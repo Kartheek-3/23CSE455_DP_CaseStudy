@@ -25,3 +25,6 @@ Thumbs.db
 *.tsbuildinfo
 **/__pycache__/
 *.pyc
+**/chrome_cdp_profile/
+*.tflite
+*.binarypb
