@@ -29,7 +29,7 @@ entry="App\\Providers\\CaseStudyIntegrationProvider::class,"
 if entry not in text:
     if not re.search(r"\];\s*$",text):
         sys.exit("Unsupported bootstrap/providers.php format")
-    text=re.sub(r"\];\s*$","    "+entry+"\n];\n",text)
+    text=re.sub(r"\];\s*$",lambda match: "    "+entry+"\n];\n",text)
     providers.write_text(text)
 routes=root/"routes/web.php"
 text=routes.read_text()
