@@ -6,4 +6,4 @@ Two patterns, four languages. The adapter programs are Pravallika's part. The st
 
 `strategy/` is the diagnostic payment. One run charges `DX-1001` through Stripe and `DX-1002` through PayPal.
 
-Open the language folder and follow its README. Java, Python, JavaScript, and C++ use the same roles. Nothing in these programs calls a network. The output we captured is in `data/test_result/`.
+Open the language folder and follow its README. Java, Python, JavaScript  and C++ use the same roles. Nothing in these programs calls a network. The output we captured is in `data/test_result/`.
