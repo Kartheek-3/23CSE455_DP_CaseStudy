@@ -25,7 +25,7 @@ The extension demonstrates **eight patterns**, with a proposed two-pattern alloc
 
 ## Validation
 
-[GitHub Actions](../../actions/workflows/a5-validate.yml) checks the PHP contracts, 32 language programs, reproducible process timings, Laravel overlay tests, and LaTeX compilation. A successful workflow run provides evidence of those checks, not proof of live third-party integration.
+[GitHub Actions](.github/workflows/a5-validate.yml) checks the PHP contracts, 32 language programs, reproducible process timings, Laravel overlay tests, and LaTeX compilation. A successful workflow run provides evidence of those checks, not proof of live third-party integration.
 
 For exact commands, dataset locations, limitations and attribution, read [the full Team A5 README](A5/README.md). The academic report is the primary narrative deliverable.
 
