@@ -3,6 +3,9 @@ on:
   push:
     branches: [feature/a5-eight-pattern-study]
   workflow_dispatch:
+concurrency:
+  group: a5-validation-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: write
 jobs:
@@ -54,5 +57,6 @@ jobs:
           git add A5/A5_Report.pdf A5/Part3/eight_patterns/measured_results.csv
           if ! git diff --cached --quiet; then
             git commit -m "docs(A5): rebuild PDF and record measured runtimes [skip ci]"
-            git push
+            git pull --rebase origin feature/a5-eight-pattern-study
+            git push origin HEAD:feature/a5-eight-pattern-study
           fi
