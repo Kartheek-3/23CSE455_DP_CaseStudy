@@ -169,7 +169,7 @@ Facade & The existing Laravel facades stay as they are. & Unchanged\\\bottomrule
 \fig{0.88}{Part2/diagrams/adapter_uml.pdf}{Figure 3. Adapter class diagram for the proposed EHR integration.}
 \fig{0.88}{Part2/diagrams/strategy_uml.pdf}{Figure 4. Strategy class diagram for the proposed billing providers.}
 
-\field{Refactoring} In the original design the business rule stays in the controller. After the proposed refactoring the controller still validates HTTP input. It does not parse FHIR and it does not switch on a provider name. This refactoring has not been applied to the upstream repository. The notes for the three changes are in \path{Part2/changes/Change1/}, \path{Change2/} and \path{Change3/}. The proposed PHP roles are in \path{Part2/code/}.
+\field{Refactoring} In the original design the business rule stays in the controller. After the proposed refactoring the controller still validates HTTP input. It does not parse FHIR and it does not switch on a provider name. An installable overlay now adds Laravel controller endpoints, dependency-injection bindings, configuration and tests in \code{laravel\_integration/}. It does not rewrite the original booking controllers. The notes for the three changes are in \path{Part2/changes/Change1/}, \path{Change2/} and \path{Change3/}. The proposed PHP roles are in \path{Part2/code/}; the installable Laravel overlay and HTTP fake tests are in \path{laravel_integration/}.
 
 \section{Part 3 Cross-language implementations}
 The two patterns written in Part~3 are Adapter and Strategy. The four languages are Java, Python, JavaScript and C++. The original application remains Laravel and PHP. None of the programs opens a network connection.
@@ -223,7 +223,7 @@ Daripineni Manogna & Factory Method; Decorator & Record export; read-access audi
 
 \textbf{Evolution impact.} Proposed dependencies flow from client to interface to fake or production adapter; substitution supports isolated tests. The new cache requires invalidation, the audit wrapper requires access controls, and billing needs real idempotency, reconciliation and gateway signature verification before production deployment. These risks are not addressed by the fakes alone.
 
-\textbf{Limitations.} This is not a full Laravel integration, and no external vendor has been contacted. Thirty-two standalone programs now cover eight patterns in Java, Python, JavaScript and C++ (four implementations per pattern). The GitHub Actions workflow has successfully validated the 32 programs and PHP contract tests. The earlier Adapter and Strategy demonstrations remain separate. Complexity, runtime benchmarks and revised PDF verification are pending. Team allocations are proposed and must be verified with members; no individual authorship is inferred from this document.
+\textbf{Limitations.} An installable Laravel integration overlay adds separate protected endpoints for the three providers, but does not replace the original workflows; no external vendor has been contacted. Thirty-two standalone programs now cover eight patterns in Java, Python, JavaScript and C++ (four implementations per pattern). The GitHub Actions workflow has successfully validated the 32 programs and PHP contract tests. The earlier Adapter and Strategy demonstrations remain separate. Complexity, runtime benchmarks and revised PDF verification are pending. Team allocations are proposed and must be verified with members; no individual authorship is inferred from this document.
 
 
 \subsection{Cross-language implementation matrix}
@@ -247,7 +247,7 @@ Decorator & source & source & source & source\\\bottomrule
 The GitHub workflow is configured to execute the PHP contract tests and 32 cross-language programs, then compile this report twice with \texttt{pdflatex}. A configured workflow is not evidence of a successful run. The GitHub Actions validation job has passed; reproducibility requires retaining its run logs. No benchmark numbers are fabricated. Future measurements should record compiler/runtime versions, five timed runs after warm-up, source-only nonblank LOC and a defined cyclomatic complexity convention.
 
 \subsection{Scope of integration and ethical claims}
-The repository retains only selected Laravel source excerpts in \code{data/code/}; it does not include a full runnable Laravel checkout with routes, migrations, framework bootstrap, dependencies and configuration. Consequently the new PHP examples are \emph{not} integrated into an executable Laravel application. They demonstrate design evolution and testable boundaries. Integration with real providers requires authorization, secrets management, consent, patient-data minimization, timeouts, idempotency, webhook verification, database transactions and staging tests. The proposed division of work is not proof of individual authorship.
+The repository retains only selected baseline Laravel source excerpts in \code{data/code/}. The installable overlay under \code{laravel_integration/} adds three integration routes and service bindings to a separately checked-out full upstream Laravel application. It does not modify the original booking and record workflows, and successful end-to-end deployment has not been established. They demonstrate design evolution and testable boundaries. Integration with real providers requires authorization, secrets management, consent, patient-data minimization, timeouts, idempotency, webhook verification, database transactions and staging tests. The proposed division of work is not proof of individual authorship.
 
 
 \section{LLM evidence}
@@ -283,7 +283,7 @@ Daripineni Manogna & Part 3, Strategy. The same payment strategy in Java, Python
 \section{Conclusion}
 \code{esteham/hospital-management} at commit \code{1e7420e} implements the six healthcare areas with Eloquent models and with controllers that hold the business rules. The patterns supported by that source are Active Record and Laravel's own facades. Adapter, Strategy, Proxy, Repository, Observer and a service layer were not found.
 
-Adapter and Strategy model the external integration boundaries. The extension demonstrates eight patterns with standalone PHP examples and 32 cross-language implementations. These are tested design prototypes rather than live provider connections or modifications to the original Laravel controllers. A full application integration and realistic external-service verification are distinct future steps.
+Adapter and Strategy model the external integration boundaries. The extension demonstrates eight patterns with standalone PHP examples and 32 cross-language implementations. These are tested design prototypes rather than live provider connections or modifications to the original Laravel controllers. The overlay provides Laravel routes and provider bindings for three external integrations, but existing booking workflows remain unchanged and real external-service verification is future work.
 
 \begin{thebibliography}{9}
 \bibitem{hms} Esteham H. Zihad Ansari. Hospital Management. \url{https://github.com/esteham/hospital-management}.
