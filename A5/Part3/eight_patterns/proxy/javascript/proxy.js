@@ -1,32 +1,42 @@
 class Source {
   constructor() {
-    this.calls=0
+    this.calls = 0;
   }
-  fetch(p) {
+
+  fetch(patientId) {
     this.calls++;
-    return {
-      id:p
-    }
+    return { id: patientId };
   }
 }
+
 class Proxy {
-  constructor(s) {
-    this.s=s;
-    this.cache=new Map()
+  constructor(source) {
+    this.source = source;
+    this.cache = new Map();
   }
-  fetch(p) {
-    if (!this.cache.has(p))this.cache.set(p,this.s.fetch(p));
-    return this.cache.get(p)
+
+  fetch(patientId) {
+    if (!this.cache.has(patientId)) {
+      this.cache.set(patientId, this.source.fetch(patientId));
+    }
+    return this.cache.get(patientId);
   }
-  invalidate(p) {
-    this.cache.delete(p)
+
+  invalidate(patientId) {
+    this.cache.delete(patientId);
   }
 }
-const s=new Source(),p=new Proxy(s);
-p.fetch('P1');
-p.fetch('P1');
-if (s.calls!==1)throw Error('cache');
-p.invalidate('P1');
-p.fetch('P1');
-if (s.calls!==2)throw Error('invalidate');
-console.log('PASS');
+
+const source = new Source();
+const proxy = new Proxy(source);
+proxy.fetch("P1");
+proxy.fetch("P1");
+if (source.calls !== 1) {
+  throw Error("cache");
+}
+proxy.invalidate("P1");
+proxy.fetch("P1");
+if (source.calls !== 2) {
+  throw Error("invalidate");
+}
+console.log("PASS");
