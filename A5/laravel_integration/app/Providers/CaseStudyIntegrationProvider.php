@@ -5,6 +5,8 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Contracts\Http\Client\Factory as HttpFactory;
 use App\Services\CaseStudy\{LabGateway,HttpLabAdapter,BillingGateway,HttpBillingStrategy,PatientGateway,FhirPatientAdapter};
 
+require_once __DIR__.'/../Services/CaseStudy/Integrations.php';
+
 final class CaseStudyIntegrationProvider extends ServiceProvider {
     public function register(): void {
         $this->app->bind(LabGateway::class,fn($app)=>new HttpLabAdapter(
