@@ -123,3 +123,8 @@ A5/
 ```
 
 Paths inside the CSV files start from this `A5/` folder. Each diagram PDF sits next to its `.tex` source. The screenshot in the report is the A5 folder.
+
+
+## Correction branch notes (2026-10-11)
+
+The selected original Laravel source is stored as excerpts in `data/code/`, not as a full runnable Laravel checkout. The Part 2 integration classes and new fake-provider demonstrations are **standalone prototypes**, not deployed Laravel or real external integrations. Execute `php Part2/tests/integration_contracts.php` from `A5/` to check six standalone assertions; no test pass is claimed until executed. The corrected consolidated datasets are in `data/`. Missing timing and complexity values remain unmeasured, not estimated. The existing report and diagrams have not been regenerated and must be reconciled before submission.
