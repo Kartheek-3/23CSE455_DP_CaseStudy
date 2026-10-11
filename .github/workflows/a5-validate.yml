@@ -1,0 +1,56 @@
+name: A5 pattern validation and report PDF
+on:
+  push:
+    branches: [feature/a5-eight-pattern-study]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: PHP syntax and contract assertions
+        run: |
+          set -euo pipefail
+          php -l A5/Part2/eight_patterns/HealthcarePatterns.php
+          php A5/Part2/eight_patterns/test.php
+          php A5/Part2/tests/integration_contracts.php
+      - name: Verify 32 cross-language implementations
+        run: |
+          set -euo pipefail
+          for pattern in facade repository adapter strategy proxy observer factory_method decorator; do
+            python3 "A5/Part3/eight_patterns/$pattern/python/$pattern.py"
+            node "A5/Part3/eight_patterns/$pattern/javascript/$pattern.js"
+            (cd "A5/Part3/eight_patterns/$pattern/java" && javac Demo.java && java Demo)
+            g++ -std=c++17 -O2 "A5/Part3/eight_patterns/$pattern/cpp/$pattern.cpp" -o "/tmp/a5-$pattern"
+            "/tmp/a5-$pattern"
+          done
+      - name: Install TeX
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq texlive-latex-extra texlive-fonts-recommended texlive-latex-recommended
+      - name: Compile report
+        run: |
+          cd A5
+          pdflatex -interaction=nonstopmode -halt-on-error A5_Report.tex
+          pdflatex -interaction=nonstopmode -halt-on-error A5_Report.tex
+      - uses: actions/upload-artifact@v4
+        with:
+          name: A5-compiled-report
+          path: A5/A5_Report.pdf
+      - name: Commit generated PDF to feature branch
+        if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/feature/a5-eight-pattern-study'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add A5/A5_Report.pdf
+          if ! git diff --cached --quiet; then
+            git commit -m "docs(A5): rebuild PDF from report source [skip ci]"
+            git push
+          fi
