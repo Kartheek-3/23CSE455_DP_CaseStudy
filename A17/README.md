@@ -8,9 +8,9 @@
 | AM.SC.U4CSE23142 | P Sai Satvik Chowdary | CSE A |
 
 This package contains the completed local analysis, code changes, diagrams,
-datasets and measured results. The connected GitHub account can read the course
-repository but cannot push to it. No GitHub screenshot is represented as a
-submission. Faculty approval and individual student contributions were not
+datasets and measured results. [Course-repository PR 16](https://github.com/aswathymohan-amrita/23CSE455_DP_CaseStudy/pull/16)
+proposes this folder at the repository root; it has not been merged. No GitHub
+screenshot is represented as a merged submission. Faculty approval and individual student contributions were not
 confirmed in this interaction. Human verification remains for the students to
 record in `data/human_verification.csv`. The LLM's displayed UI label/access tier
 were not independently confirmed, so the course's free/public LLM condition
@@ -141,8 +141,9 @@ records with typed numeric fields and an overview sheet.
 
 The course repository was checked through the connected account on 2026-10-11:
 `aswathymohan-amrita/23CSE455_DP_CaseStudy` is readable, but the account has
-`push: false`. Once the team has write access, upload **this entire A17 folder**
-at the repository root, then take a real GitHub screenshot of that uploaded folder.
+`push: false`. The complete A17 folder is in [PR 16](https://github.com/aswathymohan-amrita/23CSE455_DP_CaseStudy/pull/16),
+opened from a fork. Once it is merged, take a real screenshot of the A17 folder
+in the course repository.
 Check faculty approval, the required free/public LLM tool tier, actual student
 contributions and human verification before submission. No placeholder screenshot
 or invented approval is included.
