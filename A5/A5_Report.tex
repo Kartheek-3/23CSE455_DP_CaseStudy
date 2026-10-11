@@ -265,6 +265,30 @@ Daripineni Manogna & Factory Method; Decorator & Record export; read-access audi
 
 \textbf{Evolution impact.} Proposed dependencies flow from client to interface to fake or production adapter; substitution supports isolated tests. The new cache requires invalidation, the audit wrapper requires access controls, and billing needs real idempotency, reconciliation and gateway signature verification before production deployment. These risks are not addressed by the fakes alone.
 
-\textbf{Limitations.} This is not a full Laravel integration, and no external vendor has been contacted. A four-language comparison currently exists only for the original Adapter and Strategy examples; the other six patterns have not been ported. Complexity, runtime benchmarks and revised PDF verification are pending. Team allocations are proposed and must be verified with members; no individual authorship is inferred from this document.
+\textbf{Limitations.} This is not a full Laravel integration, and no external vendor has been contacted. Thirty-two standalone programs now cover eight patterns in Java, Python, JavaScript and C++ (four implementations per pattern). They have not been verified by a successful CI run. The earlier Adapter and Strategy demonstrations remain separate. Complexity, runtime benchmarks and revised PDF verification are pending. Team allocations are proposed and must be verified with members; no individual authorship is inferred from this document.
+
+
+\subsection{Cross-language implementation matrix}
+All eight proposed patterns have one reduced implementation in each of four languages (32 source files). These examples use synthetic healthcare data and deterministic assertions, not production endpoints. The reproducible commands are recorded in \code{Part3/eight_patterns/cross_language.csv}. The automated validation workflow is \code{.github/workflows/a5-validate.yml}.
+
+\begin{center}\small
+\begin{tabular}{lllll}\toprule
+Pattern & Python & JavaScript & Java & C++\\\midrule
+Facade & source & source & source & source\\
+Repository & source & source & source & source\\
+Adapter & source & source & source & source\\
+Strategy & source & source & source & source\\
+Proxy & source & source & source & source\\
+Observer & source & source & source & source\\
+Factory Method & source & source & source & source\\
+Decorator & source & source & source & source\\\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Verification status and measurement protocol}
+The GitHub workflow is configured to execute the PHP contract tests and 32 cross-language programs, then compile this report twice with \texttt{pdflatex}. A configured workflow is not evidence of a successful run. All newly added test results remain \emph{unverified} until CI logs or local execution outputs are saved. No benchmark numbers are fabricated. Future measurements should record compiler/runtime versions, five timed runs after warm-up, source-only nonblank LOC and a defined cyclomatic complexity convention.
+
+\subsection{Scope of integration and ethical claims}
+The repository retains only selected Laravel source excerpts in \code{data/code/}; it does not include a full runnable Laravel checkout with routes, migrations, framework bootstrap, dependencies and configuration. Consequently the new PHP examples are \emph{not} integrated into an executable Laravel application. They demonstrate design evolution and testable boundaries. Integration with real providers requires authorization, secrets management, consent, patient-data minimization, timeouts, idempotency, webhook verification, database transactions and staging tests. The proposed division of work is not proof of individual authorship.
 
 \end{document}
