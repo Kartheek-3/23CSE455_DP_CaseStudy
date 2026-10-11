@@ -89,6 +89,11 @@ for r in matrix:
     m=measurements[(r["pattern_name"],r["language"])]
     if m["test_result"]!="PASS":
         raise RuntimeError("Nonpassing measurement "+str(r))
+    r["test_status"]="passed"
+    r["median_process_ms"]=m["median_process_ms"]
+    r["source_loc"]=m["source_loc"]
+    r["max_function_cc"]=m["max_function_cc"]
+    r["measurement_status"]="runtime_loc_cc_measured_lizard_1_21_0"
     path=ROOT/m["source_path"]
     language={"python":"Python","javascript":"JavaScript","java":"Java","cpp":"C++"}[r["language"]]
     rows.append(dict(pattern_name=r["pattern_name"].replace("_"," ").title(),
@@ -99,6 +104,10 @@ for r in matrix:
         median_process_ms=m["median_process_ms"],
         language_notes="Reduced standalone example, not original baseline collaboration; "+
             m["timing_scope"]+"; raw timings in Part3/eight_patterns/measured_results.csv"))
+with MATRIX.open("w",newline="") as f:
+    writer=csv.DictWriter(f,fieldnames=list(matrix[0].keys()))
+    writer.writeheader()
+    writer.writerows(matrix)
 assert len(rows)==40
 with DATA.open("w",newline="") as f:
     writer=csv.DictWriter(f,fieldnames=FIELDS)
