@@ -1,7 +1,5 @@
 source_version,summary,pattern_name,count
-after_changes,per_pattern,Adapter,2
-after_changes,per_pattern,Strategy,1
-after_changes,implemented_in_part3,Adapter,1
-after_changes,implemented_in_part3,Strategy,1
-after_changes,proposal_only,Proxy,1
-after_changes,unchanged,Facade,1
+original,per_pattern,Active Record,3
+original,per_pattern,Facade,2
+original,total_pattern_types,,2
+original,total_pattern_instances,,5
