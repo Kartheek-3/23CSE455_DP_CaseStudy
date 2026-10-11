@@ -1,0 +1,7 @@
+```csv
+source_version,summary,pattern_name,count
+Original code,per_pattern,Singleton,8
+Original code,per_pattern,Dependency Injection,6
+Original code,total_pattern_types,,2
+Original code,total_pattern_instances,,14
+```
