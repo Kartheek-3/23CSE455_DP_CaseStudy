@@ -1,0 +1,2 @@
+class Source{constructor(){this.calls=0}fetch(p){this.calls++;return {id:p}}}class Proxy{constructor(s){this.s=s;this.cache=new Map()}fetch(p){if(!this.cache.has(p))this.cache.set(p,this.s.fetch(p));return this.cache.get(p)}invalidate(p){this.cache.delete(p)}}const s=new Source(),p=new Proxy(s);p.fetch('P1');p.fetch('P1');if(s.calls!==1)throw Error('cache');p.invalidate('P1');p.fetch('P1');if(s.calls!==2)throw Error('invalidate');
+console.log('PASS');
