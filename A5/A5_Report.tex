@@ -201,7 +201,7 @@ The Strategy commands are the same, with the file names in \path{Part3/strategy/
 \item The client receives the interface through its constructor in every language. The concrete adapter or strategy is built at the start of the program.
 \item Java and C++ state the contract as an interface or an abstract class. Python uses an abstract base class. JavaScript uses the same method names without a compile-time interface.
 \item Python spells the adapter method \code{get\_patient\_record}. The other three languages spell it \code{getPatientRecord}.
-\item The comparison files are \path{Part3/adapter/pattern_crosslanguage.csv} and \path{Part3/strategy/pattern_crosslanguage.csv}. The source-location column is the non-blank line count of each program. Cyclomatic complexity and process time were not measured, so those two columns say ``not measured''.
+\item The comparison files are \path{Part3/adapter/pattern_crosslanguage.csv} and \path{Part3/strategy/pattern_crosslanguage.csv}. The source-location column is the non-blank line count of each program. The original eight Adapter/Strategy programs are now remeasured in \path{data/cross_language.csv} with one warm-up and five process runs. Maximum function cyclomatic complexity is computed using Lizard 1.21.0; the historical per-pattern CSV snapshots retain their original unmeasured entries.
 \end{itemize}
 
 \section{Eight-pattern implementation extension}
@@ -244,11 +244,14 @@ Decorator & source & source & source & source\\\bottomrule
 \end{center}
 
 \subsection{Verification status and measurement protocol}
-The GitHub workflow is configured to execute the PHP contract tests and 32 cross-language programs, then compile this report twice with \texttt{pdflatex}. A configured workflow is not evidence of a successful run. The GitHub Actions validation job has passed; reproducibility requires retaining its run logs. No benchmark numbers are fabricated. Future measurements should record compiler/runtime versions, five timed runs after warm-up, source-only nonblank LOC and a defined cyclomatic complexity convention.
+The GitHub workflow is configured to execute the PHP contract tests and 32 cross-language programs, then compile this report twice with \texttt{pdflatex}. A configured workflow is not evidence of a successful run. The GitHub Actions validation job has passed; reproducibility requires retaining its run logs. No benchmark numbers are fabricated. The reproducible faculty-schema audit records compiler/runtime versions, five timed runs after one warm-up, source LOC and Lizard 1.21.0 maximum function CCN in \path{data/cross_language.csv}. Measurements include process startup but exclude compilation.
 
 \subsection{Scope of integration and ethical claims}
 The repository retains only selected baseline Laravel source excerpts in \code{data/code/}. The installable overlay under \code{laravel_integration/} adds three integration routes and service bindings to a separately checked-out full upstream Laravel application. It does not modify the original booking and record workflows, and successful end-to-end deployment has not been established. They demonstrate design evolution and testable boundaries. Integration with real providers requires authorization, secrets management, consent, patient-data minimization, timeouts, idempotency, webhook verification, database transactions and staging tests. The proposed division of work is not proof of individual authorship.
 
+
+\subsection{Evidence completeness and integration boundary}
+The before/after integration evidence and six HTTP-fake tests are indexed in \path{Part2/changes/EVOLUTION_VALIDATION.md}. The overlay introduces additional routes and dependency-injection bindings without refactoring the original booking workflows; therefore the same-workflow before/after LOC and live vendor acceptance results remain unverified. The LLM provenance audit at \path{data/LLM_PROVENANCE_AUDIT.md} distinguishes existing human verification from unavailable verbatim raw model responses. No missing historical LLM transcript has been reconstructed or invented.
 
 \section{LLM evidence}
 An LLM drafted explanations and the first versions of the four-language programs. A claim about the repository was kept only when the file in \path{data/code/} supported it. During the investigation the LLM could not read the GitHub tree, so the module map was rebuilt from the files we opened. The working thread is \url{https://share.gemini.google/zjKon9gmTNO8}.
