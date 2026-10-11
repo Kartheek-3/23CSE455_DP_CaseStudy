@@ -169,7 +169,7 @@ Facade & The existing Laravel facades stay as they are. & Unchanged\\\bottomrule
 \fig{0.88}{Part2/diagrams/adapter_uml.pdf}{Figure 3. Adapter class diagram for the proposed EHR integration.}
 \fig{0.88}{Part2/diagrams/strategy_uml.pdf}{Figure 4. Strategy class diagram for the proposed billing providers.}
 
-\field{Refactoring} In the original design the business rule stays in the controller. After the proposed refactoring the controller still validates HTTP input. It does not parse FHIR and it does not switch on a provider name. This refactoring has not been applied to the upstream repository. The notes for the three changes are in \path{Part2/changes/Change1/}, \path{Change2/} and \path{Change3/}. The proposed PHP roles are in \path{Part2/code/}.
+\field{Refactoring} In the original design the business rule stays in the controller. After the proposed refactoring the controller still validates HTTP input. It does not parse FHIR and it does not switch on a provider name. An installable overlay now adds Laravel controller endpoints, dependency-injection bindings, configuration and tests in \code{laravel\_integration/}. It does not rewrite the original booking controllers. The notes for the three changes are in \path{Part2/changes/Change1/}, \path{Change2/} and \path{Change3/}. The proposed PHP roles are in \path{Part2/code/}; the installable Laravel overlay and HTTP fake tests are in \path{laravel_integration/}.
 
 \section{Part 3 Cross-language implementations}
 The two patterns written in Part~3 are Adapter and Strategy. The four languages are Java, Python, JavaScript and C++. The original application remains Laravel and PHP. None of the programs opens a network connection.
@@ -204,6 +204,52 @@ The Strategy commands are the same, with the file names in \path{Part3/strategy/
 \item The comparison files are \path{Part3/adapter/pattern_crosslanguage.csv} and \path{Part3/strategy/pattern_crosslanguage.csv}. The source-location column is the non-blank line count of each program. Cyclomatic complexity and process time were not measured, so those two columns say ``not measured''.
 \end{itemize}
 
+\section{Eight-pattern implementation extension}
+\textbf{Evidence boundary.} The original Laravel baseline remains two observed pattern types: Eloquent Active Record and Laravel framework Facade. The following eight collaborations are new standalone PHP 8.2+ demonstrations, not discoveries in the baseline, nor integrated Laravel routes or live provider APIs. Each uses synthetic inputs and fake providers. This extension is independent of the A8 NestJS case study.
+
+\begin{center}\small
+\begin{tabularx}{\linewidth}{@{}P{36mm}P{39mm}L@{}}\toprule
+Proposed team allocation & Two patterns & Healthcare use cases\\\midrule
+Nemali Ashrith Reddy & Facade; Repository & Appointment booking; patient persistence\\
+Akshay Reddy Velugati & Adapter; Strategy & Lab order translation; payment selection\\
+B. Pravallika & Proxy; Observer & Patient cache; clinical event notification\\
+Daripineni Manogna & Factory Method; Decorator & Record export; read-access audit\\\bottomrule
+\end{tabularx}
+\end{center}
+
+\textbf{Implementation.} The source is \code{Part2/eight_patterns/HealthcarePatterns.php}; \code{test.php} contains fourteen contract assertions. The inventory is \code{Part2/eight_patterns/pattern_inventory.csv}. Run from \code{A5/}: \code{php Part2/eight_patterns/test.php}. Results are not claimed until this command is actually executed.
+
+\textbf{Pattern roles.} AppointmentFacade delegates to AppointmentStore and NoticeSender. PatientRegistry depends on PatientRepository. LaboratoryAdapter translates to ExternalLabClient. BillingContext selects PaymentStrategy. CachedPatientProxy implements PatientDataSource and caches its wrapped source. ClinicalEventPublisher dispatches to ClinicalObserver subscribers. ExporterFactory creates RecordExporter implementations via a factory method. AuditedMedicalRecordReader decorates MedicalRecordReader with audit logging.
+
+\textbf{Evolution impact.} Proposed dependencies flow from client to interface to fake or production adapter; substitution supports isolated tests. The new cache requires invalidation, the audit wrapper requires access controls, and billing needs real idempotency, reconciliation and gateway signature verification before production deployment. These risks are not addressed by the fakes alone.
+
+\textbf{Limitations.} An installable Laravel integration overlay adds separate protected endpoints for the three providers, but does not replace the original workflows; no external vendor has been contacted. Thirty-two standalone programs now cover eight patterns in Java, Python, JavaScript and C++ (four implementations per pattern). The GitHub Actions workflow has successfully validated the 32 programs and PHP contract tests. The earlier Adapter and Strategy demonstrations remain separate. Complexity, runtime benchmarks and revised PDF verification are pending. Team allocations are proposed and must be verified with members; no individual authorship is inferred from this document.
+
+
+\subsection{Cross-language implementation matrix}
+All eight proposed patterns have one reduced implementation in each of four languages (32 source files). These examples use synthetic healthcare data and deterministic assertions, not production endpoints. The reproducible commands are recorded in \code{Part3/eight_patterns/cross_language.csv}. The automated validation workflow is \code{.github/workflows/a5-validate.yml}.
+
+\begin{center}\small
+\begin{tabular}{lllll}\toprule
+Pattern & Python & JavaScript & Java & C++\\\midrule
+Facade & source & source & source & source\\
+Repository & source & source & source & source\\
+Adapter & source & source & source & source\\
+Strategy & source & source & source & source\\
+Proxy & source & source & source & source\\
+Observer & source & source & source & source\\
+Factory Method & source & source & source & source\\
+Decorator & source & source & source & source\\\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Verification status and measurement protocol}
+The GitHub workflow is configured to execute the PHP contract tests and 32 cross-language programs, then compile this report twice with \texttt{pdflatex}. A configured workflow is not evidence of a successful run. The GitHub Actions validation job has passed; reproducibility requires retaining its run logs. No benchmark numbers are fabricated. Future measurements should record compiler/runtime versions, five timed runs after warm-up, source-only nonblank LOC and a defined cyclomatic complexity convention.
+
+\subsection{Scope of integration and ethical claims}
+The repository retains only selected baseline Laravel source excerpts in \code{data/code/}. The installable overlay under \code{laravel_integration/} adds three integration routes and service bindings to a separately checked-out full upstream Laravel application. It does not modify the original booking and record workflows, and successful end-to-end deployment has not been established. They demonstrate design evolution and testable boundaries. Integration with real providers requires authorization, secrets management, consent, patient-data minimization, timeouts, idempotency, webhook verification, database transactions and staging tests. The proposed division of work is not proof of individual authorship.
+
+
 \section{LLM evidence}
 An LLM drafted explanations and the first versions of the four-language programs. A claim about the repository was kept only when the file in \path{data/code/} supported it. During the investigation the LLM could not read the GitHub tree, so the module map was rebuilt from the files we opened. The working thread is \url{https://share.gemini.google/zjKon9gmTNO8}.
 
@@ -219,7 +265,7 @@ Part 3 languages & PHP and TypeScript were drafted first & The submitted languag
 The check against the Gemini thread is \path{Part1/llm/verification.md}. The record files are \path{Part1/llm.csv}, \path{Part2/llm.csv}, \path{Part3/adapter/llm/llm.csv} and \path{Part3/strategy/llm/llm.csv}.
 
 \section{Contributions}
-The four members divided the case study into equal parts.
+The following original division records the initial work. The eight-pattern extension proposes two patterns per member, as tabulated above. The assignment of extension tasks is not independent evidence of individual authorship.
 
 {\small\begin{tabularx}{\linewidth}{@{}P{42mm}L@{}}\toprule
 Student & Work\\\midrule
@@ -237,11 +283,12 @@ Daripineni Manogna & Part 3, Strategy. The same payment strategy in Java, Python
 \section{Conclusion}
 \code{esteham/hospital-management} at commit \code{1e7420e} implements the six healthcare areas with Eloquent models and with controllers that hold the business rules. The patterns supported by that source are Active Record and Laravel's own facades. Adapter, Strategy, Proxy, Repository, Observer and a service layer were not found.
 
-Adapter is the translation point if an electronic health record is added. Strategy is the switch if a real payment provider is added. Those two patterns are implemented in Java, Python, JavaScript and C++. The laboratory adapter and the cache proxy remain proposals, so this report does not describe code that was not written.
+Adapter and Strategy model the external integration boundaries. The extension demonstrates eight patterns with standalone PHP examples and 32 cross-language implementations. These are tested design prototypes rather than live provider connections or modifications to the original Laravel controllers. The overlay provides Laravel routes and provider bindings for three external integrations, but existing booking workflows remain unchanged and real external-service verification is future work.
 
 \begin{thebibliography}{9}
 \bibitem{hms} Esteham H. Zihad Ansari. Hospital Management. \url{https://github.com/esteham/hospital-management}.
 \bibitem{gof} E.~Gamma, R.~Helm, R.~Johnson and J.~Vlissides. \emph{Design Patterns: Elements of Reusable Object-Oriented Software}. Addison-Wesley, 1994.
 \bibitem{laravel} Laravel 12 documentation, facades and Eloquent. \url{https://laravel.com/docs/12.x}.
 \end{thebibliography}
+
 \end{document}
