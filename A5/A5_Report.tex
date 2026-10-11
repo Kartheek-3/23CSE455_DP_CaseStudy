@@ -204,49 +204,7 @@ The Strategy commands are the same, with the file names in \path{Part3/strategy/
 \item The comparison files are \path{Part3/adapter/pattern_crosslanguage.csv} and \path{Part3/strategy/pattern_crosslanguage.csv}. The source-location column is the non-blank line count of each program. Cyclomatic complexity and process time were not measured, so those two columns say ``not measured''.
 \end{itemize}
 
-\section{LLM evidence}
-An LLM drafted explanations and the first versions of the four-language programs. A claim about the repository was kept only when the file in \path{data/code/} supported it. During the investigation the LLM could not read the GitHub tree, so the module map was rebuilt from the files we opened. The working thread is \url{https://share.gemini.google/zjKon9gmTNO8}.
-
-{\small\begin{tabularx}{\linewidth}{@{}P{32mm}LL@{}}\toprule
-Task & What was drafted & What was kept after checking\\\midrule
-Choose the application & Three public Laravel repositories & The empty skeleton was dropped. This report uses \code{esteham/hospital-management}.\\
-Name existing patterns & Several GoF names, including Adapter & Adapter, Proxy, Strategy, Repository, Observer and a service layer are marked not identified.\\
-Evolve the design & Adapter, Strategy, Proxy and services & Billing is Strategy. The proxy and the Quest adapter stay proposals.\\
-Laboratory service name & The first draft reused \code{DiagnosticService} & Renamed to \code{LaboratoryIntegrationService}.\\
-Part 3 languages & PHP and TypeScript were drafted first & The submitted languages are Java, Python, JavaScript and C++, as required.\\\bottomrule
-\end{tabularx}}
-
-The check against the Gemini thread is \path{Part1/llm/verification.md}. The record files are \path{Part1/llm.csv}, \path{Part2/llm.csv}, \path{Part3/adapter/llm/llm.csv} and \path{Part3/strategy/llm/llm.csv}.
-
-\section{Contributions}
-The four members divided the case study into equal parts.
-
-{\small\begin{tabularx}{\linewidth}{@{}P{42mm}L@{}}\toprule
-Student & Work\\\midrule
-Nemali Ashrith Reddy & Part 1. Inspection of the hospital modules, the pattern inventory, and the current architecture.\\
-Akshay Reddy Velugati & Part 2. The laboratory, billing, and patient-data evolution, with the evolved architecture and the UML diagrams.\\
-B. Pravallika & Part 3, Adapter. The same EHR adapter in Java, Python, JavaScript, and C++, and the captured adapter output.\\
-Daripineni Manogna & Part 3, Strategy. The same payment strategy in Java, Python, JavaScript, and C++, and the captured strategy output.\\\bottomrule
-\end{tabularx}}
-
-\section{Screenshot}
-\begin{center}
-\includegraphics[width=\linewidth]{screenshot.png}
-\end{center}
-
-\section{Conclusion}
-\code{esteham/hospital-management} at commit \code{1e7420e} implements the six healthcare areas with Eloquent models and with controllers that hold the business rules. The patterns supported by that source are Active Record and Laravel's own facades. Adapter, Strategy, Proxy, Repository, Observer and a service layer were not found.
-
-Adapter is the translation point if an electronic health record is added. Strategy is the switch if a real payment provider is added. Those two patterns are implemented in Java, Python, JavaScript and C++. The laboratory adapter and the cache proxy remain proposals, so this report does not describe code that was not written.
-
-\begin{thebibliography}{9}
-\bibitem{hms} Esteham H. Zihad Ansari. Hospital Management. \url{https://github.com/esteham/hospital-management}.
-\bibitem{gof} E.~Gamma, R.~Helm, R.~Johnson and J.~Vlissides. \emph{Design Patterns: Elements of Reusable Object-Oriented Software}. Addison-Wesley, 1994.
-\bibitem{laravel} Laravel 12 documentation, facades and Eloquent. \url{https://laravel.com/docs/12.x}.
-\end{thebibliography}
-
-\clearpage
-\section{Supplement: Eight-pattern extension (11 October 2026)}
+\section{Eight-pattern implementation extension}
 \textbf{Evidence boundary.} The original Laravel baseline remains two observed pattern types: Eloquent Active Record and Laravel framework Facade. The following eight collaborations are new standalone PHP 8.2+ demonstrations, not discoveries in the baseline, nor integrated Laravel routes or live provider APIs. Each uses synthetic inputs and fake providers. This extension is independent of the A8 NestJS case study.
 
 \begin{center}\small
@@ -265,7 +223,7 @@ Daripineni Manogna & Factory Method; Decorator & Record export; read-access audi
 
 \textbf{Evolution impact.} Proposed dependencies flow from client to interface to fake or production adapter; substitution supports isolated tests. The new cache requires invalidation, the audit wrapper requires access controls, and billing needs real idempotency, reconciliation and gateway signature verification before production deployment. These risks are not addressed by the fakes alone.
 
-\textbf{Limitations.} This is not a full Laravel integration, and no external vendor has been contacted. Thirty-two standalone programs now cover eight patterns in Java, Python, JavaScript and C++ (four implementations per pattern). They have not been verified by a successful CI run. The earlier Adapter and Strategy demonstrations remain separate. Complexity, runtime benchmarks and revised PDF verification are pending. Team allocations are proposed and must be verified with members; no individual authorship is inferred from this document.
+\textbf{Limitations.} This is not a full Laravel integration, and no external vendor has been contacted. Thirty-two standalone programs now cover eight patterns in Java, Python, JavaScript and C++ (four implementations per pattern). The GitHub Actions workflow has successfully validated the 32 programs and PHP contract tests. The earlier Adapter and Strategy demonstrations remain separate. Complexity, runtime benchmarks and revised PDF verification are pending. Team allocations are proposed and must be verified with members; no individual authorship is inferred from this document.
 
 
 \subsection{Cross-language implementation matrix}
@@ -286,9 +244,51 @@ Decorator & source & source & source & source\\\bottomrule
 \end{center}
 
 \subsection{Verification status and measurement protocol}
-The GitHub workflow is configured to execute the PHP contract tests and 32 cross-language programs, then compile this report twice with \texttt{pdflatex}. A configured workflow is not evidence of a successful run. All newly added test results remain \emph{unverified} until CI logs or local execution outputs are saved. No benchmark numbers are fabricated. Future measurements should record compiler/runtime versions, five timed runs after warm-up, source-only nonblank LOC and a defined cyclomatic complexity convention.
+The GitHub workflow is configured to execute the PHP contract tests and 32 cross-language programs, then compile this report twice with \texttt{pdflatex}. A configured workflow is not evidence of a successful run. The GitHub Actions validation job has passed; reproducibility requires retaining its run logs. No benchmark numbers are fabricated. Future measurements should record compiler/runtime versions, five timed runs after warm-up, source-only nonblank LOC and a defined cyclomatic complexity convention.
 
 \subsection{Scope of integration and ethical claims}
 The repository retains only selected Laravel source excerpts in \code{data/code/}; it does not include a full runnable Laravel checkout with routes, migrations, framework bootstrap, dependencies and configuration. Consequently the new PHP examples are \emph{not} integrated into an executable Laravel application. They demonstrate design evolution and testable boundaries. Integration with real providers requires authorization, secrets management, consent, patient-data minimization, timeouts, idempotency, webhook verification, database transactions and staging tests. The proposed division of work is not proof of individual authorship.
+
+
+\section{LLM evidence}
+An LLM drafted explanations and the first versions of the four-language programs. A claim about the repository was kept only when the file in \path{data/code/} supported it. During the investigation the LLM could not read the GitHub tree, so the module map was rebuilt from the files we opened. The working thread is \url{https://share.gemini.google/zjKon9gmTNO8}.
+
+{\small\begin{tabularx}{\linewidth}{@{}P{32mm}LL@{}}\toprule
+Task & What was drafted & What was kept after checking\\\midrule
+Choose the application & Three public Laravel repositories & The empty skeleton was dropped. This report uses \code{esteham/hospital-management}.\\
+Name existing patterns & Several GoF names, including Adapter & Adapter, Proxy, Strategy, Repository, Observer and a service layer are marked not identified.\\
+Evolve the design & Adapter, Strategy, Proxy and services & Billing is Strategy. The proxy and the Quest adapter stay proposals.\\
+Laboratory service name & The first draft reused \code{DiagnosticService} & Renamed to \code{LaboratoryIntegrationService}.\\
+Part 3 languages & PHP and TypeScript were drafted first & The submitted languages are Java, Python, JavaScript and C++, as required.\\\bottomrule
+\end{tabularx}}
+
+The check against the Gemini thread is \path{Part1/llm/verification.md}. The record files are \path{Part1/llm.csv}, \path{Part2/llm.csv}, \path{Part3/adapter/llm/llm.csv} and \path{Part3/strategy/llm/llm.csv}.
+
+\section{Contributions}
+The following original division records the initial work. The eight-pattern extension proposes two patterns per member, as tabulated above. The assignment of extension tasks is not independent evidence of individual authorship.
+
+{\small\begin{tabularx}{\linewidth}{@{}P{42mm}L@{}}\toprule
+Student & Work\\\midrule
+Nemali Ashrith Reddy & Part 1. Inspection of the hospital modules, the pattern inventory, and the current architecture.\\
+Akshay Reddy Velugati & Part 2. The laboratory, billing, and patient-data evolution, with the evolved architecture and the UML diagrams.\\
+B. Pravallika & Part 3, Adapter. The same EHR adapter in Java, Python, JavaScript, and C++, and the captured adapter output.\\
+Daripineni Manogna & Part 3, Strategy. The same payment strategy in Java, Python, JavaScript, and C++, and the captured strategy output.\\\bottomrule
+\end{tabularx}}
+
+\section{Screenshot}
+\begin{center}
+\includegraphics[width=\linewidth]{screenshot.png}
+\end{center}
+
+\section{Conclusion}
+\code{esteham/hospital-management} at commit \code{1e7420e} implements the six healthcare areas with Eloquent models and with controllers that hold the business rules. The patterns supported by that source are Active Record and Laravel's own facades. Adapter, Strategy, Proxy, Repository, Observer and a service layer were not found.
+
+Adapter and Strategy model the external integration boundaries. The extension demonstrates eight patterns with standalone PHP examples and 32 cross-language implementations. These are tested design prototypes rather than live provider connections or modifications to the original Laravel controllers. A full application integration and realistic external-service verification are distinct future steps.
+
+\begin{thebibliography}{9}
+\bibitem{hms} Esteham H. Zihad Ansari. Hospital Management. \url{https://github.com/esteham/hospital-management}.
+\bibitem{gof} E.~Gamma, R.~Helm, R.~Johnson and J.~Vlissides. \emph{Design Patterns: Elements of Reusable Object-Oriented Software}. Addison-Wesley, 1994.
+\bibitem{laravel} Laravel 12 documentation, facades and Eloquent. \url{https://laravel.com/docs/12.x}.
+\end{thebibliography}
 
 \end{document}
