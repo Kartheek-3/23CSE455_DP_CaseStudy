@@ -1,27 +1,33 @@
 class JsonExporter {
-  export(r) {
-    return JSON.stringify(r)
+  export(record) {
+    return JSON.stringify(record);
   }
 }
+
 class CsvExporter {
-  export(r) {
-    return Object.values(r).join(',')+'\n'
+  export(record) {
+    return Object.values(record).join(",") + "\n";
   }
 }
+
 class Factory {
   constructor(kind) {
-    this.kind=kind
+    this.kind = kind;
   }
+
   createExporter() {
-    return this.kind==='json'?new JsonExporter():new CsvExporter()
+    return this.kind === "json" ? new JsonExporter() : new CsvExporter();
   }
-  export(r) {
-    return this.createExporter().export(r)
+
+  export(record) {
+    return this.createExporter().export(record);
   }
 }
-if (!new Factory('json').export({
-  id:'P1'
-}).includes('P1')||!new Factory('csv').export({
-  id:'P1'
-}).includes('P1'))throw Error('factory');
-console.log('PASS');
+
+if (
+  !new Factory("json").export({ id: "P1" }).includes("P1") ||
+  !new Factory("csv").export({ id: "P1" }).includes("P1")
+) {
+  throw Error("factory");
+}
+console.log("PASS");
