@@ -38,6 +38,23 @@ jobs:
           done
       - name: Benchmark 32 portable implementations
         run: python3 A5/Part3/eight_patterns/benchmark.py
+      - name: Check out inspected Laravel upstream
+        uses: actions/checkout@v4
+        with:
+          repository: esteham/hospital-management
+          ref: 1e7420e431771e3f5eec470d8a005e8255fa5fe8
+          path: _upstream
+      - name: Apply Laravel integration overlay
+        run: |
+          python3 A5/laravel_integration/install.py _upstream
+          for f in _upstream/app/Services/CaseStudy/Integrations.php _upstream/app/Http/Controllers/CaseStudy/IntegrationController.php _upstream/app/Providers/CaseStudyIntegrationProvider.php _upstream/tests/Feature/CaseStudyIntegrationsTest.php; do php -l "$f"; done
+      - name: Install Laravel dependencies and test integration
+        working-directory: _upstream
+        run: |
+          composer install --no-interaction --prefer-dist --no-progress
+          cp .env.example .env
+          php artisan key:generate
+          php artisan test --filter=CaseStudyIntegrationsTest
       - name: Install TeX
         run: sudo apt-get update -qq && sudo apt-get install -y -qq texlive-latex-extra texlive-fonts-recommended texlive-latex-recommended
       - name: Compile report
