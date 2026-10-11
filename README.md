@@ -1,8 +1,7 @@
 # 23CSE455 — Design Patterns Case Study
 
-**University group repository | Team A5**
 
-This repository contains Team A5's case study, **Design Pattern Identification and Evolution in a Laravel-Based Healthcare Management Application**. It documents a source-based architectural review, three hypothetical integration changes, eight proposed design-pattern collaborations, cross-language demonstrations, reproducible tests, and a compiled academic report.
+This repository contains information about case study, **Design Pattern Identification and Evolution in a Laravel-Based Healthcare Management Application**. It documents a source-based architectural review, three hypothetical integration changes, eight proposed design-pattern collaborations, cross-language demonstrations, reproducible tests, and a compiled academic report.
 
 ## Submission
 
@@ -29,9 +28,6 @@ The extension demonstrates **eight patterns**, with a proposed two-pattern alloc
 
 For exact commands, dataset locations, limitations and attribution, read [the full Team A5 README](A5/README.md). The academic report is the primary narrative deliverable.
 
-## Academic integrity and attribution
-
-This is an original Team A5 analysis of the cited open-source application. Design-pattern examples are pedagogical, use synthetic healthcare data, and must not be mistaken for production medical or payment systems. The allocation table records proposed responsibilities, not independently verified individual authorship. External work, including other student submissions, is not copied into this repository.
 
 ## Team
 
