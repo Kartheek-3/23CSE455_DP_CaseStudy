@@ -1,29 +1,41 @@
 class Observer {
   constructor() {
-    this.events=[]
+    this.events = [];
   }
-  update(e) {
-    this.events.push(e)
+
+  update(event) {
+    this.events.push(event);
   }
 }
+
 class Publisher {
   constructor() {
-    this.subs=new Set()
+    this.subscribers = new Set();
   }
-  subscribe(o) {
-    this.subs.add(o)
+
+  subscribe(observer) {
+    this.subscribers.add(observer);
   }
-  unsubscribe(o) {
-    this.subs.delete(o)
+
+  unsubscribe(observer) {
+    this.subscribers.delete(observer);
   }
-  publish(e) {
-    for (const o of this.subs)o.update(e)
+
+  publish(event) {
+    for (const observer of this.subscribers) {
+      observer.update(event);
+    }
   }
 }
-const p=new Publisher(),o=new Observer();
-p.subscribe(o);
-p.publish('lab.ready');
-p.unsubscribe(o);
-p.publish('other');
-if (o.events.join()!=='lab.ready')throw Error('observer');
-console.log('PASS');
+
+const publisher = new Publisher();
+const observer = new Observer();
+publisher.subscribe(observer);
+publisher.publish("lab.ready");
+publisher.unsubscribe(observer);
+publisher.publish("other");
+
+if (observer.events.join() !== "lab.ready") {
+  throw Error("observer");
+}
+console.log("PASS");
