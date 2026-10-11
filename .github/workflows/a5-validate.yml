@@ -1,7 +1,7 @@
 name: A5 pattern validation and report PDF
 on:
   push:
-    branches: [feature/a5-eight-pattern-study, fix/a5-faculty-evidence-audit, format/a5-readable-java-cpp]
+    branches: [feature/a5-eight-pattern-study, fix/a5-faculty-evidence-audit, format/a5-readable-java-cpp, format/a5-all-language-readability]
   workflow_dispatch:
 concurrency:
   group: a5-validation-${{ github.ref }}
@@ -71,13 +71,13 @@ jobs:
           name: A5-compiled-report
           path: A5/A5_Report.pdf
       - name: Commit regenerated faculty dataset and report to audit branch
-        if: github.ref == 'refs/heads/format/a5-readable-java-cpp'
+        if: github.ref == 'refs/heads/format/a5-all-language-readability'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add A5/A5_Report.pdf A5/Part3/eight_patterns/measured_results.csv A5/Part3/eight_patterns/cross_language.csv A5/data/cross_language.csv
           if ! git diff --cached --quiet; then
             git commit -m "docs(A5): rebuild PDF and record measured runtimes [skip ci]"
-            git pull --rebase origin format/a5-readable-java-cpp
-            git push origin HEAD:format/a5-readable-java-cpp
+            git pull --rebase origin format/a5-all-language-readability
+            git push origin HEAD:format/a5-all-language-readability
           fi
