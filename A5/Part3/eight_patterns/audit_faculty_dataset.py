@@ -98,7 +98,7 @@ for r in matrix:
         test_command=r["test_command"],test_result="PASS (1/1 process assertion)",
         median_process_ms=m["median_process_ms"],
         language_notes="Reduced standalone example, not original baseline collaboration; "+
-            m["timing_scope"]+"; raw timings in Part3/eight_patterns/measured_results.csv")))
+            m["timing_scope"]+"; raw timings in Part3/eight_patterns/measured_results.csv"))
 assert len(rows)==40
 with DATA.open("w",newline="") as f:
     writer=csv.DictWriter(f,fieldnames=FIELDS)
