@@ -128,3 +128,9 @@ Paths inside the CSV files start from this `A5/` folder. Each diagram PDF sits n
 ## Correction branch notes (2026-10-11)
 
 The selected original Laravel source is stored as excerpts in `data/code/`, not as a full runnable Laravel checkout. The Part 2 integration classes and new fake-provider demonstrations are **standalone prototypes**, not deployed Laravel or real external integrations. Execute `php Part2/tests/integration_contracts.php` from `A5/` to check six standalone assertions; no test pass is claimed until executed. The corrected consolidated datasets are in `data/`. Missing timing and complexity values remain unmeasured, not estimated. The existing report and diagrams have not been regenerated and must be reconciled before submission.
+
+## Eight-pattern extension (2026-10-11)
+
+A new standalone PHP 8.2+ demonstration under [Part2/eight_patterns/](Part2/eight_patterns/) implements eight distinct pattern collaborations for four proposed two-pattern team assignments: Nemali Ashrith Reddy (Facade, Repository), Akshay Reddy Velugati (Adapter, Strategy), B. Pravallika (Proxy, Observer), Daripineni Manogna (Factory Method, Decorator). Run `php Part2/eight_patterns/test.php` from A5. This is a proposed allocation, not proof of each student's authorship. The examples are not integrated into the original Laravel application; provider responses are synthetic and test execution must be verified. See [pattern inventory](Part2/eight_patterns/pattern_inventory.csv). Baseline counts remain two observed pattern types; extension counts are separate.
+
+**Remaining deliverables:** Full Laravel integration, four-language versions for all eight patterns (if required by faculty), raw test outputs, measurements, actual Git diffs, and regeneration of the compiled PDF report. The original report PDF is superseded by the new TeX appendix until recompiled.
