@@ -64,7 +64,7 @@ for name, result in language.items():
     assert result["passed"] == 16 and result["total"] == 16, name
 print("PASS saved integration, upstream and four-language test summaries")
 
-for item in ("A17_Report.pdf", "A17_Report.tex", "Part3/A17_slide.pdf", "Part3/A17_Slides.pptx", "README.md"):
+for item in ("A17_Report.pdf", "A17_Report.tex", "Part3/A17_slide.pdf", "README.md", "HUMAN_VERIFICATION.md"):
     assert (team / item).is_file(), item
 assert (team / "A17_Report.pdf").read_bytes().startswith(b"%PDF")
 assert (team / "Part3/A17_slide.pdf").read_bytes().startswith(b"%PDF")

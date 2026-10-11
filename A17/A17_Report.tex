@@ -71,7 +71,7 @@ study, not a census of all PlantUML commands or every TextBlock implementation.
 Sequence/activity families, web-server internals, browser execution and optional
 VizJs runtime installation are excluded from the integration experiment.
 All mapped participant classes are recorded in \path{data/patterns.csv}; the
-local source subset preserves upstream paths under \path{data/code/}.
+local source subset preserves upstream paths under \path{Part1/code/}.
 
 \subsection{Architecture and a concrete input trace}
 \begin{figure}[H]\centering\includegraphics[width=\linewidth,height=103mm,keepaspectratio]{Part1/diagrams/architecture.png}\caption{Class-diagram processing path. Each box identifies a responsibility, not a separate process.}\end{figure}
@@ -152,7 +152,7 @@ supporting idioms outside this five-type inventory; no absence claim is made.
 \textbf{Reading the mapping tables.} All symbols below are actual source symbols.
 Except \texttt{net.atmp.CucaDiagram}, they use the prefix
 \texttt{net.sourceforge.plantuml.} The source column omits
-\path{data/code/src/main/java/net/sourceforge/plantuml/}; full paths and complete
+\path{Part1/code/src/main/java/net/sourceforge/plantuml/}; full paths and complete
 line ranges are in the CSV. A range spans the participant declaration and body;
 the named methods identify the relevant behavior.
 
@@ -610,8 +610,8 @@ The displayed UI label and access tier were not independently verified; the repo
 does not assert that the LLM run satisfies the course's free/public-tool condition.
 PlantUML and the compilation/testing tools used here are publicly available.
 
-\path{llm/exact_user_prompts.txt} contains the supplied prompt and clarification.
-\path{llm/raw_public_outputs.jsonl} captures actual assistant messages and tool-call
+\path{prompts/exact_user_prompts.txt} contains the supplied prompt and clarification.
+\path{prompts/raw_public_outputs.jsonl} captures actual assistant messages and tool-call
 text, including code-generation operations. It is an interaction prefix, not a
 fabricated set of separate trials. The input manifest identifies the PDFs, image,
 baseline source and earlier draft. System instructions and private reasoning are
@@ -659,7 +659,7 @@ not present unperformed work as an experiment.
 The following division assigns technical work that each student can personally
 verify and correct. It is a responsibility record, not a claim that the checks
 have already been performed. The exact tasks and sign-off fields are in
-\path{team_contributions.md} and \path{data/human_verification.csv}.
+\path{HUMAN_VERIFICATION.md} and \path{data/human_verification.csv}.
 
 \textbf{Sathvik Pasuvula (AM.SC.U4CSE23064, CSE A).} Own the baseline
 class-diagram trace and inspect the Command, Factory Method and Composite
@@ -710,25 +710,16 @@ dataset names take precedence over inconsistent example capitalization and typos
 in its folder tree. The Excel workbook presents the same observations as the CSVs.
 \begin{lstlisting}
 A17/
-  README.md
-  A17_Report.tex
-  A17_Report.pdf
-  data/
-    A17_Dataset.xlsx
-    patterns.csv
-    pattern_counts.csv
-    patterns_evolution.csv
-    evolution_metrics.csv
-    cross_language.csv
-    llm.csv
-    human_verification.csv
-    code/  baseline source subset and license
-  Part1/  diagrams/, evidence/
-  Part2/  code/, changes/, diagrams/, tests/, evidence/
-  Part3/  diagram/{java,python,javascript,cpp}/
-          test-cases/, evidence/, run_tests.py
-  llm/    exact prompts, public outputs, verification notes
-  tools/  metric and validation scripts
+  README.md, HUMAN_VERIFICATION.md
+  A17_Report.tex, A17_Report.pdf
+  data/  CSVs, A17_Dataset.xlsx, test_result/
+  Part1/  code/ (baseline subset), diagrams/, evidence/
+  Part2/  code/ (evolved subset), changes/, diagrams/,
+          tests/, evidence/, reconstruct.sh, run_evolution.py
+  Part3/  diagram/{java,python,javascript,cpp}/,
+          test-cases/, evidence/, A17_slide.pdf, run_tests.py
+  prompts/  exact prompts, public outputs, verification
+  tools/  validation script
 \end{lstlisting}
 \textbf{Repository status and screenshot.} The A17 folder is proposed
 at the course repository root in

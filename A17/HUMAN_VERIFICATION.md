@@ -45,6 +45,6 @@ yet signed off**.
 
 Both students should independently read the final report before submission and
 sign the corresponding claims in `data/human_verification.csv`. Faculty approval,
-the LLM access-tier requirement and the GitHub upload must be confirmed from
+the LLM access-tier requirement and the course PR merge must be confirmed from
 real records. These are administrative submission checks, not substitutes for
 the technical contributions above.
