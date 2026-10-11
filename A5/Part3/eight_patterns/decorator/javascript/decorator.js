@@ -1,21 +1,24 @@
 class Reader {
-  read(p) {
-    return {
-      patient_id:p,summary:'synthetic'
-    }
+  read(patientId) {
+    return { patient_id: patientId, summary: "synthetic" };
   }
 }
+
 class AuditedReader {
   constructor(inner) {
-    this.inner=inner;
-    this.audit=[]
+    this.inner = inner;
+    this.audit = [];
   }
-  read(p) {
-    const r=this.inner.read(p);
-    this.audit.push(['read',p]);
-    return r
+
+  read(patientId) {
+    const record = this.inner.read(patientId);
+    this.audit.push(["read", patientId]);
+    return record;
   }
 }
-const a=new AuditedReader(new Reader());
-if (a.read('P1').patient_id!=='P1'||a.audit.length!==1)throw Error('decorator');
-console.log('PASS');
+
+const reader = new AuditedReader(new Reader());
+if (reader.read("P1").patient_id !== "P1" || reader.audit.length !== 1) {
+  throw Error("decorator");
+}
+console.log("PASS");
