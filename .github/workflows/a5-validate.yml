@@ -33,7 +33,7 @@ jobs:
             g++ -std=c++17 -O2 "A5/Part3/eight_patterns/$pattern/cpp/$pattern.cpp" -o "/tmp/a5-$pattern"
             "/tmp/a5-$pattern"
           done
-      - name: Install TeX
+      - name: Benchmark 32 portable implementations\n        run: python3 A5/Part3/eight_patterns/benchmark.py\n      - name: Install TeX
         run: sudo apt-get update -qq && sudo apt-get install -y -qq texlive-latex-extra texlive-fonts-recommended texlive-latex-recommended
       - name: Compile report
         run: |
@@ -49,8 +49,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add A5/A5_Report.pdf
+          git add A5/A5_Report.pdf A5/Part3/eight_patterns/measured_results.csv
           if ! git diff --cached --quiet; then
-            git commit -m "docs(A5): rebuild PDF from report source [skip ci]"
+            git commit -m "docs(A5): rebuild PDF and record measured runtimes [skip ci]"
             git push
           fi
