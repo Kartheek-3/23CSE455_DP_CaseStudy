@@ -1,6 +1,6 @@
 # Eight-pattern healthcare extension — A5
 
-**Scope:** Standalone, executable PHP 8.2+ examples inspired by the original Laravel healthcare domain. They are *proposed* designs, not patterns discovered in the original application and not integrated with the Laravel routes, database or third-party APIs. All data and external providers are synthetic.
+**Scope:** Standalone, executable PHP 8.2+ examples inspired by the original Laravel healthcare domain. They are *proposed* designs, not patterns discovered in the original application and not themselves integrated with Laravel routes, databases or third-party APIs. A **separate** installable Laravel overlay under `../../laravel_integration/` implements three related HTTP integration boundaries and tests them using simulated responses; it does not wire these standalone examples directly into existing booking controllers. All data and external providers are synthetic.
 
 ## Team allocation (proposed, not a claim about individual authorship)
 
@@ -26,7 +26,7 @@
 | Factory Method | ExporterFactory::exportRecord | RecordExporter | JsonExporterFactory, CsvExporterFactory |
 | Decorator | AuditedMedicalRecordReader::read | MedicalRecordReader | FakeMedicalRecordReader |
 
-**Architecture:** Controller (future) -> domain service/facade -> interface -> concrete adapter/repository/provider. Only the facade and interface implementations exist in this standalone folder; controller integration remains future work.
+**Architecture:** These standalone examples illustrate domain service/facade -> interface -> collaborator. The later `../../laravel_integration/` adds separate protected Laravel controller endpoints and DI bindings for lab, billing and patient data; integration into existing booking/record workflows remains future work.
 
 ## Real integration checklist
 
