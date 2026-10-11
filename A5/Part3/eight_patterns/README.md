@@ -4,11 +4,11 @@ Each pattern has standalone demonstrations in Python, JavaScript, Java and C++ (
 
 ## Running
 
-From `A5/` run the per-language commands in `Part3/eight_patterns/cross_language.csv`. The GitHub workflow `.github/workflows/a5-validate.yml` is intended to run all 32 and the PHP contract suite, then compile `A5_Report.pdf`. Check the workflow logs before claiming results. Do not report timings, LOC or cyclomatic complexity as measured until those measurements have been executed.
+From `A5/` run the per-language commands in `Part3/eight_patterns/cross_language.csv`. The repository workflow `.github/workflows/a5-validate.yml` has validated all 32 implementations and the PHP contracts. `cross_language.csv` records the verified run status and the corresponding measured median/LOC from `measured_results.csv`. `benchmark.py` regenerates process-level measurements; five raw times and medians are recorded in `measured_results.csv`. Cyclomatic complexity was **not measured**.
 
 ## Evaluation notes
 
-All implementations use synthetic data and deterministic assertions. Cross-language timing must use a shared protocol: compile first, warm up, then measure repeated executions on the same machine, record raw times, report median; distinguish startup cost from steady-state work. Keep the original Adapter and Strategy evidence separate from these newly added simplified variants.
+All implementations use synthetic data and deterministic assertions. Cross-language timing must use a shared protocol: compile first, then time five process executions on the same CI machine, record raw times and median; startup costs are included, compilation is excluded, and these are not warmed steady-state benchmarks. Keep the original Adapter and Strategy evidence separate from these newly added simplified variants.
 
 ## Pattern / domain mapping
 
