@@ -7,6 +7,7 @@ import statistics
 import subprocess
 import sys
 import time
+import lizard
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = ROOT / "Part3" / "eight_patterns"
@@ -48,6 +49,8 @@ for pattern in PATTERNS:
             command = ["node", filename]
         samples = measure(command, cwd=folder)
         loc = sum(bool(line.strip()) and not line.lstrip().startswith(("//", "#", "/*", "*")) for line in source.read_text().splitlines())
+        analysis = lizard.analyze_file(str(source))
+        max_cc = max((function.cyclomatic_complexity for function in analysis.function_list), default=1)
         rows.append({
             "pattern_name": pattern, "language": language,
             "source_path": str(source.relative_to(ROOT)), "source_loc": loc,
@@ -55,7 +58,7 @@ for pattern in PATTERNS:
             "raw_process_ms": ";".join(f"{n:.4f}" for n in samples),
             "runtime_host": platform.platform(), "test_result": "PASS",
             "timing_scope": "process_startup_plus_test_compilation_excluded",
-            "max_function_cc": "", "complexity_status": "not_measured",
+            "max_function_cc": max_cc, "complexity_status": "measured_lizard_max_function_cc",
         })
         print(f"{pattern}/{language}: PASS, median {rows[-1]['median_process_ms']} ms")
 
