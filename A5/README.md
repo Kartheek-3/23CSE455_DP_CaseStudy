@@ -138,3 +138,9 @@ A new standalone PHP 8.2+ demonstration under [Part2/eight_patterns/](Part2/eigh
 ### Cross-language extension
 
 All eight proposed patterns now have standalone source in Java, Python, JavaScript and C++ (32 programs) under [Part3/eight_patterns](Part3/eight_patterns/). The [matrix and commands](Part3/eight_patterns/cross_language.csv) distinguish files from measured results. GitHub Actions workflow [a5-validate.yml](../.github/workflows/a5-validate.yml) runs the PHP tests and 32 programs and attempts to rebuild the PDF. Check the workflow status before claiming successful validation. The baseline Laravel excerpts cannot be executed as a full application without acquiring and configuring the original full source tree.
+
+### Laravel integration overlay and final report order
+
+The [Laravel 12 integration overlay](laravel_integration/README.md) supplies actual framework controller endpoints, service bindings, routes and six HTTP-fake feature tests for laboratory orders, billing and patient FHIR reads. It can be installed into a clean checkout of the inspected upstream commit using `python3 A5/laravel_integration/install.py /path/to/hospital-management`. These are additional protected endpoints; the existing booking controllers are not rewritten and live vendor transactions are not claimed. The validation workflow now checks out the exact upstream revision and attempts `php artisan test --filter=CaseStudyIntegrationsTest` after installing the overlay.
+
+The report's eight-pattern extension is now located within the Part 3 results flow, **before LLM evidence, contributions and the final conclusion**. The LaTeX source is authoritative; the PDF should only be considered current after the final successful report-build workflow.
