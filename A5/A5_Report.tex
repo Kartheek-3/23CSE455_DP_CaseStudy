@@ -244,4 +244,27 @@ Adapter is the translation point if an electronic health record is added. Strate
 \bibitem{gof} E.~Gamma, R.~Helm, R.~Johnson and J.~Vlissides. \emph{Design Patterns: Elements of Reusable Object-Oriented Software}. Addison-Wesley, 1994.
 \bibitem{laravel} Laravel 12 documentation, facades and Eloquent. \url{https://laravel.com/docs/12.x}.
 \end{thebibliography}
+
+\clearpage
+\section{Supplement: Eight-pattern extension (11 October 2026)}
+\textbf{Evidence boundary.} The original Laravel baseline remains two observed pattern types: Eloquent Active Record and Laravel framework Facade. The following eight collaborations are new standalone PHP 8.2+ demonstrations, not discoveries in the baseline, nor integrated Laravel routes or live provider APIs. Each uses synthetic inputs and fake providers. This extension is independent of the A8 NestJS case study.
+
+\begin{center}\small
+\begin{tabularx}{\linewidth}{@{}P{36mm}P{39mm}L@{}}\toprule
+Proposed team allocation & Two patterns & Healthcare use cases\\\midrule
+Nemali Ashrith Reddy & Facade; Repository & Appointment booking; patient persistence\\
+Akshay Reddy Velugati & Adapter; Strategy & Lab order translation; payment selection\\
+B. Pravallika & Proxy; Observer & Patient cache; clinical event notification\\
+Daripineni Manogna & Factory Method; Decorator & Record export; read-access audit\\\bottomrule
+\end{tabularx}
+\end{center}
+
+\textbf{Implementation.} The source is \code{Part2/eight_patterns/HealthcarePatterns.php}; \code{test.php} contains fourteen contract assertions. The inventory is \code{Part2/eight_patterns/pattern_inventory.csv}. Run from \code{A5/}: \code{php Part2/eight_patterns/test.php}. Results are not claimed until this command is actually executed.
+
+\textbf{Pattern roles.} AppointmentFacade delegates to AppointmentStore and NoticeSender. PatientRegistry depends on PatientRepository. LaboratoryAdapter translates to ExternalLabClient. BillingContext selects PaymentStrategy. CachedPatientProxy implements PatientDataSource and caches its wrapped source. ClinicalEventPublisher dispatches to ClinicalObserver subscribers. ExporterFactory creates RecordExporter implementations via a factory method. AuditedMedicalRecordReader decorates MedicalRecordReader with audit logging.
+
+\textbf{Evolution impact.} Proposed dependencies flow from client to interface to fake or production adapter; substitution supports isolated tests. The new cache requires invalidation, the audit wrapper requires access controls, and billing needs real idempotency, reconciliation and gateway signature verification before production deployment. These risks are not addressed by the fakes alone.
+
+\textbf{Limitations.} This is not a full Laravel integration, and no external vendor has been contacted. A four-language comparison currently exists only for the original Adapter and Strategy examples; the other six patterns have not been ported. Complexity, runtime benchmarks and revised PDF verification are pending. Team allocations are proposed and must be verified with members; no individual authorship is inferred from this document.
+
 \end{document}
