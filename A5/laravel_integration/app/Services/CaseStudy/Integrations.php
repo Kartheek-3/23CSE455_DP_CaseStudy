@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 namespace App\Services\CaseStudy;
-use Illuminate\Contracts\Http\Client\Factory as HttpFactory;
+use Illuminate\Http\Client\Factory as HttpFactory;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 
