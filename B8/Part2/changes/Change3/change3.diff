@@ -1,0 +1,740 @@
+diff --git a/backend/app/models.py b/backend/app/models.py
+--- a/backend/app/models.py
++++ b/backend/app/models.py
+@@ -52,6 +52,7 @@
+     sms_opt_in = Column(Boolean, default=True)
+     email_class_reminder = Column(Boolean, default=True)
+     sms_class_reminder = Column(Boolean, default=True)
++    attendance_alerts = Column(Boolean, default=True)
+     reset_token = Column(String, nullable=True)
+     reset_token_expiry = Column(DateTime, nullable=True)
+     created_at = Column(DateTime(timezone=True), server_default=func.now())
+@@ -318,10 +319,11 @@
+     id = Column(Integer, primary_key=True, index=True)
+     user_id = Column(Integer, ForeignKey("users.id"))
+     type = Column(String, nullable=False)
+-    channel = Column(String, nullable=False)  # email, sms
++    channel = Column(String, nullable=False)  # in_app, email, sms
+     subject = Column(String, nullable=True)
+     content = Column(Text, nullable=False)
+     status = Column(String, default="pending")  # pending, sent, failed
++    is_read = Column(Boolean, default=False)
+     sent_at = Column(DateTime(timezone=True), nullable=True)
+     created_at = Column(DateTime(timezone=True), server_default=func.now())
+ 
+diff --git a/backend/app/routers/attendance.py b/backend/app/routers/attendance.py
+--- a/backend/app/routers/attendance.py
++++ b/backend/app/routers/attendance.py
+@@ -1,4 +1,4 @@
+-from fastapi import APIRouter, Depends, HTTPException, Query
++from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
+ from sqlalchemy.orm import Session
+ from sqlalchemy import func
+ from typing import List, Optional
+@@ -15,6 +15,7 @@
+ from ..routers.auth import get_current_user, get_current_admin, get_current_trainer
+ from ..utils.qr_generator import generate_qr_code
+ from ..core.security import decode_token, create_access_token
++from ..services.attendance_events import calculate_streak, publish_attendance_marked, publish_class_missed
+ 
+ router = APIRouter()
+ 
+@@ -46,6 +47,7 @@
+ @router.post("/qr/scan")
+ def scan_qr(
+     scan_data: AttendanceQRScan,
++    background_tasks: BackgroundTasks,
+     db: Session = Depends(get_db),
+     current_user: User = Depends(get_current_trainer),
+ ):
+@@ -102,6 +104,8 @@
+     db.refresh(attendance)
+ 
+     member = db.query(Member).filter(Member.id == member_id).first()
++    if member and member.user:
++        publish_attendance_marked(db, background_tasks, member, cls)
+     return {
+         "message": "Attendance recorded successfully",
+         "member_name": member.user.full_name if member and member.user else "Unknown",
+@@ -113,6 +117,7 @@
+ @router.post("/manual")
+ def mark_manual_attendance(
+     data: AttendanceManualCreate,
++    background_tasks: BackgroundTasks,
+     db: Session = Depends(get_db),
+     current_user: User = Depends(get_current_trainer),
+ ):
+@@ -147,6 +152,8 @@
+ 
+     member = db.query(Member).filter(Member.id == data.member_id).first()
+     cls = db.query(Class).filter(Class.id == data.class_id).first()
++    if member and member.user and cls:
++        publish_attendance_marked(db, background_tasks, member, cls)
+ 
+     return {
+         "id": attendance.id,
+@@ -227,21 +234,36 @@
+     db: Session = Depends(get_db),
+     current_user: User = Depends(get_current_user),
+ ):
+-    records = (
+-        db.query(Attendance)
+-        .filter(Attendance.member_id == member_id)
+-        .order_by(Attendance.marked_at.desc())
+-        .all()
+-    )
+-    if not records:
+-        return {"streak": 0, "total_attended": 0}
+-
+-    dates = sorted(set(r.marked_at.date() for r in records), reverse=True)
+-    streak = 1
+-    for i in range(1, len(dates)):
+-        if (dates[i - 1] - dates[i]).days == 1:
+-            streak += 1
+-        else:
+-            break
+-
+-    return {"streak": streak, "total_attended": len(records)}
++    return calculate_streak(db, member_id)
++
++
++@router.post("/classes/{class_id}/close")
++def close_class(
++    class_id: int,
++    background_tasks: BackgroundTasks,
++    db: Session = Depends(get_db),
++    current_user: User = Depends(get_current_trainer),
++):
++    cls = db.query(Class).filter(Class.id == class_id).first()
++    if not cls:
++        raise HTTPException(status_code=404, detail="Class not found")
++    if datetime.utcnow() < cls.start_time:
++        raise HTTPException(status_code=400, detail="A class can only be closed after it has started")
++
++    no_shows = db.query(Booking).filter(
++        Booking.class_id == class_id,
++        Booking.status == BookingStatus.BOOKED,
++    ).all()
++    for booking in no_shows:
++        booking.status = BookingStatus.NO_SHOW
++    db.commit()
++
++    for booking in no_shows:
++        if booking.member and booking.member.user:
++            publish_class_missed(db, background_tasks, booking.member, cls)
++
++    return {
++        "class_name": cls.name,
++        "no_shows": len(no_shows),
++        "members": [b.member.user.full_name for b in no_shows if b.member and b.member.user],
++    }
+diff --git a/backend/app/routers/notifications.py b/backend/app/routers/notifications.py
+--- a/backend/app/routers/notifications.py
++++ b/backend/app/routers/notifications.py
+@@ -1,6 +1,6 @@
+ from fastapi import APIRouter, Depends, HTTPException
+ from sqlalchemy.orm import Session
+-from typing import List
++from typing import List, Optional
+ 
+ from ..database import get_db
+ from ..models import User, Notification, UserRole
+@@ -10,21 +10,72 @@
+ router = APIRouter()
+ 
+ 
++def _my_notifications(db: Session, user: User, channel: Optional[str]):
++    query = db.query(Notification).filter(Notification.user_id == user.id)
++    if channel:
++        query = query.filter(Notification.channel == channel)
++    return query
++
++
+ @router.get("/", response_model=List[NotificationResponse])
+ def get_my_notifications(
+     skip: int = 0,
+     limit: int = 50,
++    channel: Optional[str] = None,
++    unread_only: bool = False,
+     db: Session = Depends(get_db),
+     current_user: User = Depends(get_current_user),
+ ):
++    query = _my_notifications(db, current_user, channel)
++    if unread_only:
++        query = query.filter(Notification.is_read == False)  # noqa: E712
+     return (
+-        db.query(Notification)
+-        .filter(Notification.user_id == current_user.id)
+-        .order_by(Notification.created_at.desc())
++        query
++        .order_by(Notification.created_at.desc(), Notification.id.desc())
+         .offset(skip)
+         .limit(limit)
+         .all()
+     )
++
++
++@router.get("/unread-count")
++def get_unread_count(
++    channel: Optional[str] = "in_app",
++    db: Session = Depends(get_db),
++    current_user: User = Depends(get_current_user),
++):
++    count = _my_notifications(db, current_user, channel).filter(Notification.is_read == False).count()  # noqa: E712
++    return {"unread": count}
++
++
++@router.put("/read-all")
++def mark_all_read(
++    channel: Optional[str] = "in_app",
++    db: Session = Depends(get_db),
++    current_user: User = Depends(get_current_user),
++):
++    updated = (
++        _my_notifications(db, current_user, channel)
++        .filter(Notification.is_read == False)  # noqa: E712
++        .update({Notification.is_read: True}, synchronize_session=False)
++    )
++    db.commit()
++    return {"updated": updated}
++
++
++@router.put("/{notification_id}/read", response_model=NotificationResponse)
++def mark_read(
++    notification_id: int,
++    db: Session = Depends(get_db),
++    current_user: User = Depends(get_current_user),
++):
++    notification = _my_notifications(db, current_user, None).filter(Notification.id == notification_id).first()
++    if not notification:
++        raise HTTPException(status_code=404, detail="Notification not found")
++    notification.is_read = True
++    db.commit()
++    db.refresh(notification)
++    return notification
+ 
+ 
+ @router.get("/all", response_model=List[NotificationResponse])
+@@ -55,6 +106,8 @@
+         current_user.email_class_reminder = settings_data.email_class_reminder
+     if settings_data.sms_class_reminder is not None:
+         current_user.sms_class_reminder = settings_data.sms_class_reminder
++    if settings_data.attendance_alerts is not None:
++        current_user.attendance_alerts = settings_data.attendance_alerts
+     db.commit()
+     return {"message": "Notification settings updated"}
+ 
+@@ -67,4 +120,5 @@
+         "sms_opt_in": current_user.sms_opt_in,
+         "email_class_reminder": current_user.email_class_reminder,
+         "sms_class_reminder": current_user.sms_class_reminder,
++        "attendance_alerts": current_user.attendance_alerts,
+     }
+diff --git a/backend/app/schemas/notifications.py b/backend/app/schemas/notifications.py
+--- a/backend/app/schemas/notifications.py
++++ b/backend/app/schemas/notifications.py
+@@ -11,6 +11,7 @@
+     subject: Optional[str]
+     content: str
+     status: str
++    is_read: bool = False
+     sent_at: Optional[datetime]
+     created_at: datetime
+ 
+@@ -24,3 +25,4 @@
+     sms_class_reminder: Optional[bool] = None
+     email_payment_receipt: Optional[bool] = None
+     sms_attendance: Optional[bool] = None
++    attendance_alerts: Optional[bool] = None
+diff --git a/backend/app/services/attendance_events.py b/backend/app/services/attendance_events.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/services/attendance_events.py
+@@ -0,0 +1,170 @@
++from abc import ABC, abstractmethod
++from dataclasses import dataclass
++from datetime import datetime
++from typing import List, Optional
++
++from fastapi import BackgroundTasks
++from sqlalchemy.orm import Session
++
++from ..database import SessionLocal
++from ..models import Attendance, Class, Member, Notification, User
++from ..utils.notifications import send_email, send_sms
++
++ATTENDANCE_MARKED = "attendance_marked"
++CLASS_MISSED = "class_missed"
++STREAK_MILESTONE = "streak_milestone"
++
++STREAK_MILESTONES = {3, 7, 14, 30}
++
++
++@dataclass
++class AttendanceEvent:
++    type: str
++    member: Member
++    cls: Class
++    streak: Optional[int] = None
++
++    def subject(self) -> str:
++        if self.type == ATTENDANCE_MARKED:
++            return f"Checked in: {self.cls.name}"
++        if self.type == CLASS_MISSED:
++            return f"Missed class: {self.cls.name}"
++        return f"{self.streak}-day attendance streak!"
++
++    def member_message(self) -> str:
++        when = self.cls.start_time.strftime("%b %d at %I:%M %p")
++        if self.type == ATTENDANCE_MARKED:
++            return f"Your attendance for {self.cls.name} on {when} has been recorded."
++        if self.type == CLASS_MISSED:
++            return f"You were marked absent from {self.cls.name} on {when}. Book your next session to stay on track."
++        return f"Great work! You have attended classes {self.streak} days in a row."
++
++    def trainer_message(self) -> str:
++        name = self.member.user.full_name
++        if self.type == CLASS_MISSED:
++            return f"Your client {name} missed {self.cls.name} on {self.cls.start_time.strftime('%b %d at %I:%M %p')}."
++        return f"Your client {name} reached a {self.streak}-day attendance streak."
++
++
++class AttendanceObserver(ABC):
++    @abstractmethod
++    def update(self, event: AttendanceEvent, db: Session, background_tasks: BackgroundTasks) -> None:
++        ...
++
++
++def _record(db: Session, user: User, event: AttendanceEvent, channel: str, content: str, status: str = "sent") -> Notification:
++    notification = Notification(
++        user_id=user.id,
++        type=event.type,
++        channel=channel,
++        subject=event.subject(),
++        content=content,
++        status=status,
++        sent_at=datetime.utcnow() if status == "sent" else None,
++    )
++    db.add(notification)
++    db.flush()
++    return notification
++
++
++def _deliver(notification_id: int, sender, *args) -> None:
++    db = SessionLocal()
++    try:
++        notification = db.query(Notification).filter(Notification.id == notification_id).first()
++        delivered = sender(*args)
++        if notification:
++            notification.status = "sent" if delivered else "failed"
++            notification.sent_at = datetime.utcnow() if delivered else None
++            db.commit()
++    finally:
++        db.close()
++
++
++class InAppNotificationObserver(AttendanceObserver):
++    def update(self, event, db, background_tasks):
++        _record(db, event.member.user, event, "in_app", event.member_message())
++
++
++class EmailNotificationObserver(AttendanceObserver):
++    def update(self, event, db, background_tasks):
++        user = event.member.user
++        if not user.attendance_alerts:
++            return
++        notification = _record(db, user, event, "email", event.member_message(), status="pending")
++        background_tasks.add_task(_deliver, notification.id, send_email, user.email, event.subject(), f"<p>{event.member_message()}</p>")
++
++
++class SmsNotificationObserver(AttendanceObserver):
++    def update(self, event, db, background_tasks):
++        user = event.member.user
++        if event.type == ATTENDANCE_MARKED or not (user.attendance_alerts and user.sms_opt_in and user.phone):
++            return
++        notification = _record(db, user, event, "sms", event.member_message(), status="pending")
++        background_tasks.add_task(_deliver, notification.id, send_sms, user.phone, event.member_message())
++
++
++class TrainerAlertObserver(AttendanceObserver):
++    def update(self, event, db, background_tasks):
++        trainer = event.member.assigned_trainer
++        if event.type == ATTENDANCE_MARKED or not trainer or not trainer.user:
++            return
++        _record(db, trainer.user, event, "in_app", event.trainer_message())
++
++
++class AttendancePublisher:
++    def __init__(self) -> None:
++        self._observers: List[AttendanceObserver] = []
++
++    def subscribe(self, observer: AttendanceObserver) -> None:
++        if observer not in self._observers:
++            self._observers.append(observer)
++
++    def unsubscribe(self, observer: AttendanceObserver) -> None:
++        self._observers.remove(observer)
++
++    def notify(self, event: AttendanceEvent, db: Session, background_tasks: BackgroundTasks) -> None:
++        for observer in self._observers:
++            observer.update(event, db, background_tasks)
++        db.commit()
++
++
++attendance_publisher = AttendancePublisher()
++for _observer in (InAppNotificationObserver(), EmailNotificationObserver(), SmsNotificationObserver(), TrainerAlertObserver()):
++    attendance_publisher.subscribe(_observer)
++
++
++def calculate_streak(db: Session, member_id: int) -> dict:
++    records = (
++        db.query(Attendance)
++        .filter(Attendance.member_id == member_id)
++        .order_by(Attendance.marked_at.desc())
++        .all()
++    )
++    if not records:
++        return {"streak": 0, "total_attended": 0}
++
++    dates = sorted(set(r.marked_at.date() for r in records), reverse=True)
++    streak = 1
++    for i in range(1, len(dates)):
++        if (dates[i - 1] - dates[i]).days == 1:
++            streak += 1
++        else:
++            break
++    return {"streak": streak, "total_attended": len(records)}
++
++
++def publish_attendance_marked(db: Session, background_tasks: BackgroundTasks, member: Member, cls: Class) -> None:
++    attendance_publisher.notify(AttendanceEvent(ATTENDANCE_MARKED, member, cls), db, background_tasks)
++
++    today_start = datetime.combine(datetime.utcnow().date(), datetime.min.time())
++    first_today = db.query(Attendance).filter(
++        Attendance.member_id == member.id,
++        Attendance.marked_at >= today_start,
++    ).count() == 1
++    streak = calculate_streak(db, member.id)["streak"]
++    if first_today and streak in STREAK_MILESTONES:
++        attendance_publisher.notify(AttendanceEvent(STREAK_MILESTONE, member, cls, streak=streak), db, background_tasks)
++
++
++def publish_class_missed(db: Session, background_tasks: BackgroundTasks, member: Member, cls: Class) -> None:
++    attendance_publisher.notify(AttendanceEvent(CLASS_MISSED, member, cls), db, background_tasks)
+diff --git a/frontend/src/app/app.component.ts b/frontend/src/app/app.component.ts
+--- a/frontend/src/app/app.component.ts
++++ b/frontend/src/app/app.component.ts
+@@ -1,7 +1,10 @@
+-import { Component } from '@angular/core';
++import { Component, OnDestroy, OnInit } from '@angular/core';
+ import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
+ import { CommonModule } from '@angular/common';
++import { Subscription } from 'rxjs';
+ import { AuthService } from './services/auth.service';
++import { NotificationsService } from './services/notifications.service';
++import { Notification } from './models/user.model';
+ 
+ @Component({
+   selector: 'app-root',
+@@ -23,6 +26,10 @@
+ 
+           <div class="sidebar-role">
+             <span class="role-pill">{{ auth.getRole() | uppercase }}</span>
++            <button class="bell-btn" (click)="toggleNotifications()" title="Notifications">
++              ALERTS
++              <span class="bell-badge" *ngIf="(notifications.unreadCount$ | async) as count">{{ count > 99 ? '99+' : count }}</span>
++            </button>
+           </div>
+ 
+           <nav class="sidebar-nav">
+@@ -81,7 +88,33 @@
+             </button>
+             <span class="topbar-brand">GYMMANAGER</span>
+             <span class="topbar-role">{{ auth.getRole() | uppercase }}</span>
++            <button class="bell-btn" (click)="toggleNotifications()">
++              ALERTS
++              <span class="bell-badge" *ngIf="(notifications.unreadCount$ | async) as count">{{ count > 99 ? '99+' : count }}</span>
++            </button>
+           </header>
++
++          <div class="notif-panel" *ngIf="notificationsOpen">
++            <div class="notif-head">
++              <span>Notifications</span>
++              <div class="notif-head-actions">
++                <button class="notif-link" (click)="markAllRead()">Mark all read</button>
++                <button class="notif-link" (click)="notificationsOpen=false">Close</button>
++              </div>
++            </div>
++            <label class="notif-toggle">
++              <input type="checkbox" [checked]="attendanceAlerts" (change)="toggleAttendanceAlerts($event)">
++              Email / SMS attendance alerts
++            </label>
++            <div class="notif-list">
++              <div *ngFor="let n of notifications.latest$ | async" class="notif-item" [class.unread]="!n.is_read" (click)="markRead(n)">
++                <div class="notif-subject">{{ n.subject || n.type }}</div>
++                <div class="notif-content">{{ n.content }}</div>
++                <div class="notif-time">{{ n.created_at | date:'MMM d, h:mm a' }}</div>
++              </div>
++              <div class="notif-empty" *ngIf="!(notifications.latest$ | async)?.length">No notifications yet.</div>
++            </div>
++          </div>
+           <div class="content">
+             <router-outlet></router-outlet>
+           </div>
+@@ -159,6 +192,36 @@
+ 
+     .content { flex: 1; }
+ 
++    /* ── Notifications ── */
++    .sidebar-role { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
++    .bell-btn {
++      position: relative; background: transparent; border: 1px solid #2a2a2a; color: #aaa;
++      font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em; padding: 0.3rem 0.6rem;
++      border-radius: 2px; cursor: pointer;
++    }
++    .bell-btn:hover { border-color: #fff; color: #fff; }
++    .bell-badge {
++      position: absolute; top: -7px; right: -7px; min-width: 16px; height: 16px; padding: 0 4px;
++      background: #e53935; color: #fff; border-radius: 8px; font-size: 0.6rem; line-height: 16px; text-align: center;
++    }
++    .notif-panel {
++      position: fixed; top: 1rem; left: 236px; width: 340px; max-height: 70vh; z-index: 600;
++      background: #0d0d0d; border: 1px solid #2a2a2a; border-radius: 4px; display: flex; flex-direction: column;
++      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
++    }
++    .notif-head { display: flex; justify-content: space-between; align-items: center; padding: 0.85rem 1rem; border-bottom: 1px solid #1a1a1a; color: #fff; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
++    .notif-head-actions { display: flex; gap: 0.75rem; }
++    .notif-link { background: none; border: none; color: #888; font-size: 0.7rem; cursor: pointer; text-transform: none; letter-spacing: 0; }
++    .notif-link:hover { color: #fff; }
++    .notif-toggle { display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1rem; border-bottom: 1px solid #1a1a1a; color: #888; font-size: 0.75rem; }
++    .notif-list { overflow-y: auto; }
++    .notif-item { padding: 0.75rem 1rem; border-bottom: 1px solid #151515; cursor: pointer; }
++    .notif-item.unread { background: #141414; border-left: 2px solid #e53935; }
++    .notif-subject { color: #fff; font-size: 0.8rem; font-weight: 600; }
++    .notif-content { color: #999; font-size: 0.75rem; margin-top: 0.2rem; }
++    .notif-time { color: #555; font-size: 0.65rem; margin-top: 0.3rem; }
++    .notif-empty { padding: 1.25rem 1rem; color: #555; font-size: 0.8rem; text-align: center; }
++
+     @media (max-width: 1023px) {
+       .sidebar { transform: translateX(-100%); }
+       .sidebar.open { transform: translateX(0); }
+@@ -166,11 +229,61 @@
+       .backdrop { display: block; }
+       .main { margin-left: 0; }
+       .topbar { display: flex; }
++      .topbar .topbar-role { margin-left: auto; }
++      .notif-panel { left: 0.75rem; right: 0.75rem; top: 4rem; width: auto; }
+     }
+   `]
+ })
+-export class AppComponent {
++export class AppComponent implements OnInit, OnDestroy {
+   sidebarOpen = false;
+-  constructor(public auth: AuthService, private router: Router) {}
++  notificationsOpen = false;
++  attendanceAlerts = true;
++  private authSub?: Subscription;
++
++  constructor(public auth: AuthService, private router: Router, public notifications: NotificationsService) {}
++
++  ngOnInit() {
++    this.authSub = this.auth.currentUser$.subscribe(user => {
++      if (user) {
++        this.notifications.startPolling();
++      } else {
++        this.notifications.stopPolling();
++        this.notificationsOpen = false;
++      }
++    });
++  }
++
++  ngOnDestroy() {
++    this.authSub?.unsubscribe();
++    this.notifications.stopPolling();
++  }
++
++  toggleNotifications() {
++    this.notificationsOpen = !this.notificationsOpen;
++    if (this.notificationsOpen) {
++      this.notifications.refresh();
++      this.notifications.getSettings().subscribe({
++        next: s => this.attendanceAlerts = s.attendance_alerts !== false,
++        error: () => {},
++      });
++    }
++  }
++
++  markRead(n: Notification) {
++    if (!n.is_read) this.notifications.markRead(n.id).subscribe();
++  }
++
++  markAllRead() {
++    this.notifications.markAllRead().subscribe();
++  }
++
++  toggleAttendanceAlerts(event: Event) {
++    const enabled = (event.target as HTMLInputElement).checked;
++    this.notifications.updateSettings({ attendance_alerts: enabled }).subscribe({
++      next: () => this.attendanceAlerts = enabled,
++      error: () => (event.target as HTMLInputElement).checked = this.attendanceAlerts,
++    });
++  }
++
+   logout() { this.auth.logout(); }
+ }
+diff --git a/frontend/src/app/components/attendance/attendance.component.ts b/frontend/src/app/components/attendance/attendance.component.ts
+--- a/frontend/src/app/components/attendance/attendance.component.ts
++++ b/frontend/src/app/components/attendance/attendance.component.ts
+@@ -105,6 +105,10 @@
+               <span class="spin" *ngIf="markingAttendance"></span>
+               {{ markingAttendance ? 'MARKING...' : 'MARK PRESENT' }}
+             </button>
++            <button class="btn-ghost close-btn" (click)="closeClass()" [disabled]="!manualForm.class_id || closingClass"
++                    title="Marks everyone still booked as a no-show and notifies them and their trainer">
++              {{ closingClass ? 'CLOSING...' : 'CLOSE CLASS &amp; MARK NO-SHOWS' }}
++            </button>
+             <div class="err" *ngIf="manualError">{{ manualError }}</div>
+             <div class="ok"  *ngIf="manualSuccess">{{ manualSuccess }}</div>
+           </div>
+@@ -287,6 +291,7 @@
+     /* Toast */
+     .toast { position: fixed; bottom: 2rem; right: 2rem; padding: 0.875rem 1.5rem; border-radius: 2px; font-weight: 700; font-size: 0.78rem; letter-spacing: 0.08em; z-index: 2000; }
+     .toast.success { background: #0f0f0f; color: #68d391; border: 1px solid rgba(56,161,105,0.3); }
++    .close-btn { margin-left: 0.75rem; }
+     .toast.error   { background: #0f0f0f; color: #fc8181; border: 1px solid rgba(229,62,62,0.3); }
+ 
+     @media (max-width: 768px) {
+@@ -302,7 +307,7 @@
+   myAttendance: any[] = []; reportData: any[] = []; reportLoaded = false;
+   stats: any = null; streak: any = null; qrData: any = null; timeLeft = 0;
+   generatingQR = false; selectedClassId: number | null = null;
+-  markingAttendance = false; scanning = false;
++  markingAttendance = false; scanning = false; closingClass = false;
+   scanResult: any = null; scanError = ''; manualError = ''; manualSuccess = '';
+   toast = ''; toastType = 'success';
+   private timerInterval: any;
+@@ -353,8 +358,22 @@
+   quickMark(memberId: number) {
+     if (!this.manualForm.class_id) return;
+     this.attendanceService.markManual({ member_id: memberId, class_id: this.manualForm.class_id }).subscribe({
+-      next: (r) => this.showToast(`Marked: ${r.member_name}`, 'success'),
++      next: (r) => { this.showToast(`Marked: ${r.member_name}`, 'success'); this.loadRoster(); },
+       error: (err) => this.showToast(err.error?.detail || 'Failed.', 'error')
++    });
++  }
++
++  closeClass() {
++    if (!this.manualForm.class_id) return;
++    if (!confirm('Mark every member still booked in this class as a no-show and notify them?')) return;
++    this.closingClass = true; this.manualError = ''; this.manualSuccess = '';
++    this.attendanceService.closeClass(this.manualForm.class_id).subscribe({
++      next: (r) => {
++        this.closingClass = false;
++        this.manualSuccess = r.no_shows ? `${r.class_name} closed: ${r.no_shows} no-show(s) notified.` : `${r.class_name} closed: no no-shows.`;
++        this.loadRoster();
++      },
++      error: (err) => { this.closingClass = false; this.manualError = err.error?.detail || 'Failed to close class.'; }
+     });
+   }
+ 
+diff --git a/frontend/src/app/models/user.model.ts b/frontend/src/app/models/user.model.ts
+--- a/frontend/src/app/models/user.model.ts
++++ b/frontend/src/app/models/user.model.ts
+@@ -193,6 +193,7 @@
+   subject?: string;
+   content: string;
+   status: string;
++  is_read: boolean;
+   sent_at?: string;
+   created_at: string;
+ }
+diff --git a/frontend/src/app/services/attendance.service.ts b/frontend/src/app/services/attendance.service.ts
+--- a/frontend/src/app/services/attendance.service.ts
++++ b/frontend/src/app/services/attendance.service.ts
+@@ -42,6 +42,10 @@
+     return this.http.get(`${this.apiUrl}/stats/overview`);
+   }
+ 
++  closeClass(classId: number): Observable<{ class_name: string; no_shows: number; members: string[] }> {
++    return this.http.post<{ class_name: string; no_shows: number; members: string[] }>(`${this.apiUrl}/classes/${classId}/close`, {});
++  }
++
+   getMemberStreak(memberId: number): Observable<any> {
+     return this.http.get(`${this.apiUrl}/member/${memberId}/streak`);
+   }
+diff --git a/frontend/src/app/services/notifications.service.ts b/frontend/src/app/services/notifications.service.ts
+--- a/frontend/src/app/services/notifications.service.ts
++++ b/frontend/src/app/services/notifications.service.ts
+@@ -1,17 +1,69 @@
+ import { Injectable } from '@angular/core';
+ import { HttpClient } from '@angular/common/http';
+-import { Observable } from 'rxjs';
++import { BehaviorSubject, Observable, Subscription, timer, switchMap, tap, catchError, of } from 'rxjs';
+ import { Notification } from '../models/user.model';
+ import { environment } from '../../environments/environment';
+ 
+ @Injectable({ providedIn: 'root' })
+ export class NotificationsService {
+   private apiUrl = `${environment.apiUrl}/notifications`;
++  private unreadCountSubject = new BehaviorSubject<number>(0);
++  private latestSubject = new BehaviorSubject<Notification[]>([]);
++  private polling?: Subscription;
++
++  unreadCount$ = this.unreadCountSubject.asObservable();
++  latest$ = this.latestSubject.asObservable();
+ 
+   constructor(private http: HttpClient) {}
+ 
+-  getMyNotifications(): Observable<Notification[]> {
+-    return this.http.get<Notification[]>(this.apiUrl);
++  getMyNotifications(params: { channel?: string; unread_only?: boolean; limit?: number } = {}): Observable<Notification[]> {
++    const query: any = {};
++    if (params.channel) query.channel = params.channel;
++    if (params.unread_only) query.unread_only = true;
++    if (params.limit) query.limit = params.limit;
++    return this.http.get<Notification[]>(`${this.apiUrl}/`, { params: query });
++  }
++
++  getUnreadCount(): Observable<{ unread: number }> {
++    return this.http.get<{ unread: number }>(`${this.apiUrl}/unread-count`);
++  }
++
++  startPolling(intervalMs = 30000): void {
++    if (this.polling) return;
++    this.polling = timer(0, intervalMs).pipe(
++      switchMap(() => this.getUnreadCount().pipe(catchError(() => of(null))))
++    ).subscribe(res => {
++      if (!res) return;
++      if (res.unread !== this.unreadCountSubject.value || !this.latestSubject.value.length) this.refreshLatest();
++      this.unreadCountSubject.next(res.unread);
++    });
++  }
++
++  stopPolling(): void {
++    this.polling?.unsubscribe();
++    this.polling = undefined;
++    this.unreadCountSubject.next(0);
++    this.latestSubject.next([]);
++  }
++
++  refresh(): void {
++    this.getUnreadCount().subscribe({ next: res => this.unreadCountSubject.next(res.unread), error: () => {} });
++    this.refreshLatest();
++  }
++
++  private refreshLatest(): void {
++    this.getMyNotifications({ channel: 'in_app', limit: 15 }).subscribe({
++      next: list => this.latestSubject.next(list),
++      error: () => {},
++    });
++  }
++
++  markRead(id: number): Observable<Notification> {
++    return this.http.put<Notification>(`${this.apiUrl}/${id}/read`, {}).pipe(tap(() => this.refresh()));
++  }
++
++  markAllRead(): Observable<{ updated: number }> {
++    return this.http.put<{ updated: number }>(`${this.apiUrl}/read-all`, {}).pipe(tap(() => this.refresh()));
+   }
+ 
+   getSettings(): Observable<any> {

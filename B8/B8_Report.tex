@@ -1,0 +1,984 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=22mm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern,tabularx,booktabs,hyperref,xcolor}
+\usepackage{listings,xurl,longtable,graphicx}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+\newcommand{\fp}[1]{\nolinkurl{#1}}
+\lstset{basicstyle=\ttfamily\small,breaklines=true,columns=fullflexible,keepspaces=true,showstringspaces=false}
+\setlength{\parindent}{0pt}\setlength{\parskip}{6pt}
+\setcounter{secnumdepth}{3}
+\newcommand{\entry}[2]{\textbf{#1:} \textcolor{gray}{\textit{[#2]}}\par}
+\newcommand{\filledentry}[2]{\textbf{#1:} #2\par}
+\newcommand{\help}[1]{\textbf{Add:} #1\par}
+\begin{document}
+\begin{center}\Large\textbf{23CSE455 Design Patterns}\\[4pt]\LARGE Case Study Report\end{center}
+
+\filledentry{Team}{B8}
+\filledentry{Case study}{Design Pattern Identification and Evolution in an Angular-Based Fitness Management Application}
+\filledentry{Application}{Gym Management System}
+\filledentry{Date}{2026-10-11}
+\textbf{Submission repository:} \href{https://github.com/aswathymohan-amrita/23CSE455_DP_CaseStudy}{23CSE455\_DP\_CaseStudy}\par
+\textbf{Students}\par
+\begin{tabularx}{\linewidth}{@{}llX@{}}
+\toprule
+Roll number & Student name & Batch\\
+\midrule
+AM.SC.U4AIE23117 & K. Madhuri & AIE\\
+AM.SC.U4AIE23127 & M. Sri Lakshmi Snigdha & AIE\\
+AM.SC.U4AIE23137 & N. Meghana Prasad & AIE\\
+AM.SC.U4AIE23162 & W. Venkat Ashrith & AIE\\
+\bottomrule
+\end{tabularx}
+
+\section{Application and architecture}
+
+The case study examines the Gym Management System from its original implementation through three subsequent feature enhancements .
+
+\subsection{Original source}
+
+\begin{tabularx}{\linewidth}{@{}p{3.4cm}L@{}}
+\toprule
+Repository & \texttt{MeharRaza/Gym-Managment-System}\\
+Repository URL & \url{https://github.com/MeharRaza/Gym-Managment-System}\\
+Baseline version & Original code\\
+Baseline commit & \texttt{837e2be2ef4e27baa93e9b42cecc790febd5f16c}\\
+Access date & 2026-10-04 \\
+License & No license file identified in the repository.\\
+Local copy & \fp{data/code/Gym-Managment-System/}\\
+\bottomrule
+\end{tabularx}
+
+\subsection{Environment}
+
+\begin{tabularx}{\linewidth}{@{}p{3.4cm}L@{}}
+\toprule
+Languages & Python, TypeScript, JavaScript\\
+Frontend & Angular 17 (standalone components, routing, dependency injection)\\
+Backend & FastAPI (routers, services, Pydantic schemas, SQLAlchemy models)\\
+Database & SQLite (SQLAlchemy + aiosqlite)\\
+Authentication & JWT access and refresh tokens; Admin, Trainer and Member roles\\
+\bottomrule
+\end{tabularx}
+
+
+\begin{tabularx}{\linewidth}{@{}p{3.4cm}L@{}}
+\toprule
+File & Declared versions\\
+\midrule
+\fp{backend/requirements.txt} & fastapi 0.104.1; uvicorn[standard] 0.24.0; sqlalchemy 2.0.23; aiosqlite 0.19.0; pydantic 2.5.0; pydantic-settings 2.1.0; python-jose[cryptography] 3.3.0; passlib[bcrypt] 1.7.4; python-multipart 0.0.6; python-dotenv 1.0.0; email-validator 2.1.0; qrcode[pil] 7.4.2; pillow 10.1.0; stripe 7.8.0; twilio 8.10.0; httpx 0.25.1; celery 5.3.4; redis 5.0.1; alembic 1.13.0\\
+\fp{frontend/package.json} (runtime) & angular/* \texttt{\^{}17.0.0}; rxjs \texttt{\~{}7.8.0}; zone.js \texttt{\~{}0.14.0}; tslib \texttt{\^{}2.3.0}; auth0/angular-jwt \texttt{\^{}5.1.2}; chart.js \texttt{\^{}4.4.0}; html5-qrcode \texttt{\^{}2.3.8}\\
+\fp{frontend/package.json} (dev) & angular/cli and angular-devkit/build-angular \texttt{\^{}17.0.0}; typescript \texttt{\~{}5.2.2}; karma \texttt{\~{}6.4.0}; jasmine-core \texttt{\~{}5.1.0}\\
+\bottomrule
+\end{tabularx}
+
+\subsection{Scope}
+
+\textbf{Inspected:}
+\begin{itemize}
+\item Angular frontend components, services, routing, guards and the HTTP interceptor.
+\item FastAPI backend routers and services.
+\item Database models and Pydantic schemas.
+\item Authentication and role management.
+\item Workout-plan management, trainer assignment, attendance and notifications.
+\end{itemize}
+
+\textbf{Excluded from the baseline analysis:}
+\begin{itemize}
+\item Third-party framework internals and generated files (\texttt{node\_modules}, build output), because they are not application design.
+\item Test files, which are not treated as production-code evidence of pattern collaborations.
+\end{itemize}
+
+The analysis focuses on source-code evidence, component responsibilities, interactions and design-pattern implementation.
+
+\subsection{Architecture}
+
+The system follows a client--server architecture (Figure~\ref{fig:arch}). An Angular single-page application in the browser talks to a FastAPI backend over a JSON REST API. The backend stores all data in a local SQLite file and calls three optional external services. In the baseline, both parts run as separate development processes on one machine; there is no reverse proxy, container or separate identity server, because the backend issues and checks its own JWT tokens.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\linewidth]{architecture.png}
+\caption{Component architecture of the baseline Gym Management System.}
+\label{fig:arch}
+\end{figure}
+
+\textbf{Components.}
+\begin{itemize}
+\item \textbf{Frontend (Angular 17, port 4200):} standalone components provide the Admin, Trainer and Member screens. Each feature talks to the backend only through its root-scoped service (for example \texttt{MembersService}), which wraps \texttt{HttpClient}. Route guards block pages the user's role may not open, and \texttt{authInterceptor} attaches the access token to every request.
+\item \textbf{Backend (FastAPI, port 8000):} eight routers under \texttt{/api/} expose the REST endpoints. Each endpoint declares its needs with \texttt{Depends}: a database session from \texttt{get\_db} and the logged-in user from \texttt{get\_current\_user} or one of its role-checking variants. \texttt{core/security} creates and verifies JWT tokens and hashes passwords with bcrypt; \texttt{utils} generates attendance QR codes and sends notifications.
+\item \textbf{Database (SQLite):} the 14 SQLAlchemy models in \fp{backend/app/models.py} map to tables in \texttt{gym\_system.db}.
+\item \textbf{External services:} Stripe creates payment checkout sessions and reports results back through a webhook; SMTP and Twilio deliver e-mail and SMS. All three are optional and are skipped when their keys are not configured.
+\end{itemize}
+
+\textbf{Request flow}
+\begin{enumerate}
+\item \textbf{Login:} the user submits the login form. \texttt{AuthService} posts to \texttt{/api/auth/login}; the backend checks the bcrypt hash and returns an access token (30 minutes) and a refresh token (7 days), which \texttt{AuthService} stores in \texttt{localStorage}.
+\item \textbf{Navigation:} \texttt{authGuard} checks that the user is logged in before the bookings page opens.
+\item \textbf{API call:} the component calls \texttt{ClassesService.getMemberSchedule()}, which sends a GET request to \texttt{/api/classes/schedule/member/\{id\}}; \texttt{authInterceptor} adds \texttt{Authorization: Bearer <token>}.
+\item \textbf{Backend processing:} FastAPI injects a database session through \texttt{get\_db} and the current user through \texttt{get\_current\_user}, which decodes the token. The route queries SQLite through the models and returns JSON; \texttt{get\_db} closes the session afterwards.
+\item \textbf{UI update:} the component renders the response. If the backend replies 401 because the access token expired, the interceptor requests a new one with the refresh token and retries the call once; if that fails, the user is logged out.
+\end{enumerate}
+
+\textbf{Event flow (payments).} When a member pays, the payments router creates a Stripe checkout session. Stripe later calls \texttt{/api/payments/webhook/stripe}; the backend records the payment in SQLite and can send a confirmation e-mail through SMTP.
+
+\subsection{Run instructions}
+
+\textbf{README:} \fp{data/code/Gym-Managment-System/README.md}
+
+\textbf{Prerequisites:} Python, Node.js and npm, Angular CLI, and the project dependencies listed above.
+
+\textbf{Backend} (from the project root, using the existing virtual environment):
+\begin{verbatim}
+cd backend
+.\venv\Scripts\Activate.ps1
+python -m uvicorn app.main:app --reload
+\end{verbatim}
+
+\textbf{Frontend} (in a separate terminal):
+\begin{verbatim}
+cd frontend
+npm install
+ng serve
+\end{verbatim}
+
+\textbf{Application URL:} \url{http://localhost:4200/login}\par
+\textbf{Backend API documentation:} \url{http://localhost:8000/docs}\par
+\textbf{Database:} SQLite file created by the backend on first run.
+
+\textbf{Test result:} the baseline contains no automated tests. There are no backend test modules (\texttt{test\_*.py}) and no Angular \texttt{*.spec.ts} files, so although \texttt{package.json} defines \texttt{npm test} (\texttt{ng test}), the baseline has no test cases to execute and no automated pass/fail count exists for it.\par
+
+\section{Part 1 Pattern discovery}
+
+\filledentry{Method}{%
+Baseline scope: \texttt{data/code/Gym-Managment-System/} (FastAPI backend and Angular~17 frontend).
+Build output, \texttt{node\_modules}, and third-party libraries were excluded.
+Candidates were found by searching for \texttt{providedIn:'root'}, FastAPI \texttt{Depends(...)}, Angular \texttt{inject()}, and constructor injection; each candidate was traced to call sites in routers, components, guards, and interceptors.
+Evidence is recorded in \texttt{Part1/patterns.csv}; totals in \texttt{Part1/Pattern\_count.csv}.
+Each instance was human-verified against source line ranges; names or annotations alone were not counted as confirmed patterns.
+}
+
+\subsection{Totals at the baseline}
+
+\filledentry{Confirmed pattern types}{Singleton; Dependency Injection. Total: \textbf{2}.}
+\filledentry{Confirmed pattern instances}{Independent collaborations in \texttt{patterns.csv}. Total: \textbf{14} (8 Singleton + 6 Dependency Injection).}
+\filledentry{Concrete participant classes}{Classes in variable roles (eight root services, eleven Angular component classes including \texttt{AppComponent}, \texttt{User}, \texttt{HttpClient}, \texttt{Router}). Total: \textbf{21} (shared service classes counted once).}
+\filledentry{Unique participant symbols}{Distinct classes, interfaces, and functions mapped to roles (shared symbols counted once). Total: \textbf{33}.}
+\filledentry{Rejected and uncertain candidates}{%
+\textbf{Rejected: 3} (scope: baseline application source under \texttt{data/code/}).
+(1)~Repository-style SQLAlchemy access without an explicit Repository type.
+(2)~Pydantic schema DTOs without a mapper collaboration.
+(3)~Strategy-named types inside Angular framework bundles (framework internals, not application collaborations).
+\textbf{Uncertain: 0} after manual review.
+}
+
+\subsection{Pattern inventory}
+
+\begin{tabularx}{\linewidth}{@{}lXll@{}}
+\toprule
+Pattern type & Instance names & Instances & Concrete classes\\
+\midrule
+Singleton &
+AuthService; AttendanceService; ClassesService; MembersService; NotificationsService; PaymentsService; PlansService; TrainersService &
+8 & 8\\
+Dependency Injection &
+FastAPI database session injection; FastAPI authentication dependency chain; Angular service HTTP dependency injection; Angular component constructor injection; Angular route guard injection; Angular HTTP interceptor injection &
+6 & 13\\
+\bottomrule
+\end{tabularx}
+
+\subsection{One record for each pattern instance}
+
+\subsubsection{Angular root singleton: AuthService}
+
+\filledentry{Instance name}{Angular root singleton: AuthService}
+\filledentry{Pattern type and category}{Singleton; GoF Creational (Angular root injector idiom)}
+\filledentry{Purpose and origin}{Single shared authentication state and API client for the SPA; application code using Angular \texttt{providedIn:'root'}.}
+
+\textbf{Participant mapping}\par
+\begin{tabularx}{\linewidth}{@{}p{2.4cm}LL@{}}
+\toprule
+Pattern role & Actual class, interface and function & File and line range\\
+\midrule
+Singleton & \texttt{AuthService} & \fp{frontend/src/app/services/auth.service.ts:8-14}\\
+Client & \texttt{AppComponent} & \fp{frontend/src/app/app.component.ts:174}\\
+Client & Feature components, guards, interceptor (see \texttt{Part1/patterns.csv} row~2) & various under \fp{frontend/src/app/}\\
+\bottomrule
+\end{tabularx}
+
+\filledentry{Evidence}{\texttt{@Injectable(\{ providedIn: 'root' \})} registers one root-scoped instance. Multiple components, guards, and the HTTP interceptor inject \texttt{AuthService} instead of constructing it.}
+\begin{lstlisting}
+@Injectable({ providedIn: 'root' })
+export class AuthService {
+  constructor(private http: HttpClient, private router: Router) {}
+}
+\end{lstlisting}
+\filledentry{Diagram}{Editable UML: \texttt{Part1/evidence/diagrams/singleton\_auth\_service.puml} (add rendered PNG when available).}
+\filledentry{Verification}{Confirmed; team B8; \texttt{providedIn:'root'} plus traced consumers; no second app-level auth service instance.}
+
+\subsubsection{Angular root singleton: AttendanceService}
+
+\filledentry{Instance name}{Angular root singleton: AttendanceService}
+\filledentry{Pattern type and category}{Singleton; GoF Creational (Angular root injector)}
+\filledentry{Purpose and origin}{Shared attendance and QR API access; application.}
+
+\textbf{Participant mapping}\par
+\begin{tabularx}{\linewidth}{@{}p{2.4cm}LL@{}}
+\toprule
+Pattern role & Actual class, interface and function & File and line range\\
+\midrule
+Singleton & \texttt{AttendanceService} & \fp{frontend/src/app/services/attendance.service.ts:6-10}\\
+Client & \texttt{AttendanceComponent} & \fp{frontend/src/app/components/attendance/attendance.component.ts:314}\\
+Client & \texttt{DashboardComponent} & \fp{frontend/src/app/components/dashboard/dashboard.component.ts:279-286}\\
+\bottomrule
+\end{tabularx}
+
+\filledentry{Evidence}{Root registration; \texttt{AttendanceComponent} and \texttt{DashboardComponent} inject \texttt{AttendanceService} for QR and statistics HTTP calls.}
+\filledentry{Verification}{Confirmed; dual consumer injection on one service type.}
+
+\subsubsection{Angular root singleton: ClassesService}
+
+\filledentry{Instance name}{Angular root singleton: ClassesService}
+\filledentry{Pattern type and category}{Singleton; GoF Creational (Angular root injector)}
+\filledentry{Purpose and origin}{Shared class schedule and booking API access; application.}
+
+\textbf{Participant mapping}\par
+\begin{tabularx}{\linewidth}{@{}p{2.4cm}LL@{}}
+\toprule
+Pattern role & Actual class, interface and function & File and line range\\
+\midrule
+Singleton & \texttt{ClassesService} & \fp{frontend/src/app/services/classes.service.ts:7-11}\\
+Client & \texttt{AttendanceComponent}, \texttt{ClassesComponent}, \texttt{DashboardComponent} & \texttt{attendance.component.ts:314}; \texttt{classes.component.ts:288}; \texttt{dashboard.component.ts:279--286}\\
+\bottomrule
+\end{tabularx}
+
+\filledentry{Evidence}{\texttt{providedIn:'root'} with three components injecting the same service for class-related operations.}
+\filledentry{Verification}{Confirmed.}
+
+\subsubsection{Angular root singleton: MembersService}
+
+\filledentry{Instance name}{Angular root singleton: MembersService}
+\filledentry{Pattern type and category}{Singleton; GoF Creational (Angular root injector)}
+\filledentry{Purpose and origin}{Shared member profile and statistics API access; application.}
+
+\textbf{Participant mapping}\par
+\begin{tabularx}{\linewidth}{@{}p{2.4cm}LL@{}}
+\toprule
+Pattern role & Actual class, interface and function & File and line range\\
+\midrule
+Singleton & \texttt{MembersService} & \fp{frontend/src/app/services/members.service.ts:7-11}\\
+Client & \texttt{AttendanceComponent}, \texttt{DashboardComponent}, \texttt{MembersComponent}, \texttt{PaymentsComponent}, \texttt{PlansComponent} & see \texttt{Part1/patterns.csv} row~5\\
+\bottomrule
+\end{tabularx}
+
+\filledentry{Evidence}{Five feature components depend on \texttt{MembersService} for member endpoints; service registered at root.}
+\filledentry{Diagram}{\texttt{Part1/evidence/diagrams/singleton\_members\_service.puml}}
+\filledentry{Verification}{Confirmed.}
+
+\subsubsection{Angular root singleton: NotificationsService}
+
+\filledentry{Instance name}{Angular root singleton: NotificationsService}
+\filledentry{Pattern type and category}{Singleton; GoF Creational (Angular root injector)}
+\filledentry{Purpose and origin}{Shared notifications API client; application (no baseline frontend consumer located).}
+
+\textbf{Participant mapping}\par
+\begin{tabularx}{\linewidth}{@{}p{2.4cm}LL@{}}
+\toprule
+Pattern role & Actual class, interface and function & File and line range\\
+\midrule
+Singleton & \texttt{NotificationsService} & \fp{frontend/src/app/services/notifications.service.ts:7-11}\\
+Client & none in inspected baseline frontend & ---\\
+\bottomrule
+\end{tabularx}
+
+\filledentry{Evidence}{\texttt{providedIn:'root'} configures a single shared instance; consumer coupling was not invented beyond inspected source.}
+
+\filledentry{Verification}{Confirmed for singleton registration; consumer count not overstated.}
+
+\subsubsection{Angular root singleton: PaymentsService}
+
+\filledentry{Instance name}{Angular root singleton: PaymentsService}
+\filledentry{Pattern type and category}{Singleton; GoF Creational (Angular root injector)}
+\filledentry{Purpose and origin}{Shared payments and revenue API access; application.}
+
+\textbf{Participant mapping}\par
+\begin{tabularx}{\linewidth}{@{}p{2.4cm}LL@{}}
+\toprule
+Pattern role & Actual class, interface and function & File and line range\\
+\midrule
+Singleton & \texttt{PaymentsService} & \fp{frontend/src/app/services/payments.service.ts:7-11}\\
+Client & \texttt{DashboardComponent}, \texttt{PaymentsComponent} & \texttt{dashboard.component.ts:279--286}; \texttt{payments.component.ts:326--330}\\
+\bottomrule
+\end{tabularx}
+
+\filledentry{Evidence}{Dashboard and payments feature inject \texttt{PaymentsService} for billing operations.}
+\filledentry{Verification}{Confirmed.}
+
+\subsubsection{Angular root singleton: PlansService}
+
+\filledentry{Instance name}{Angular root singleton: PlansService}
+\filledentry{Pattern type and category}{Singleton; GoF Creational (Angular root injector)}
+\filledentry{Purpose and origin}{Shared workout and diet plan API access; application.}
+
+\textbf{Participant mapping}\par
+\begin{tabularx}{\linewidth}{@{}p{2.4cm}LL@{}}
+\toprule
+Pattern role & Actual class, interface and function & File and line range\\
+\midrule
+Singleton & \texttt{PlansService} & \fp{frontend/src/app/services/plans.service.ts:7-11}\\
+Client & \texttt{PlansComponent} & \fp{frontend/src/app/components/plans/plans.component.ts:422-426}\\
+\bottomrule
+\end{tabularx}
+
+\filledentry{Evidence}{\texttt{PlansComponent} constructor injects \texttt{PlansService} for plan CRUD and progress calls.}
+\filledentry{Verification}{Confirmed.}
+
+\subsubsection{Angular root singleton: TrainersService}
+
+\filledentry{Instance name}{Angular root singleton: TrainersService}
+\filledentry{Pattern type and category}{Singleton; GoF Creational (Angular root injector)}
+\filledentry{Purpose and origin}{Shared trainer and schedule API access; application.}
+
+\textbf{Participant mapping}\par
+\begin{tabularx}{\linewidth}{@{}p{2.4cm}LL@{}}
+\toprule
+Pattern role & Actual class, interface and function & File and line range\\
+\midrule
+Singleton & \texttt{TrainersService} & \fp{frontend/src/app/services/trainers.service.ts:7-11}\\
+Client & \texttt{ClassesComponent}, \texttt{DashboardComponent}, \texttt{PlansComponent}, \texttt{TrainersComponent} & see \texttt{Part1/patterns.csv} row~10\\
+\bottomrule
+\end{tabularx}
+
+\filledentry{Evidence}{Four components inject \texttt{TrainersService} for trainer-linked UI flows.}
+\filledentry{Verification}{Confirmed.}
+
+\subsubsection{FastAPI database session injection}
+
+\filledentry{Instance name}{FastAPI database session injection}
+\filledentry{Pattern type and category}{Dependency Injection; GRASP / FastAPI \texttt{Depends} idiom}
+\filledentry{Purpose and origin}{One SQLAlchemy \texttt{Session} per request with guaranteed close; application and FastAPI.}
+
+\textbf{Participant mapping}\par
+\begin{tabularx}{\linewidth}{@{}p{2.4cm}LL@{}}
+\toprule
+Pattern role & Actual class, interface and function & File and line range\\
+\midrule
+Provider & \texttt{get\_db} & \fp{backend/app/database.py:29-34}\\
+Dependency & \texttt{Session} (parameter type) & router signatures\\
+Client & Route functions in eight API routers & e.g.\ \fp{backend/app/routers/attendance.py:27-28}\\
+\bottomrule
+\end{tabularx}
+
+\filledentry{Evidence}{Routes declare \texttt{db: Session = Depends(get\_db)}. Provider yields a session and closes it in \texttt{finally}.}
+\begin{lstlisting}
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+\end{lstlisting}
+\filledentry{Verification}{Confirmed; no global session antipattern in inspected routes.}
+
+\subsubsection{FastAPI authentication dependency chain}
+
+\filledentry{Instance name}{FastAPI authentication dependency chain}
+\filledentry{Pattern type and category}{Dependency Injection; GRASP / FastAPI dependency graph}
+\filledentry{Purpose and origin}{Separate token extraction, user lookup, and role checks from route bodies; application.}
+
+\textbf{Participant mapping}\par
+\begin{tabularx}{\linewidth}{@{}p{2.4cm}LL@{}}
+\toprule
+Pattern role & Actual class, interface and function & File and line range\\
+\midrule
+Provider & \texttt{oauth2\_scheme} & \fp{backend/app/routers/auth.py:13}\\
+Provider & \texttt{get\_current\_user} & \texttt{auth.py:90--100}\\
+Provider & \texttt{get\_current\_admin}, \texttt{get\_current\_trainer}, \texttt{get\_current\_member} & \texttt{auth.py:102--115}\\
+Dependency & \texttt{User} model & \fp{backend/app/models.py}\\
+Client & Protected routes using \texttt{Depends(...)} & routers listed in \texttt{Part1/patterns.csv} row~12\\
+\bottomrule
+\end{tabularx}
+
+\filledentry{Evidence}{Role providers depend on \texttt{get\_current\_user}, which depends on \texttt{oauth2\_scheme} and \texttt{get\_db}.}
+\begin{lstlisting}
+def get_current_user(token: str = Depends(oauth2_scheme),
+                     db: Session = Depends(get_db)): ...
+def get_current_admin(current_user: User = Depends(get_current_user)): ...
+\end{lstlisting}
+\filledentry{Verification}{Confirmed; dependency chain visible across protected endpoints.}
+
+\subsubsection{Angular service HTTP dependency injection}
+
+\filledentry{Instance name}{Angular service HTTP dependency injection}
+\filledentry{Pattern type and category}{Dependency Injection; GRASP / Angular DI}
+\filledentry{Purpose and origin}{API services receive \texttt{HttpClient} (and \texttt{Router} where needed) from the injector; application.}
+
+\textbf{Participant mapping}\par
+\begin{tabularx}{\linewidth}{@{}p{2.4cm}LL@{}}
+\toprule
+Pattern role & Actual class, interface and function & File and line range\\
+\midrule
+Client & Eight domain \texttt{*Service} classes & \fp{frontend/src/app/services/*.service.ts}\\
+Dependency & \texttt{HttpClient} & each service constructor\\
+Dependency & \texttt{Router} & \texttt{auth.service.ts:14} only\\
+\bottomrule
+\end{tabularx}
+
+\filledentry{Evidence}{Each API service uses constructor injection for \texttt{HttpClient}; \texttt{AuthService} also injects \texttt{Router} for navigation after login/logout.}
+\filledentry{Verification}{Confirmed.}
+
+\subsubsection{Angular component constructor injection}
+
+\filledentry{Instance name}{Angular component constructor injection}
+\filledentry{Pattern type and category}{Dependency Injection; GRASP / Angular DI}
+\filledentry{Purpose and origin}{UI components obtain services from Angular's injector; application.}
+
+\textbf{Participant mapping}\par
+\begin{tabularx}{\linewidth}{@{}p{2.4cm}LL@{}}
+\toprule
+Pattern role & Actual class, interface and function & File and line range\\
+\midrule
+Client & \texttt{AttendanceComponent}, auth feature components, \texttt{ClassesComponent}, \texttt{DashboardComponent}, \texttt{MembersComponent}, \texttt{PaymentsComponent}, \texttt{PlansComponent}, \texttt{TrainersComponent} & see \texttt{Part1/patterns.csv} row~14\\
+Injected dependency & \texttt{AuthService} and domain services per component & same rows\\
+\bottomrule
+\end{tabularx}
+
+\filledentry{Evidence}{Example: \texttt{DashboardComponent} lists \texttt{AuthService}, \texttt{MembersService}, \texttt{ClassesService}, \texttt{AttendanceService}, \texttt{PaymentsService}, and \texttt{TrainersService} in its constructor (baseline lines 279--286). Components do not call \texttt{new AuthService()}.}
+\filledentry{Verification}{Confirmed.}
+
+\subsubsection{Angular route guard injection}
+
+\filledentry{Instance name}{Angular route guard injection}
+\filledentry{Pattern type and category}{Dependency Injection; GRASP / Angular \texttt{inject()}}
+\filledentry{Purpose and origin}{Functional guards obtain \texttt{AuthService} and \texttt{Router} without manual construction; application.}
+
+\textbf{Participant mapping}\par
+\begin{tabularx}{\linewidth}{@{}p{2.4cm}LL@{}}
+\toprule
+Pattern role & Actual class, interface and function & File and line range\\
+\midrule
+Client & \texttt{authGuard}, \texttt{adminGuard}, \texttt{trainerGuard} & \fp{frontend/src/app/guards/auth.guard.ts:5-26}\\
+Dependency & \texttt{AuthService}, \texttt{Router} & each guard via \texttt{inject(...)}\\
+\bottomrule
+\end{tabularx}
+
+\filledentry{Evidence}{\texttt{authGuard} calls \texttt{inject(AuthService)} and \texttt{inject(Router)} before role checks and redirects.}
+\filledentry{Verification}{Confirmed.}
+
+\subsubsection{Angular HTTP interceptor injection}
+
+\filledentry{Instance name}{Angular HTTP interceptor injection}
+\filledentry{Pattern type and category}{Dependency Injection; GRASP / Angular HTTP pipeline}
+\filledentry{Purpose and origin}{Centralize bearer tokens and 401 refresh; \texttt{AuthService} injected into \texttt{authInterceptor}; registered in \texttt{app.config.ts}.}
+
+\textbf{Participant mapping}\par
+\begin{tabularx}{\linewidth}{@{}p{2.4cm}LL@{}}
+\toprule
+Pattern role & Actual class, interface and function & File and line range\\
+\midrule
+Client & \texttt{authInterceptor} & \fp{frontend/src/app/interceptors/auth.interceptor.ts:6-27}\\
+Dependency & \texttt{AuthService} & \texttt{auth.interceptor.ts:7}\\
+Registry & \fp{provideHttpClient(withInterceptors([authInterceptor]))} & \fp{frontend/src/app/app.config.ts:7-11}\\
+\bottomrule
+\end{tabularx}
+
+\filledentry{Evidence}{Interceptor uses \texttt{inject(AuthService)} for token read/refresh; \texttt{app.config.ts} registers the interceptor on the HTTP client.}
+\filledentry{Verification}{Confirmed; bootstrap and interceptor behavior traced.}
+
+\section{Part 2 Evolution and refactoring}
+
+Part 2 extends the Gym Management System through three changes:
+personalized workout recommendations, trainer-assignment policies, and
+attendance notifications. The implementation uses the Strategy,
+Singleton, and Observer design patterns to separate responsibilities
+and make the system easier to extend.
+
+The original application under \texttt{data/} was preserved. The
+updated implementation is maintained under
+\texttt{Part2/code/Gym-Managment-System}.
+
+\subsection*{CH01 -- Personalized Workout Plans}
+
+\textbf{Change and acceptance criteria:}
+The workout-planning feature was extended to recommend exercises based
+on a member's fitness goal and selected difficulty. Six goals are
+supported: General Fitness, Weight Loss, Muscle Building, Strength
+Training, Endurance, and Flexibility. The system also detects goals
+from member-provided text and stores the selected goal with the
+workout plan.
+
+\textbf{Before and after:}
+Previously, the system lacked this goal-based recommendation workflow.
+After the change, trainers can obtain personalized exercise suggestions
+through the application.
+
+\textbf{Implementation and tests:}
+The backend contains six goal-specific strategies, a factory, and two
+API endpoints for listing goals and retrieving recommendations. The
+Angular Plans page includes a goal selector and suggested-exercises
+panel. Recommendations refresh when the goal, difficulty, or member
+changes.
+
+\textbf{Reported test result:} 11 checks passed.
+
+
+\textbf{Log path:}
+\texttt{Part2/changes/Change1/test\_result.txt}
+
+\textbf{Pattern effects:}
+The Strategy pattern encapsulates goal-specific recommendation
+algorithms. The factory selects the appropriate strategy. The instance
+must be compared with the Part 1 inventory to determine whether it is
+new or extends an existing instance.
+
+\textbf{Refactoring:}
+Recommendation logic was moved into backend strategy classes,
+separating business rules from the frontend and API. The actual
+before-and-after diff and regression-test evidence should be included.
+
+\textbf{Before/after metrics:}
+The change introduced the Strategy pattern for personalized
+workout recommendations, replacing the hard-coded recommendation
+dictionary with interchangeable strategies. The reported test
+result was 11 checks passed. Before-and-after source lines of
+code (LOC) were not measured.
+
+\subsection*{CH02 -- Trainer-Assignment Policies}
+
+\textbf{Change and acceptance criteria:}
+Trainer assignment was extended with manual assignment, automatic
+assignment, client-capacity enforcement, and assignment history.
+The three assignment policies are specialization match, least loaded,
+and highest rated. Trainers can manage plans only for their own clients.
+
+\textbf{Before and after:}
+Previously, the system lacked the complete policy-based assignment
+workflow. After the change, administrators can assign trainers using
+different policies, while members and trainers can view their
+assignment information.
+
+\textbf{Implementation and tests:}
+The backend adds assignment policies, member-trainer relationships,
+trainer client limits, assignment history, and
+\texttt{/api/assignments} endpoints. A migration script updates
+existing databases. The Angular frontend adds assignment controls,
+capacity information, dashboard updates, and a shared
+\texttt{AssignmentsService}.
+
+\textbf{Reported test result:} 19 checks passed.
+
+\textbf{Log path:}
+\texttt{Part2/changes/Change2/test\_result.txt}
+
+\textbf{Pattern effects:}
+The Strategy pattern supports interchangeable trainer-assignment
+policies. The Singleton pattern is used for the shared Angular
+\texttt{AssignmentsService}. Compare their concrete participants
+with the Part 1 inventory to determine whether the instances are
+new, modified, or extended.
+
+\textbf{Refactoring:}
+Assignment algorithms were separated into policy implementations,
+and assignment operations were centralized in the shared service.
+Include the actual source-code diff, policy tests, authorization
+tests, and migration evidence.
+
+\textbf{Before/after metrics:}
+The change introduced the Strategy pattern for trainer assignment
+policies and a shared AssignmentsService for assignment-related
+operations. The reported test result was 19 checks passed.
+Before-and-after source lines of code (LOC) were not measured.
+
+\subsection*{CH03 -- Attendance Notifications}
+
+\textbf{Change and acceptance criteria:}
+Attendance functionality was extended to notify members about
+check-ins, attendance streaks, and missed classes, and to alert
+their assigned trainers. Members can disable email and SMS
+notifications. Classes can be closed to mark booked members who
+did not attend as no-shows, but only after the class has started.
+
+\textbf{Before and after:}
+Previously, the system lacked the multi-channel notification
+workflow and class-closure functionality. After the change,
+attendance events trigger notifications, and eligible classes
+can be closed with no-shows recorded.
+
+\textbf{Implementation and tests:}
+The backend publishes attendance events to four observers:
+in-app notification, email, SMS, and trainer-alert observers.
+Notification operations include unread counts, marking
+notifications as read, and filtering. The Angular
+\texttt{NotificationsService} checks for updates every 30 seconds
+and supports the ALERTS panel and class-closure button.
+
+\textbf{Reported test result:} 21 checks passed.
+
+
+\textbf{Log path:}
+\texttt{Part2/changes/Change3/test\_result.txt}
+
+\textbf{Pattern effects:}
+The Observer pattern separates attendance-event publication
+from notification delivery. Document the concrete publisher
+and observer classes, and compare the collaboration with
+the Part 1 inventory.
+
+\textbf{Refactoring:}
+Notification delivery was separated from attendance processing
+through independent observers. Include the actual before-and-after
+source-code diff and tests for notification preferences, event
+handling, and class-closure restrictions.
+
+\textbf{Before/after metrics:}
+The change introduced the Observer pattern for attendance events
+and notification-state updates. The NotificationsService was
+also extended to manage shared notification state. The reported
+test result was 21 checks passed. Before-and-after source lines
+of code (LOC) were not measured.
+
+\subsection{Updated pattern counts}
+
+\textbf{CH01 -- Personalized Workout Plans:}
+The Strategy pattern was introduced for personalized workout
+recommendations, with separate strategies for different fitness
+goals.
+
+\textbf{CH02 -- Trainer Assignment Policies:}
+The Strategy pattern was introduced for trainer assignment
+policies, including specialization matching, least-loaded
+assignment, and highest-rated trainer selection.
+
+\textbf{CH03 -- Attendance Notifications:}
+The Observer pattern was introduced to separate attendance
+event publication from notification handling.
+
+\textbf{Interpretation:}
+These changes improve separation of concerns and extensibility.
+Strategy allows recommendation and trainer-assignment policies
+to be changed independently, while Observer separates attendance
+processing from notification delivery. These patterns introduce
+additional classes and interactions, which may increase
+implementation complexity. Exact before-and-after counts of
+pattern types, instances, concrete participant classes, and
+rejected or uncertain candidates must be verified against the
+pattern inventory for each version.
+
+\section{Part 3 Cross-language comparison}
+
+Part~3 covers all four confirmed pattern types from Parts~1 and~2 (Singleton, Dependency Injection, Strategy, Observer). Each team member took two verified instances, giving eight instances. Each instance is implemented as a small, self-contained snippet in Java, Python, JavaScript and C++, with the same participants and the same expected behavior in every language. All code is under \fp{Part3/}, with one folder per instance and one sub-folder per language. Every language folder has a production file, a test runner and a README.
+
+\subsection{Selected instances}
+
+\begin{tabularx}{\linewidth}{@{}p{2.4cm}p{3.6cm}p{2.2cm}L@{}}
+\toprule
+Pattern type & Source instance & Member & Selection reason\\
+\midrule
+Singleton & AuthService (Part~1) & W.~Venkat Ashrith & Most widely injected root service (components, guards, interceptor).\\
+Singleton & PlansService (Part~1) & K.~Madhuri & Service behind the plans feature that CH01 extended.\\
+Dependency Injection & FastAPI database session injection (Part~1) & W.~Venkat Ashrith & Backend DI idiom used by every router.\\
+Dependency Injection & Angular component constructor injection (Part~1) & N.~Meghana Prasad & Frontend DI idiom used by every feature component.\\
+Strategy & Workout recommendation strategy (CH01) & K.~Madhuri & Goal-specific algorithms added in Part~2.\\
+Strategy & Trainer assignment policy (CH02) & M.~Sri Lakshmi Snigdha & Three interchangeable assignment policies added in Part~2.\\
+Observer & Attendance event observer (CH03) & N.~Meghana Prasad & Attendance events fan out to several notification channels.\\
+Observer & Notification state observer (CH03) & M.~Sri Lakshmi Snigdha & Unread-count stream that drives the ALERTS panel.\\
+\bottomrule
+\end{tabularx}
+
+Angular root-injector services are container-scoped singletons, not hand-written GoF Singletons. The snippets show the equivalent GoF form in each language. The two DI snippets are conceptual equivalents: they reproduce the provider--consumer structure, but they do not run inside FastAPI or Angular.
+
+\subsection{Common specifications}
+
+All four languages use the same fixtures and expected outputs (Python versions shown for reference):
+
+\begin{itemize}
+\item \textbf{Singleton (AuthService, PlansService):} two separate requests for the service must return the same object. One case per language.
+\item \textbf{FastAPI DB session DI:} a provider (\texttt{get\_db} or a \texttt{DatabaseSession} implementation) is passed into \texttt{MemberRepository}. The repository must keep the injected session and return \texttt{"database result"} from \texttt{list\_members()}.
+\item \textbf{Angular constructor DI:} \texttt{NotificationService} is passed to the \texttt{AttendanceComponent} constructor. The component must hold that exact instance, and \texttt{notify()} must return \texttt{"sent: Attendance marked"}. Two checks.
+\item \textbf{Workout strategy:} \texttt{WorkoutRecommender} with \texttt{WeightLoss} returns a plan containing \texttt{"Cycling"}. After \texttt{set\_strategy(MuscleGain)}, the plan contains \texttt{"Progressive overload"}. Two checks.
+\item \textbf{Trainer assignment strategy:} the fixture has four trainers (Asha: Weight Loss, 3/10 clients, rating 4.8; Ravi: Muscle Gain, 1/10, 4.5; Maya: Weight Loss, 5/10, 4.9; John: General Fitness, 0/10, 5.0, inactive). Every policy first removes inactive or full trainers. Expected: specialization match for ``Weight Loss'' gives Maya, least loaded gives Ravi, highest rated gives Maya, a list with only a full trainer gives no result (null/None), and switching policy at runtime gives Maya. Five cases.
+\item \textbf{Attendance observer:} a subscribed observer receives the event for ``Member A''. After unsubscribing, the event for ``Member B'' is not delivered (event count stays at 1). Two checks.
+\item \textbf{Notification state observer:} a new subscriber immediately receives the current state (0 unread), as an RxJS \texttt{BehaviorSubject} does. A new notification sets unread to 1 and updates the latest message. Marking one as read and then all as read gives 1 and then 0, and the count never goes below 0. After unsubscribing, no further updates arrive. Four cases.
+\end{itemize}
+
+\subsection{Implementations}
+
+\begin{tabularx}{\linewidth}{@{}p{2.6cm}L@{}}
+\toprule
+Language & Version used and run command (from the language folder)\\
+\midrule
+Java & OpenJDK 21.0.9: \texttt{javac *.java \&\& java <Name>Test}\\
+Python & Python 3.11.6: \texttt{python test\_<name>.py}\\
+JavaScript & Node.js v24.18.0: \texttt{node <Name>.test.js}\\
+C++ & g++ 14.2.0, \texttt{-std=c++17 -Wall -Wextra}: \texttt{g++ ... <Name>.cpp -o test \&\& ./test}\\
+\bottomrule
+\end{tabularx}
+
+Instance folders: \fp{singleton_authservice_ashrith}, \fp{singleton_plansservice_madhuri}, \fp{dependencyinjection_fastapidb_ashrith}, \fp{dependencyinjection_angularconstructor_meghana}, \fp{stratergy_workout_madhuri}, \fp{strategy_trainerassignment_snigdha}, \fp{observer_attendance_meghana} and \fp{observer_notificationstate_snigdha}, each containing \texttt{java/}, \texttt{python/}, \texttt{javascript/} and \texttt{cpp/}.
+
+\subsection{Actual results}
+
+\begin{itemize}
+\item \textbf{Java, Python, JavaScript: 24/24 implementations passed} when re-run locally on Windows~11 on 2026-10-11. Each test passed in every run (one warm-up run plus five timed runs). The Python unittest suites printed \texttt{Ran 4 tests ... OK} (notification state) and \texttt{Ran 5 tests ... OK} (trainer assignment).
+\item \textbf{C++: 8/8 passed in the team's earlier run} in a Debian environment with g++ 14.2.0, recorded in \fp{Part3/llm/pattern_crosslanguage.csv}. \textbf{The C++ tests were not re-run locally} because no C++ compiler is installed on the measurement machine, so C++ has no local timings.
+\item In the earlier sandbox run, the Python runner also printed an unrelated ``spreadsheet runtime warmup'' traceback from the sandbox tooling. The tests still passed, and the traceback does not appear in the local re-run.
+\end{itemize}
+
+\subsection{Static and dynamic comparison}
+
+Source LOC counts the non-blank lines of the production file only (tests excluded). For C++ files that contain \texttt{main()}, the test driver is included in the count. Max CC is the highest cyclomatic complexity of any function in the production file, measured with \texttt{lizard} 1.24.1. Median time is the median wall-clock time of five fresh processes (compile excluded, process start-up included), measured after one warm-up run.
+
+{\small
+\begin{longtable}{@{}llrrll r@{}}
+\toprule
+Instance & Lang. & LOC & Max CC & Runtime & Result & Median ms\\
+\midrule
+\endhead
+AuthService & Java & 5 & 1 & JDK 21.0.9 & PASS & 281.2\\
+ & Python & 5 & 2 & 3.11.6 & PASS & 135.7\\
+ & JS & 5 & 2 & Node 24.18 & PASS & 184.5\\
+ & C++ & 9 & 1 & g++ 14.2 & PASS & \\
+\midrule
+PlansService & Java & 5 & 1 & JDK 21.0.9 & PASS & 268.0\\
+ & Python & 5 & 2 & 3.11.6 & PASS & 154.9\\
+ & JS & 5 & 2 & Node 24.18 & PASS & 170.5\\
+ & C++ & 9 & 1 & g++ 14.2 & PASS & \\
+\midrule
+FastAPI DB session DI & Java & 7 & 1 & JDK 21.0.9 & PASS & 244.0\\
+ & Python & 8 & 1 & 3.11.6 & PASS & 163.7\\
+ & JS & 4 & 1 & Node 24.18 & PASS & 189.6\\
+ & C++ & 7 & 1 & g++ 14.2 & PASS & \\
+\midrule
+Angular constructor DI & Java & 6 & 1 & JDK 21.0.9 & PASS & 298.5\\
+ & Python & 5 & 1$^{*}$ & 3.11.6 & PASS & 105.3\\
+ & JS & 6 & 1 & Node 24.18 & PASS & 195.3\\
+ & C++ & 6 & 1 & g++ 14.2 & PASS& \\
+\midrule
+Workout strategy & Java & 11 & 1 & JDK 21.0.9 & PASS & 266.2\\
+ & Python & 10 & 1$^{*}$ & 3.11.6 & PASS & 177.0\\
+ & JS & 9 & 1 & Node 24.18 & PASS & 192.2\\
+ & C++ & 11 & 1 & g++ 14.2 & PASS & \\
+\midrule
+Trainer assignment & Java & 58 & 4 & JDK 21.0.9 & PASS & 261.1\\
+ & Python & 44 & 4 & 3.11.6 & PASS & 242.0\\
+ & JS & 37 & 3 & Node 24.18 & PASS & 170.8\\
+ & C++ & 80 & 6 & g++ 14.2 & PASS & \\
+\midrule
+Attendance observer & Java & 12 & 2 & JDK 21.0.9 & PASS & 302.6\\
+ & Python & 12 & 2 & 3.11.6 & PASS & 129.3\\
+ & JS & 8 & 2 & Node 24.18 & PASS & 188.3\\
+ & C++ & 14 & 2 & g++ 14.2 & PASS & \\
+\midrule
+Notification state & Java & 50 & 2 & JDK 21.0.9 & PASS & 333.3\\
+ & Python & 45 & 2 & 3.11.6 & PASS & 214.1\\
+ & JS & 40 & 2 & Node 24.18 & PASS & 188.0\\
+ & C++ & 50 & 2 & g++ 14.2 & PASS& \\
+\bottomrule
+\end{longtable}
+}
+
+
+\textbf{Observations.} Java has the highest median in every instance (244--333\,ms) because each run starts a fresh JVM. Python (105--242\,ms) and Node (171--196\,ms) start faster. With snippets this small, the timings mostly measure runtime start-up rather than the patterns themselves, so they should not be read as a language performance ranking. Complexity stays at 1--2 for Singleton, DI and Observer in all languages. It rises only for the trainer-assignment Strategy, where the eligibility filter and selection rules contain the branching. C++ reaches CC~6 there because it uses explicit loops and comparisons where Python uses \texttt{min}/\texttt{max} with key functions.
+
+\subsection{Comparison}
+
+\textbf{Singleton.} The two Python singletons override \texttt{\_\_new\_\_} to cache \texttt{\_instance}. Java uses an eagerly initialised \texttt{private static final INSTANCE}, a private constructor and \texttt{getInstance()}. JavaScript returns the cached \texttt{AuthService.instance} from the constructor, so \texttt{new} always gives the same object. C++ uses a function-local \texttt{static} in \texttt{getInstance()} and deletes the copy constructor. The Python and JavaScript versions branch on the cached field, which explains their CC~2; Java and C++ rely on language-level static initialisation and have CC~1. None of the four snippets is the real mechanism in the application, where Angular's root injector creates and scopes the instance.
+
+\textbf{Dependency Injection.} All four versions use constructor injection with no container. The consumer (\texttt{MemberRepository}, \texttt{AttendanceComponent}) receives its dependency and never constructs it. Java and C++ type the dependency as an interface or abstract base (\texttt{DatabaseSession}, accessed through a reference in C++). Python and JavaScript rely on duck typing. The FastAPI version keeps a separate provider function (\texttt{get\_db}/\texttt{getDb}) to mirror \texttt{Depends(get\_db)}.
+
+\textbf{Strategy.} Java and C++ declare an explicit strategy type: an interface in Java, an abstract class with pure virtual functions in C++. Python's trainer-assignment version uses an \texttt{ABC} with \texttt{@abstractmethod}, while its workout version relies on duck typing alone. In every language the context holds the strategy by composition and swaps it with \texttt{set\_strategy}/\texttt{setPolicy}. C++ owns the strategy through \texttt{std::unique\_ptr} and moves it on replacement, which gives explicit lifetime control.
+
+\textbf{Observer.} The subject keeps a list of observers and copies it before notifying, so observers can unsubscribe during a notification. Java uses an observer interface; the notification-state version has two callbacks (\texttt{onUnreadCountChanged}, \texttt{onLatestNotificationChanged}). Python and JavaScript accept plain callables, which mirrors RxJS \texttt{subscribe(fn)} most closely. The notification-state Python version also publishes an immutable \texttt{@dataclass(frozen=True)} state object, so observers cannot change shared state.
+
+Overall, the statically typed versions (Java, C++) declare the abstract participant roles explicitly. The dynamic versions (Python, JavaScript) leave roles implicit and need fewer lines, but they lose compile-time checking that a strategy or observer implements the required method.
+
+\subsection{Technology discussion}
+
+The four languages give different built-in guarantees for these patterns:
+
+\begin{itemize}
+\item \textbf{Singleton thread safety.} Java initialises a \texttt{static final} field during class initialisation, which the JVM performs once and thread-safely (Java Language Specification \S12.4.2). Since C++11, a function-local \texttt{static} is initialised exactly once even when several threads call the function concurrently (the ``magic statics'' rule). The Python \texttt{\_\_new\_\_} check and the JavaScript constructor check carry no such guarantee. They are safe here only because CPython runs one thread at a time under the GIL and Node runs JavaScript on a single thread.
+\item \textbf{Framework DI.} Angular's injector gives a service declared with \texttt{providedIn: 'root'} a single application-wide instance. FastAPI resolves \texttt{Depends} callables for each request and caches each dependency within that request. Neither scoping behaviour is reproduced by the hand-written snippets.
+\item \textbf{Reactive Observer.} The notification-state snippets follow the RxJS \texttt{BehaviorSubject} contract: the subject stores its current value and sends it to each new subscriber immediately.
+\end{itemize}
+
+Sources: Gamma et al., \emph{Design Patterns} (1994); Java Language Specification SE~21, \S12.4.2; ISO C++ [stmt.dcl]/3; Angular documentation, ``Dependency injection''; FastAPI documentation, ``Dependencies''; RxJS documentation, ``BehaviorSubject''.
+
+\section{LLM Records and Human Verification}
+
+\subsection{Run and Model}
+
+ChatGPT was used to support design-pattern analysis,
+implementation guidance, and report preparation for the
+Gym Management System case study.
+
+\textbf{Model:} GPT-6
+
+\textbf{Access tier:} Free
+
+\textbf{Date:} 11 October 2026
+
+\textbf{Parts covered:} Parts 1, 2, and 3.
+
+\subsection{Input and Output Records}
+
+The prompts used during the process were maintained separately
+from the report. The generated outputs included Part 2 design
+pattern implementations, Part 3 cross-language examples, pattern
+data files, and report content.
+
+The source repository was identified as
+\texttt{MeharRaza/Gym-Managment-System}. The baseline commit
+was not confirmed at the time of preparing this section.
+The repository and relevant project files should be checked
+when recording the final source version.
+
+\subsection{Human Review}
+
+The generated content was reviewed by the student and team
+members. The review focused on the relevance of each design
+pattern, the suitability of the implementation, consistency
+with the existing project structure, and the accuracy of the
+cross-language examples.
+
+Claims that could not be established from the available source
+code or supporting evidence were not treated as confirmed facts.
+Code examples were considered tested when corresponding
+execution or compilation results were available.
+
+\subsection{Testing Evidence}
+
+The reported Part 2 test results were as follows:
+
+\begin{itemize}
+    \item \textbf{CH01:} 11 checks passed.
+    \item \textbf{CH02:} 19 checks passed.
+    \item \textbf{CH03:} 21 checks passed.
+\end{itemize}
+
+Test commands and output logs are documented where available.
+The reported results describe the checks associated with the
+three Part 2 changes. Part 3 examples are presented for
+cross-language comparison, with execution or compilation
+evidence included where available.
+
+\subsection{Limitations}
+
+The exact baseline commit, source-line counts before and after
+each change, and complete test-output records were not
+confirmed during preparation of this section. Therefore,
+these details should be added only when supporting evidence
+is available. The use of an LLM assisted the development and
+documentation process, but the final design decisions and
+claims remain subject to human review.
+\section{Findings, contributions and references}
+
+
+\subsection*{Findings}
+
+The Gym Management System case study demonstrated how design
+patterns can improve software modularity, maintainability, and
+extensibility. The original application uses Python, TypeScript,
+JavaScript, Angular 17, FastAPI, and SQLite.
+
+In Part 2, the Strategy pattern was applied to personalized
+workout recommendations and trainer assignment policies.
+The Observer pattern was applied to attendance notifications.
+Singleton and Dependency Injection were also explored for
+service management and dependency handling.
+
+The reported test results were 11 checks passed for CH01
+(Personalized Workout Plans), 19 checks passed for CH02
+(Trainer Assignment Policies), and 21 checks passed for CH03
+(Attendance Notifications). These results should be supported
+by the corresponding test logs.
+
+In Part 3, selected design patterns were demonstrated using
+Python, Java, C++, and JavaScript. This comparison illustrated
+how similar design principles can be implemented using
+different programming-language features and frameworks.
+
+The study also highlighted the importance of separating
+responsibilities, reducing coupling, and making software
+easier to extend. However, before-and-after source lines of
+code (LOC), updated pattern counts, and cross-language
+performance measurements require consistent measurement and
+verification. Fewer lines of code alone do not necessarily
+indicate better design.
+
+\subsection*{Contributions}
+
+The project was completed by the following four team members:
+
+\begin{itemize}
+    \item \textbf{Katakam Madhuri}
+    -- Roll No.: AM.SC.U4AIE23117, Batch: AIE-B.
+
+    \item \textbf{M. Sri Lakshmi Snigdha}
+    -- Roll No.: AM.SC.U4AIE23127, Batch: AIE-B.
+
+    \item \textbf{N. Meghana Prasad}
+    -- Roll No.: AM.SC.U4AIE23137, Batch: AIE-B.
+
+    \item \textbf{W. Venkat Ashrith}
+    -- Roll No.: AM.SC.U4AIE23162, Batch: AIE-B.
+\end{itemize}
+
+The project work covered design-pattern identification,
+implementation and evolution, cross-language examples,
+testing, documentation, and report preparation. Individual
+responsibilities should reflect the work actually completed
+by each team member.
+
+\textbf{Evidence:}
+Supporting evidence includes the Gym Management System source
+code, pattern inventory and evolution CSV files, available
+Part 2 test results, and Part 3 cross-language examples.
+The repository and supporting files should be included in
+the submitted project folder.
+
+\subsection*{References}
+
+\begin{enumerate}
+    \item Gamma, E., Helm, R., Johnson, R., and Vlissides, J.
+    \textit{Design Patterns: Elements of Reusable
+    Object-Oriented Software}. Addison-Wesley, 1994.
+
+    \item FastAPI Documentation.
+    \textit{Dependencies}.
+    \url{https://fastapi.tiangolo.com/tutorial/dependencies/}
+
+    \item Angular Documentation.
+    \textit{Dependency Injection}.
+    \url{https://angular.dev/guide/di}
+
+    \item Python Software Foundation.
+    \textit{Python Documentation}.
+    \url{https://docs.python.org/3/}
+
+    \item Oracle.
+    \textit{Java Documentation}.
+    \url{https://docs.oracle.com/en/java/}
+
+    \item cppreference.com.
+    \textit{C++ Language Reference}.
+    \url{https://en.cppreference.com/}
+
+    \item MDN Web Docs.
+    \textit{JavaScript Guide}.
+    \url{https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide}
+\end{enumerate}
+
+\section{Team folder and datasets (take a screenshots from the GitHub repository--- your team)}
+\begin{verbatim}
+B8/
+  README.md
+  B8_Report.tex
+  B8_Final_Report.pdf
+  data/   patterns.csv, pattern_counts.csv,
+          cross_language.csv, llm.csv
+  Part1/  report PDF, code/, evidence/, llm/
+  Part2/  report PDF, code/, evidence/, llm/
+  Part3/  report PDF, code/, test-cases/, evidence/, llm/
+\end{verbatim}
+
+\end{document}

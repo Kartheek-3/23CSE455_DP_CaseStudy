@@ -1,0 +1,17 @@
+source_version,summary,pattern_name,count
+Change1,per_pattern,Singleton,8
+Change1,per_pattern,Dependency Injection,6
+Change1,per_pattern,Strategy,1
+Change1,total_pattern_types,,3
+Change1,total_pattern_instances,,15
+Change2,per_pattern,Singleton,9
+Change2,per_pattern,Dependency Injection,6
+Change2,per_pattern,Strategy,2
+Change2,total_pattern_types,,3
+Change2,total_pattern_instances,,17
+Change3,per_pattern,Singleton,9
+Change3,per_pattern,Dependency Injection,6
+Change3,per_pattern,Strategy,2
+Change3,per_pattern,Observer,2
+Change3,total_pattern_types,,4
+Change3,total_pattern_instances,,19
