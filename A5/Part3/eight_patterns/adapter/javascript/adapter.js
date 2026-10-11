@@ -1,2 +1,32 @@
-class Vendor{submit(payload){return {accepted:true,id:'LAB-1',payload}}}class Adapter{constructor(v){this.v=v}order(p,t){if(!p||!t)throw Error('missing');const r=this.v.submit({patient:{id:p},test:{code:t}});if(!r.accepted)throw Error('rejected');return r.id}}if(new Adapter(new Vendor()).order('P1','CBC')!=='LAB-1')throw Error('adapter');
-console.log('PASS');
+class Vendor {
+  submit(payload) {
+    return { accepted: true, id: "LAB-1", payload };
+  }
+}
+
+class Adapter {
+  constructor(vendor) {
+    this.vendor = vendor;
+  }
+
+  order(patientId, testCode) {
+    if (!patientId || !testCode) {
+      throw Error("missing");
+    }
+
+    const response = this.vendor.submit({
+      patient: { id: patientId },
+      test: { code: testCode },
+    });
+
+    if (!response.accepted) {
+      throw Error("rejected");
+    }
+    return response.id;
+  }
+}
+
+if (new Adapter(new Vendor()).order("P1", "CBC") !== "LAB-1") {
+  throw Error("adapter");
+}
+console.log("PASS");

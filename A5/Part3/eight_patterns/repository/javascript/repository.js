@@ -1,2 +1,34 @@
-class Repo{constructor(){this.rows=new Map()}save(p){this.rows.set(p.id,p)}find(id){return this.rows.get(id)||null}}class Registry{constructor(repo){this.repo=repo}register(p){this.repo.save(p)}lookup(id){return this.repo.find(id)}}const r=new Registry(new Repo());r.register({id:'P1',name:'Demo'});if(r.lookup('P1').name!=='Demo'||r.lookup('none')!==null)throw Error('repository');
-console.log('PASS');
+class Repo {
+  constructor() {
+    this.rows = new Map();
+  }
+
+  save(patient) {
+    this.rows.set(patient.id, patient);
+  }
+
+  find(id) {
+    return this.rows.get(id) || null;
+  }
+}
+
+class Registry {
+  constructor(repository) {
+    this.repository = repository;
+  }
+
+  register(patient) {
+    this.repository.save(patient);
+  }
+
+  lookup(id) {
+    return this.repository.find(id);
+  }
+}
+
+const registry = new Registry(new Repo());
+registry.register({ id: "P1", name: "Demo" });
+if (registry.lookup("P1").name !== "Demo" || registry.lookup("none") !== null) {
+  throw Error("repository");
+}
+console.log("PASS");

@@ -1,2 +1,43 @@
-class Store{constructor(){this.rows=[]}save(p,d){this.rows.push([p,d]);return this.rows.length}}class Notice{constructor(){this.sent=[]}send(p,m){this.sent.push([p,m])}}class Facade{constructor(s,n){this.s=s;this.n=n}book(p,d){if(!p||!d)throw Error('missing');const id=this.s.save(p,d);this.n.send(p,String(id));return id}}const s=new Store(),n=new Notice();if(new Facade(s,n).book('P1','D1')!==1||n.sent.length!==1)throw Error('facade');
-console.log('PASS');
+class Store {
+  constructor() {
+    this.rows = [];
+  }
+
+  save(patient, doctor) {
+    this.rows.push([patient, doctor]);
+    return this.rows.length;
+  }
+}
+
+class Notice {
+  constructor() {
+    this.sent = [];
+  }
+
+  send(patient, message) {
+    this.sent.push([patient, message]);
+  }
+}
+
+class Facade {
+  constructor(store, notice) {
+    this.store = store;
+    this.notice = notice;
+  }
+
+  book(patient, doctor) {
+    if (!patient || !doctor) {
+      throw Error("missing");
+    }
+    const id = this.store.save(patient, doctor);
+    this.notice.send(patient, String(id));
+    return id;
+  }
+}
+
+const store = new Store();
+const notice = new Notice();
+if (new Facade(store, notice).book("P1", "D1") !== 1 || notice.sent.length !== 1) {
+  throw Error("facade");
+}
+console.log("PASS");
