@@ -42,10 +42,10 @@ All evolutions and pattern demonstrations are fully reproducible:
 
 ## Team B1
 
-| Student Name | Roll Number | Primary Contributions |
+| Student Name | Roll Number |
 |:---|:---|:---|
-| **Srivarma Battini** | AM.SC.U4AIE23032 | Full-stack backend/frontend architecture, Strategy pattern refactoring, LaTeX report |
-| **Student 2** | AM.SC.U4AIE23110 | Evolution 1 Online Ordering implementation & validation |
-| **Student 3** | AM.SC.U4AIE23057 | Evolution 2 Kitchen Workflow room partitioning & WebSocket routing |
-| **Student 4** | AM.SC.U4AIE23039 | Evolution 3 Payment Strategy engine & concrete payment classes |
-| **Student 5** | AM.SC.U4AIE23053 | Cross-language benchmarking (Java, Python, JS, C++) & dataset auditing |
+| **D Surya** | AM.SC.U4AIE23032 | 
+| **K Bruhadesh Varma** | AM.SC.U4AIE23039 | 
+| **R Teja** | AM.SC.U4AIE23053 | 
+| **Srivarma Battini** | AM.SC.U4AIE23057 | 
+| **Vijayshima Reddy** | AM.SC.U4AIE23110 |
