@@ -43,7 +43,7 @@ All evolutions and pattern demonstrations are fully reproducible:
 ## Team B1
 
 | Student Name | Roll Number |
-|:---|:---|:---|
+|:---|:---|
 | **D Surya** | AM.SC.U4AIE23032 | 
 | **K Bruhadesh Varma** | AM.SC.U4AIE23039 | 
 | **R Teja** | AM.SC.U4AIE23053 | 
