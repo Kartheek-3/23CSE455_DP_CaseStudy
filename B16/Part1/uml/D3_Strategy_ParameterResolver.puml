@@ -1,0 +1,36 @@
+@startuml D3
+!pragma layout smetana
+title D3 Strategy: ParameterResolver
+
+interface ParameterResolver <<Strategy>> {
+  +supportsParameter(ParameterContext, ExtensionContext) : boolean
+  +resolveParameter(ParameterContext, ExtensionContext) : Object
+}
+class TempDirectory <<ConcreteStrategy>>
+class TestInfoParameterResolver <<ConcreteStrategy>>
+class TestReporterParameterResolver <<ConcreteStrategy>>
+class RepetitionExtension <<ConcreteStrategy, not counted>> #E6E6E6
+class ParameterResolutionUtils <<Context>> {
+  {static} -resolveParameter(...)
+}
+interface ExtensionRegistry <<Registry>> {
+  +stream(Class) : Stream
+}
+
+TempDirectory ..|> ParameterResolver
+TestInfoParameterResolver ..|> ParameterResolver
+TestReporterParameterResolver ..|> ParameterResolver
+RepetitionExtension ..|> ParameterResolver
+ParameterResolutionUtils ..> ExtensionRegistry : stream(ParameterResolver.class)
+ParameterResolutionUtils ..> ParameterResolver : supportsParameter(), then resolveParameter() on the single match
+' aligned-with-record
+legend right
+  <b>Counted participants</b> (record in the dataset)
+  Strategy: ParameterResolver
+  ConcreteStrategy: TempDirectory
+  ConcreteStrategy: TestInfoParameterResolver
+  ConcreteStrategy: TestReporterParameterResolver
+  Context: ParameterResolutionUtils#resolveParameter
+  Grey classes: real, shown for context, not counted
+endlegend
+@enduml

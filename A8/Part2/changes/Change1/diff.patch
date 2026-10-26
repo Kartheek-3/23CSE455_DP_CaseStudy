@@ -1,0 +1,382 @@
+commit b731f5778678d075a148d6af53a34f4b02ffa6c1
+Author: Balasankar Mohan <balumohan04@gmail.com>
+Date:   Tue Oct 6 11:19:13 2026 +0530
+
+    Part2: Add flight cancellation
+
+diff --git a/src/booking/booking.service.spec.ts b/src/booking/booking.service.spec.ts
+index f15941f..bca29d8 100644
+--- a/src/booking/booking.service.spec.ts
++++ b/src/booking/booking.service.spec.ts
+@@ -54,4 +54,27 @@ describe('BookingService', () => {
+   it('should be defined', () => {
+     expect(service).toBeDefined();
+   });
++
++  describe('createBooking', () => {
++    it('should throw BadRequestException when trying to book a cancelled flight', async () => {
++      const userRepoMock = repositoryMock;
++      const flightRepoMock = repositoryMock;
++
++      // Mock user found
++      userRepoMock.findOne.mockImplementation(({ where }: any) => {
++        if (where?.id === 'u1') return Promise.resolve({ id: 'u1' });
++        if (where?.id === 'f1') {
++          return Promise.resolve({
++            id: 'f1',
++            status: 'CANCELLED',
++          });
++        }
++        return Promise.resolve(null);
++      });
++
++      await expect(service.createBooking('u1', 'f1')).rejects.toThrow(
++        'Cannot book seats on a cancelled flight',
++      );
++    });
++  });
+ });
+\ No newline at end of file
+diff --git a/src/booking/booking.service.ts b/src/booking/booking.service.ts
+index 209a525..2565729 100644
+--- a/src/booking/booking.service.ts
++++ b/src/booking/booking.service.ts
+@@ -10,6 +10,7 @@ import { Repository } from 'typeorm';
+ import { CreateBooking } from './dtos/create-booking.dto';
+ import { User } from 'src/users/entities/user.entity';
+ import { Flight } from 'src/flight/entities/flight.entity';
++import { FlightStatus } from 'src/flight/enums/flight-status.enum';
+ import { Seat } from 'src/seat/entities/seat.entity';
+ import { use } from 'passport';
+ 
+@@ -33,6 +34,10 @@ export class BookingService {
+     const flight = await this.flightRepo.findOne({ where: { id: flightId } });
+     if (!flight) throw new NotFoundException(`Flight not found`);
+ 
++    if (flight.status === FlightStatus.CANCELLED) {
++      throw new BadRequestException(`Cannot book seats on a cancelled flight`);
++    }
++
+     // 3) Check if user already booked this flight
+     const foundedBooking = await this.bookingRepo.findOne({
+       where: {
+diff --git a/src/flight/entities/flight.entity.ts b/src/flight/entities/flight.entity.ts
+index 83508cb..ba7fe0b 100644
+--- a/src/flight/entities/flight.entity.ts
++++ b/src/flight/entities/flight.entity.ts
+@@ -1,6 +1,7 @@
+ import { ObjectType, Field, Int, ID } from '@nestjs/graphql';
+ import { Booking } from 'src/booking/entities/booking.entity';
+ import { User } from 'src/users/entities/user.entity';
++import { FlightStatus } from '../enums/flight-status.enum';
+ import {
+   Column,
+   Entity,
+@@ -48,6 +49,13 @@ export class Flight {
+   @Field(() => Int, { nullable: false, defaultValue: 60 })
+   availableSeats: number;
+ 
++  @Column({
++    type: 'varchar',
++    default: FlightStatus.ACTIVE,
++  })
++  @Field(() => FlightStatus, { defaultValue: FlightStatus.ACTIVE })
++  status: FlightStatus;
++
+   // Relation must not have colum decorator the oneToMany or manyToOne Is Sufficient
+   @ManyToOne(() => User, (user) => user.ResponsibleFlights, {
+     onDelete: 'CASCADE',
+diff --git a/src/flight/enums/flight-status.enum.ts b/src/flight/enums/flight-status.enum.ts
+new file mode 100644
+index 0000000..65e22fb
+--- /dev/null
++++ b/src/flight/enums/flight-status.enum.ts
+@@ -0,0 +1,11 @@
++import { registerEnumType } from '@nestjs/graphql';
++
++export enum FlightStatus {
++  ACTIVE = 'ACTIVE',
++  CANCELLED = 'CANCELLED',
++}
++
++registerEnumType(FlightStatus, {
++  name: 'FlightStatus',
++  description: 'Authoritative operational status of the flight',
++});
+diff --git a/src/flight/flight.module.ts b/src/flight/flight.module.ts
+index b50b601..3a80e2f 100644
+--- a/src/flight/flight.module.ts
++++ b/src/flight/flight.module.ts
+@@ -7,15 +7,23 @@ import { UsersService } from 'src/users/users.service';
+ import { User } from 'src/users/entities/user.entity';
+ import { StaffService } from './staff.service';
+ import { FlightAutoDelete } from './flight-auto-delete.service';
++import { Seat } from 'src/seat/entities/seat.entity';
++import { SendGridService } from 'src/users/send-grid.service';
++import { BullModule } from '@nestjs/bullmq';
+ 
+ @Module({
+-  imports: [TypeOrmModule.forFeature([Flight, User])],
++  imports: [
++    TypeOrmModule.forFeature([Flight, User, Seat]),
++    BullModule.registerQueue({ name: 'email' }),
++  ],
+   providers: [
+     FlightResolver,
+     FlightService,
+     UsersService,
+     StaffService,
+     FlightAutoDelete,
++    SendGridService,
+   ],
++  exports: [FlightService],
+ })
+ export class FlightModule {}
+diff --git a/src/flight/flight.resolver.ts b/src/flight/flight.resolver.ts
+index 960705c..0f16d3c 100644
+--- a/src/flight/flight.resolver.ts
++++ b/src/flight/flight.resolver.ts
+@@ -52,13 +52,23 @@ export class FlightResolver {
+     return this.flightService.updateFlight(id, updateFlight);
+   }
+ 
++  @UseGuards(
++    new allAuthGuard([new authGuard(), new GoogleAuthGuard()]),
++    rolesRestrict(Role.ADMIN, Role.CREW),
++  )
++  @Mutation(() => Flight)
++  cancelFlight(@Args('id') id: string) {
++    return this.flightService.cancelFlight(id);
++  }
++
+   @UseGuards(
+     new allAuthGuard([new authGuard(), new GoogleAuthGuard()]),
+     FlightRestrict,
+   )
+   @Mutation(() => FlightResponse)
+-  removeFlight(@Args('id') id: string) {
+-    return this.flightService.cancelFlight(id);
++  async removeFlight(@Args('id') id: string) {
++    await this.flightService.cancelFlight(id);
++    return { message: `flight with id of ${id} cancelled successfully!` };
+   }
+ 
+   @Query(() => FlightPaginationResponse)
+diff --git a/src/flight/flight.service.spec.ts b/src/flight/flight.service.spec.ts
+index 0e4822b..d6bac22 100644
+--- a/src/flight/flight.service.spec.ts
++++ b/src/flight/flight.service.spec.ts
+@@ -1,27 +1,55 @@
+ import { Test, TestingModule } from '@nestjs/testing';
+ import { getRepositoryToken } from '@nestjs/typeorm';
++import { BadRequestException, NotFoundException } from '@nestjs/common';
+ import { FlightService } from './flight.service';
+ import { Flight } from './entities/flight.entity';
++import { FlightStatus } from './enums/flight-status.enum';
++import { Seat } from 'src/seat/entities/seat.entity';
++import { SendGridService } from 'src/users/send-grid.service';
+ 
+ describe('FlightService', () => {
+   let service: FlightService;
++  let flightRepoMock: any;
++  let seatRepoMock: any;
++  let sendGridMock: any;
+ 
+   beforeEach(async () => {
++    flightRepoMock = {
++      find: jest.fn(),
++      findOne: jest.fn(),
++      findOneBy: jest.fn(),
++      save: jest.fn(),
++      create: jest.fn(),
++      update: jest.fn(),
++      delete: jest.fn(),
++      remove: jest.fn(),
++    };
++
++    seatRepoMock = {
++      find: jest.fn(),
++      findOne: jest.fn(),
++      save: jest.fn(),
++      update: jest.fn(),
++    };
++
++    sendGridMock = {
++      send: jest.fn(),
++    };
++
+     const module: TestingModule = await Test.createTestingModule({
+       providers: [
+         FlightService,
+         {
+           provide: getRepositoryToken(Flight),
+-          useValue: {
+-            find: jest.fn(),
+-            findOne: jest.fn(),
+-            findOneBy: jest.fn(),
+-            save: jest.fn(),
+-            create: jest.fn(),
+-            update: jest.fn(),
+-            delete: jest.fn(),
+-            remove: jest.fn(),
+-          },
++          useValue: flightRepoMock,
++        },
++        {
++          provide: getRepositoryToken(Seat),
++          useValue: seatRepoMock,
++        },
++        {
++          provide: SendGridService,
++          useValue: sendGridMock,
+         },
+       ],
+     }).compile();
+@@ -32,4 +60,70 @@ describe('FlightService', () => {
+   it('should be defined', () => {
+     expect(service).toBeDefined();
+   });
++
++  describe('cancelFlight', () => {
++    it('should successfully cancel an active flight and release seats', async () => {
++      const mockFlight: any = {
++        id: 'f1',
++        flightNumber: 101,
++        status: FlightStatus.ACTIVE,
++        availableSeats: 50,
++        departureAirport: 'JFK',
++        destinationAirport: 'LAX',
++        bookings: [
++          {
++            id: 'b1',
++            user: { email: 'passenger@example.com' },
++            seat: [{ id: 's1', isAvailable: false }],
++          },
++        ],
++      };
++
++      flightRepoMock.findOne.mockResolvedValue(mockFlight);
++      flightRepoMock.save.mockImplementation((f: any) => Promise.resolve(f));
++      seatRepoMock.update.mockResolvedValue({ affected: 1 });
++
++      const result = await service.cancelFlight('f1');
++
++      expect(result.status).toBe(FlightStatus.CANCELLED);
++      expect(result.availableSeats).toBe(0);
++      expect(flightRepoMock.save).toHaveBeenCalledWith(
++        expect.objectContaining({
++          status: FlightStatus.CANCELLED,
++          availableSeats: 0,
++        }),
++      );
++      expect(seatRepoMock.update).toHaveBeenCalledWith(
++        { flightId: 'f1' },
++        { isAvailable: true },
++      );
++      expect(sendGridMock.send).toHaveBeenCalledWith(
++        expect.objectContaining({
++          to: 'passenger@example.com',
++          subject: expect.stringContaining('101'),
++        }),
++      );
++    });
++
++    it('should throw NotFoundException if flight does not exist', async () => {
++      flightRepoMock.findOne.mockResolvedValue(null);
++
++      await expect(service.cancelFlight('f999')).rejects.toThrow(
++        NotFoundException,
++      );
++    });
++
++    it('should throw BadRequestException if flight is already cancelled', async () => {
++      const mockFlight: any = {
++        id: 'f1',
++        status: FlightStatus.CANCELLED,
++      };
++
++      flightRepoMock.findOne.mockResolvedValue(mockFlight);
++
++      await expect(service.cancelFlight('f1')).rejects.toThrow(
++        BadRequestException,
++      );
++    });
++  });
+ });
+\ No newline at end of file
+diff --git a/src/flight/flight.service.ts b/src/flight/flight.service.ts
+index d6716e4..8bde5c9 100644
+--- a/src/flight/flight.service.ts
++++ b/src/flight/flight.service.ts
+@@ -2,6 +2,7 @@ import {
+   BadRequestException,
+   Injectable,
+   NotFoundException,
++  Optional,
+ } from '@nestjs/common';
+ import { CreateFlightInput } from './dto/create-flight.input';
+ import { UpdateFlightInput } from './dto/update-flight.input';
+@@ -9,11 +10,16 @@ import { InjectRepository } from '@nestjs/typeorm';
+ import { Flight } from './entities/flight.entity';
+ import { Between, Like, Repository } from 'typeorm';
+ import { FlightFilterDto } from './dto/filter-flight.input.dto';
++import { FlightStatus } from './enums/flight-status.enum';
++import { Seat } from 'src/seat/entities/seat.entity';
++import { SendGridService } from 'src/users/send-grid.service';
+ 
+ @Injectable()
+ export class FlightService {
+   constructor(
+     @InjectRepository(Flight) private readonly flightRepo: Repository<Flight>,
++    @InjectRepository(Seat) private readonly seatRepo: Repository<Seat>,
++    @Optional() private readonly sendGridService?: SendGridService,
+   ) {}
+ 
+   async createFlight(flightInput: CreateFlightInput) {
+@@ -40,15 +46,42 @@ export class FlightService {
+     return this.flightRepo.save(foundedFlight);
+   }
+ 
+-  async cancelFlight(id: string) {
+-    const foundedFlight = await this.flightRepo.findOne({ where: { id } });
++  async cancelFlight(id: string): Promise<Flight> {
++    const foundedFlight = await this.flightRepo.findOne({
++      where: { id },
++      relations: ['bookings', 'bookings.seat', 'bookings.user'],
++    });
+     if (!foundedFlight)
+       throw new NotFoundException(
+         `There is no flight founded with an id of ${id}`,
+       );
+ 
+-    await this.flightRepo.remove(foundedFlight);
+-    return { message: `flight with id of ${id} removed successfully!` };
++    if (foundedFlight.status === FlightStatus.CANCELLED) {
++      throw new BadRequestException(`Flight is already cancelled`);
++    }
++
++    foundedFlight.status = FlightStatus.CANCELLED;
++    foundedFlight.availableSeats = 0;
++    const savedFlight = await this.flightRepo.save(foundedFlight);
++
++    // Release all booked seats for this flight to ensure seat consistency
++    await this.seatRepo.update({ flightId: id }, { isAvailable: true });
++
++    // Asynchronously dispatch passenger cancellation notifications via BullMQ queue if email service is active
++    if (this.sendGridService && foundedFlight.bookings) {
++      for (const booking of foundedFlight.bookings) {
++        if (booking.user?.email) {
++          await this.sendGridService.send({
++            to: booking.user.email,
++            subject: `Flight Cancellation Notice: Flight ${foundedFlight.flightNumber}`,
++            from: 'zeyadalbadawyamm@gmail.com',
++            text: `Dear passenger, your flight ${foundedFlight.flightNumber} from ${foundedFlight.departureAirport} to ${foundedFlight.destinationAirport} has been cancelled.`,
++          });
++        }
++      }
++    }
++
++    return savedFlight;
+   }
+ 
+   async retriveFlights(filterFlightInput: FlightFilterDto) {

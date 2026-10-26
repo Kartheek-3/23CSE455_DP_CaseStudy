@@ -1,0 +1,3 @@
+Frozen pre-existing Part3 file checksum matches: 138/138.
+Information Expert cumulative ZIP entry comparison: 137/137 unchanged.
+Adapter fixtures unchanged from original freeze: 9/9.

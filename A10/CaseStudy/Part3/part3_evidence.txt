@@ -1,0 +1,41 @@
+
+JavaScript
+Implementation: CaseStudy/Part3/JavaScript/repository_demo.js
+Execution: node repository_demo.js
+Result: PASS
+Source lines: 49
+Cyclomatic complexity: 3
+Median process time: 46.009 ms
+
+C++
+Implementation: CaseStudy/Part3/Cpp/repository_demo.cpp
+Compilation: g++ -std=c++17 -O2 repository_demo.cpp -o repository_demo.exe
+Execution: repository_demo.exe
+Result: PASS
+Source lines: 65
+Cyclomatic complexity: 3
+Median process time: 14.209 ms
+
+Measurement methodology
+Each implementation was executed once as a warm-up and then measured five times.
+PowerShell Measure-Command was used for process-level timing.
+The median of the five measured runs was recorded.
+Execution times were measured rather than estimated.
+The timings include process startup overhead.
+
+Java
+Implementation: CaseStudy/Part3/Java/RepositoryDemo.java
+Compilation: javac RepositoryDemo.java
+Execution: java -cp CaseStudy/Part3/Java RepositoryDemo
+Result: PASS
+Source lines: 74
+Cyclomatic complexity: 3
+Median process time: 81.214 ms
+
+Python
+Implementation: CaseStudy/Part3/Python/repository_demo.py
+Execution: python repository_demo.py
+Result: PASS
+Source lines: 45
+Cyclomatic complexity: 1
+Median process time: 93.486 ms

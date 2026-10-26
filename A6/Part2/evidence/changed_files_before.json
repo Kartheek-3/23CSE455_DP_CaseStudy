@@ -1,0 +1,53 @@
+{
+  "srcDir": "Part1/code/src",
+  "files": 7,
+  "total": {
+    "nloc": 379,
+    "functions": 16,
+    "max_cc": 15
+  },
+  "rows": [
+    {
+      "file": "application/use_cases/Admin/AdminChangeDriverStatus.ts",
+      "nloc": 31,
+      "functions": 2,
+      "max_cc": 5
+    },
+    {
+      "file": "application/use_cases/Driver/AcceptBooking.ts",
+      "nloc": 42,
+      "functions": 2,
+      "max_cc": 4
+    },
+    {
+      "file": "application/use_cases/User/CancelBooking.ts",
+      "nloc": 48,
+      "functions": 2,
+      "max_cc": 5
+    },
+    {
+      "file": "application/use_cases/Driver/UpdateBookingstatus.ts",
+      "nloc": 54,
+      "functions": 2,
+      "max_cc": 12
+    },
+    {
+      "file": "infrastructure/services/FareCalculatorService.ts",
+      "nloc": 32,
+      "functions": 1,
+      "max_cc": 6
+    },
+    {
+      "file": "application/use_cases/User/BookDriver.ts",
+      "nloc": 128,
+      "functions": 5,
+      "max_cc": 15
+    },
+    {
+      "file": "infrastructure/services/CronScheduler.ts",
+      "nloc": 44,
+      "functions": 2,
+      "max_cc": 5
+    }
+  ]
+}

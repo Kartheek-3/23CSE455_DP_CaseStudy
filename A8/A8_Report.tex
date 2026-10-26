@@ -1,0 +1,494 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=20mm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue}
+\setlength{\parindent}{0pt}\setlength{\headheight}{14pt}
+\setlength{\parskip}{5pt}
+\renewcommand{\arraystretch}{1.15}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{23CSE455 Design Patterns}
+\rhead{Team A8}
+\cfoot{\thepage}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcommand{\code}[1]{\texttt{\small\detokenize{#1}}}
+\newcommand{\placeholder}[1]{\textcolor{red}{\textbf{[TO FILL: #1]}}}
+\lstset{basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,columns=fullflexible}
+
+\begin{document}
+
+\begin{titlepage}
+\centering
+\vspace*{18mm}
+{\Large\textbf{23CSE455 Design Patterns}}\\[8mm]
+{\LARGE\textbf{Design Pattern Case Study Report}}\\[5mm]
+{\Large Airline Reservation Application using NestJS}\\[12mm]
+{\large\textbf{Design Pattern Analysis in a NestJS-Based Airline Reservation Application}}\\[18mm]
+\begin{tabular}{rl}
+\textbf{Team:} & A8\\
+\textbf{Application:} & NestJS Airplane Reservation System\\
+\textbf{Framework:} & NestJS + GraphQL + TypeORM\\
+\textbf{Baseline commit:} & \code{ae2c24869377ce2f7a29022cd237d808338156ea}\\
+\textbf{Report date:} & 2026-10-06\\
+\end{tabular}
+\vfill
+\textbf{Students}\\[4mm]
+\begin{tabular}{lll}
+\toprule
+Roll number & Student name & Batch\\
+\midrule
+AM.SC.U4CSE23016 & Balashankar Mohan & CSE-A\\
+AM.SC.U4CSE23125 & Josewin Anto J & CSE-B\\
+AM.SC.U4CSE23128 & Karthik Kishor & CSE-B\\
+AM.SC.U4CSE23141 & Pavithra Nair & CSE-B\\
+\bottomrule
+\end{tabular}
+\vfill
+
+\end{titlepage}
+
+
+\newpage
+
+\section{Application and Architecture}
+
+\subsection{Application overview}
+The case study is a GraphQL-based airline reservation application built using NestJS. The provided README includes information on user management, flight management, booking, seat management, session authentication, Google OAuth, role-based access control, query batching with DataLoader, and background processing with BullMQ. The baseline repository does not have a payment entity, payment service, payment resolver, or payment controller, so payment is considered an unimplemented capability in the baseline, not a confirmed pattern instance.
+
+The application is the open-source NestJS Airplane Reservation System, originally published at \url{https://github.com/zeyadAlbadawy/Airport-Reservation-System.git}. The supplied baseline is identified by commit \code{ae2c24869377ce2f7a29022cd237d808338156ea}, and its unmodified snapshot is stored under \code{data/code/}. The team's working repository, \url{https://github.com/DevBM04/DP_Case_study}, holds the baseline snapshot together with the Part 2 evolution commits (Change~1 \code{b731f57}, Change~2 \code{febb4c4}, Change~3 \code{34e8621}). The report treats the commit SHAs and the saved source snapshots as the authoritative version identifiers.
+
+\subsection{Environment}
+\begin{tabularx}{\linewidth}{@{}lY@{}}
+\toprule
+Component & Version / evidence\\
+\midrule
+Node.js & v25.9.0 for the baseline verification record; Part 2 change tests used v24.15.0\\
+npm & 11.12.1\\
+TypeScript & 5.9.3 / package range \code{^5.7.3}\\
+NestJS Core & \code{^11.0.1} baseline\\
+NestJS GraphQL & \code{^13.2.0}; Apollo Server \code{^5.1.0}\\
+TypeORM & \code{^0.3.27}\\
+DataLoader & \code{^2.2.3}\\
+BullMQ & \code{^5.65.1}; \code{@nestjs/bullmq ^11.0.4}\\
+PostgreSQL driver & \code{pg ^8.16.3}\\
+\bottomrule
+\end{tabularx}
+
+\subsection{Scope}
+The inspected application scope includes \code{src/flight}, \code{src/booking}, \code{src/seat}, and \code{src/users}, with supporting application configuration in \code{src/app.module.ts}. The pattern analysis does not cover framework internals, like the implementation of Passport’s Google Strategy or TypeORM standard repository mechanics, as these are more of a dependency/framework collaboration rather than an application-level one. The analysis also rejects the \code{allAuthGuard} structure as a formal Composite pattern based on the supplied Part 1 verification.
+
+\subsection{Architecture and request flow}
+In NestJS, GraphQL queries and mutations are exposed with resolvers. Domain operations services TypeORM repositories for persisting entities DataLoader providers for batching relation lookups BullMQ for decoupling email jobs from synchronous request processing Creates role-based access. The \code{rolesRestrict} factory.
+
+\begin{figure}[H]
+    \centering
+    \IfFileExists{pattern_architecture.png}{
+        \includegraphics[
+            width=\textwidth,
+            height=0.72\textheight,
+            keepaspectratio
+        ]{pattern_architecture.png}
+    }{
+        \fbox{\parbox{0.9\textwidth}{
+            \centering
+            Upload \texttt{Part1/pattern\_architecture/pattern\_architecture.png}
+            to Overleaf to display the architecture diagram.
+        }}
+    }
+    \caption{Baseline pattern architecture supplied with the case-study evidence.}
+    \label{fig:pattern-architecture}
+\end{figure}
+
+A representative booking request follows this flow: a GraphQL mutation enters \code{BookingResolver}, the resolver delegates booking and seat creation to services . Relation fields are resolved by request-scoped ` DataLoaders ` . An email payload is handed off to an operation such as booking confirmation or flight cancelation that produces a notification. \code{SendGridService}; the service enqueues a job on the BullMQ \code{email} queue and \code{EmailProcessor} consumes it asynchronously.
+
+\subsection{Run and verification instructions}
+The baseline evidence records the following results:
+\begin{itemize}[leftmargin=*]
+\item \code{npm run build}: passed, exit code 0.
+\item \code{npm test}: passed; 10 test suites and 27 tests passed in the preserved baseline verification record.
+\item \code{npm run test:e2e}: failed, exit code 1, because the supplied e2e Jest configuration lacked the required \code{moduleNameMapper} mapping for \code{src/} absolute imports.
+\end{itemize}
+The Part 2 change snapshots were tested with \code{npm test}; Change 1 passed 14/14, Change 2 passed 21/21, and Change 3 passed 27/27 tests.
+
+\section{Part 1 -- Pattern Discovery}
+
+\subsection{Method}
+Pattern candidates were identified by repository archaeology and was checked against actual source collaborations. A candidate was retained only when its roles could be mapped to real functions, classes, interfaces, queues, providers, or resolver methods and the interactions demonstrated the claimed intent. A class name or LLM assertion alone was not considered enough evidence. This matches the case-study instructions, which require real participant mappings and source locations for every confirmed collaboration.
+
+\subsection{Baseline totals}
+The baseline contains \textbf{3 distinct confirmed pattern types} and \textbf{5 independent confirmed pattern instances}. The instances are one Dynamic Guard Factory collaboration, three Batch Loader collaborations, and one Producer--Consumer collaboration. The concrete participant classes/providers represented in these collaborations are \textbf{9 distinct symbols} when shared symbols are counted once: \code{rolesRestrict}, \code{RolesRestriceGuard}, \code{CanActivate}, \code{UserDataLoader}, \code{FlightDataLoader}, \code{SeatDataLoader}, \code{SendGridService}, \code{UsersResolver}, and \code{EmailProcessor}. Participants also include the BullMQ queue channel and TypeORM repository, which are framework/depedency objects and not separate application classes.
+
+Rejected/uncertain observations include \code{allAuthGuard} as a pattern-like structure rather than a confirmed Composite pattern, TypeORM repository/data-mapper behavior as framework mechanism, and Passport Google Strategy as a framework mechanism. The baseline payment subsystem is not implemented.
+
+\subsection{Pattern inventory}
+\begin{table}[H]
+\centering
+\begin{tabularx}{\linewidth}{@{}lYcc@{}}
+\toprule
+Pattern type & Confirmed instance names & Instances & Concrete application classes/providers\\
+\midrule
+Dynamic Guard Factory & Role-Based Guard Synthesis & 1 & 2 main classes/functions + interface\\
+Batch Loader & User Entity Batch Loading; Flight Entity Batch Loading; Seat Entity Batch Loading & 3 & 3 loader providers\\
+Producer--Consumer & Async Email Processing Queue & 1 & 4 main application participants\\
+\bottomrule
+\end{tabularx}
+\caption{Baseline pattern inventory.}
+\end{table}
+
+\subsection{Confirmed pattern evidence}
+
+\subsubsection{Role-Based Guard Synthesis -- Dynamic Guard Factory}
+\textbf{Category:} Creational (as recorded in the supplied pattern dataset). The implementation is a NestJS-specific factory/mixin idiom.
+
+\textbf{Purpose and origin.} The collaboration parameterizes the authorization process by accepting any set of allowed roles and returning the guard type of NestJS. This eliminates the need to create static guards for each role set.
+
+\begin{tabularx}{\linewidth}{@{}lYl@{}}
+\toprule
+Role & Actual participant & Source location\\
+\midrule
+Factory function & \code{rolesRestrict(...allowedRoles)} & \code{src/flight/guards/roles.restrict.guard.ts:12--28}\\
+Dynamic product & \code{RolesRestriceGuard} & same file, lines 14--27\\
+Product interface & \code{CanActivate} & same file, lines 12--16\\
+Dependency & \code{UsersService} & same file, lines 10--15, 22\\
+Consumers & Flight/Booking resolver guard annotations & FlightResolver and BookingResolver\\
+\bottomrule
+\end{tabularx}
+
+The function closes over \code{allowedRoles}, defines a local class implementing \code{CanActivate}, checks the authenticated session user through \code{UsersService}, and returns \code{mixin(RolesRestriceGuard)}. It is thus related to the production of dynamic authorization guards in a direct way rather than just being associated with a class called ``Guard.''
+
+\subsubsection{User Entity Batch Loading}
+\textbf{Category:} Architectural. \code{UserDataLoader} is request-scoped and wraps DataLoader. Its batch function queries users using TypeORM \code{In(userIds)}, builds a map, and restores the original requested key order. \code{BookingResolver.user()} calls \code{userLoader.load(booking.userId)}.
+
+\begin{tabularx}{\linewidth}{@{}lYl@{}}
+\toprule
+Role & Participant & Source location\\
+\midrule
+Batch loader provider & \code{UserDataLoader} & \code{src/users/loaders/user.loader.ts:10--24}\\
+Loader instance & \code{userLoader} & \code{src/users/loaders/user.loader.ts:15--23}\\
+Target repository & \code{Repository<User>} & \code{src/users/loaders/user.loader.ts:11--18}\\
+Relational resolver & \code{BookingResolver.user} & \code{src/booking/booking.resolver.ts:114--117}\\
+\bottomrule
+\end{tabularx}
+
+This is aimed at avoiding a situation whereby N+1 queries are triggered when resolving the user relation of multiple bookings within a single execution cycle.
+
+\subsubsection{Flight Entity Batch Loading}
+\code{FlightDataLoader} follows the same batching structure for flight relations. It accepts flight IDs, executes one repository lookup with \code{In(flightIds)}, maps the returned flights by ID, and restores the requested order. \code{BookingResolver.flight()} invokes the loader.
+
+\begin{tabularx}{\linewidth}{@{}lYl@{}}
+\toprule
+Role & Participant & Source location\\
+\midrule
+Batch loader provider & \code{FlightDataLoader} & \code{src/flight/loaders/flight.loader.ts:7--23}\\
+Loader instance & \code{flightLoader} & \code{src/flight/loaders/flight.loader.ts:12--22}\\
+Target repository & \code{Repository<Flight>} & \code{src/flight/loaders/flight.loader.ts:8--15}\\
+Relational resolver & \code{BookingResolver.flight} & \code{src/booking/booking.resolver.ts:119--122}\\
+\bottomrule
+\end{tabularx}
+
+\subsubsection{Seat Entity Batch Loading}
+\code{SeatDataLoader} contains two related loader instances. \code{seatLoader} maps individual seat IDs to Seat entities, while \code{seatManyLoader} maps booking IDs to arrays of seats. Both use request-scoped DataLoader batching and TypeORM \code{In(...)} queries.
+
+\begin{tabularx}{\linewidth}{@{}lYl@{}}
+\toprule
+Role & Participant & Source location\\
+\midrule
+Batch loader provider & \code{SeatDataLoader} & \code{src/seat/loaders/seat.loader.ts:8--45}\\
+Single-seat loader & \code{seatLoader} & lines 14--23\\
+Booking-to-seats loader & \code{seatManyLoader} & lines 26--43\\
+Target repository & \code{Repository<Seat>} & lines 9--17, 28--30\\
+Relational resolver & \code{BookingResolver.seat} & \code{src/booking/booking.resolver.ts:124--127}\\
+\bottomrule
+\end{tabularx}
+
+\subsubsection{Async Email Processing Queue -- Producer--Consumer}
+\textbf{Category:} Architectural. The producer side consists of application services/resolvers that enqueue jobs, the BullMQ \code{email} queue is the channel, and \code{EmailProcessor} is the consumer worker.
+
+\begin{tabularx}{\linewidth}{@{}lYl@{}}
+\toprule
+Role & Participant & Source location\\
+\midrule
+Job producer & \code{SendGridService.send} & \code{src/users/send-grid.service.ts:30--42}\\
+Job producer & \code{UsersResolver} & \code{src/users/users.resolver.ts:78--81}\\
+Queue channel & BullMQ \code{email} queue & \code{src/app.module.ts:27--35}\\
+Consumer worker & \code{EmailProcessor} & \code{src/users/workers/email.worker.ts:8--25}\\
+\bottomrule
+\end{tabularx}
+
+\code{SendGridService.send()} adds a \code{sending-token-sendGrid} job to the queue rather than performing the email operation synchronously. \code{EmailProcessor.process()} consumes jobs and dispatches the appropriate email operation. The collaboration therefore separates request processing from I/O-heavy background work.
+
+\subsection{Verification and rejected candidates}
+The supplied Part 1 analysis explicitly rejects \code{allAuthGuard} as a formal Composite pattern and categorizes TypeORM repositories and Passport's Google Strategy as framework constructs. This is vital since the number of collaboration at application level counted only those collaborations that had source evidence. The payment module was also validated to be missing from the baseline.
+
+\section{Part 2 -- Evolution and Refactoring}
+
+The three changes that have been applied are: CH01 Flight Cancellation, CH02 Seat Class Extension, and CH03 Ticket Change. There has been mention made about a new payment provider in the assignment, however, the change artifacts provided clearly state that payment/ refund functionality is not in scope of the work performed.
+
+\subsection{CH01 -- Flight Cancellation}
+\textbf{Requirement.} Instead of destructive deletion of the flight, use a non-destructive lifecycle state, do not allow new bookings for the cancelled flight, free up the relevant seat and enable cancellation by administrators or crew members.
+
+\textbf{Implementation.} A \code{FlightStatus} enum introduces \code{ACTIVE} and \code{CANCELLED}. \code{FlightService.cancelFlight} persistence changes from destructive delete to status update, initializes available seats, frees up seats, and sends notification task. \code{BookingService.createBooking} will not accept cancelled flights. The resolver makes available the cancellation feature and maintains compatibility with deletion mutation.
+
+\textbf{Pattern effects.}
+\begin{itemize}[leftmargin=*]
+\item Dynamic Guard Factory: \textbf{extended}; \code{rolesRestrict(Role.ADMIN, Role.CREW)} protects the cancellation operation.
+\item Producer--Consumer: \textbf{extended}; \code{FlightService} becomes an additional producer for cancellation notices.
+\item All three Batch Loader collaborations: \textbf{preserved}; the Flight entity gains lifecycle state without changing the batching mechanism.
+\end{itemize}
+
+\textbf{Test evidence.} Change 1: 10 suites, 14/14 tests passed.
+
+\subsection{CH02 -- Seat-Class Expansion}
+\textbf{Requirement.} Introduce \code{FIRST}, \code{BUSINESS}, and \code{ECONOMY}; enforce row/class allocation rules; support explicit and inferred classes; preserve seat uniqueness, availability, and DataLoader behavior.
+
+Rules for the supplied domain are 1-3 = FIRST, 4-8 = BUSINESS, and 9-20 = ECONOMY. Class values explicitly assigned are verified using the above ranges, and missing class values are determined deterministically.
+
+\textbf{Pattern effects.}
+\begin{itemize}[leftmargin=*]
+\item Dynamic Guard Factory: \textbf{preserved}.
+\item Producer--Consumer: \textbf{preserved}.
+\item Seat Entity Batch Loading: \textbf{preserved}; the loader continues to hydrate Seat entities, now with the added \code{seatClass} field.
+\item User and Flight Batch Loading: \textbf{preserved}.
+\end{itemize}
+
+\textbf{Test evidence.} Change 2: 10 suites, 21/21 tests passed.
+
+\subsection{CH03 -- Ticket Modification}
+\textbf{Requirement.} Use the current Booking aggregate instead of adding another duplicate Ticket entity. Facilitate seat changes, seat class changes, and flight changes while ensuring ownership, seat availability, flight availability, and cancellations.
+
+The new \code{UpdateBooking} input contains \code{bookingId}, optional \code{flightId}, and optional target seats. \code{BookingService.modifyBooking} validates ownership, prevents modification of cancelled flights, restores capacity on the old flight when transferring, reduces capacity on the target flight, and allocates replacement seats through \code{SeatService}. Resolver mutations are protected with \code{rolesRestrict('USER')}.
+
+\textbf{Pattern effects.}
+\begin{itemize}[leftmargin=*]
+\item Dynamic Guard Factory: \textbf{extended}; it now guards \code{modifyBooking} and backward-compatible \code{updateBooking} operations.
+\item User, Flight, and Seat Batch Loaders: \textbf{preserved}; they resolve the updated booking relationships.
+\item Producer--Consumer: \textbf{preserved}; the existing queue remains the asynchronous messaging infrastructure.
+\end{itemize}
+
+\textbf{Test evidence.} Change 3: 10 suites, 27/27 tests passed.
+
+\subsection{Pattern count evolution}
+\begin{table}[H]
+\centering
+\begin{tabular}{lrrrr}
+\toprule
+Snapshot & Guard Factory & Batch Loader & Producer--Consumer & Total instances\\
+\midrule
+Original & 1 & 3 & 1 & 5\\
+Change 1 & 1 & 3 & 1 & 5\\
+Change 2 & 1 & 3 & 1 & 5\\
+Change 3 & 1 & 3 & 1 & 5\\
+\bottomrule
+\end{tabular}
+\caption{Confirmed pattern counts across source snapshots.}
+\end{table}
+
+This stability of the count is not an indicator of architectural constancy. There was stability in the collaboration roles, whereas their responsibility underwent change, with the guard factory acquiring new protected actions and the email producer role being extended in the event of cancellation of flights.
+
+\subsection{Refactoring and design impact}
+These modifications involve refactoring of concrete components as opposed to just addition of new methods. CH01 involves refactoring of the destructive flight deletion feature into a lifecycle aware status change. CH03 involves refactoring of the booking update input into an expressive DTO that contains booking id, optional target flight and nested seat layout information.
+
+In the absence of any defined LOC or cyclometric-complexity measurement criteria for the application changes from the Part 2 notes provided, this report will not provide before-and-after numbers. This functional proof will depend upon the unit test results and code differences that have been documented.
+
+\section{Part 3 -- Cross-Language Comparison}
+
+The two key identified patterns include Dynamic Guard Factory Pattern and Producer–Consumer Pattern. These implementations were specifically developed without the presence of NestJS, Redis, BullMQ, and networks so that the comparison is made possible on Java, Python, JavaScript, and C++.
+
+\subsection{Common specifications}
+For Dynamic Guard Factory, the reduced problem is to design a role-checking guard based on a set of allowed roles and check the correctness of a provided user role. Seven test cases were implemented for each language.
+
+For Producer–Consumer, the reduced problem is a deterministic FIFO job queue with producer actions and consumer processing depending on the job type. Four test cases were implemented for each language.
+
+\subsection{Dynamic Guard Factory results}
+\begin{table}[H]
+\centering\small
+\begin{tabularx}{\linewidth}{@{}lrrrrY@{}}
+\toprule
+Language & LOC & Max CC & Test & Median ms & Notes\\
+\midrule
+Java & 19 & 2 & 7/7 & 78.3662 & JVM startup, class loading and test execution included\\
+Python & 9 & 2 & 7/7 & 34.3508 & Python process startup, module loading and test execution included\\
+JavaScript & 12 & 2 & 7/7 & 41.5423 & Node process startup, module loading and test execution included\\
+C++ & 18 & 2 & 7/7 & 7.6309 & Executable startup and test execution included\\
+\bottomrule
+\end{tabularx}
+\caption{Dynamic Guard Factory cross-language measurements.}
+\end{table}
+
+However, all four implementations passed all tests. C++ has the lowest process time recorded in the reduced benchmark, while Python has the smallest production code size. This timing is not meant to be a benchmark for performance of languages for the original NestJS application but rather for the snippets alone.
+
+\subsection{Producer--Consumer results}
+\begin{table}[H]
+\centering\small
+\begin{tabularx}{\linewidth}{@{}lrrrrY@{}}
+\toprule
+Language & LOC & Max CC & Test & Median ms & Notes\\
+\midrule
+Java & 51 & 4 & 4/4 & 94.4393 & JVM startup, class loading and test execution included\\
+Python & 24 & 4 & 4/4 & 62.5046 & Python process startup, module loading and test execution included\\
+JavaScript & 38 & 4 & 4/4 & 51.8063 & Node process startup, module loading and test execution included\\
+C++ & 38 & 4 & 4/4 & 10.8482 & Executable startup and test execution included\\
+\bottomrule
+\end{tabularx}
+\caption{Producer--Consumer cross-language measurements.}
+\end{table}
+
+\subsection{Batch Loader results}
+\begin{table}[H]
+\centering\small
+\begin{tabularx}{\linewidth}{@{}lrrrrY@{}}
+\toprule
+Language & LOC & Max CC & Test & Median ms & Notes\\
+\midrule
+Java & 71 & 3 & 7/7 & 91.6325 & JVM startup, class loading and test execution included\\
+Python & 32 & 3 & 7/7 & 23.8342 & Python process startup, module loading and test execution included\\
+JavaScript & 48 & 2 & 7/7 & 41.2825 & Node process startup, module loading and test execution included\\
+C++ & 79 & 5 & 7/7 & 11.2842 & Executable startup and test execution included\\
+\bottomrule
+\end{tabularx}
+\caption{Batch Loader cross-language measurements.}
+\end{table}
+
+
+All four implementations passed all seven tests, validating batched repository access, unique-key handling, key ordering, missing-record handling, and caching. C++ recorded the lowest process time in this reduced benchmark, while Python had the second-lowest. These measurements include process startup and test execution and are not intended to compare language performance in the original NestJS application.
+\subsection{Runtime and compilation environment}
+\begin{tabularx}{\linewidth}{@{}lY@{}}
+\toprule
+Language & Runtime/compiler\\
+\midrule
+Java & Java 25.0.1 LTS / javac 25.0.1\\
+Python & Python 3.11.9\\
+JavaScript & Node.js v22.12.0\\
+C++ & g++ (MSYS2) 14.2.0 / C++17\\
+\bottomrule
+\end{tabularx}
+
+Compilation was done before timing; one warmup and five timings were done, with the median value presented. Compilation time was not included. Raw data were saved for each pattern/language combination.
+\code{timing_raw.csv} file.
+
+\subsection{Structural comparison}
+Dynamic Guard Factory naturally maps to first-class functions/closures in Python and JavaScript, but factory methods/functions and concrete guard objects in Java and C++. However, the fundamental design concept remains identical: create guards depending on permitted roles and return an object capable of conducting the validation.
+
+Producer-Consumer pattern implementation demonstrates significant language level disparities. In Java, this problem is solved through explicit classes and queue types; in Python – using a concise object-oriented model; in JavaScript – through the object-oriented model available at run time; in C++ – through explicit types and queue support from the standard library. Nevertheless, all implementations remain faithful to the roles of producer, channel, and consumer.
+
+\subsection{Comparative dataset}
+The report data contains information regarding LOC source, the maximum complexity of cyclomatic function, runtime/ compiler, test command/result, median execution time, and language-related information. It is worth noting that the portability of the pattern is not affected by the implementation technique used. The execution times should only be considered within the given execution context and snippet scope.
+
+\section{LLM Records and Human Verification}
+
+The repository contains LLM-related documentation for Parts 1--3. The records distinguish preserved outputs from reconstructed or representative documentation where original transcripts were unavailable.
+
+\begin{table}[htbp]
+\centering
+\small
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{@{}p{0.09\textwidth}p{0.22\textwidth}X p{0.22\textwidth}@{}}
+\toprule
+\textbf{Part} & \textbf{Model / Date} & \textbf{LLM Record and Evaluation} & \textbf{Verification} \\
+\midrule
+Part 1 &
+Gemini 3.6 Flash (High), Oct.\ 2026 &
+\texttt{Part1/part1\_antigravity\_output.md}. Output was partially correct; a candidate pattern was rejected. &
+Pattern CSV and source inspection. \\
+\midrule
+Part 2 &
+Gemini 1.5 Pro, Oct.\ 6, 2026 &
+Change prompts and outputs. CH01 was correct; the CH02 output was not recoverable; the CH03 record is reconstructed/representative. &
+Change test results. \\
+\midrule
+Part 3 &
+GPT-5.6 Luna, Oct.\ 6, 2026 &
+\texttt{Part3/llm/part3\_prompt.txt}. The implementation record was reconstructed; no literal transcript was preserved. &
+Cross-language tests and timing files. \\
+\bottomrule
+\end{tabularx}
+\caption{LLM records and human verification across project parts.}
+\label{tab:llm-verification}
+\end{table}
+
+The team performed human verification using source-code locations, diffs in the change records, unit-test outputs, and cross-language CSV results. Missing execution times were not estimated, and no payment-provider implementation was invented.
+
+\section{Findings and Contributions}
+
+\subsection{Findings}
+\begin{enumerate}[leftmargin=*]
+\item The baseline This application features five validated pattern combinations within three different pattern groups, namely one Dynamic Guard Factory, three Batch Loaders, and one Producer-Consumer queue.
+\item The strongest architectural reuse is visible in the DataLoader collaborations: the same batching strategy is applied independently to users, flights, and seats.
+\item The Dynamic Guard Factory is resilient to new authorization requirements. It is extended rather than replaced when flight cancellation and booking modification introduce new role-protected operations.
+\item Flight cancellation demonstrates that a pattern can evolve because of a domain lifecycle change: the existing Producer--Consumer infrastructure gains a new producer without changing the queue/consumer contract.
+\item Seat-class expansion changes the domain model without forcing changes to the DataLoader collaboration, illustrating separation between entity representation and relation-loading infrastructure.
+\item The pattern counts remain constant across all three changes, but participant responsibilities and interactions change. Therefore, pattern evolution cannot be inferred from counts alone.
+\item The cross-language implementations show that the same pattern intent can be expressed through different abstraction mechanisms while retaining equivalent behavior.
+\item Payment integration remains a limitation of the supplied implementation. A new payment provider was not implemented, and the change requirements explicitly excluded payment gateways, refunds, and monetary transactions.
+\end{enumerate}
+
+\subsection{Contributions}
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Team Member Contributions}
+\label{tab:contributions}
+\begin{tabularx}{\textwidth}{|l|X|c|X|}
+\hline
+\textbf{Roll Number} & \textbf{Name} & \textbf{Batch} & \textbf{Actual Contribution} \\
+\hline
+AM.SC.U4CSE23016 & Balashankar Mohan & CSE-A &
+Analyzed the original application, identified design pattern instances, and documented Part 1 findings. \\
+\hline
+AM.SC.U4CSE23125 & Josewin Anto J & CSE-B &
+Prepared overall documentation, conducted baseline analysis and testing, documented test results, and organized supporting evidence. \\
+\hline
+AM.SC.U4CSE23128 & Karthik Kishor & CSE-B &
+Analyzed feature changes, documented pattern evolution, and prepared Part 2 records and diagrams. \\
+\hline
+AM.SC.U4CSE23141 & Pavithra Nair & CSE-B &
+Implemented selected patterns in four languages, ran tests, collected timing measurements, and documented Part 3 results. \\
+\hline
+\end{tabularx}
+\end{table}
+\section{References and Evidence Files}
+\begin{enumerate}[leftmargin=*]
+\item Supplied case-study instructions: \code{DP_Casestudy.pdf}; defines the required CSV datasets, report sections, source evidence rules, and team-folder structure.
+\item Supplied report template: \code{DP_Casestudy.pdf}; defines the required report organization from Application and Architecture through Findings and References.
+\item Baseline application source: commit \code{ae2c24869377ce2f7a29022cd237d808338156ea}; source snapshot stored under \code{data/code/}.
+\item Part 1 evidence: \code{Part1/patterns.csv}, \code{Part1/Pattern_count.csv}, \code{Part1/part1_antigravity_output.md}, and \code{Part1/pattern_architecture/}.
+\item Part 2 evidence: \code{Part2/pattern_evolution.csv}, \code{Part2/Pattern_count.csv}, change requirements, diffs, test results, and evolution diagrams.
+\item Part 3 evidence: \code{Part3/pattern_crosslanguage.csv}, four-language snippets, test runners, README files, and raw timing CSVs.
+\item NestJS, DataLoader, TypeORM, and BullMQ are used by the supplied application; the report's pattern claims are based on the application's actual collaborations rather than framework documentation alone.
+\end{enumerate}
+
+\section{Team Folder and Dataset Checklist}
+The supplied A8 folder contains the Part 1, Part 2, and Part 3 supporting artifacts. Before final submission, the following items should be checked against the faculty repository instructions:
+\begin{itemize}[leftmargin=*]
+\item \code{A8_Report.tex} and compiled \code{A8_Final_Report.pdf}.
+\item One final dataset folder containing \code{patterns.csv}, \code{pattern_counts.csv}, \code{cross_language.csv} (or the team's accepted filename), and \code{llm.csv}.
+\item Part 1 architecture diagram source and rendered image.
+\item Part 2 change requirements, diffs, test results, and updated diagrams.
+\item Part 3 four-language implementations, tests, READMEs, and raw timing evidence.
+\item README with source/version information, environment, run commands, inspected modules, and limitations.
+\item No passwords, dependency caches, or compiled binaries.
+\end{itemize}
+
+\vfill
+\begin{center}
+\textit{End of report}
+\end{center}
+
+\end{document}

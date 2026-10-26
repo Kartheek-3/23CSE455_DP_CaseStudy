@@ -1,0 +1,13 @@
+# template_method / javascript
+# working folder: Part3/code/pattern_template_method/javascript
+# runtime: Node.js v24.15.0
+$ node chart.test.js ../../../test-cases/template_method.txt
+PASS major_clamps_and_prefixes
+PASS minor_hook
+PASS negative_clamped_to_zero
+PASS empty_result_not_stored
+PASS hook_error_propagates
+passed 5/5
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 45.6, 49.0, 47.4, 56.8, 47.8 -> median 47.8

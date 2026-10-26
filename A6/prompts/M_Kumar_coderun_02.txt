@@ -1,0 +1,53 @@
+# Compile/run of the code blocks in prompts/M_Kumar_output_02.md
+
+## java: exit code 0
+command: javac Main.java && java Main
+```
+T1 COMPLETED 0
+T2 CANCELLED 0
+T3 CANCELLED 0
+T4 EXPIRED 0
+T5 PENDING 1
+T6 COMPLETED 1
+T7 REJECTED 0
+T8 EXPIRED 2
+```
+
+## python: exit code 0
+command: python llm_snippet.py
+```
+T1 COMPLETED 0
+T2 CANCELLED 0
+T3 CANCELLED 0
+T4 EXPIRED 0
+T5 PENDING 1
+T6 COMPLETED 1
+T7 REJECTED 0
+T8 EXPIRED 2
+```
+
+## javascript: exit code 0
+command: node llm_snippet.cjs
+```
+T1 COMPLETED 0
+T2 CANCELLED 0
+T3 CANCELLED 0
+T4 EXPIRED 0
+T5 PENDING 1
+T6 COMPLETED 1
+T7 REJECTED 0
+T8 EXPIRED 2
+```
+
+## cpp: exit code 0
+command: g++ -std=c++17 -Wall -Wextra -pedantic llm_snippet.cpp (gcc:13) && run
+```
+T1 COMPLETED 0
+T2 CANCELLED 0
+T3 CANCELLED 0
+T4 EXPIRED 0
+T5 PENDING 1
+T6 COMPLETED 1
+T7 REJECTED 0
+T8 EXPIRED 2
+```

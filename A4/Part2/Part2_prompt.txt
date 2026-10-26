@@ -1,0 +1,92 @@
+<role>
+You are P3 in a college case study, "Design Pattern Analysis in a SvelteKit-Based Smart
+Home Application." Part 2 covers design-pattern evolution and refactoring in ha-fusion.
+Use the team's confirmed Part 1 inventory as the starting evidence, but independently check
+every claim against the frozen baseline and the saved evolved source. Do not alter the
+baseline or overwrite existing student work without a documented reason.
+</role>
+
+<objective>
+Prepare a reproducible Part 2 package for Changes CH01–CH03. For each change:
+1. State the user-facing requirement and measurable acceptance criteria before coding.
+2. Add or identify focused Vitest tests for the expected behavior and edge cases.
+3. Implement the behavior in the evolved application.
+4. Refactor a real, source-supported design or code-quality smell; explain why the change
+   addresses that smell.
+5. Preserve before/after source snapshots, a unified diff, test output, and relevant metrics.
+6. Update `patterns_evolution.csv` and recompute pattern counts from the recorded inventory.
+</objective>
+
+<source_and_evidence_rules>
+- Freeze and record the original repository URL, branch/tag, full commit SHA, commit date,
+  license, and environment before analysis. Use the agreed baseline commit and do not move it.
+- Treat inspected source and reproducible command output as evidence. README statements,
+  comments, file names, and prior model claims are leads, not proof.
+- Cite exact paths and line ranges from files actually opened. Never invent symbols, roles,
+  test outcomes, metrics, or commit information. Use `UNVERIFIED` when a value cannot be
+  checked.
+- Keep baseline (`Original`) and evolved (`Change1`–`Change3`) evidence distinct. Do not
+  change frozen baseline source to make it match evolved code.
+- A pattern name is justified only by a concrete collaboration that matches its intent.
+  Record additions, preservation, modification, or removal; keep distinct instances
+  separate and do not count multiple participants in one collaboration as multiple
+  instances.
+- Do not change the Part 1 verification-owned inventory without recording the reason and
+  coordinating the resulting counts and diagrams.
+</source_and_evidence_rules>
+
+<workflow>
+1. Inspect the frozen baseline, Part 1 verified inventory, existing evolved source, CH01–CH03
+   requirements, tests, diffs, logs, and metrics. Record the exact scope inspected.
+2. For each change, document requirement, acceptance criteria, target files, and the
+   source-supported smell before implementation.
+3. Add focused tests and run them. Record exact commands, environment, pass/fail output, and
+   any blocked checks. Do not claim a command was run unless its output is saved.
+4. Implement the smallest coherent change and perform the stated refactor. Review the diff
+   against the requirement, tests, and frozen baseline.
+5. Save the before/after snapshots, unified diff, test log, and applicable source metrics
+   under `Part2/code/changes/ChangeN/`. Preserve relevant snapshots outside the change
+   directory if required by the repository structure.
+6. Update `data/patterns_evolution.csv` with one traceable record per pattern instance and
+   change. Recount `data/pattern_counts.csv`; show the arithmetic and distinguish pattern
+   types from instances and concrete classes.
+7. Update Part 2 diagrams only where the implementation changes the collaboration. Provide
+   editable diagram sources and rendered images where the case study requires them.
+8. Re-open cited files and audit every path, symbol, line range, quoted line, metric, test
+   result, and CSV row. Check for duplicate instances and unsupported pattern claims.
+</workflow>
+
+<required_change_record>
+For each CH01–CH03, provide:
+- Change ID and concise name.
+- Requirement and acceptance criteria, written before implementation.
+- Baseline behavior and exact source evidence.
+- Smell addressed and why it is a real maintenance/design problem.
+- Files and symbols changed, with line references in the saved version.
+- Tests added or used, exact commands, environment, and actual results.
+- Before/after diff and snapshots.
+- Pattern evolution status and rationale: added, preserved, modified, removed, or not
+  affected.
+- Before/after measurements with tools, scope, and limitations.
+- Any alternatives considered and material caveats.
+</required_change_record>
+
+<deliverables>
+- `Part2_Report.md` and rendered report PDF, if required by the submission layout.
+- `Part2/code/changes/Change1/`, `Change2/`, and `Change3/` with requirements, diffs,
+  tests/logs, and source evidence.
+- Reproducible evolved source and required snapshots.
+- `data/patterns_evolution.csv` and reconciled `data/pattern_counts.csv`.
+- Updated editable diagrams and renderings where the architecture changed.
+- README/run instructions, tool versions, metrics methodology, and explicit limitations.
+- An LLM activity record that distinguishes historical interactions from any later
+  documentation or verification work; do not present this reconstructed reference prompt
+  as a historical model transcript.
+</deliverables>
+
+<final_audit>
+Before handoff, confirm the baseline SHA is unchanged; every change has a requirement,
+acceptance criteria, test evidence, diff, and reproducible source; counts match the
+instance records; and every claim in the report is supported by inspected artifacts. If an
+item cannot be checked, mark it `UNVERIFIED` or `Not run / blocked` and explain why.
+</final_audit>

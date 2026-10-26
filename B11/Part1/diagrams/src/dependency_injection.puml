@@ -1,0 +1,12 @@
+@startuml dependency_injection
+title Dependency Injection - Service/Repository Wiring (framework idiom)
+skinparam shadowing false
+class "Spring Container" as IoC <<Injector>>
+class CaseService {
+  +CaseService(CaseRepository)
+}
+interface CaseRepository
+IoC ..> CaseService : injects
+CaseService o--> CaseRepository : constructor
+note bottom of CaseService : service/CaseService.java:18-21
+@enduml

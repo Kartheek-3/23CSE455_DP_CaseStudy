@@ -1,0 +1,65 @@
+﻿@startuml
+title WTMS - Repository Pattern Baseline
+
+skinparam classAttributeIconSize 0
+
+class WarehouseAPI
+class InventoryAPI
+class OrderAPI
+class TransportationAPI
+
+class WarehouseRepository {
+    +create_warehouse()
+    +get_warehouse_by_id()
+    +get_all_warehouses()
+    +update_warehouse()
+    +delete_warehouse()
+}
+
+class InventoryRepository {
+    +get_inventory()
+    +create_or_update_inventory()
+}
+
+class OrderRepository {
+    +create_customer()
+    +create_order()
+    +get_order()
+    +get_all_orders()
+}
+
+class TransportationRepository {
+    +create_vehicle()
+    +get_vehicles()
+    +create_driver()
+    +get_drivers()
+    +create_route()
+    +get_routes()
+    +create_shipment()
+    +get_shipments()
+}
+
+class Database {
+    +connect()
+    +disconnect()
+    +fetch_one()
+    +fetch_all()
+    +execute()
+    +transaction()
+}
+
+class PostgreSQL
+
+WarehouseAPI ..> WarehouseRepository : Depends
+InventoryAPI ..> InventoryRepository : Depends
+OrderAPI ..> OrderRepository : Depends
+TransportationAPI ..> TransportationRepository : Depends
+
+WarehouseRepository --> Database : uses
+InventoryRepository --> Database : uses
+OrderRepository --> Database : uses
+TransportationRepository --> Database : uses
+
+Database --> PostgreSQL : SQL
+
+@enduml

@@ -1,0 +1,7 @@
+Prompt used (Part 2, evolution & refactoring), Claude Opus 4.8, 2026-10-10:
+"Using the confirmed patterns from Part 1, design three realistic changes to the
+legalSystem app: (CH01) a new switchable late-fee policy extending the Strategy;
+(CH02) an SMS notification channel that turns the uncertain scheduler-Observer into
+a true subject-maintains-observers Observer; (CH03) replace the stubbed plaintext
+PasswordEncoder with a real BCryptPasswordEncoder. For each, give the code written
+to the com.dcm package, the pattern effect, and for CH03 a diff against the baseline."

@@ -1,0 +1,50 @@
+@startuml A3
+!pragma layout smetana
+title A3 Strategy: Filter and PostDiscoveryFilter
+
+interface "Filter<T>" as Filter <<Strategy, not counted>> #E6E6E6 {
+  +apply(T) : FilterResult
+}
+interface PostDiscoveryFilter <<Strategy>>
+interface "DiscoveryFilter<T>" as DiscoveryFilter <<Strategy, not counted>> #E6E6E6
+interface MethodFilter <<Strategy, not counted>> #E6E6E6
+interface ClassNameFilter <<Strategy, not counted>> #E6E6E6
+abstract class AbstractMethodFilter <<Strategy, not counted>> #E6E6E6
+abstract class AbstractClassNameFilter <<Strategy, not counted>> #E6E6E6
+class IncludeMethodFilter <<ConcreteStrategy>>
+class ExcludeMethodFilter <<ConcreteStrategy>>
+class IncludeClassNameFilter <<ConcreteStrategy, not counted>> #E6E6E6
+class ExcludeClassNameFilter <<ConcreteStrategy, not counted>> #E6E6E6
+class EngineFilter <<ConcreteStrategy, not counted>> #E6E6E6
+class "lambda from TagFilter.includeTags() / excludeTags()" as TagLambda <<ConcreteStrategy>>
+class FilterResult <<Result>>
+class EngineDiscoveryOrchestrator <<Context>> {
+  -postDiscoveryFilters : Collection<PostDiscoveryFilter>
+  -applyPostDiscoveryFilters()
+}
+
+PostDiscoveryFilter --|> Filter
+DiscoveryFilter --|> Filter
+MethodFilter --|> PostDiscoveryFilter
+ClassNameFilter --|> DiscoveryFilter
+AbstractMethodFilter ..|> MethodFilter
+AbstractClassNameFilter ..|> ClassNameFilter
+IncludeMethodFilter --|> AbstractMethodFilter
+ExcludeMethodFilter --|> AbstractMethodFilter
+IncludeClassNameFilter --|> AbstractClassNameFilter
+ExcludeClassNameFilter --|> AbstractClassNameFilter
+EngineFilter ..|> Filter
+TagLambda ..|> PostDiscoveryFilter
+Filter ..> FilterResult : returns
+EngineDiscoveryOrchestrator o--> "0..*" PostDiscoveryFilter : postDiscoveryFilters
+' aligned-with-record
+legend right
+  <b>Counted participants</b> (record in the dataset)
+  Strategy: PostDiscoveryFilter
+  ConcreteStrategy: IncludeMethodFilter
+  ConcreteStrategy: ExcludeMethodFilter
+  ConcreteStrategy (lambdas): TagFilter
+  Context: EngineDiscoveryOrchestrator#applyPostDiscoveryFilters
+  Grey classes: real, shown for context, not counted
+endlegend
+@enduml

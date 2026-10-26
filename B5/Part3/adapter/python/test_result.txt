@@ -1,0 +1,18 @@
+Command: python3 test_main.py
+Working directory: Part3/adapter/python
+Exit code: 0
+
+STDOUT:
+A01	OK	atlas_demo	Atlas Demo	atlas-rome-walk-01	Ancient Rome Walking Sampler	do	Rome, Italy	Fictional guided walk description	2400	EUR
+A02	OK	beacon_demo	Beacon Demo	beacon-rome-museum-01	Rome Museum Sampler	do	Rome, Italy	Fictional museum visit sampler	1600	EUR
+A03	OK	atlas_demo	Atlas Demo	atlas-paris-market-01	Paris Market Browsing	shop	Paris, France	Fictional market browsing offer	0	EUR
+A04	OK	beacon_demo	Beacon Demo	beacon-paris-pastry-01	Paris Pastry Stop	eat	Paris, France	Fictional pastry tasting stop	1250	EUR
+A05	ERROR	UNKNOWN_PROVIDER
+A06	ERROR	UNKNOWN_DESTINATION
+A07	ERROR	UNKNOWN_OFFER
+A08	ERROR	INVALID_OFFER
+A09	ERROR	INVALID_OFFER
+A10	ERROR	INVALID_FIXTURE
+
+STDERR:
+passed=10/10 failures=0 errors=0 skipped=0; extra_isolation_checks=passed

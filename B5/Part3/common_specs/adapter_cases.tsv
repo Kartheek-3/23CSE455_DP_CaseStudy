@@ -1,0 +1,11 @@
+case_id	provider_code	destination_code	offer_id	atlas_source	beacon_source
+A01	atlas_demo	rome	atlas-rome-walk-01	atlas_raw.tsv	beacon_raw.tsv
+A02	beacon_demo	rome	beacon-rome-museum-01	atlas_raw.tsv	beacon_raw.tsv
+A03	atlas_demo	paris	atlas-paris-market-01	atlas_raw.tsv	beacon_raw.tsv
+A04	beacon_demo	paris	beacon-paris-pastry-01	atlas_raw.tsv	beacon_raw.tsv
+A05	unknown_demo	rome	atlas-rome-walk-01	atlas_raw.tsv	beacon_raw.tsv
+A06	atlas_demo	berlin	atlas-rome-walk-01	atlas_raw.tsv	beacon_raw.tsv
+A07	atlas_demo	rome	beacon-rome-museum-01	atlas_raw.tsv	beacon_raw.tsv
+A08	atlas_demo	rome	atlas-rome-unsupported-01	adapter_invalid_fixtures/atlas_invalid_category.tsv	beacon_raw.tsv
+A09	atlas_demo	rome	atlas-rome-bad-price-01	adapter_invalid_fixtures/atlas_invalid_price.tsv	beacon_raw.tsv
+A10	atlas_demo	rome	atlas-rome-no-price-01	adapter_invalid_fixtures/atlas_missing_structure.tsv	beacon_raw.tsv

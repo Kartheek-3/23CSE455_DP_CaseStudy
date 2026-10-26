@@ -1,0 +1,78 @@
+{
+  "Java": {
+    "language_folder": "java",
+    "test_command": "java TestMain",
+    "exit_code": 0,
+    "passed": 8,
+    "total": 8,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "warmup_ms": 93.846054,
+    "five_measurements_ms": [
+      75.601558,
+      64.794227,
+      78.34,
+      78.456998,
+      56.485319
+    ],
+    "median_process_ms": 75.601558
+  },
+  "Python": {
+    "language_folder": "python",
+    "test_command": "python3 test_main.py",
+    "exit_code": 0,
+    "passed": 8,
+    "total": 8,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "warmup_ms": 829.603956,
+    "five_measurements_ms": [
+      847.285213,
+      798.343934,
+      814.46829,
+      819.621766,
+      839.15126
+    ],
+    "median_process_ms": 819.621766
+  },
+  "JavaScript": {
+    "language_folder": "javascript",
+    "test_command": "node test_main.js",
+    "exit_code": 0,
+    "passed": 8,
+    "total": 8,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "warmup_ms": 42.410069,
+    "five_measurements_ms": [
+      52.60629,
+      33.741442,
+      37.011172,
+      36.435657,
+      33.054916
+    ],
+    "median_process_ms": 36.435657
+  },
+  "C++": {
+    "language_folder": "cpp",
+    "test_command": "./information_expert_tests",
+    "exit_code": 0,
+    "passed": 8,
+    "total": 8,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "warmup_ms": 2.771811,
+    "five_measurements_ms": [
+      4.390529,
+      4.827389,
+      4.058398,
+      2.721256,
+      4.929857
+    ],
+    "median_process_ms": 4.390529
+  }
+}

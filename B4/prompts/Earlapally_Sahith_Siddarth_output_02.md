@@ -1,0 +1,3 @@
+# Baseline challenge output
+
+MVC is confirmed by resource routes, controllers, Eloquent models, and actual Blade templates. Active Record is confirmed because models own mapping/relationships and controllers invoke persistence directly. Chain of Responsibility is confirmed by middleware pass/stop behavior. Template Method is confirmed by Form Request hooks under a framework-owned lifecycle. Facade is confirmed by DB::transaction and Hash::make. Repository is rejected because no application repository abstraction exists; Strategy is rejected because no baseline algorithm family exists; Observer is rejected because an unused Notifiable trait alone is not a collaboration.

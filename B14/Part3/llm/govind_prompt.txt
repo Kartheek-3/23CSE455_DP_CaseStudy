@@ -1,0 +1,605 @@
+# MASTER TASK: 23CSE455 DESIGN PATTERN CASE STUDY — GOVIND'S PART 3
+
+You are acting as a senior software engineer, software-design-pattern researcher, cross-language implementation engineer, test engineer, and technical documentation writer.
+
+Your job is to inspect the supplied repositories and assignment materials, understand the complete case study, and then implement my assigned work with working code, tests, evidence, datasets, metrics, and documentation.
+
+Do not spend time explaining general concepts to me before doing the work. Investigate the workspace first, create an actionable plan internally, execute the tasks that can be completed, run the tests and measurements, and report only meaningful progress, actual results, and genuine blockers.
+
+## 1. PROJECT CONTEXT
+
+Course: 23CSE455 — Design Patterns
+
+Case study title: **Design Pattern Identification and Evolution in a Next.js-Based Digital News and Publishing Application**
+
+Application domain: A digital news and publishing application built with Next.js.
+
+The application may involve article management, author management, categories, comments, content moderation, recommendations, subscriptions, authentication, and related functionality.
+
+The uploaded materials may include:
+- Design Pattern Case Study Instructions PDF.
+- Design Pattern Case Study Report Template PDF.
+- The associated LaTeX report source.
+- An image showing the expected repository and folder structure.
+- The original Next.js application's source repository.
+- The course submission repository.
+- Existing team implementations, CSV files, tests, screenshots, diagrams, reports, or other supporting material.
+
+Read all available assignment documents and inspect the repository contents before modifying anything. Use the supplied documents as the authoritative requirements. Where instructions conflict, identify the conflict, prioritize the clearest and most explicit submission requirement, and document any unresolved ambiguity instead of silently inventing a resolution.
+
+### Team responsibilities
+
+- Keziah: Part 1 — Pattern Discovery.
+- Nivedita: Part 2 — Software Evolution.
+- BR GOVIND (me): Part 3 — Python and JavaScript implementations.
+- Soop: Part 3 — Java and C++ implementations.
+
+The overall Part 3 assignment requires two significant, verified design patterns to be implemented in four languages: Java, Python, JavaScript, and C++.
+
+My primary responsibility is **Python and JavaScript for both selected patterns**.
+
+Do not assume the other team members' work is complete. Inspect existing work, use verified findings where available, and prepare the interfaces, specifications, and evidence necessary to integrate the four languages. Do not overwrite their work or claim to have completed their assigned tasks unless the relevant work actually exists and has been verified.
+
+## 2. FIRST: DISCOVER THE ACTUAL PROJECT AND ITS STATE
+
+Before writing code:
+
+1. Inspect the current working directory, Git repositories, directory structure, README files, Git remotes, existing branches and changes.
+2. Identify which repository contains the actual Next.js news application and which repository is the course submission repository.
+3. Inspect all supplied PDFs, the LaTeX template, the folder-structure image, and any existing team documentation or datasets.
+4. Locate the approved original application repository URL. If there are multiple candidates, distinguish them using the supplied materials and available repository evidence.
+5. Identify the actual team folder name from the workspace or assignment materials. Do not assume the team is A1.
+6. Record the original application version, baseline commit hash, source URL, license, runtime versions, framework, dependency versions, and actual environment where discoverable.
+7. Inspect available tests, existing pattern inventories, diagrams, code changes, and any existing Python, JavaScript, Java or C++ implementations.
+
+Determine whether the supplied code is a genuine existing news application, a partial implementation, a starter template, a different application, or only the submission repository.
+
+Do not fabricate an original application URL, source version, commit hash, license, test result, environment version, or other missing fact.
+
+If a critical dependency is missing, complete the tasks that can be completed independently and clearly identify what remains blocked. Do not silently substitute an unrelated application.
+
+### Preserve the workspace
+
+- Inspect `git status` before changing files.
+- Preserve user changes, existing implementations, uncommitted files and the original application's source.
+- Do not reset, clean, overwrite or delete existing work.
+- Do not commit or push changes unless explicitly authorized.
+- Prefer working in the appropriate team directory or a clearly isolated Part 3 working directory.
+- Do not duplicate or move the original application's code unnecessarily.
+- Never expose secrets, environment variables containing credentials, API keys or passwords.
+- Do not modify the production application just to create cross-language demonstration snippets.
+
+## 3. UNDERSTAND THE COMPLETE CASE STUDY
+
+The assignment has three connected parts.
+
+### Part 1 — Pattern Discovery
+
+Keziah is responsible for examining the original application and identifying verified patterns across the application's relevant functionality.
+
+The investigation scope includes:
+- Article management.
+- Author management.
+- Categories.
+- Comments.
+- Content moderation.
+- Recommendations.
+- Subscriptions.
+- Authentication.
+
+The expected outputs include an architecture description, pattern inventory, actual source-code participant mapping, UML or component diagrams, source evidence, pattern counts, and human verification.
+
+Use Part 1's results as the primary basis for selecting the patterns for Part 3.
+
+If Part 1 is incomplete, independently inspect the available original source and identify credible candidates. Label independently discovered findings appropriately. Do not represent an unverified candidate as a confirmed Part 1 result.
+
+### Part 2 — Software Evolution
+
+Nivedita is responsible for three changes:
+
+1. Add article recommendations.
+2. Add content moderation.
+3. Add subscription/paywall functionality.
+
+For each change, the case study requires an explicit requirement, implementation, observable acceptance criteria, tests, before/after source evidence, affected pattern collaborations, relevant refactoring, metrics, and updated counts.
+
+Inspect the current Part 2 work if available. Use it to understand how the application and its design evolve, but do not claim to have implemented or verified Nivedita's changes unless you actually have.
+
+### Part 3 — Cross-Language Analysis
+
+Select two significant, verified pattern types and implement representative examples of the same underlying problems in Java, Python, JavaScript and C++.
+
+My deliverable is Python and JavaScript for both patterns.
+
+Each language must implement the same intended behavior, using a common specification, equivalent rules, shared fixtures and the same expected results.
+
+The goal is not to rewrite the complete Next.js application in four languages. Create small, independently runnable implementations that demonstrate the relevant patterns faithfully.
+
+## 4. SELECT THE TWO PATTERNS CORRECTLY
+
+Before implementing anything, inspect the verified Part 1 findings and available source code.
+
+Select exactly two significant patterns that meet these requirements:
+
+- They are genuinely supported by source-code evidence or explicitly verified findings.
+- Their purpose and participants can be explained accurately.
+- They are suitable for a small, meaningful cross-language implementation.
+- They are relevant to the case study and, where appropriate, to its evolution scenarios.
+- They allow their behavior to be tested and compared across all four languages.
+
+Potential examples include Strategy for interchangeable recommendation algorithms or Chain of Responsibility for sequential moderation rules. These are only candidates: do not select them automatically or claim that they exist in the application without evidence.
+
+For each selected pattern, record:
+- Exact recognized pattern name and category.
+- Original application source instance and meaningful instance name.
+- The design problem it solves.
+- Its actual participants and their roles.
+- Qualified class, interface, function or module names.
+- Source file paths and exact line ranges.
+- Relevant interactions, calls, delegation, composition or inheritance.
+- Evidence supporting the classification.
+- Verification result and plausible alternative interpretations.
+- Why this pattern is suitable for cross-language implementation.
+
+Distinguish between an existing production pattern and a small educational implementation inspired by it. Never claim the demonstration snippet is identical to the original application's architecture if it is not.
+
+If two defensible patterns cannot be established from the supplied materials, report the exact gap rather than inventing findings.
+
+## 5. DEFINE A SHARED SPECIFICATION BEFORE CODING
+
+For each selected pattern, create a concise language-independent specification before implementing its Python and JavaScript versions.
+
+Include:
+- Problem statement.
+- Input schema.
+- Output schema.
+- Business rules.
+- Expected ordering and tie-breaking rules, where applicable.
+- Boundary cases.
+- Invalid input and error-handling behavior.
+- At least one normal case.
+- At least one edge case.
+- Expected results for every test fixture.
+
+Coordinate these specifications with Soop's Java and C++ work.
+
+Use shared, language-neutral fixtures, preferably a JSON file where appropriate, so the same cases can be consumed by all four implementations. Language-specific test runners may parse the same fixtures.
+
+The implementations must preserve the same intended semantics, not merely use similarly named classes or functions.
+
+For example, if all implementations rank articles, they must use the same score formula, input values, descending/ascending behavior, tie-breaking rule and expected order. Do not let JavaScript mutate input arrays if Python preserves them, or allow different error semantics without explicitly defining that difference.
+
+Create an integration/specification document for Soop that explains the selected patterns, participant contracts, function signatures or equivalent interfaces, fixtures, expected outputs, test commands and requirements for matching behavior.
+
+If Soop's implementations already exist, inspect and test them before changing anything. Do not overwrite them.
+
+## 6. IMPLEMENT BOTH PATTERNS IN PYTHON
+
+For each selected pattern, implement a clear, idiomatic, independently runnable Python solution.
+
+Requirements:
+- Use meaningful names and sensible separation of responsibilities.
+- Preserve the intent of the design pattern.
+- Use appropriate interfaces, protocols, abstract classes, composition or other Python mechanisms where they improve the design.
+- Avoid unnecessary inheritance or abstractions that make a tiny example harder to understand.
+- Keep production code separate from tests.
+- Prefer Python's standard library unless an additional dependency is justified and available.
+- Implement all shared fixtures and specified error cases.
+- Provide a working command to run the snippet.
+- Provide a working command to run automated tests.
+- Use deterministic output for repeatable tests.
+- Include type hints when they help clarify the contracts.
+
+Do not write pseudocode in place of the implementation.
+
+Do not mark a test as passing unless it has been executed and the actual output supports that result.
+
+## 7. IMPLEMENT BOTH PATTERNS IN JAVASCRIPT
+
+For each selected pattern, implement the same behavior in idiomatic, independently runnable JavaScript.
+
+Requirements:
+- Use the JavaScript runtime appropriate for the standalone cross-language experiment, normally Node.js unless the supplied environment calls for something else.
+- Do not unnecessarily couple the snippets to the Next.js runtime, browser APIs or application-specific dependencies.
+- Use appropriate JavaScript abstractions to represent the pattern faithfully.
+- Keep production code and tests separate.
+- Reuse the language-independent test cases and expected outputs.
+- Handle errors and boundary cases consistently with the shared specification.
+- Avoid accidental mutation of input data.
+- Provide exact, reproducible run and test commands.
+- Record the actual JavaScript runtime version.
+
+The purpose is to compare programming-language implementations, not to benchmark unrelated web frameworks or build systems.
+
+## 8. AUTOMATED TESTING AND BEHAVIORAL EQUIVALENCE
+
+Create and execute proper tests for all four-language integrations where the relevant implementations are available.
+
+For my Python and JavaScript implementations:
+- Every fixture must have an expected result.
+- Verify normal, boundary and error cases applicable to each pattern.
+- Check tie-breaking, ordering, default behavior, empty collections and invalid inputs wherever relevant.
+- Confirm that the same fixtures produce equivalent results across Python and JavaScript.
+- Avoid tests that merely repeat internal implementation details instead of checking behavior.
+- Add regression tests for defects discovered during implementation.
+
+Use a simple test framework already available, or a standard-library solution such as Python `unittest` and Node.js's built-in test runner where appropriate.
+
+Keep test dependencies and test commands explicit.
+
+Run the implementations and tests in the actual available environment. Save test output and relevant logs.
+
+For each implementation, record the actual test result as `passed/total`, or record its genuine failure or `not_run` status with a reason.
+
+Never substitute a successful Python test run for a JavaScript test result, or assume another language behaves identically without testing it.
+
+If Java or C++ code is not available yet, do not mark the four-language comparison as complete. Prepare the common fixtures and integration contract, complete my languages, and identify what still requires Soop's implementations.
+
+## 9. REPOSITORY AND FILE ORGANIZATION
+
+Use the exact team directory and conventions found in the supplied instructions and repository. A1 in the examples is a placeholder unless confirmed as the actual team.
+
+A suitable structure, adapted to the existing repository, would be:
+
+TEAM/
+├── README.md
+├── TEAM_Report.tex
+├── TEAM_Report.pdf
+├── data/
+│   ├── patterns.csv
+│   ├── pattern_counts.csv
+│   ├── pattern_evolution.csv
+│   ├── cross_language.csv
+│   ├── llm.csv
+│   └── case_study_metrics.xlsx
+│
+└── Part3/
+    ├── <PatternOne>/
+    │   ├── specification.md
+    │   ├── fixtures.json
+    │   ├── python/
+    │   │   ├── implementation.py
+    │   │   ├── test_implementation.py
+    │   │   └── README.md
+    │   ├── javascript/
+    │   │   ├── implementation.js
+    │   │   ├── test_implementation.js
+    │   │   └── README.md
+    │   ├── java/
+    │   └── cpp/
+    │
+    ├── <PatternTwo>/
+    │   ├── specification.md
+    │   ├── fixtures.json
+    │   ├── python/
+    │   ├── javascript/
+    │   ├── java/
+    │   └── cpp/
+    │
+    ├── evidence/
+    │   ├── python/
+    │   ├── javascript/
+    │   └── cross_language/
+    │
+    ├── llm/
+    │   └── part3_prompt.txt
+    │
+    └── SOOP_INTEGRATION.md
+
+Treat this as a suggested layout, not permission to create conflicting or duplicate datasets. Follow the uploaded repository instructions and existing team conventions when they differ.
+
+The source instructions specify one central dataset directory and caution against duplicating the same four CSV datasets inside every part directory. Keep one canonical version of each dataset and use references to it elsewhere.
+
+Preserve any existing files and naming conventions that are already correct. Adapt filenames to the actual chosen patterns.
+
+Do not place generated binaries, dependency caches, secrets or unrelated temporary files in the deliverable.
+
+## 10. REQUIRED DATASETS AND THEIR SCHEMAS
+
+Use UTF-8 CSV with a header row, proper CSV quoting, paths relative to the team directory where required, and actual verified values.
+
+Inspect the supplied instructions for the precise naming and required columns. Use these schemas unless the supplied template explicitly specifies a compatible variation.
+
+### A. patterns.csv
+
+One row represents one confirmed pattern collaboration in one source version.
+
+Columns:
+- `source_version`
+- `pattern_name`
+- `pattern_type`
+- `instance_name`
+- `participant_roles`
+- `source_locations`
+- `intent_and_evidence`
+
+Include all applicable actual participants, not just the principal class. Distinguish roles that are combined in a class from classes or interfaces that are genuinely separate.
+
+### B. pattern_counts.csv
+
+Columns:
+- `source_version`
+- `summary`
+- `pattern_name`
+- `count`
+
+Record the count of each pattern, total distinct pattern types and total pattern instances for the relevant source version. Calculate counts from the actual pattern records rather than manually guessing them.
+
+### C. pattern_evolution.csv
+
+The supplied documents are inconsistent about the exact filename and whether evolution observations belong in this file or in an appended evolution dataset. Inspect the actual instructions and repository before deciding.
+
+The evolution dataset should retain the relevant original observation and record:
+- `source_version`
+- `pattern_name`
+- `pattern_type`
+- `instance_name`
+- `participant_roles`
+- `source_locations`
+- `intent_and_evidence`
+- `status_after_change`
+- `change_description`
+
+Allowed status values include `baseline`, `preserved`, `modified`, `extended`, `replaced`, `removed` and `newly_introduced`.
+
+Do not count historical changes as additional concurrent pattern instances. Keep continuing instance names stable and preserve removed-instance records as required.
+
+### D. cross_language.csv
+
+Use the exact columns required by the instructions:
+
+- `pattern_name`
+- `instance_name`
+- `language`
+- `snippet_path`
+- `source_loc`
+- `max_function_cc`
+- `runtime_compiler`
+- `test_command`
+- `test_result`
+- `median_process_ms`
+- `language_notes`
+
+Record actual results for each language implementation. My completed rows should cover the Python and JavaScript implementation of each selected pattern. Integrate Soop's Java and C++ rows only after their implementations and evidence are available and verified.
+
+Do not create fake rows containing guessed metrics just to make the dataset appear complete.
+
+### E. llm.csv
+
+Required columns:
+- `part`
+- `model_and_date`
+- `prompt_file`
+- `input_file`
+- `output_file`
+- `evaluation`
+- `verification_file`
+
+Capture genuine prompt, input and output information for the analyses or generated code that are actually recorded. Save exact prompts and available raw outputs, then evaluate material claims against source code and tests.
+
+Use the actual model identity and interaction date if exposed by the environment. If an item is unavailable, explicitly mark it as unavailable or requiring manual completion; do not invent it.
+
+### F. Excel workbook
+
+The expected outputs mention Excel as well as CSV.
+
+Where practical, create a workbook generated from the canonical datasets, with clearly named sheets for the actual datasets and appropriately formatted headers, readable column widths, filters and frozen header rows.
+
+If both the CSV files and Excel workbook are created, ensure their data values agree. Never use the workbook as a reason to maintain multiple inconsistent versions of the same data.
+
+## 11. MEASURE THE IMPLEMENTATIONS CORRECTLY
+
+The assignment requires static and dynamic comparisons.
+
+For every Python and JavaScript implementation, measure and document the following.
+
+### Source lines of code
+
+Record production LOC only, excluding:
+- Blank lines.
+- Comments.
+- Test code.
+
+Apply the same counting convention to all languages. Document the tool or script and measurement rule.
+
+### Maximum function cyclomatic complexity
+
+Measure maximum function cyclomatic complexity using a consistent, named and available tool wherever possible.
+
+Prefer a common tool that supports the relevant languages if it is already available in the environment. Otherwise, establish an appropriate reproducible measurement method and document the tool and counting rule. If a reliable measurement cannot be obtained, mark it as not measured with an explanation rather than fabricating a value.
+
+### Runtime and compiler
+
+Record actual runtime or compiler names and versions. Run commands to verify the versions rather than assuming them.
+
+### Tests
+
+Record the exact test command and actual result for each implementation.
+
+### Median process execution time
+
+Follow the supplied methodology:
+1. Compile first where relevant.
+2. Execute one warm-up run.
+3. Perform five measured runs.
+4. Record the five raw observations.
+5. Report the median elapsed time in milliseconds.
+
+Use equivalent timing methodology and the same machine for the language comparisons.
+
+Define whether timing includes process startup and fixture/input reading or measures only the snippet execution. Apply that measurement boundary consistently and document it once in the README.
+
+Keep raw timing observations as evidence. Do not estimate measurements or present invented timings.
+
+Do not conclude that the fastest result is the best design merely because it runs faster. Discuss the limitations of measuring small programs, process startup overhead, language/runtime differences and measurement variability.
+
+## 12. UML, ARCHITECTURE AND SOURCE EVIDENCE
+
+The overall team submission requires application architecture, a pattern inventory, pattern-to-source-code mapping, UML diagrams, source-code evidence and evolution analysis.
+
+For my Part 3 work:
+- Provide a clear diagram or editable diagram source showing the relevant pattern roles and relationships.
+- Include participant names and responsibilities.
+- Show important calls, delegation, composition, inheritance or implementation relationships where applicable.
+- Include the source instance from the original application separately from my cross-language demonstration, so they are not confused.
+- Produce rendered diagram images if required by the current repository conventions.
+- Reference relevant original source paths and line ranges, along with the independent implementation files.
+- Preserve enough evidence for another team member to verify the claims.
+
+Prefer an editable diagram format, such as Mermaid or PlantUML if supported by the workspace, rather than only providing an uneditable image.
+
+Do not add irrelevant diagrams or reproduce the entire application architecture just for decoration.
+
+## 13. LLM USAGE AND HUMAN VERIFICATION
+
+The assignment requires actual LLM prompts, supplied inputs, outputs and human verification.
+
+Create and preserve:
+- The exact prompts used for pattern analysis or code generation.
+- The specific source code or specification supplied as input.
+- Available raw model outputs.
+- The claims being evaluated.
+- Verification notes supported by source code, tests or measurement logs.
+- Any corrections made to incorrect or incomplete generated claims.
+- Paths to relevant evidence.
+
+Evaluation statuses should honestly distinguish `correct`, `partially correct`, `incorrect` and `cannot confirm`, as appropriate.
+
+Do not fabricate AI experiments, transcripts, test results, human reviewers or model metadata. Clearly distinguish code suggested by an LLM from code manually implemented or subsequently modified.
+
+The final code must pass the actual checks regardless of whether it originated from a model or a human.
+
+## 14. INTEGRATION WITH THE OVERALL REPORT
+
+Read the supplied report template and identify where Part 3's results fit into the overall report.
+
+Prepare integration-ready content for the report owner:
+- Selected pattern names and rationale.
+- Original source instances and supporting evidence.
+- Shared specifications and fixture descriptions.
+- Python and JavaScript implementation paths.
+- Actual test results.
+- Metrics and measurement methodology.
+- A concise cross-language comparison.
+- Limitations and interpretation of the results.
+- References to the actual evidence and datasets.
+
+Do not fabricate or silently fill in Keziah's pattern counts, Nivedita's change results, Soop's test results, student roll numbers, batch details, or the final submission details.
+
+If useful, create a concise slide-ready summary of Part 3 that can be incorporated into the team's final presentation. Do not claim the complete team report or PDF is final unless all required team-owned sections have actually been completed and reviewed.
+
+The overall expected report includes:
+1. Application description.
+2. Framework architecture.
+3. Pattern inventory.
+4. Pattern-to-source-code mapping.
+5. UML diagrams.
+6. Source-code evidence.
+7. Three evolution scenarios.
+8. Before/after analysis.
+9. Refactoring analysis.
+10. Four-language implementations.
+11. LLM prompts and outputs.
+12. Human verification.
+13. Metrics.
+14. Excel and CSV datasets.
+
+My priority is to complete my own Part 3 work and supply trustworthy evidence that the team can integrate into these deliverables.
+
+## 15. QUALITY AND CORRECTNESS REQUIREMENTS
+
+Treat the assignment as an evidence-based engineering study, not a code-generation exercise.
+
+- Do not invent patterns or assert that a pattern exists based only on naming.
+- Do not write the entire news application from scratch when the assignment calls for examining an existing source repository.
+- Do not overengineer the demonstration snippets.
+- Do not use different functional rules across the four languages.
+- Do not report successful tests that were not executed.
+- Do not fill missing language results with guesses.
+- Do not submit invented LOC, complexity, timing or runtime values.
+- Do not silently change the common behavior specification.
+- Do not duplicate canonical datasets unnecessarily.
+- Do not overwrite the team's existing work.
+- Do not claim the overall case study is finished when other team members' deliverables are missing.
+- Clearly separate confirmed findings, plausible interpretations, assumptions and unresolved questions.
+- Use exact file paths, commands, versions, source locations and evidence references.
+- Keep implementation comments and documentation useful rather than verbose.
+- Prefer deterministic behavior, simple dependencies, reproducibility and clear tests.
+
+When a test fails, investigate and fix the implementation or explain the genuine environmental blocker. Do not hide a failing test or replace its expected output merely to make it pass.
+
+## 16. EXECUTION ORDER
+
+Execute the task in this order:
+
+**Phase 1 — Repository and material reconnaissance**
+
+Inspect the supplied documents, original application, submission repository, existing team artifacts and environment. Determine what is available and what is missing.
+
+**Phase 2 — Pattern verification and selection**
+
+Inspect verified Part 1 findings or independently examine the source where necessary. Select two defensible patterns, identify their original source instances and document the evidence.
+
+**Phase 3 — Shared specifications**
+
+Define both pattern problems, participant contracts, input/output rules, shared fixtures, edge cases and expected results. Create the integration instructions for Soop.
+
+**Phase 4 — Implementation**
+
+Implement both patterns in Python and JavaScript with separate production code, tests, fixtures and README files.
+
+**Phase 5 — Verification**
+
+Run all relevant tests, compare outputs, inspect edge cases and address defects. Record actual results.
+
+**Phase 6 — Measurement**
+
+Measure LOC, complexity, runtime versions, test outcomes and median process timings. Preserve raw measurement evidence.
+
+**Phase 7 — Documentation and datasets**
+
+Create or update the appropriate canonical CSV files, the Excel workbook where practical, the Part 3 comparison report, source evidence, diagrams, prompt records and integration notes.
+
+**Phase 8 — Final audit**
+
+Verify the folder structure, runnable commands, file paths, dataset consistency, test results, measurement records and uncompleted dependencies. Do not declare incomplete work complete.
+
+Work autonomously. Avoid asking me routine questions that can be answered by inspecting the supplied files. If an essential decision genuinely cannot be resolved, finish independent work first, document the blocker, explain exactly what input is needed and avoid guessing.
+
+## 17. DEFINITION OF DONE
+
+My assigned work is complete only when:
+
+- Two suitable patterns have been selected based on evidence, or a genuine source-related blocker is explicitly documented.
+- Both patterns have working Python and JavaScript implementations.
+- Their behavior is defined by shared specifications and test fixtures.
+- All implemented-language tests have actually been run and results saved.
+- Source code is separate from test code.
+- Each implementation has run instructions.
+- Soop has a clear specification to implement equivalent Java and C++ versions.
+- Actual metrics and measurement methodology are documented.
+- Cross-language CSV rows for my implementations are accurate and complete.
+- Relevant source evidence, diagrams and human-verification notes are available.
+- The appropriate canonical datasets and Excel workbook are created or updated where practical.
+- The work fits the supplied team submission structure.
+- Missing dependencies on the other team members are transparently identified.
+- The final report states exactly what was done, what was verified, what failed, and what remains outstanding.
+
+## 18. FINAL RESPONSE AFTER EXECUTION
+
+Once you finish, provide a concise engineering handoff with:
+
+1. The original repository and baseline commit actually inspected.
+2. The two selected patterns and the evidence supporting the selection.
+3. A summary of the Python and JavaScript implementations created.
+4. Exact paths to the principal code, tests, fixtures, READMEs and integration guide.
+5. Actual test commands and outcomes.
+6. Actual measurements, where successfully collected.
+7. The datasets, workbook, diagrams and report-ready material created.
+8. Any issues, missing inputs, unmeasured values or outstanding work.
+9. The exact commands I should run to verify the deliverables myself.
+10. A clear statement of whether my Part 3 contribution is complete and which dependencies still require Soop or the other team members.
+
+Do not return a lengthy generic tutorial. Perform the engineering work in the repository, provide concrete deliverables and a clear handoff.
+
+**Begin by inspecting the supplied assignment documents and current repository. Do not start by guessing what the application contains or which patterns it implements.**

@@ -1,0 +1,4 @@
+add -> PASS  [logging > disabled > timeout > invocation]
+div -> SKIPPED (disabled)  [logging > disabled]
+slow -> TIMEOUT (500 ms > 100 ms limit)  [logging > disabled > timeout > invocation]
+sub -> FAIL  [logging > disabled > timeout > invocation]

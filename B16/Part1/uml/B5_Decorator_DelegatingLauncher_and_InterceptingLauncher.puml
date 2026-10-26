@@ -1,0 +1,40 @@
+@startuml B5
+!pragma layout smetana
+title B5 Decorator: DelegatingLauncher and InterceptingLauncher
+
+interface Launcher <<Component>> {
+  +discover(...)
+  +execute(...)
+  +registerTestExecutionListeners(...)
+}
+class DefaultLauncher <<ConcreteComponent>>
+class DelegatingLauncher <<Decorator>> {
+  #delegate : Launcher
+}
+class InterceptingLauncher <<ConcreteDecorator>> {
+  -interceptor : LauncherInterceptor
+}
+interface LauncherInterceptor <<Collaborator>> {
+  +intercept(Invocation)
+}
+class DefaultLauncherSession <<Assembler>> {
+  -launcher : DelegatingLauncher
+}
+
+DefaultLauncher ..|> Launcher
+DelegatingLauncher ..|> Launcher
+DelegatingLauncher o--> Launcher : delegate
+InterceptingLauncher --|> DelegatingLauncher
+InterceptingLauncher o--> LauncherInterceptor : interceptor
+DefaultLauncherSession o--> DelegatingLauncher : launcher
+' aligned-with-record
+legend right
+  <b>Counted participants</b> (record in the dataset)
+  Component: Launcher
+  ConcreteComponent: DefaultLauncher
+  Decorator: DelegatingLauncher
+  ConcreteDecorator: InterceptingLauncher
+  Assembler: DefaultLauncherSession
+  Grey classes: real, shown for context, not counted
+endlegend
+@enduml

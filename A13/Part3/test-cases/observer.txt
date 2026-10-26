@@ -1,0 +1,10 @@
+# case|commands: on <name>; off <name>; commit <key> <value> (listener "boom" throws)|expected (notifications joined by ~)
+# The expected oldValue is the NEW value, because manager.ts:261-271 reads it after the state was updated. Unchanged commits emit nothing (manager.ts:254-257).
+no_observers_no_output|commit theme dark|
+single_observer|on A;commit theme dark|A:theme=dark(oldValue=dark)
+changed_value_notifies_again|on A;commit theme dark;commit theme light|A:theme=dark(oldValue=dark)~A:theme=light(oldValue=light)
+unchanged_value_not_announced|on A;commit theme dark;commit theme dark|A:theme=dark(oldValue=dark)
+registration_order|on A;on B;commit lang ja|A:lang=ja(oldValue=ja)~B:lang=ja(oldValue=ja)
+unsubscribed_not_notified|on A;on B;off A;commit lang ja|B:lang=ja(oldValue=ja)
+unknown_off_ignored|on A;off Z;commit k v|A:k=v(oldValue=v)
+listener_error_propagates|on A;on boom;on B;commit k v|A:k=v(oldValue=v)~ERR:listener failed

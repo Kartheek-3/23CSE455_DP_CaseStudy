@@ -1,0 +1,564 @@
+# DaPlanStan — Trip Creation, Membership and Permission Investigation
+
+Patterns unconfirmed
+
+Source Investigation 03 · Original uploaded ZIP
+
+## 1. Initial source findings
+
+The implementation separates responsibilities across Rails controllers and Active Record models. Three important facts emerge from the code:
+
+1. Trip creation and owner-membership creation are coordinated by `TripsController#create`, not by a single `Trip` model method. The controller saves the trip, creates its first `TripMember`, and enqueues cover-image retrieval.
+2. Membership roles are stored as values on `TripMember`. No application-defined interchangeable role objects or role-specific classes were identified in this source area.
+3. Permissions are enforced differently across controllers. Some actions require owner or planner membership, others require only that the user belongs to the trip.
+
+The last distinction matters: DaPlanStan does not implement one uniform, centralized authorization policy.
+
+## 2. Trip creation — complete collaboration trace
+
+Trip creation control flow
+
+\#chatgpt-mermaid-\_r_1am\_{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;fill:rgb(237, 237, 237);}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#chatgpt-mermaid-\_r_1am\_ .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-\_r_1am\_ .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-\_r_1am\_ .error-icon{fill:rgb(48, 48, 48);}#chatgpt-mermaid-\_r_1am\_ .error-text{fill:rgb(237, 237, 237);stroke:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_1am\_ .edge-thickness-normal{stroke-width:1px;}#chatgpt-mermaid-\_r_1am\_ .edge-thickness-thick{stroke-width:3.5px;}#chatgpt-mermaid-\_r_1am\_ .edge-pattern-solid{stroke-dasharray:0;}#chatgpt-mermaid-\_r_1am\_ .edge-thickness-invisible{stroke-width:0;fill:none;}#chatgpt-mermaid-\_r_1am\_ .edge-pattern-dashed{stroke-dasharray:3;}#chatgpt-mermaid-\_r_1am\_ .edge-pattern-dotted{stroke-dasharray:2;}#chatgpt-mermaid-\_r_1am\_ .marker{fill:rgb(175, 175, 175);stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_1am\_ .marker.cross{stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_1am\_ svg{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;}#chatgpt-mermaid-\_r_1am\_ p{margin:0;}#chatgpt-mermaid-\_r_1am\_ .label{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_1am\_ .cluster-label text{fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_1am\_ .cluster-label span{color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_1am\_ .cluster-label span p{background-color:transparent;}#chatgpt-mermaid-\_r_1am\_ .label text,#chatgpt-mermaid-\_r_1am\_ span{fill:rgb(237, 237, 237);color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_1am\_ .node rect,#chatgpt-mermaid-\_r_1am\_ .node circle,#chatgpt-mermaid-\_r_1am\_ .node ellipse,#chatgpt-mermaid-\_r_1am\_ .node polygon,#chatgpt-mermaid-\_r_1am\_ .node path{fill:rgb(9, 23, 44);stroke:rgb(31, 78, 148);stroke-width:1px;}#chatgpt-mermaid-\_r_1am\_ .rough-node .label text,#chatgpt-mermaid-\_r_1am\_ .node .label text,#chatgpt-mermaid-\_r_1am\_ .image-shape .label,#chatgpt-mermaid-\_r_1am\_ .icon-shape .label{text-anchor:middle;}#chatgpt-mermaid-\_r_1am\_ .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#chatgpt-mermaid-\_r_1am\_ .rough-node .label,#chatgpt-mermaid-\_r_1am\_ .node .label,#chatgpt-mermaid-\_r_1am\_ .image-shape .label,#chatgpt-mermaid-\_r_1am\_ .icon-shape .label{text-align:center;}#chatgpt-mermaid-\_r_1am\_ .node.clickable{cursor:pointer;}#chatgpt-mermaid-\_r_1am\_ .root .anchor path{fill:rgb(175, 175, 175)!important;stroke-width:0;stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_1am\_ .arrowheadPath{fill:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_1am\_ .edgePath .path{stroke:rgb(175, 175, 175);stroke-width:1px;}#chatgpt-mermaid-\_r_1am\_ .flowchart-link{stroke:rgb(175, 175, 175);fill:none;}#chatgpt-mermaid-\_r_1am\_ .edgeLabel{background-color:rgb(0, 0, 0);text-align:center;}#chatgpt-mermaid-\_r_1am\_ .edgeLabel p{background-color:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_1am\_ .edgeLabel rect{opacity:0.5;background-color:rgb(0, 0, 0);fill:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_1am\_ .labelBkg{background-color:rgba(0, 0, 0, 0.5);}#chatgpt-mermaid-\_r_1am\_ .cluster rect{fill:rgb(48, 48, 48);stroke:rgba(255, 255, 255, 0.15);stroke-width:1px;}#chatgpt-mermaid-\_r_1am\_ .cluster text{fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_1am\_ .cluster span{color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_1am\_ div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:12px;background:rgb(48, 48, 48);border:1px solid rgba(255, 255, 255, 0.15);border-radius:2px;pointer-events:none;z-index:100;}#chatgpt-mermaid-\_r_1am\_ .flowchartTitleText{text-anchor:middle;font-size:18px;fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_1am\_ rect.text{fill:none;stroke-width:0;}#chatgpt-mermaid-\_r_1am\_ .icon-shape,#chatgpt-mermaid-\_r_1am\_ .image-shape{background-color:rgb(0, 0, 0);text-align:center;}#chatgpt-mermaid-\_r_1am\_ .icon-shape p,#chatgpt-mermaid-\_r_1am\_ .image-shape p{background-color:rgb(0, 0, 0);padding:2px;}#chatgpt-mermaid-\_r_1am\_ .icon-shape .label rect,#chatgpt-mermaid-\_r_1am\_ .image-shape .label rect{opacity:0.5;background-color:rgb(0, 0, 0);fill:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_1am\_ .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#chatgpt-mermaid-\_r_1am\_ .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#chatgpt-mermaid-\_r_1am\_ .node .neo-node{stroke:rgb(31, 78, 148);}#chatgpt-mermaid-\_r_1am\_ [data-look="neo"].node rect,#chatgpt-mermaid-\_r_1am\_ [data-look="neo"].cluster rect,#chatgpt-mermaid-\_r_1am\_ [data-look="neo"].node polygon{stroke:url(#chatgpt-mermaid-\_r_1am\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_1am\_ [data-look="neo"].swimlane.cluster rect{filter:none;}#chatgpt-mermaid-\_r_1am\_ [data-look="neo"].node path{stroke:url(#chatgpt-mermaid-\_r_1am\_-gradient);stroke-width:1px;}#chatgpt-mermaid-\_r_1am\_ [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_1am\_ [data-look="neo"].node .neo-line path{stroke:rgb(31, 78, 148);filter:none;}#chatgpt-mermaid-\_r_1am\_ [data-look="neo"].node circle{stroke:url(#chatgpt-mermaid-\_r_1am\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_1am\_ [data-look="neo"].node circle .state-start{fill:#000000;}#chatgpt-mermaid-\_r_1am\_ [data-look="neo"].icon-shape .icon{fill:url(#chatgpt-mermaid-\_r_1am\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_1am\_ [data-look="neo"].icon-shape .icon-neo path{stroke:url(#chatgpt-mermaid-\_r_1am\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_1am\_ .node text{font-size:14px;font-weight:600;letter-spacing:normal;fill:rgb(153, 206, 255);}#chatgpt-mermaid-\_r_1am\_ .edgeLabels text{font-size:13px;font-weight:600;letter-spacing:-0.08px;fill:rgb(153, 206, 255);}#chatgpt-mermaid-\_r_1am\_ .node tspan[font-weight="normal"],#chatgpt-mermaid-\_r_1am\_ .edgeLabels tspan[font-weight="normal"]{font-weight:600;}#chatgpt-mermaid-\_r_1am\_ .edgeLabel .label rect{opacity:1;rx:13px;ry:13px;fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-width:1px;}#chatgpt-mermaid-\_r_1am\_ .node rect,#chatgpt-mermaid-\_r_1am\_ .node circle,#chatgpt-mermaid-\_r_1am\_ .node ellipse,#chatgpt-mermaid-\_r_1am\_ .node polygon,#chatgpt-mermaid-\_r_1am\_ .node path{fill:rgb(0, 40, 77);stroke:rgba(255, 255, 255, 0.1);stroke-width:1px;}#chatgpt-mermaid-\_r_1am\_ .node rect{rx:16px;ry:16px;}#chatgpt-mermaid-\_r_1am\_ .node.mermaid-decision .label-container{fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-dasharray:2,2;}#chatgpt-mermaid-\_r_1am\_ .edgePaths .flowchart-link{stroke:rgb(175, 175, 175);stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;}#chatgpt-mermaid-\_r_1am\_ .marker{fill:rgb(175, 175, 175);stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_1am\_ :root{--mermaid-font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";}New trip formPOST /tripsTripsController#createTrip.new and assigncreator/accountTrip#saveTrip validation and inboundemail generationSave succeeds?Render new form with errorsAccount#owner_travelertrip.trip_members.create! roleownerFetchTripCoverImageJob.perform_laterRedirect to trip pageActive Job executescover-image jobPexels API requestStore cover_image_url ifavailableNoYes
+
+### Step A — The request enters the controller
+
+`config/routes.rb:21` declares `resources :trips` within the application's host constraint at lines 6–7. This provides the normal RESTful POST route to `TripsController#create`.
+
+The controller registers `authenticate_user!` at line 2. The request must be associated with a signed-in user before trip creation proceeds.
+
+At `app/controllers/trips_controller.rb:35–39`, the application constructs the trip and assigns its creator and account:
+
+```
+
+@trip = Trip.new(trip_params)
+@trip.created_by = current_user
+@trip.account = current_account
+
+```
+
+The strong parameters at lines 129–131 permit only `title`, `description`, `start_date` and `end_date` from the submitted trip form.
+
+`created_by` and `account` are assigned by the application rather than taken from those form parameters.&#x20;
+
+
+
+### Step B — The trip is saved
+
+`TripsController#create` calls `@trip.save` at line 40.
+
+`Trip`, defined in `app/models/trip.rb:1–19`, has relationships to its account, creator, members, travelers, itinerary items, expenses and other trip resources.
+
+The model validates the title, start date, end date and inbound email address. It also declares:
+
+```
+before_validation :generate_inbound_email,
+  on: :create,
+  if: -> { inbound_email.blank? }
+```
+
+`Trip#generate_inbound_email` and `#build_inbound_email`, lines 31–37, generate a trip-specific address using the title, a random hexadecimal suffix and the configured email domain.
+
+The application defines the address-generation logic. Rails provides validation, callback invocation and persistence infrastructure.&#x20;
+
+
+
+If saving fails, the controller renders the new-trip form with an unprocessable-entity response.
+
+### Step C — The initial owner membership is created
+
+Once the trip is saved, the controller executes:
+
+```
+
+owner_traveler = current_account.owner_traveler
+@trip.trip_members.create!(
+  traveler: owner_traveler,
+  role: :owner,
+  joined_at: Time.current
+)
+
+```
+
+`Account#owner_traveler`, `app/models/account.rb:9–11`, searches the account's travelers for the record linked to the account owner.
+
+The source also shows how that record is normally provisioned. `SessionsController#create_account_for`, `app/controllers/sessions_controller.rb:78–81`, creates an `Account` and then its owner-linked `Traveler`.
+
+These are distinct identities:
+
+- `User` is the signed-in person.
+- `Account` groups that person's owned travel resources.
+- `Traveler` represents a participant, optionally linked to a `User`.
+- `TripMember` establishes the traveler's membership and role in a particular trip.
+
+The controller creates the membership through the new trip's Active Record association. It explicitly assigns `owner`, rather than relying on the database's default membership role.&#x20;
+
+
+
+### Step D — Cover-image processing is requested
+
+At `app/controllers/trips_controller.rb:43`:
+
+```
+FetchTripCoverImageJob.perform_later(@trip.id)
+```
+
+The job implementation is application-written. It loads the trip, checks for a configured Pexels API key, constructs a search from the title, requests a landscape image and stores the returned image URL when available.
+
+Important details from `app/jobs/fetch_trip_cover_image_job.rb:4–30`:
+
+- If the trip is missing, the job returns.
+- If the API key is absent, it logs a message and returns.
+- If the HTTP response is unsuccessful, it logs a warning and returns.
+- It uses the first returned photograph's `large2x` URL.
+- It catches exceptions and logs warnings.
+
+The controller does not wait for this external lookup before redirecting. Successful image retrieval was not established through runtime testing.&#x20;
+
+
+
+### Where creation responsibility is located
+
+| Responsibility                                  | Actual owner                                            |
+| ----------------------------------------------- | ------------------------------------------------------- |
+| Handle trip-creation request                    | `TripsController#create`                                |
+| Construct trip and assign account/creator       | `TripsController#create`                                |
+| Validate trip data and generate inbound address | `Trip`                                                  |
+| Find the account owner's traveler record        | `Account#owner_traveler`                                |
+| Create the first membership                     | `TripsController#create` through `trip_members.create!` |
+| Persist records and associations                | Active Record                                           |
+| Request cover-image work                        | `TripsController#create`                                |
+| Perform cover-image retrieval                   | `FetchTripCoverImageJob`                                |
+
+The business operation is therefore coordinated across multiple objects, with the controller responsible for sequencing them.
+
+Important limitation: The trip save and owner-membership creation are not visibly enclosed in one application-level database transaction. If membership creation raises after a successful trip save, the source does not establish an automatic rollback of the already-saved trip.
+
+## 3. Membership management — complete collaboration trace
+
+### A. How the five domain objects are related
+
+Domain relationship overview
+
+\#chatgpt-mermaid-\_r_1f7\_{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;fill:rgb(237, 237, 237);}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#chatgpt-mermaid-\_r_1f7\_ .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-\_r_1f7\_ .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-\_r_1f7\_ .error-icon{fill:rgb(48, 48, 48);}#chatgpt-mermaid-\_r_1f7\_ .error-text{fill:rgb(237, 237, 237);stroke:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_1f7\_ .edge-thickness-normal{stroke-width:1px;}#chatgpt-mermaid-\_r_1f7\_ .edge-thickness-thick{stroke-width:3.5px;}#chatgpt-mermaid-\_r_1f7\_ .edge-pattern-solid{stroke-dasharray:0;}#chatgpt-mermaid-\_r_1f7\_ .edge-thickness-invisible{stroke-width:0;fill:none;}#chatgpt-mermaid-\_r_1f7\_ .edge-pattern-dashed{stroke-dasharray:3;}#chatgpt-mermaid-\_r_1f7\_ .edge-pattern-dotted{stroke-dasharray:2;}#chatgpt-mermaid-\_r_1f7\_ .marker{fill:rgb(175, 175, 175);stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_1f7\_ .marker.cross{stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_1f7\_ svg{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;}#chatgpt-mermaid-\_r_1f7\_ p{margin:0;}#chatgpt-mermaid-\_r_1f7\_ .label{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_1f7\_ .cluster-label text{fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_1f7\_ .cluster-label span{color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_1f7\_ .cluster-label span p{background-color:transparent;}#chatgpt-mermaid-\_r_1f7\_ .label text,#chatgpt-mermaid-\_r_1f7\_ span{fill:rgb(237, 237, 237);color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_1f7\_ .node rect,#chatgpt-mermaid-\_r_1f7\_ .node circle,#chatgpt-mermaid-\_r_1f7\_ .node ellipse,#chatgpt-mermaid-\_r_1f7\_ .node polygon,#chatgpt-mermaid-\_r_1f7\_ .node path{fill:rgb(9, 23, 44);stroke:rgb(31, 78, 148);stroke-width:1px;}#chatgpt-mermaid-\_r_1f7\_ .rough-node .label text,#chatgpt-mermaid-\_r_1f7\_ .node .label text,#chatgpt-mermaid-\_r_1f7\_ .image-shape .label,#chatgpt-mermaid-\_r_1f7\_ .icon-shape .label{text-anchor:middle;}#chatgpt-mermaid-\_r_1f7\_ .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#chatgpt-mermaid-\_r_1f7\_ .rough-node .label,#chatgpt-mermaid-\_r_1f7\_ .node .label,#chatgpt-mermaid-\_r_1f7\_ .image-shape .label,#chatgpt-mermaid-\_r_1f7\_ .icon-shape .label{text-align:center;}#chatgpt-mermaid-\_r_1f7\_ .node.clickable{cursor:pointer;}#chatgpt-mermaid-\_r_1f7\_ .root .anchor path{fill:rgb(175, 175, 175)!important;stroke-width:0;stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_1f7\_ .arrowheadPath{fill:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_1f7\_ .edgePath .path{stroke:rgb(175, 175, 175);stroke-width:1px;}#chatgpt-mermaid-\_r_1f7\_ .flowchart-link{stroke:rgb(175, 175, 175);fill:none;}#chatgpt-mermaid-\_r_1f7\_ .edgeLabel{background-color:rgb(0, 0, 0);text-align:center;}#chatgpt-mermaid-\_r_1f7\_ .edgeLabel p{background-color:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_1f7\_ .edgeLabel rect{opacity:0.5;background-color:rgb(0, 0, 0);fill:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_1f7\_ .labelBkg{background-color:rgba(0, 0, 0, 0.5);}#chatgpt-mermaid-\_r_1f7\_ .cluster rect{fill:rgb(48, 48, 48);stroke:rgba(255, 255, 255, 0.15);stroke-width:1px;}#chatgpt-mermaid-\_r_1f7\_ .cluster text{fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_1f7\_ .cluster span{color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_1f7\_ div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:12px;background:rgb(48, 48, 48);border:1px solid rgba(255, 255, 255, 0.15);border-radius:2px;pointer-events:none;z-index:100;}#chatgpt-mermaid-\_r_1f7\_ .flowchartTitleText{text-anchor:middle;font-size:18px;fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_1f7\_ rect.text{fill:none;stroke-width:0;}#chatgpt-mermaid-\_r_1f7\_ .icon-shape,#chatgpt-mermaid-\_r_1f7\_ .image-shape{background-color:rgb(0, 0, 0);text-align:center;}#chatgpt-mermaid-\_r_1f7\_ .icon-shape p,#chatgpt-mermaid-\_r_1f7\_ .image-shape p{background-color:rgb(0, 0, 0);padding:2px;}#chatgpt-mermaid-\_r_1f7\_ .icon-shape .label rect,#chatgpt-mermaid-\_r_1f7\_ .image-shape .label rect{opacity:0.5;background-color:rgb(0, 0, 0);fill:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_1f7\_ .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#chatgpt-mermaid-\_r_1f7\_ .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#chatgpt-mermaid-\_r_1f7\_ .node .neo-node{stroke:rgb(31, 78, 148);}#chatgpt-mermaid-\_r_1f7\_ [data-look="neo"].node rect,#chatgpt-mermaid-\_r_1f7\_ [data-look="neo"].cluster rect,#chatgpt-mermaid-\_r_1f7\_ [data-look="neo"].node polygon{stroke:url(#chatgpt-mermaid-\_r_1f7\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_1f7\_ [data-look="neo"].swimlane.cluster rect{filter:none;}#chatgpt-mermaid-\_r_1f7\_ [data-look="neo"].node path{stroke:url(#chatgpt-mermaid-\_r_1f7\_-gradient);stroke-width:1px;}#chatgpt-mermaid-\_r_1f7\_ [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_1f7\_ [data-look="neo"].node .neo-line path{stroke:rgb(31, 78, 148);filter:none;}#chatgpt-mermaid-\_r_1f7\_ [data-look="neo"].node circle{stroke:url(#chatgpt-mermaid-\_r_1f7\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_1f7\_ [data-look="neo"].node circle .state-start{fill:#000000;}#chatgpt-mermaid-\_r_1f7\_ [data-look="neo"].icon-shape .icon{fill:url(#chatgpt-mermaid-\_r_1f7\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_1f7\_ [data-look="neo"].icon-shape .icon-neo path{stroke:url(#chatgpt-mermaid-\_r_1f7\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_1f7\_ .node text{font-size:14px;font-weight:600;letter-spacing:normal;fill:rgb(153, 206, 255);}#chatgpt-mermaid-\_r_1f7\_ .edgeLabels text{font-size:13px;font-weight:600;letter-spacing:-0.08px;fill:rgb(153, 206, 255);}#chatgpt-mermaid-\_r_1f7\_ .node tspan[font-weight="normal"],#chatgpt-mermaid-\_r_1f7\_ .edgeLabels tspan[font-weight="normal"]{font-weight:600;}#chatgpt-mermaid-\_r_1f7\_ .edgeLabel .label rect{opacity:1;rx:13px;ry:13px;fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-width:1px;}#chatgpt-mermaid-\_r_1f7\_ .node rect,#chatgpt-mermaid-\_r_1f7\_ .node circle,#chatgpt-mermaid-\_r_1f7\_ .node ellipse,#chatgpt-mermaid-\_r_1f7\_ .node polygon,#chatgpt-mermaid-\_r_1f7\_ .node path{fill:rgb(0, 40, 77);stroke:rgba(255, 255, 255, 0.1);stroke-width:1px;}#chatgpt-mermaid-\_r_1f7\_ .node rect{rx:16px;ry:16px;}#chatgpt-mermaid-\_r_1f7\_ .node.mermaid-decision .label-container{fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-dasharray:2,2;}#chatgpt-mermaid-\_r_1f7\_ .edgePaths .flowchart-link{stroke:rgb(175, 175, 175);stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;}#chatgpt-mermaid-\_r_1f7\_ .marker{fill:rgb(175, 175, 175);stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_1f7\_ :root{--mermaid-font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";}Userauthenticated identityAccountTravelerTripTripMemberrole, joined_atmay own onemay have multiplehas manyhas manycreated_byhas manyhas many
+
+`TripMember` connects a Traveler to a Trip and holds membership-specific information. User identity, account ownership and trip membership are separate concepts.
+
+The associations appear in:
+
+- `app/models/account.rb:1–4`
+- `app/models/user.rb:11–17`
+- `app/models/traveler.rb:1–5`
+- `app/models/trip.rb:4–12`
+- `app/models/trip_member.rb:1–6`
+
+In particular, `User#trips` uses `has_many :trips, through: :trip_members`, with membership reached through the user's `traveler_profiles`.
+
+Therefore, being recorded as `Trip#created_by` is structurally different from accessing the trip through an active membership.&#x20;
+
+### B. Adding a traveler to a trip
+
+The membership-management interface is `app/views/trips/travelers.html.erb:29–81`. It displays existing members, provides removal controls for non-owners and submits an email address through a form.
+
+The route is declared at `config/routes.rb:40`:
+
+```
+resources :trip_members, only: [ :create, :destroy ]
+```
+
+`TripMembersController`, lines 1–4, requires authentication, loads the current trip and checks that the acting user is its owner or a planner.
+
+Then `TripMembersController#create`, lines 6–15, chooses between two paths.
+
+Path 1 — Existing traveler ID
+
+The controller looks up the traveler through:
+
+```
+traveler = @trip.account.travelers.find(params[:traveler_id])
+add_traveler(traveler)
+```
+
+This scopes the selected traveler to the trip's account.
+
+Path 2 — Email address
+
+`resolve_and_add_by_email`, lines 46–64, checks for an existing traveler within the trip's account, including travelers linked to users with the submitted email.
+
+If no traveler exists, it checks for an existing `User` globally.
+
+- If a registered user exists, it creates a `Traveler` record for that user within the trip's account.
+- If no registered user exists, it creates an email-only `Traveler` record and requests a trip invitation email.
+
+The controller then calls `add_traveler` in either case.
+
+\#chatgpt-mermaid-\_r_1fh\_{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;fill:rgb(237, 237, 237);}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#chatgpt-mermaid-\_r_1fh\_ .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-\_r_1fh\_ .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-\_r_1fh\_ .error-icon{fill:rgb(48, 48, 48);}#chatgpt-mermaid-\_r_1fh\_ .error-text{fill:rgb(237, 237, 237);stroke:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_1fh\_ .edge-thickness-normal{stroke-width:1px;}#chatgpt-mermaid-\_r_1fh\_ .edge-thickness-thick{stroke-width:3.5px;}#chatgpt-mermaid-\_r_1fh\_ .edge-pattern-solid{stroke-dasharray:0;}#chatgpt-mermaid-\_r_1fh\_ .edge-thickness-invisible{stroke-width:0;fill:none;}#chatgpt-mermaid-\_r_1fh\_ .edge-pattern-dashed{stroke-dasharray:3;}#chatgpt-mermaid-\_r_1fh\_ .edge-pattern-dotted{stroke-dasharray:2;}#chatgpt-mermaid-\_r_1fh\_ .marker{fill:rgb(175, 175, 175);stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_1fh\_ .marker.cross{stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_1fh\_ svg{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;}#chatgpt-mermaid-\_r_1fh\_ p{margin:0;}#chatgpt-mermaid-\_r_1fh\_ .label{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_1fh\_ .cluster-label text{fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_1fh\_ .cluster-label span{color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_1fh\_ .cluster-label span p{background-color:transparent;}#chatgpt-mermaid-\_r_1fh\_ .label text,#chatgpt-mermaid-\_r_1fh\_ span{fill:rgb(237, 237, 237);color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_1fh\_ .node rect,#chatgpt-mermaid-\_r_1fh\_ .node circle,#chatgpt-mermaid-\_r_1fh\_ .node ellipse,#chatgpt-mermaid-\_r_1fh\_ .node polygon,#chatgpt-mermaid-\_r_1fh\_ .node path{fill:rgb(9, 23, 44);stroke:rgb(31, 78, 148);stroke-width:1px;}#chatgpt-mermaid-\_r_1fh\_ .rough-node .label text,#chatgpt-mermaid-\_r_1fh\_ .node .label text,#chatgpt-mermaid-\_r_1fh\_ .image-shape .label,#chatgpt-mermaid-\_r_1fh\_ .icon-shape .label{text-anchor:middle;}#chatgpt-mermaid-\_r_1fh\_ .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#chatgpt-mermaid-\_r_1fh\_ .rough-node .label,#chatgpt-mermaid-\_r_1fh\_ .node .label,#chatgpt-mermaid-\_r_1fh\_ .image-shape .label,#chatgpt-mermaid-\_r_1fh\_ .icon-shape .label{text-align:center;}#chatgpt-mermaid-\_r_1fh\_ .node.clickable{cursor:pointer;}#chatgpt-mermaid-\_r_1fh\_ .root .anchor path{fill:rgb(175, 175, 175)!important;stroke-width:0;stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_1fh\_ .arrowheadPath{fill:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_1fh\_ .edgePath .path{stroke:rgb(175, 175, 175);stroke-width:1px;}#chatgpt-mermaid-\_r_1fh\_ .flowchart-link{stroke:rgb(175, 175, 175);fill:none;}#chatgpt-mermaid-\_r_1fh\_ .edgeLabel{background-color:rgb(0, 0, 0);text-align:center;}#chatgpt-mermaid-\_r_1fh\_ .edgeLabel p{background-color:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_1fh\_ .edgeLabel rect{opacity:0.5;background-color:rgb(0, 0, 0);fill:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_1fh\_ .labelBkg{background-color:rgba(0, 0, 0, 0.5);}#chatgpt-mermaid-\_r_1fh\_ .cluster rect{fill:rgb(48, 48, 48);stroke:rgba(255, 255, 255, 0.15);stroke-width:1px;}#chatgpt-mermaid-\_r_1fh\_ .cluster text{fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_1fh\_ .cluster span{color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_1fh\_ div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:12px;background:rgb(48, 48, 48);border:1px solid rgba(255, 255, 255, 0.15);border-radius:2px;pointer-events:none;z-index:100;}#chatgpt-mermaid-\_r_1fh\_ .flowchartTitleText{text-anchor:middle;font-size:18px;fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_1fh\_ rect.text{fill:none;stroke-width:0;}#chatgpt-mermaid-\_r_1fh\_ .icon-shape,#chatgpt-mermaid-\_r_1fh\_ .image-shape{background-color:rgb(0, 0, 0);text-align:center;}#chatgpt-mermaid-\_r_1fh\_ .icon-shape p,#chatgpt-mermaid-\_r_1fh\_ .image-shape p{background-color:rgb(0, 0, 0);padding:2px;}#chatgpt-mermaid-\_r_1fh\_ .icon-shape .label rect,#chatgpt-mermaid-\_r_1fh\_ .image-shape .label rect{opacity:0.5;background-color:rgb(0, 0, 0);fill:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_1fh\_ .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#chatgpt-mermaid-\_r_1fh\_ .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#chatgpt-mermaid-\_r_1fh\_ .node .neo-node{stroke:rgb(31, 78, 148);}#chatgpt-mermaid-\_r_1fh\_ [data-look="neo"].node rect,#chatgpt-mermaid-\_r_1fh\_ [data-look="neo"].cluster rect,#chatgpt-mermaid-\_r_1fh\_ [data-look="neo"].node polygon{stroke:url(#chatgpt-mermaid-\_r_1fh\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_1fh\_ [data-look="neo"].swimlane.cluster rect{filter:none;}#chatgpt-mermaid-\_r_1fh\_ [data-look="neo"].node path{stroke:url(#chatgpt-mermaid-\_r_1fh\_-gradient);stroke-width:1px;}#chatgpt-mermaid-\_r_1fh\_ [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_1fh\_ [data-look="neo"].node .neo-line path{stroke:rgb(31, 78, 148);filter:none;}#chatgpt-mermaid-\_r_1fh\_ [data-look="neo"].node circle{stroke:url(#chatgpt-mermaid-\_r_1fh\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_1fh\_ [data-look="neo"].node circle .state-start{fill:#000000;}#chatgpt-mermaid-\_r_1fh\_ [data-look="neo"].icon-shape .icon{fill:url(#chatgpt-mermaid-\_r_1fh\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_1fh\_ [data-look="neo"].icon-shape .icon-neo path{stroke:url(#chatgpt-mermaid-\_r_1fh\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_1fh\_ .node text{font-size:14px;font-weight:600;letter-spacing:normal;fill:rgb(153, 206, 255);}#chatgpt-mermaid-\_r_1fh\_ .edgeLabels text{font-size:13px;font-weight:600;letter-spacing:-0.08px;fill:rgb(153, 206, 255);}#chatgpt-mermaid-\_r_1fh\_ .node tspan[font-weight="normal"],#chatgpt-mermaid-\_r_1fh\_ .edgeLabels tspan[font-weight="normal"]{font-weight:600;}#chatgpt-mermaid-\_r_1fh\_ .edgeLabel .label rect{opacity:1;rx:13px;ry:13px;fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-width:1px;}#chatgpt-mermaid-\_r_1fh\_ .node rect,#chatgpt-mermaid-\_r_1fh\_ .node circle,#chatgpt-mermaid-\_r_1fh\_ .node ellipse,#chatgpt-mermaid-\_r_1fh\_ .node polygon,#chatgpt-mermaid-\_r_1fh\_ .node path{fill:rgb(0, 40, 77);stroke:rgba(255, 255, 255, 0.1);stroke-width:1px;}#chatgpt-mermaid-\_r_1fh\_ .node rect{rx:16px;ry:16px;}#chatgpt-mermaid-\_r_1fh\_ .node.mermaid-decision .label-container{fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-dasharray:2,2;}#chatgpt-mermaid-\_r_1fh\_ .edgePaths .flowchart-link{stroke:rgb(175, 175, 175);stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;}#chatgpt-mermaid-\_r_1fh\_ .marker{fill:rgb(175, 175, 175);stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_1fh\_ :root{--mermaid-font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";}POST/trips/:trip_id/trip_membersTripMembersController#createTraveler ID supplied?Find account travelerResolve emailExisting account traveler?Use existing TravelerRegistered User?Create account Traveler linkedto UserCreate email-only Traveler andsend invitationadd_travelerAlready a trip member?Redirect: already on tripCreate TripMember rolecontributorYesNo, emailYesNoYesNoYesNo
+
+`add_traveler`, at `app/controllers/trip_members_controller.rb:37–44`, checks whether that traveler already belongs to the trip.
+
+If not, it creates:
+
+```
+@trip.trip_members.create!(
+  traveler: traveler,
+  role: :contributor,
+  joined_at: Time.current
+)
+```
+
+The database also has a unique index on `(trip_id, traveler_id)`, providing an additional uniqueness constraint beyond the application check.
+
+Important: An email-only traveler becomes a `TripMember` immediately. The membership record is not created when the invitation is accepted.
+
+The user-account link is established separately, when a matching user signs in. &#x20;
+
+
+
+### C. How invited travelers gain access
+
+The relevant supporting code is:
+
+- `Traveler#accept!` — `app/models/traveler.rb:26–28`
+- `SessionsController#create` — `app/controllers/sessions_controller.rb:26–40`
+
+At sign-in, the application looks for travelers with a matching email and no linked user:
+
+```
+pending_travelers = Traveler.where(user_id: nil, email: user.email).to_a
+pending_travelers.each { |t| t.accept!(user) }
+```
+
+`Traveler#accept!` then assigns the user and records the invitation-acceptance timestamp.
+
+The existing trip membership remains linked to the same traveler. Through `User#traveler_profiles`, the signed-in user can now retrieve that membership and its trip.
+
+This is an account-linking operation, not a membership-role transition.&#x20;
+
+
+
+### D. How roles are represented
+
+`app/models/trip_member.rb:1–7` contains:
+
+```
+class TripMember < ApplicationRecord
+  belongs_to :trip
+  belongs_to :traveler
+
+  enum :role, {
+    owner: "owner",
+    planner: "planner",
+    contributor: "contributor",
+    viewer: "viewer"
+  }
+  validates :role, presence: true
+end
+```
+
+The role is a persisted string-backed Rails enum.
+
+| Role          | Where the code uses it                                                                                 |
+| ------------- | ------------------------------------------------------------------------------------------------------ |
+| `owner`       | Initial membership, deletion protection, owner-only trip operations                                    |
+| `planner`     | Authorization for trip editing and membership management                                               |
+| `contributor` | Assigned to travelers added through the membership controller                                          |
+| `viewer`      | Declared as a role and database default, but not assigned by the inspected membership creation actions |
+
+A source-wide search did not identify an application route or controller action for changing a `TripMember` role. The examined creation paths explicitly assign `owner` or `contributor`.
+
+There is no application-implemented State or Strategy collaboration in these enum declarations. The role values are queried by authorization code; they do not encapsulate interchangeable behavior.
+
+### E. Updating and removing members
+
+The routes expose `create` and `destroy` only. There is no `TripMembersController#update` action.
+
+`TravelersController#update`, at `app/controllers/travelers_controller.rb:37–44`, updates the traveler's profile information, such as name and avatar URL, rather than the `TripMember#role`.
+
+For removal, `TripMembersController#destroy`, lines 17–22:
+
+1. Locates the membership through `@trip.trip_members`.
+2. Rejects removal if `member.owner?` is true.
+3. Otherwise destroys the membership.
+4. Redirects to the travelers page.
+
+This removes the person from the trip, not from the account.
+
+Account-level traveler deletion is different. `TravelersController#destroy` removes the traveler record, and `Traveler` declares `has_many :trip_members, dependent: :destroy`. Thus, deleting an account traveler can also remove that person's trip memberships. Unlike the membership controller, the account-level deletion action contains no explicit trip-owner protection. That interaction should be tested before claiming owner memberships are always protected.
+
+## 4. Permission handling — actual authorization paths
+
+### A. Current user and membership lookup
+
+`ApplicationController`, at `app/controllers/application_controller.rb:14–24`, defines:
+
+```
+def current_user
+  @current_user ||= User.find_by(id: session[:user_id]) if session[:user_id]
+end
+
+def current_account
+  @current_account ||= current_user&.account
+end
+
+def current_member_for(trip)
+  return nil unless current_user
+  trip.trip_members.joins(:traveler)
+      .find_by(travelers: { user_id: current_user.id })
+end
+```
+
+`authenticate_user!`, lines 47–49, handles the basic sign-in requirement.
+
+The application then uses membership-based queries for trip authorization. It does not rely solely on whether the user created the trip or owns the account.
+
+### B. Viewing a trip
+
+`TripsController#show` uses the `set_trip` callback:
+
+```
+def set_trip
+  @trip = current_user.trips.find(params[:id])
+end
+```
+
+This scopes the lookup to trips reachable through the signed-in user's traveler memberships.
+
+No role check is performed here. Consequently, a user with a linked membership in any of the four roles can satisfy the trip-visibility query.
+
+The index action uses the same `current_user.trips` relationship.
+
+### C. Editing a trip
+
+`TripsController#set_editable_trip`, lines 111–119, uses a database query that requires both:
+
+- A traveler associated with the current user.
+- A membership whose role is `owner` or `planner`.
+
+```
+@trip = Trip.joins(trip_members: :traveler)
+            .where(travelers: { user_id: current_user.id })
+            .where(trip_members: { role: ["owner", "planner"] })
+            .find(params[:id])
+```
+
+This callback applies to `edit`, `update`, `cover`, `update_cover`, `refresh_cover`, `travelers` and `geocode_missing`.
+
+Failure to find a matching trip leads to a redirect with a permission alert.&#x20;
+
+
+
+### D. Deleting a trip or regenerating its inbound address
+
+`TripsController#set_owner_trip`, lines 120–127, is more restrictive. It requires the acting user's traveler membership to have `role: "owner"`.
+
+It protects `destroy` and `regenerate_inbound_email`.
+
+An account owner is therefore not automatically treated as a trip owner by this authorization query; the matching `TripMember` role is what matters.
+
+### E. Managing trip members
+
+`TripMembersController#require_owner_or_planner`, lines 30–35, uses a different implementation:
+
+```
+member = current_member_for(@trip)
+
+unless member&.owner? || member&.planner?
+  redirect_to @trip, alert: "Only trip owners and planners can manage travelers."
+end
+```
+
+This checks the actual membership object after loading the trip.
+
+The controller also prevents deletion of a membership whose role is `owner`, regardless of the acting user's own role.
+
+### F. Actual permission matrix
+
+Based on the examined controller checks:
+
+| Operation                            | Owner | Planner | Contributor | Viewer |
+| ------------------------------------ | ----- | ------- | ----------- | ------ |
+| View trip                            | Yes   | Yes     | Yes         | Yes    |
+| Edit trip details                    | Yes   | Yes     | No          | No     |
+| Update cover / geocode missing       | Yes   | Yes     | No          | No     |
+| Access trip member-management page   | Yes   | Yes     | No          | No     |
+| Add/remove non-owner members         | Yes   | Yes     | No          | No     |
+| Delete trip                          | Yes   | No      | No          | No     |
+| Regenerate trip email address        | Yes   | No      | No          | No     |
+| Create/update/delete itinerary items | Yes   | Yes     | Yes\*       | Yes\*  |
+| Create/update/delete expenses        | Yes   | Yes     | Yes\*       | Yes\*  |
+| Confirm/delete inbox items           | Yes   | Yes     | Yes\*       | Yes\*  |
+| Manage approved senders              | Yes   | Yes     | Yes\*       | Yes\*  |
+
+\*The relevant child controllers require authenticated membership through `current_user.trips.find`, but have no additional role restriction in the inspected application actions. These are source-implied permissions, not independently tested HTTP outcomes.
+
+### G. Repeated and inconsistent permission logic
+
+The source contains two different authorization styles.
+
+Role-restricted queries:
+
+`TripsController#set_editable_trip` and `#set_owner_trip` use explicit role conditions in their SQL-backed Active Record queries.
+
+`TripMembersController#require_owner_or_planner` loads the membership and evaluates Rails enum predicates.
+
+Membership-only scoping:
+
+The following controller methods use `current_user.trips.find(params[:trip_id])` without distinguishing owner, planner, contributor and viewer:
+
+- `TripItemsController#set_trip` — lines 118–120.
+- `ExpensesController#set_trip` — lines 90–92.
+- `InboxItemsController#set_trip` — lines 44–46.
+- `ApprovedSendersController#set_trip` — lines 30–32.
+
+Those controllers include actions that modify or delete records.&#x20;
+
+
+
+This is a meaningful authorization observation: the role names suggest different levels of permission, but many mutating routes enforce only membership.
+
+There is also a difference between UI visibility and server authorization. `app/views/trips/_trip_panel.html.erb:178–249` displays the trip-editing controls only when the current member is an owner, while the server-side trip-editing methods also permit planners. UI visibility alone does not define authorization.&#x20;
+
+## 5. Participant and source-evidence table
+
+The following references use paths relative to the uploaded `daplanstan-main.zip` snapshot, with line numbers verified against the extracted files.
+
+| Participant / method                             | Source location                                    | Observed responsibility                            |
+| ------------------------------------------------ | -------------------------------------------------- | -------------------------------------------------- |
+| Trip REST routes                                 | `config/routes.rb:21–46`                           | Route trip and membership requests                 |
+| `TripsController#create`                         | `app/controllers/trips_controller.rb:35–49`        | Coordinate trip, membership and cover-job creation |
+| `TripsController#set_trip`                       | `app/controllers/trips_controller.rb:107–109`      | Membership-scoped trip lookup                      |
+| `TripsController#set_editable_trip`              | `app/controllers/trips_controller.rb:111–119`      | Owner/planner access                               |
+| `TripsController#set_owner_trip`                 | `app/controllers/trips_controller.rb:120–127`      | Owner-only access                                  |
+| `Trip` associations and validation               | `app/models/trip.rb:1–19`                          | Define trip relationships and validate data        |
+| `Trip#build_inbound_email`                       | `app/models/trip.rb:31–37`                         | Generate inbound email address                     |
+| `Account#owner_traveler`                         | `app/models/account.rb:9–11`                       | Locate owner-linked traveler                       |
+| `SessionsController#create_account_for`          | `app/controllers/sessions_controller.rb:78–81`     | Provision owner account and traveler               |
+| `FetchTripCoverImageJob#perform`                 | `app/jobs/fetch_trip_cover_image_job.rb:4–30`      | Retrieve external cover-image URL                  |
+| `TripMember`                                     | `app/models/trip_member.rb:1–7`                    | Associate traveler with trip and store role        |
+| `Traveler#accept!`                               | `app/models/traveler.rb:26–28`                     | Associate invited traveler with signed-in user     |
+| `TripMembersController#create`                   | `app/controllers/trip_members_controller.rb:6–15`  | Select membership-addition path                    |
+| `TripMembersController#destroy`                  | `app/controllers/trip_members_controller.rb:17–22` | Remove non-owner member                            |
+| `TripMembersController#require_owner_or_planner` | `app/controllers/trip_members_controller.rb:30–35` | Authorize membership changes                       |
+| `TripMembersController#add_traveler`             | `app/controllers/trip_members_controller.rb:37–44` | Prevent duplicate membership and create new member |
+| `TripMembersController#resolve_and_add_by_email` | `app/controllers/trip_members_controller.rb:46–65` | Find or create traveler and request invitation     |
+| `ApplicationController#current_member_for`       | `app/controllers/application_controller.rb:22–25`  | Resolve membership for authenticated user          |
+| `User` associations                              | `app/models/user.rb:11–17`                         | Relate users to accounts, travelers and trips      |
+| Account traveler actions                         | `app/controllers/travelers_controller.rb:5–60`     | Manage account-level traveler records              |
+| Membership view                                  | `app/views/trips/travelers.html.erb:29–81`         | Present members and submit add/remove requests     |
+| Membership uniqueness                            | `db/structure.sql:71–80`                           | Enforce unique trip/traveler membership            |
+
+## 6. Application-written behavior versus Rails
+
+| Area                  | DaPlanStan responsibility                                                        | Rails responsibility                                               |
+| --------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Trip creation         | Assign creator/account, sequence save, owner membership and job scheduling       | Routing, controller callbacks, model persistence                   |
+| Trip initialization   | Generate inbound email and define validation requirements                        | Validation and model callback execution                            |
+| Membership            | Choose travelers, assign roles, prevent duplicate additions and owner removal    | Associations, enum methods, Active Record queries                  |
+| Invitations           | Determine recipients, create pending travelers and associate users after sign-in | Mail delivery infrastructure and database persistence              |
+| Authorization         | Define role conditions and enforce them in application controller methods        | Execute filtered queries and before-action callbacks               |
+| Cover-image retrieval | Construct Pexels request and store returned URL                                  | Active Job execution infrastructure; HTTP and JSON library support |
+
+Responsibility is not concentrated in `Trip` or `TripMember`. Controllers contain much of the workflow coordination and authorization logic, while models primarily represent relationships, validation rules and selected domain operations.
+
+## 7. Design-pattern candidates
+
+Only after tracing all three flows do I find one recognized pattern category worth carrying into formal verification, represented by two potentially distinct system-event responsibilities.
+
+Candidate A — GRASP Controller
+
+UNCONFIRMED
+
+Responsibility-assignment pattern · Mainly application-owned
+
+Possible collaboration: Trip Creation Coordination
+
+The principal event handler is `TripsController#create`, lines 35–49. It receives the creation request, constructs a `Trip`, assigns account information, saves it, creates the initial owner membership and delegates image retrieval to `FetchTripCoverImageJob`.
+
+Why it might fit: A system-event handler coordinates several domain operations without implementing every subordinate operation itself.
+
+Strongest false-positive argument: This may be routine Rails controller code following conventional request handling. More evidence is needed to assess whether its responsibility assignment is a meaningful GRASP Controller instance rather than merely labeling any Rails controller as a pattern.
+
+Origin: Mixed infrastructure, with application-defined orchestration.
+
+Decision: UNCONFIRMED.
+
+Candidate B — GRASP Controller
+
+UNCONFIRMED
+
+Responsibility-assignment pattern · Mainly application-owned
+
+Possible collaboration: Trip Membership Management Coordination
+
+`TripMembersController#create` and `#destroy`, together with `resolve_and_add_by_email` and `add_traveler`, coordinate membership addition and removal.
+
+The controller delegates storage to Active Record models and invitation delivery to `InvitationMailer`.
+
+Why it might fit: The controller handles meaningful membership-management events and coordinates multiple domain objects and operations.
+
+Strongest false-positive argument: The functionality is implemented as conventional controller branching and association manipulation. It is not yet established that the responsibility allocation is sufficiently distinctive to justify a separate GRASP Controller instance.
+
+Origin: Mixed infrastructure, with application-defined decisions.
+
+Decision: UNCONFIRMED.
+
+Both candidates use the same pattern name but concern different system events. If either is later confirmed, its instance boundary must be established from its actual responsibility and collaboration—not merely from the number of controller classes or actions.
+
+### Classifications not supported by the evidence
+
+`TripMember` is an association model containing role information, not an independently implemented behavioral hierarchy.
+
+The inspected source does not establish interchangeable role algorithms, role-state objects, a specialized object-creation factory, a recursive object hierarchy or a protective proxy.
+
+Likewise, `@trip.trip_members.create!` is ordinary Active Record association-based creation. It does not independently prove a GRASP Creator assignment to the `Trip` model, because the application explicitly places the orchestration in `TripsController`.
+
+No additional pattern names are warranted in this preliminary investigation.
+
+## 8. Strongest non-pattern explanation
+
+The implementation is best explained as conventional Rails CRUD orchestration over a membership-based domain model with controller-level authorization.
+
+Trip creation uses Active Record persistence followed by owner-membership creation and asynchronous cover-image retrieval.
+
+Membership management uses a join model carrying role data, account-scoped traveler lookups, conditional invitation handling and ordinary creation/deletion operations.
+
+Authorization uses the signed-in user's membership and role through Active Record queries and before-action methods. The rules are repeated across controllers rather than encapsulated in one authorization abstraction.
+
+This explanation accounts for the source without requiring an additional GoF design pattern.
+
+## 9. Remaining questions before candidate verification
+
+The next verification stage should resolve the following issues.
+
+| Question                                                                          | Why it matters                                                                                     |
+| --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Does trip creation preserve consistency if owner-membership creation fails?       | No explicit transaction covers both application-level operations                                   |
+| What happens when an invited member with no owned account accesses trip creation? | `current_account` can be nil; the creation path expects an account                                 |
+| Can a contributor or viewer successfully perform mutating child-resource actions? | Those controller methods enforce membership but not the finer role distinctions                    |
+| Can account-level traveler deletion remove the final trip owner membership?       | Traveler deletion cascades memberships, and the account-level action has no owner-membership guard |
+| How are planner and viewer roles assigned in practice?                            | No role-update route or application assignment for those roles was identified                      |
+| Are duplicate-addition and invitation flows safe under concurrent requests?       | Database uniqueness provides one safeguard, but the full workflows were not tested                 |
+| Should the two event handlers count as independent GRASP Controller instances?    | Requires evaluating the responsibility assignment and counting boundary, not only class names      |
+| Are the source and runtime results reproducible?                                  | No application execution or HTTP authorization tests were performed during this investigation      |
+
+The source-level authorization inconsistency is particularly important to preserve as a separate verification observation. It should not be misrepresented as a design-pattern finding or as a runtime-verified security defect.
+
+## 10. Investigation outcome
+
+Trip and membership investigation
+
+Awaiting candidate review
+
+| Trip creation flow                                  | Traced                                          |
+| --------------------------------------------------- | ----------------------------------------------- |
+| Membership management flow                          | Traced                                          |
+| Permission handling                                 | Traced                                          |
+| Source evidence                                     | Recorded                                        |
+| Pattern candidates                                  | 2 unconfirmed GRASP Controller responsibilities |
+| Confirmed pattern instances from this investigation | 0                                               |
+| Runtime testing                                     | Not performed                                   |
+
+Final preliminary conclusion: DaPlanStan coordinates trip creation and membership management through controllers, domain associations and Active Record operations. It authorizes trip-level editing using owner/planner membership checks but applies less restrictive membership-only checks in several child-resource controllers.
+
+Two GRASP Controller responsibility assignments are plausible candidates for subsequent verification. Neither should enter `patterns.csv` or confirmed pattern counts yet.
+
+No source files were modified, and this investigation remains limited to the original source snapshot.

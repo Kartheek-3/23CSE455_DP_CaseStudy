@@ -1,0 +1,8 @@
+Part2/code/demo/build/
+Part3/**/java/out/
+Part3/**/__pycache__/
+Part3/observer-test-listeners/cpp/observer
+Part3/observer-test-listeners/cpp/observer_test
+Part3/composite-test-tree/cpp/composite
+Part3/composite-test-tree/cpp/composite_test
+**/__pycache__/

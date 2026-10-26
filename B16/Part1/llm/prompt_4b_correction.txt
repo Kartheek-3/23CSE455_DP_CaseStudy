@@ -1,0 +1,1 @@
+In step 7 you said no instance is created for divides(). But NodeTestTask calls prepare() before checkWhetherSkipped(), and TestMethodTestDescriptor.prepare() creates the test instance. Is your step 7 correct?

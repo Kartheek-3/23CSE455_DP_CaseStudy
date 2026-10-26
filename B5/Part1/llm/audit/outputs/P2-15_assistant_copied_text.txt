@@ -1,0 +1,585 @@
+# DaPlanStan — Final Adversarial Pattern Review
+
+Pre-freeze verification · Original uploaded source archive · 10 challenged classifications
+
+## 1. Review standard
+
+I re-examined the actual application methods, their callers, participant relationships and the relevant framework contracts. The eight earlier confirmations are treated as claims to test, not conclusions to preserve automatically.
+
+I am applying these rules consistently:
+
+- GRASP Controller: Count one cohesive system-event or use-case responsibility when an application object makes meaningful domain decisions and coordinates collaborators. Do not count merely per Rails class, HTTP action or method.
+- GRASP Information Expert: The responsible object must possess or directly control information central to a substantive application responsibility. Trivial predicates alone are insufficient for a separately counted collaboration.
+- Observer: Identify a publisher, observer or subscriber, registration/subscription and a defined notification mechanism. Framework implementation is acceptable when the application's participation is explicit and substantial.
+- Deduplication: Repeated use of a collaborator, framework facility or domain model does not establish another instance.
+
+A confirmed classification here means the static source supports the pattern. It does not mean the implementation is well-designed, runtime-tested or independently approved by a human reviewer.
+
+## 2. Adversarial assessment of the ten candidates
+
+### 1. GRASP Information Expert — Parsed Email to Trip Record Linking
+
+Defining rule: Assign a substantive responsibility to the object with the information necessary to perform it.
+
+Actual responsibility and participants: `InboxItem` holds the extracted email data and interprets it when a user confirms or relinks an email. `InboxItemsController` initiates the operation; `Trip`, `TripItem`, `Expense`, `Traveler` and `User` supply related domain records.
+
+Strongest source evidence:
+
+- `app/controllers/inbox_items_controller.rb:16–26` — controller calls the model's linking operations.
+- `app/models/inbox_item.rb:19–25` — parsed-data storage interface.
+- `app/models/inbox_item.rb:34–58` — confirmation and shortlist handling.
+- `app/models/inbox_item.rb:67–187` — travel-record interpretation, matching and linking.
+- `app/models/inbox_item.rb:191–207` — associated expense creation.
+
+Strongest rejection argument: `InboxItem` accesses information from many other models and performs considerable orchestration. It could be considered an oversized Active Record model rather than an ideal Information Expert.
+
+However, the central input being interpreted is its own `parsed_data`. The application deliberately places the associated conversion rules on that model rather than in the controller or Anthropic job. This is a substantive responsibility involving several related record types, not merely an accessor or validation predicate.&#x20;
+
+Role correction: `InboxItem` is the responsible Information Expert, not an exclusive owner of all data used. `TripItem` and `Expense` are domain collaborators, not separate Information Expert instances.
+
+Decision: CONFIRMED
+
+Retain: `Parsed Email to Trip Record Linking`
+
+### 2. GRASP Controller — Inbound Travel Email Intake Coordination
+
+Defining rule: A designated system-event handler receives an external event, makes relevant application decisions and coordinates subsequent responsibilities.
+
+System event: An incoming email is delivered to the application's mailbox.
+
+Actual participants: `ApplicationMailbox` routes the message; `TripMailbox#process` handles the event; `Trip`, `InboxItem`, `ParseInboxItemJob` and `TripMailer` participate in its processing.
+
+Strongest source evidence:
+
+- `app/mailboxes/application_mailbox.rb:1–3` — incoming mail routing.
+- `app/mailboxes/trip_mailbox.rb:2–14` — recipient-to-trip resolution and sender eligibility.
+- `app/mailboxes/trip_mailbox.rb:16–30` — inbox persistence and conditional delegation.
+- `app/mailboxes/trip_mailbox.rb:55–60` — notification delegation.
+
+Strongest rejection argument: Action Mailbox supplies the event lifecycle, and `process` is a conventional framework method.
+
+But the application determines which trip receives the message, whether its sender is recognized, what to store and whether to initiate parsing or owner notification. These are meaningful event-handling decisions, not merely mailbox inheritance.&#x20;
+
+Role correction: Rails Action Mailbox is the inbound dispatch infrastructure. `TripMailbox#process` is the application-owned GRASP Controller. `ParseInboxItemJob` is a delegated processing collaborator, not a second instance of this Controller responsibility.
+
+Decision: CONFIRMED
+
+Retain: `Inbound Travel Email Intake Coordination`
+
+### 3. GRASP Controller — Trip Creation Coordination
+
+Defining rule: Coordinate the system event that establishes a new domain entity and its required associated state.
+
+System event: A signed-in user requests creation of a trip.
+
+Actual participants: `TripsController#create`, `Trip`, `Account#owner_traveler`, `TripMember` and `FetchTripCoverImageJob`.
+
+Strongest source evidence:
+
+- `config/routes.rb:21` — trip creation endpoint.
+- `app/controllers/trips_controller.rb:35–48` — entire creation sequence.
+- `app/models/trip.rb:14–19, 31–37` — validation and inbound-address generation.
+- `app/models/account.rb:9–11` — owner-traveler lookup.
+- `app/models/trip_member.rb:1–6` — role-bearing membership record.
+- `app/jobs/fetch_trip_cover_image_job.rb:4–32` — delegated cover retrieval.
+
+Strongest rejection argument: This is a short Rails `create` action containing ordinary Active Record calls. The controller directly performs the membership insertion, and the writes are not visibly enclosed in a single application transaction.
+
+The decisive distinction is that the operation establishes both the trip and its initial ownership relationship, then delegates nonessential follow-up processing. It coordinates a specific multi-object domain operation rather than solely persisting submitted form attributes.&#x20;
+
+
+
+Role correction: `TripsController#create` controls the use-case sequence. `Trip` does not itself create its owner membership; that responsibility is explicitly invoked by the controller.
+
+Decision: CONFIRMED
+
+Retain: `Trip Creation Coordination`
+
+### 4. GRASP Controller — Trip Membership Management Coordination
+
+Defining rule: Coordinate a coherent membership-management use case, including its authorization and changes to the related domain state.
+
+System events: Add or remove a member of an existing trip.
+
+Actual participants: `TripMembersController#create`, `#destroy`, `#resolve_and_add_by_email`, `#add_traveler`, `ApplicationController#current_member_for`, `Trip`, `Account`, `Traveler`, `User`, `TripMember` and `InvitationMailer`.
+
+Strongest source evidence:
+
+- `config/routes.rb:40` — create/destroy membership endpoints.
+- `app/controllers/trip_members_controller.rb:6–22` — event handlers.
+- Same file, `26–35` — trip lookup and role-based authorization.
+- Same file, `37–65` — duplicate checking, traveler resolution, membership creation and conditional invitation.
+- `app/models/trip_member.rb:1–6` — association and role representation.
+
+Strongest rejection argument: The controller holds substantial membership policy and identity-resolution logic. The methods could be described as procedural CRUD over `Traveler` and `TripMember`.
+
+Nonetheless, the controller handles more than an isolated record insertion. It coordinates account-scoped traveler identity, trip-specific role assignment, invitation handling and owner-removal restrictions. These form a coherent membership-management responsibility.&#x20;
+
+Role correction: `TripMember` represents membership and stores role values; it is not a Controller and does not implement interchangeable role behavior.
+
+Decision: CONFIRMED
+
+Retain: `Trip Membership Management Coordination`
+
+Creation and removal belong to one lifecycle-management instance, not two instances merely because there are separate HTTP actions.
+
+### 5. GRASP Controller — Bulk Itinerary Import Coordination
+
+Defining rule: An application coordinator receives an import use case, controls its phases and arranges persistence and subsequent processing.
+
+System event: A user supplies itinerary JSON, previews it and confirms import into an existing trip.
+
+Actual participants: `TripItemsController#import`, `#bulk_create_items`, `#parse_import_time`, `Trip`, `TripItem`, `Geocodable` and `GeocodeTripItemsJob`.
+
+Strongest source evidence:
+
+- `config/routes.rb:30–35` — import entry points.
+- `app/controllers/trip_items_controller.rb:31–58` — preview and confirmation branches.
+- Same file, `128–174` — duplicate resolution, item creation and geocoding scheduling.
+- Same file, `176–179` — time parsing.
+- `app/models/trip_item.rb:1–28` — persisted domain object.
+- `app/jobs/geocode_trip_items_job.rb:4–21` — delegated geocoding.
+
+Strongest rejection argument: Almost all business rules are inside one controller helper. There is little application-level delegation of import policy, and callback modification occurs directly inside the controller. The implementation is clearly procedural.
+
+This is the closest of the five original GRASP Controller candidates to being rejected as controller-heavy code.
+
+Nevertheless, it still handles a distinct system-level import responsibility with two user-facing phases and delegates domain persistence and deferred processing. Under the same rule applied to the earlier Controllers, imperfect separation does not erase the responsibility assignment.&#x20;
+
+
+
+Role correction: `TripItemsController` is the coordinator; `TripItem` is the domain record. `GeocodeTripItemsJob` performs delegated work, but is already part of the separately examined geocoding behavior.
+
+Decision: CONFIRMED
+
+Retain: `Bulk Itinerary Import Coordination`
+
+Preview and confirmed import constitute one instance, not separate instances.
+
+### 6. GRASP Controller — OAuth Sign-in and Identity Linking Coordination
+
+Defining rule: An application-level controller receives a completed authentication event and coordinates the corresponding local identity and access responsibilities.
+
+System event: OmniAuth completes an external authentication attempt and forwards the callback to DaPlanStan.
+
+Actual participants: `SessionsController#create`, `#provision_account_or_gate`, `#create_account_for`, `UserIdentity`, `User`, `Traveler#accept!`, `Account` and `Invite`.
+
+Strongest source evidence:
+
+- `config/routes.rb:12–14` — authentication callback routing.
+- `app/controllers/sessions_controller.rb:4–24` — provider/UID identity lookup, email-based user resolution and identity creation.
+- Same file, `26–40` — session establishment, pending-traveler acceptance and access decision.
+- Same file, `54–81` — signup gate and account provisioning.
+- `app/models/traveler.rb:26–28` — delegated acceptance operation.
+- `app/models/invite.rb:12–18` — invitation eligibility rules.
+
+Strongest rejection argument: OmniAuth performs the actual provider authentication. The remaining application code is concentrated in a procedural callback containing multiple database operations and branching decisions.
+
+However, the classification is not for performing OAuth itself. The application coordinates how an authenticated external identity becomes a DaPlanStan user, gains access to existing invitations and potentially receives an account. These are separate application-defined responsibilities involving multiple domain objects.&#x20;
+
+Role correction: OmniAuth is the authentication infrastructure, not the application-defined GRASP Controller. The Controller responsibility begins when `SessionsController#create` receives the normalized authentication result.
+
+Decision: CONFIRMED
+
+Retain: `OAuth Sign-in and Identity Linking Coordination`
+
+Google and Apple are configured providers within the same application-level coordination path. They are not separate GRASP Controller instances.
+
+### 7. Observer — Outbound Mail Delivery Logging
+
+Defining mechanism: An observer is registered with a publisher, and the publisher's notification infrastructure invokes the observer's defined callback when the relevant event occurs.
+
+Actual participants:
+
+| Role                             | Actual implementation                   |
+| -------------------------------- | --------------------------------------- |
+| Publisher/subject infrastructure | Mail gem's delivery notification system |
+| Registration interface           | `ActionMailer::Base.register_observer`  |
+| Concrete observer                | Application-defined `MailLogger`        |
+| Notification operation           | `MailLogger.delivered_email(message)`   |
+| Event-producing collaborators    | `InvitationMailer`, `TripMailer`        |
+
+Strongest source evidence:
+
+`config/initializers/mail_logger.rb:1–7` contains both the callback definition and explicit registration:
+
+```
+module MailLogger
+  def self.delivered_email(message)
+    Rails.logger.info "[Mailer] Sent '#{message.subject}' to #{Array(message.to).join(', ')}"
+  end
+end
+
+ActionMailer::Base.register_observer(MailLogger)
+```
+
+This is supported by the actual framework contract. Action Mailer 8.1.3 delegates registration to `Mail.register_observer`, while Mail 2.9.0 maintains the registered observers and invokes `delivered_email(mail)` when informing them.&#x20;
+
+[image](https://www.google.com/s2/favicons?domain=https://www.rubydoc.info\&sz=32)
+
+RubyDoc
+
++1
+
+
+
+Strongest rejection argument: DaPlanStan implements neither the observer registry nor the notification algorithm. It only registers a custom logger through an existing Rails API.
+
+This objection would defeat a claim that DaPlanStan independently implements the whole GoF Observer framework.
+
+It does not defeat the narrower claim that DaPlanStan participates in a concrete, framework-mediated Observer collaboration. The application defines the actual observer, explicitly registers it and relies on the framework's notification contract.
+
+Role correction: `TripMailer` and `InvitationMailer` are mail producers, not custom Observer subjects. The notification publisher is the Mail gem's delivery infrastructure, exposed through Action Mailer.
+
+Decision: CONFIRMED
+
+Retain: `Outbound Mail Delivery Logging`
+
+Count it once, not once per mailer or delivered email.
+
+### 8. Observer — Trip-Scoped Turbo Refresh Notifications
+
+Defining mechanism: A publisher sends notifications to subscribed receivers through an established notification channel, without invoking each receiver directly.
+
+Actual participants:
+
+| Role                          | Actual implementation                                 |
+| ----------------------------- | ----------------------------------------------------- |
+| Model publication source      | `InboxItem`                                           |
+| Job publication source        | `GeocodeTripItemsJob`                                 |
+| Publisher infrastructure      | `Turbo::StreamsChannel` and Turbo broadcasting        |
+| Subscription declarations     | Trip show view and inbox index view                   |
+| Concrete subscriber mechanism | Turbo cable stream source in subscribed browser pages |
+| Delivery infrastructure       | Action Cable                                          |
+| Notification reaction         | Turbo client refresh handling                         |
+
+Strongest application evidence:
+
+- `app/models/inbox_item.rb:5` — `broadcasts_refreshes_to :trip`.
+- `app/jobs/geocode_trip_items_job.rb:20–21` — `Turbo::StreamsChannel.broadcast_refresh_to(trip)`.
+- `app/views/trips/show.html.erb:2` — `turbo_stream_from @trip`.
+- `app/views/inbox_items/index.html.erb:1` — identical trip-scoped subscription.
+
+The framework contract establishes the missing infrastructure:
+
+- Turbo Rails 2.0.23 uses an `after_commit` callback for `broadcasts_refreshes_to`.&#x20;
+
+  [image](https://www.google.com/s2/favicons?domain=https://github.com\&sz=32)
+
+  GitHub
+
+- `turbo_stream_from` creates a signed stream subscription declaration.&#x20;
+
+  [image](https://www.google.com/s2/favicons?domain=https://github.com\&sz=32)
+
+  GitHub
+
+- `Turbo::StreamsChannel#subscribed` establishes the Action Cable subscription.&#x20;
+
+  [image](https://www.google.com/s2/favicons?domain=https://github.com\&sz=32)
+
+  GitHub
+
+- `broadcast_refresh_to` publishes a Turbo Stream refresh action.&#x20;
+
+  [image](https://www.google.com/s2/favicons?domain=https://github.com\&sz=32)
+
+  GitHub
+
+
+
+Strongest rejection argument: Almost the entire Observer mechanism is supplied by Turbo and Action Cable. DaPlanStan does not define a custom observer callback or its own notification registry.
+
+This instance has less application-owned observer behavior than Outbound Mail Delivery Logging, where `MailLogger.delivered_email` is explicitly written by the application.
+
+Nevertheless, the two application publication paths and two subscription declarations form a complete, intentional trip-scoped notification collaboration. The defining mechanism does not depend on imagining additional application-written classes.
+
+Under the framework-mediated acceptance rule applied to the Mail Observer, this meets the pattern threshold.&#x20;
+
+
+
+Role correction: `InboxItem` and `GeocodeTripItemsJob` are publication sources, not independent ConcreteSubjects implementing a custom Observer API. The browser subscribers are instantiated through Turbo; the application supplies subscription declarations.
+
+Decision: CONFIRMED
+
+Retain: `Trip-Scoped Turbo Refresh Notifications`
+
+Count one collaboration across the inbound-email and geocoding workflows.
+
+### 9. GRASP Controller — Account Traveler Enrollment Coordination
+
+Defining rule: A system-event handler coordinates a substantive account-level enrollment use case involving identity resolution, record creation and, where appropriate, invitation delivery.
+
+System event: An account owner adds a traveler through Settings.
+
+Actual participants: `TravelersController#create`, `#set_account`, `Account`, `Traveler`, `User` and `InvitationMailer#invite`.
+
+Strongest source evidence:
+
+- `config/routes.rb:48–50` — account Settings traveler-management routes.
+- `app/views/settings/show.html.erb:114–127` — account-level enrollment form.
+- `app/controllers/travelers_controller.rb:5–35` — enrollment branching.
+- Same file, `54–56` — account-owner authorization.
+- `app/models/account.rb:1–11` — account/traveler relationship.
+- `app/models/traveler.rb:1–8` — persisted traveler relationship.
+- `app/mailers/invitation_mailer.rb:2–6` — delegated invitation construction.
+
+Actual application decisions: The controller normalizes supplied values, rejects invalid and duplicate requests, distinguishes registered users from email-only travelers, supports name-only managed travelers and optionally requests an invitation.
+
+This is not a simple unconditional `Traveler.create!` operation.&#x20;
+
+Strongest rejection argument: These decisions are implemented directly in a conventional Rails controller. The enrollment algorithm is procedural, and some of its user-resolution behavior resembles the trip membership controller's logic.
+
+Under a counting policy that rejects every controller-heavy operation, this would be rejected. But such a policy would also threaten several previously confirmed GRASP Controller cases, especially Trip Creation Coordination and Bulk Itinerary Import Coordination.
+
+Applying the established rule consistently, the application does coordinate a meaningful account-enrollment event with multiple possible outcomes and delegated invitation delivery.
+
+Role correction: `TravelersController#create` is the system-event coordinator. `Traveler` represents an account participant; it is not automatically a trip member. `InvitationMailer` constructs the invitation but does not decide whether enrollment is permitted.
+
+Decision: CONFIRMED
+
+New stable instance name: `Account Traveler Enrollment Coordination`
+
+It passes the same source-level GRASP Controller threshold as the earlier use-case coordinators.
+
+### 10. GRASP Information Expert — Beta Invite Eligibility Evaluation
+
+Defining rule: A substantive responsibility should belong to the object possessing the information needed to carry it out.
+
+Proposed expert: `Invite`.
+
+Actual participants: `Invite#used?`, `#expired?`, `#usable?`, `#email_matches?`, `InvitesController#accept` and `SessionsController#provision_account_or_gate`.
+
+Strongest source evidence:
+
+`app/models/invite.rb:12–18` defines predicates using the invitation's own fields:
+
+```
+def used?    = used_at.present?
+def expired? = expires_at.present? && expires_at < Time.current
+def usable?  = !used? && !expired?
+
+def email_matches?(address)
+  email.blank? || email.casecmp?(address.to_s)
+end
+```
+
+Both `InvitesController#accept`, lines 5–15, and `SessionsController#provision_account_or_gate`, lines 63–75, use these rules.&#x20;
+
+
+
+Strongest rejection argument: These are elementary predicates over the model's own attributes. Nearly every domain model with validation or status methods could qualify under such a permissive interpretation.
+
+Unlike `InboxItem`, `Invite` does not interpret complex information or coordinate a substantial cross-object responsibility.
+
+The full account-eligibility decision remains in `SessionsController`, which combines invitation validity, user identity and account-provisioning conditions.
+
+This code is a reasonable example of keeping domain predicates near their data, but the evidence is insufficient for a separately counted Information Expert collaboration under the significance threshold used for `Parsed Email to Trip Record Linking`.
+
+Role correction: `Invite` owns basic eligibility predicates; it is not the object responsible for the entire signup-authorization process.
+
+Decision: REJECTED
+
+Record the reason as: Simple domain-model predicate encapsulation; insufficient independent collaboration for a separately counted GRASP Information Expert instance.
+
+This is a rejection of the pattern-inventory classification, not a criticism of the code's method placement.
+
+## 3. Final candidate decision table
+
+| #  | Candidate                                                    | Strongest objection                                                 | Origin                    | Final decision |
+| -- | ------------------------------------------------------------ | ------------------------------------------------------------------- | ------------------------- | -------------- |
+| 1  | Parsed Email to Trip Record Linking — Information Expert     | Large model coordinating other domain objects                       | Mainly application        | CONFIRMED      |
+| 2  | Inbound Travel Email Intake Coordination — Controller        | Action Mailbox convention                                           | Mixed                     | CONFIRMED      |
+| 3  | Trip Creation Coordination — Controller                      | Short Rails create action                                           | Mixed                     | CONFIRMED      |
+| 4  | Trip Membership Management Coordination — Controller         | Controller-heavy membership policy                                  | Mixed                     | CONFIRMED      |
+| 5  | Bulk Itinerary Import Coordination — Controller              | Procedural import algorithm in controller                           | Mixed                     | CONFIRMED      |
+| 6  | OAuth Sign-in and Identity Linking Coordination — Controller | Procedural callback after OmniAuth                                  | Mixed                     | CONFIRMED      |
+| 7  | Outbound Mail Delivery Logging — Observer                    | Observer infrastructure belongs to Mail gem                         | Mixed, framework-mediated | CONFIRMED      |
+| 8  | Trip-Scoped Turbo Refresh Notifications — Observer           | Subscriber and dispatch infrastructure belong to Turbo              | Mainly framework-mediated | CONFIRMED      |
+| 9  | Account Traveler Enrollment Coordination — Controller        | Resembles ordinary account CRUD and overlaps traveler resolution    | Mixed                     | CONFIRMED      |
+| 10 | Beta Invite Eligibility Evaluation — Information Expert      | Simple model predicates, not substantial independent responsibility | Mainly application        | REJECTED       |
+
+No candidate remains structurally UNCERTAIN under the applied rule. This does not eliminate human-review and runtime limitations.
+
+## 4. Cross-instance review
+
+### A. Consistent GRASP Controller counting rule
+
+One instance is counted for one coherent, independently identifiable use-case responsibility implemented through an application-level event coordinator and its relevant collaborators.
+
+This means:
+
+- Multiple HTTP actions can belong to one instance.
+- Multiple methods of one class can belong to one instance.
+- One Rails controller class could support different use cases, but class count does not determine instance count.
+- Sharing models or framework services does not automatically merge independently triggered use cases.
+- Simple CRUD actions without substantial application decisions do not qualify merely because they receive requests.
+
+Applying that rule yields six defensible Controller instances.
+
+| Independent use case        | Main event handler           | Distinct business outcome                                                   |
+| --------------------------- | ---------------------------- | --------------------------------------------------------------------------- |
+| Inbound email intake        | `TripMailbox#process`        | Accept a message into a trip's inbox and choose its next processing path    |
+| Trip creation               | `TripsController#create`     | Create trip and initial owner membership                                    |
+| Trip membership management  | `TripMembersController`      | Add/remove participation in an existing trip                                |
+| Bulk itinerary import       | `TripItemsController#import` | Import a reviewed batch of itinerary ideas                                  |
+| OAuth identity coordination | `SessionsController#create`  | Establish local authenticated identity, invitation links and account access |
+| Account traveler enrollment | `TravelersController#create` | Enroll an account-level traveler and optionally invite them                 |
+
+These six are not being counted because six controller or mailbox classes exist. They represent six different externally initiated responsibilities.
+
+### B. Account enrollment versus trip membership management
+
+These are sufficiently independent to count separately.
+
+Account traveler enrollment creates or manages a `Traveler` within an `Account`. It supports name-only travelers and email-based invitations but does not create a `TripMember`.
+
+Trip membership management adds or removes participation in one particular trip. It may resolve or create a traveler as a supporting step, but its defining outcome is the presence or removal of a role-bearing `TripMember`.
+
+They overlap in identity resolution and invitation infrastructure. Those shared steps must not be counted as extra patterns, but they do not collapse two independent use-case responsibilities into one.
+
+Decision: Retain both as distinct GRASP Controller instances.
+
+### C. Information Expert consistency
+
+The difference between the two candidates is substantive responsibility.
+
+`InboxItem` owns structured email data and implements the complex translation of that information into existing or new itinerary and expense records.
+
+`Invite` owns a few fields and answers eligibility questions about them.
+
+Although both put rules near relevant data, only the first represents a substantial independently identifiable responsibility under the inventory's counting threshold.
+
+Decision: Retain `Parsed Email to Trip Record Linking`; reject `Beta Invite Eligibility Evaluation`.
+
+### D. Observer duplication and boundaries
+
+The two confirmed Observers have separate subjects, events, infrastructure and reactions.
+
+| Dimension               | Outbound Mail Delivery Logging     | Trip-Scoped Turbo Refresh Notifications         |
+| ----------------------- | ---------------------------------- | ----------------------------------------------- |
+| Event                   | Mail delivery                      | Trip-scoped record changes or refresh requests  |
+| Framework               | Action Mailer / Mail               | Turbo Rails / Action Cable                      |
+| Application participant | `MailLogger` concrete observer     | Inbox/geocoding publishers and subscribed views |
+| Registration            | `register_observer(MailLogger)`    | `turbo_stream_from @trip`                       |
+| Reaction                | Write application log entry        | Process a browser refresh                       |
+| Instance boundary       | One delivery-logging collaboration | One trip-scoped refresh collaboration           |
+
+These are not duplicates.
+
+The earlier rejected `map:locate`, `map:reset` and `map:resize` collaboration also remains excluded. Those events are targeted DOM commands to a known map element, not another instance of trip-scoped Turbo notification.
+
+Decision: Two distinct Observer instances.
+
+## 5. Final participant-role mapping and stable names
+
+This is the mapping to preserve for eventual inventory construction. GRASP patterns use responsibility roles, not invented GoF-style interfaces.
+
+| Pattern                  | Stable instance name                            | Main participant                                              | Essential collaborators                                                                          |
+| ------------------------ | ----------------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| GRASP Information Expert | Parsed Email to Trip Record Linking             | `InboxItem#confirm_and_create_items!`, `#fill_missing_links!` | `InboxItemsController`, `Trip`, `TripItem`, `Expense`, `Traveler`                                |
+| GRASP Controller         | Inbound Travel Email Intake Coordination        | `TripMailbox#process`                                         | `ApplicationMailbox`, `Trip`, `InboxItem`, `ParseInboxItemJob`, `TripMailer`                     |
+| GRASP Controller         | Trip Creation Coordination                      | `TripsController#create`                                      | `Trip`, `Account`, `TripMember`, `FetchTripCoverImageJob`                                        |
+| GRASP Controller         | Trip Membership Management Coordination         | `TripMembersController` membership operations                 | `ApplicationController`, `Trip`, `Account`, `Traveler`, `User`, `TripMember`, `InvitationMailer` |
+| GRASP Controller         | Bulk Itinerary Import Coordination              | `TripItemsController#import`, `#bulk_create_items`            | `Trip`, `TripItem`, `Geocodable`, `GeocodeTripItemsJob`                                          |
+| GRASP Controller         | OAuth Sign-in and Identity Linking Coordination | `SessionsController#create`, account-provisioning helpers     | `UserIdentity`, `User`, `Traveler`, `Account`, `Invite`                                          |
+| GRASP Controller         | Account Traveler Enrollment Coordination        | `TravelersController#create`                                  | `Account`, `Traveler`, `User`, `InvitationMailer`                                                |
+| Observer                 | Outbound Mail Delivery Logging                  | `MailLogger.delivered_email`                                  | Action Mailer registration, Mail notification infrastructure, mailer producers                   |
+| Observer                 | Trip-Scoped Turbo Refresh Notifications         | `InboxItem`, `GeocodeTripItemsJob`, subscribing views         | Turbo Streams, Action Cable and Turbo browser subscriber                                         |
+
+These participant descriptions are accurate at the responsibility level. The eventual `participant_roles` and `source_locations` CSV fields should retain the precise roles and file ranges, including the framework-origin distinctions.
+
+## 6. Rejected-candidate record
+
+The following should remain outside `patterns.csv` and confirmed pattern counts.
+
+| Rejected candidate                                      | Reason                                                                                    |
+| ------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Geocoding — Template Method                             | No application-defined template algorithm delegating overridable primitive steps          |
+| Geocoding — Strategy                                    | Sequential primary/fallback methods, not interchangeable algorithm implementations        |
+| Geocoding — Adapter                                     | Direct use of the Geocoder API, without an established incompatible-interface translation |
+| Itinerary Timeline–Map Event Coordination — Observer    | Targeted DOM event communication to the known map component                               |
+| Beta Invite Eligibility Evaluation — Information Expert | Simple eligibility predicates lack substantive independent collaboration                  |
+
+Ordinary Rails CRUD, callbacks, enums, associations and `create!` calls also remain insufficient as standalone pattern evidence.
+
+## 7. Pre-freeze counting result
+
+Adversarial-review outcome
+
+# 9
+
+Source-confirmed instances
+
+# 3
+
+Pattern types
+
+# 1
+
+Candidate rejected in final review
+
+| GRASP Controller         | 6 |
+| ------------------------ | - |
+| GRASP Information Expert | 1 |
+| Observer                 | 2 |
+| Total                    | 9 |
+
+These are source-supported classifications under the documented counting rule, not independently human-approved final submission counts.
+
+The final adversarial review changes the working inventory from eight to nine instances: one new independent account-enrollment Controller instance is accepted, while the invite-predicate Information Expert candidate is rejected.
+
+No previously confirmed instance required removal or merging under the consistently applied counting rule.
+
+## 8. Remaining verification boundaries
+
+The source-level pattern identification is sufficiently complete to close the discovery phase. Four limitations remain relevant before formal submission.
+
+Source provenance: The original ZIP was inspected, but its equivalence to Git commit `da54d9ab8bfc118e99375fdd6c506efb20b66e5b` has not been verified.
+
+Independent human verification: The project still requires a separate reviewer to validate the participant assignments, design-pattern threshold and nine proposed instances. The present analysis should not be labeled independent human approval.
+
+Framework provenance: The Observer classifications rely on documented contracts for the versions declared in `Gemfile.lock`. They must be described as framework-mediated instances rather than fully application-implemented observer frameworks.
+
+Runtime behavior: Successful OAuth callbacks, mail delivery notifications, Turbo refreshes, trip membership flows and imports have not been tested end to end. Runtime correctness should not be confused with static pattern identification.
+
+## Final adversarial-review conclusion
+
+### DaPlanStan — Final Adversarial Review Record
+
+**Source:** Original uploaded DaPlanStan archive\
+**Scope:** Ten challenged pattern candidates\
+**Method:** Direct source inspection, responsibility-boundary comparison, duplicate checking and relevant framework-contract verification.
+
+**Final classification**
+
+- GRASP Controller: 6 confirmed instances.
+- GRASP Information Expert: 1 confirmed instance.
+- Observer: 2 confirmed instances.
+- Total: 9 source-confirmed instances across 3 pattern types.
+
+**Decision changes**
+
+Account Traveler Enrollment Coordination is accepted as an independent GRASP Controller instance. Its system event creates account-level traveler participation, which is distinct from the creation of a role-bearing membership in an existing trip.
+
+Beta Invite Eligibility Evaluation is rejected as a separate GRASP Information Expert instance because its elementary model predicates do not establish a substantive independent collaboration comparable to Parsed Email to Trip Record Linking.
+
+**Deduplication**
+
+The two Observer instances are independent collaborations using different notification infrastructure. The trip-scoped Turbo Observer is counted once across geocoding and inbound-email processing.
+
+The six Controller instances are counted by cohesive system-event responsibility, not by controller class, method, provider or HTTP endpoint.
+
+**Previously rejected candidates**
+
+Geocoding Template Method, Strategy and Adapter remain rejected. Targeted timeline-to-map DOM event coordination remains rejected as Observer. Simple invite eligibility is added to the rejected-candidate record.
+
+**Verification boundary**
+
+The source-based classifications are complete enough for inventory preparation. Independent human sign-off, source-commit provenance and runtime behavior remain unverified.
+
+**Conclusion**
+
+The adversarial review supports a nine-instance baseline proposal. No additional pattern search is justified on current evidence. Preserve the accepted roles and rejected-candidate reasons, and obtain independent review before declaring the submission inventory formally frozen.
+
+Final decision: The repository discovery and source-level adversarial assessment are complete. The nine-instance inventory is ready for human verification and controlled baseline freezing, not for an unsupported claim that every pattern has already been independently validated.

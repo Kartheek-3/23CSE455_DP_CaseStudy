@@ -1,0 +1,621 @@
+Now continue the cross-language implementation phase.
+
+Strategy S3-N01, Observer P08, Controller P03 and Information Expert P01 are complete and frozen.
+
+Implement ONLY the fifth and final selected pattern:
+
+S2-N01 — Adapter (GoF)
+Multiple Booking Provider Normalization
+
+Do not modify any completed Strategy, Observer, Controller or Information Expert materials.
+
+Use the previously frozen Adapter common specification exactly.
+
+Do not create the final cross_language.csv yet. That will happen only after this Adapter implementation is verified.
+
+1. Extend the existing Part3 structure.
+
+Preserve all existing:
+
+Part3/common_specs/
+Part3/strategy/
+Part3/observer/
+Part3/controller/
+Part3/information_expert/
+existing evidence
+existing append-ready records
+
+Create and freeze before implementation:
+
+Part3/common_specs/adapter_cases.tsv
+Part3/common_specs/adapter_expected.tsv
+Part3/common_specs/atlas_raw.tsv
+Part3/common_specs/beacon_raw.tsv
+
+Also create any deterministic malformed fixture variants required for A08–A10 under:
+
+Part3/common_specs/adapter_invalid_fixtures/
+
+All four languages must use the same shared data.
+
+2. Simplified problem.
+
+Two fictional booking providers expose incompatible offer formats.
+
+Atlas Demo uses one raw structure.
+
+Beacon Demo uses another raw structure.
+
+The application must access either provider through one common target contract and receive the same normalized offer representation.
+
+There is:
+
+- no network request
+- no real booking
+- no payment
+- no confirmation reference
+- no external provider API
+
+3. Preserve these Adapter roles in every language.
+
+Client:
+BookingOfferClient
+
+Target:
+common offersFor(destination) / offers_for(destination) contract
+
+ConcreteAdapter 1:
+AtlasAdapter
+
+ConcreteAdapter 2:
+BeaconAdapter
+
+Adaptees:
+Atlas raw data format
+Beacon raw data format
+
+Selection:
+ProviderRegistry
+
+The client must not inspect Atlas-specific or Beacon-specific raw fields.
+
+Provider-specific interpretation must remain inside the corresponding adapter.
+
+4. Valid providers.
+
+Only:
+
+atlas_demo
+beacon_demo
+
+are supported.
+
+Unknown provider code:
+
+ERROR UNKNOWN_PROVIDER
+
+5. Valid destinations.
+
+Only:
+
+rome
+paris
+
+are supported by the frozen demo dataset.
+
+Unknown destination:
+
+ERROR UNKNOWN_DESTINATION
+
+6. Atlas raw format.
+
+Use a genuinely different schema from Beacon.
+
+Atlas records should represent destination-scoped offers using fields equivalent to:
+
+destination
+id
+title
+category
+location
+details
+price
+
+Atlas price must be a compound representation such as:
+
+EUR:24.00
+
+The Atlas adapter is responsible for:
+
+- parsing the compound price
+- validating currency
+- converting it to integer cents
+- mapping category into normalized kind
+- producing the target representation
+
+7. Beacon raw format.
+
+Use a different layout with fields equivalent to:
+
+destination
+code
+label
+type
+address
+summary
+amount
+currency
+
+Amount and currency are separate.
+
+BeaconAdapter must interpret only the Beacon format and produce the same normalized output contract as AtlasAdapter.
+
+8. Normalized target fields.
+
+Every valid offer must normalize to:
+
+provider_code
+provider_name
+offer_id
+name
+kind
+address
+description
+sample_amount_cents
+currency
+
+Example:
+
+atlas_demo
+Atlas Demo
+atlas-rome-walk-01
+Ancient Rome Walking Sampler
+do
+Rome, Italy
+Fictional guided walk description
+2400
+EUR
+
+Use integer cents.
+
+Do not use floating-point values in the normalized representation.
+
+9. Supported normalized kinds.
+
+Use only the itinerary kinds required by the frozen fixtures, including:
+
+do
+shop
+eat
+
+If a raw provider category/type cannot be mapped to a supported normalized kind:
+
+ERROR INVALID_OFFER
+
+10. Frozen business rules.
+
+Implement exactly:
+
+- provider must be approved
+- destination must be supported
+- selected offer must belong to the selected provider
+- selected offer must belong to the requested destination
+- IDs must be present
+- normalized kind must be valid
+- amount must be nonnegative
+- currency must be valid for the fixture
+- malformed provider structure must be rejected
+- no confirmation reference is created
+- no reservation is made
+
+Provider-specific raw details must not leak into BookingOfferClient.
+
+11. Freeze A01–A10 exactly.
+
+A01:
+Atlas Demo
+Rome
+walking sampler
+→ atlas_demo
+→ kind do
+→ 2400 cents
+→ EUR
+
+A02:
+Beacon Demo
+Rome
+museum sampler
+→ beacon_demo
+→ kind do
+→ 1600 cents
+→ EUR
+
+A03:
+Atlas Demo
+Paris
+market browsing
+→ normalized kind shop
+→ 0 cents
+
+A04:
+Beacon Demo
+Paris
+pastry stop
+→ normalized kind eat
+→ 1250 cents
+
+A05:
+unknown provider code
+→ ERROR UNKNOWN_PROVIDER
+
+A06:
+unsupported destination
+→ ERROR UNKNOWN_DESTINATION
+
+A07:
+Atlas provider selected with a Beacon offer ID
+→ ERROR UNKNOWN_OFFER
+
+A08:
+provider source record contains an unknown/unsupported category
+→ ERROR INVALID_OFFER
+
+A09:
+Atlas source contains malformed compound price
+→ ERROR INVALID_OFFER
+
+A10:
+provider fixture/source is missing required structure
+→ ERROR INVALID_FIXTURE
+
+Do not alter these expected outcomes.
+
+12. Define deterministic output.
+
+For success output use one fixed tab-separated structure:
+
+case_id
+OK
+provider_code
+provider_name
+offer_id
+name
+kind
+address
+description
+sample_amount_cents
+currency
+
+For errors:
+
+case_id
+ERROR
+error_code
+
+Use the same output in all four languages.
+
+13. Implement Java under:
+
+Part3/adapter/java/
+
+Keep clearly identifiable:
+
+BookingOfferClient
+ProviderRegistry
+OfferProvider or equivalent Target interface
+AtlasAdapter
+BeaconAdapter
+NormalizedOffer
+
+Use dependency-free Java.
+
+Do not require external JSON libraries.
+
+Read the frozen shared TSV data.
+
+14. Implement Python under:
+
+Part3/adapter/python/
+
+Preserve the same Adapter roles.
+
+Use standard library only.
+
+Do not replace both adapters with one generic function containing provider-specific if/else parsing.
+
+The provider-specific transformations must remain encapsulated separately.
+
+15. Implement JavaScript under:
+
+Part3/adapter/javascript/
+
+Use Node.js only.
+
+Keep AtlasAdapter and BeaconAdapter separately identifiable.
+
+BookingOfferClient must use only the common adapter contract.
+
+16. Implement C++ under:
+
+Part3/adapter/cpp/
+
+Use standard C++ only.
+
+Represent the Target contract explicitly.
+
+Keep both concrete adapters separate.
+
+No external JSON or third-party libraries.
+
+17. ProviderRegistry behavior.
+
+ProviderRegistry must resolve only:
+
+atlas_demo
+beacon_demo
+
+Do not use unsafe dynamic loading.
+
+A simple fixed lookup is acceptable.
+
+Do not classify ProviderRegistry as an additional Factory pattern.
+
+This implementation demonstrates only the frozen Adapter instance S2-N01.
+
+18. All four runners must use the same shared fixtures.
+
+Read:
+
+adapter_cases.tsv
+adapter_expected.tsv
+atlas_raw.tsv
+beacon_raw.tsv
+and the shared invalid fixture variants
+
+Do not embed separate expected answers in each language.
+
+19. Verify Adapter fidelity explicitly.
+
+For every language identify:
+
+Client
+Target
+AtlasAdapter
+BeaconAdapter
+Atlas adaptee/raw format
+Beacon adaptee/raw format
+ProviderRegistry
+NormalizedOffer
+
+Confirm that:
+
+- BookingOfferClient knows the target contract only
+- Atlas-specific parsing exists inside AtlasAdapter
+- Beacon-specific parsing exists inside BeaconAdapter
+- the two incompatible raw formats become the same normalized representation
+
+Explain why this is Adapter rather than Strategy.
+
+The key responsibility is interface/data-format translation, not interchangeable business algorithms.
+
+20. Verify isolation.
+
+Tests must establish:
+
+- Atlas request cannot retrieve a Beacon offer
+- Beacon request cannot retrieve an Atlas offer
+- destination filtering is enforced
+- malformed Atlas data does not corrupt Beacon operation
+- malformed Beacon/fixture data is handled independently where applicable
+- no mutable current-provider global state exists
+
+21. Compile and execute all four implementations.
+
+Record actual:
+
+Java:
+java version
+javac version
+compile command
+test command
+
+Python:
+python3 version
+test command
+
+JavaScript:
+node version
+test command
+
+C++:
+g++ version
+compile command
+test command
+
+Do not claim execution unless it actually occurred.
+
+22. Required results.
+
+10 Java cases
+10 Python cases
+10 JavaScript cases
+10 C++ cases
+
+Expected total:
+
+40/40
+
+If any case fails:
+
+- fix the implementation
+- rerun it
+
+Do not change the frozen expected results simply to make a failing implementation pass.
+
+23. Measure production LOC.
+
+Use exactly the same rule as the previous four patterns:
+
+- production source only
+- exclude tests
+- exclude fixture files
+- exclude blank lines
+- exclude comment-only lines
+- exclude generated/compiled artifacts
+
+Record source_loc for every language.
+
+24. Measure maximum function cyclomatic complexity.
+
+Use exactly the same previously frozen McCabe-style rule.
+
+Record:
+
+max_function_cc
+
+for each language.
+
+Do not change complexity methodology for Adapter.
+
+25. Measure runtime.
+
+For each language:
+
+- compile first where applicable
+- perform one warm-up
+- perform five measured fresh-process executions
+- each run processes A01–A10
+- retain all five measurements
+- calculate median_process_ms
+
+Use the same timing method used for Strategy, Observer, Controller and Information Expert.
+
+26. Create the standard evidence files in every language directory:
+
+production source
+test runner
+README.md
+test_result.txt
+timings.csv
+
+README must include:
+
+- source ID S2-N01
+- pattern Adapter (GoF)
+- instance Multiple Booking Provider Normalization
+- role mapping
+- compile/run instructions
+- Atlas vs Beacon raw-schema explanation
+- simplification from DaPlanStan
+- statement that no real provider API or booking is involved
+
+27. Prepare four append-ready faculty records with exactly these fields:
+
+pattern_name
+instance_name
+language
+snippet_path
+source_loc
+max_function_cc
+runtime_compiler
+test_command
+test_result
+median_process_ms
+language_notes
+
+Use:
+
+pattern_name = Adapter
+
+instance_name = Multiple Booking Provider Normalization
+
+Save:
+
+Part3/adapter/adapter_append_ready.json
+
+Do not create final cross_language.csv yet.
+
+28. Create:
+
+Part3/ADAPTER_VERIFICATION_SUMMARY.md
+
+Include:
+
+- fixture hashes
+- A01–A10 validation
+- Atlas raw format
+- Beacon raw format
+- normalized target structure
+- Adapter role mapping
+- provider isolation
+- compilation
+- test results
+- LOC
+- complexity
+- five timing values and medians
+- remaining limitations
+
+29. Preserve earlier work.
+
+Before and after implementation compare checksums of the existing Part3 materials.
+
+Confirm that completed:
+
+Strategy
+Observer
+Controller
+Information Expert
+
+source, fixtures, evidence and append-ready records remain unchanged.
+
+30. Package this stage.
+
+Create one cumulative ZIP containing the complete current Part3 tree:
+
+- Strategy
+- Observer
+- Controller
+- Information Expert
+- Adapter
+- all common fixtures
+- all append-ready records
+- verification summaries
+- measurement evidence
+
+Exclude:
+
+- compiled Java .class files
+- C++ binaries
+- Python caches
+- temporary/generated runtime files not required as evidence
+
+Verify ZIP integrity.
+
+31. Do not modify DaPlanStan.
+
+32. Do not generate final cross_language.csv yet.
+
+The next step after this will be final 20-row aggregation and cross-language report validation.
+
+At the end give me:
+
+1. Exact Adapter files created.
+2. A01–A10 fixture validation.
+3. Atlas raw format and normalization.
+4. Beacon raw format and normalization.
+5. Java result.
+6. Python result.
+7. JavaScript result.
+8. C++ result.
+9. Adapter role mapping.
+10. Provider isolation verification.
+11. Runtime/compiler versions.
+12. LOC values.
+13. Maximum function CC values.
+14. Five measured timings and median for each language.
+15. Four append-ready Adapter records.
+16. Preservation result for the previous four patterns.
+17. Remaining limitations.
+18. Downloadable cumulative Adapter/cross-language ZIP.
+
+Do not start final aggregation until this Adapter implementation is complete.

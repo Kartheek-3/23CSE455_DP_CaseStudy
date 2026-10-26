@@ -1,0 +1,17 @@
+# Strategy Pattern — Python Implementation
+
+## Pattern Problem
+Implements the **Visibility Condition Evaluator Dispatch** strategy from `ha-fusion` (`src/lib/Conditional.ts` refactored in CH01), where condition evaluation logic is factored out of switch blocks into interchangeable strategy objects registered within an evaluation context.
+
+## File Manifest
+- `condition_strategy.py`: Production snippet defining `ConditionStrategy` interface, concrete strategy classes (`StateStrategy`, `NumericStrategy`, `ScreenStrategy`), and `EvaluatorContext` strategy selector/registry supporting both class-based and functional strategy callables.
+- `test_runner.py`: Test runner executing evaluations across built-in and dynamically registered strategies.
+
+## How to Run
+From the root of `A4/`:
+```bash
+python Part3/strategy_evaluator/python/test_runner.py
+```
+
+## Timing Protocol
+Measured using `time.perf_counter()` in milliseconds across 1 warm-up run and 5 measured runs.

@@ -1,0 +1,25 @@
+source_version,summary,pattern_name,count
+original,per_pattern,Adapter,1
+original,per_pattern,Builder,1
+original,per_pattern,Service Layer,4
+original,total_pattern_types,,3
+original,total_pattern_instances,,6
+after_change1,per_pattern,Adapter,1
+after_change1,per_pattern,Builder,1
+after_change1,per_pattern,Service Layer,4
+after_change1,per_pattern,Strategy,1
+after_change1,total_pattern_types,,4
+after_change1,total_pattern_instances,,7
+after_change2,per_pattern,Adapter,1
+after_change2,per_pattern,Builder,1
+after_change2,per_pattern,Service Layer,5
+after_change2,per_pattern,Strategy,1
+after_change2,total_pattern_types,,4
+after_change2,total_pattern_instances,,8
+after_change3,per_pattern,Adapter,1
+after_change3,per_pattern,Builder,1
+after_change3,per_pattern,Service Layer,5
+after_change3,per_pattern,Strategy,1
+after_change3,per_pattern,Chain of Responsibility,1
+after_change3,total_pattern_types,,5
+after_change3,total_pattern_instances,,9

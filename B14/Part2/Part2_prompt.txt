@@ -1,0 +1,123 @@
+# Part 2 — Software Evolution
+
+## Project context
+
+I am working on Part 2 (Evolution and Refactoring) of the 23CSE455 Design Patterns case study. The assigned application is the Next.js Blog CMS.
+
+Original repository: https://github.com/thepracticalengineer/nextjs-blog-cms
+
+Team repository: https://github.com/keziahgeorge/23CSE455_DP_CaseStudy
+
+Team folder: B14
+
+The application uses Next.js App Router, React, TypeScript, Supabase, Tailwind CSS and shadcn/ui. Existing functionality includes authentication, Admin/Author roles, rich-text editing, draft and publication workflows, comments, an AI writing assistant, newsletter subscriptions and a REST API.
+
+The original baseline commit recorded in our Part 1 pattern inventory is `90ec6565877053ee0e93e9f09dcc7c7213aa4832`. Verify that this commit corresponds to the source being analysed before relying on it.
+
+## Objective
+
+Implement three realistic changes to the existing application and document how each change affects its design patterns.
+
+The required changes are:
+
+- CH01: Article recommendations.
+- CH02: Content moderation.
+- CH03: Subscription/paywall access control.
+
+Do not rebuild the application from scratch. Extend the existing architecture and preserve unrelated functionality.
+
+## Instructions
+
+### 1. Inspect the baseline
+
+Before proposing code changes:
+
+1. Inspect the project structure, package scripts, relevant source files, database schema and migrations, existing tests, and project documentation.
+2. Identify the actual implementation of each feature relevant to the three changes.
+3. Review the supplied Part 1 `patterns.csv` and verify its findings against the source.
+4. Identify existing pattern participants, their relationships, file paths and line ranges.
+5. Identify existing tests, environment requirements, limitations and potential regressions.
+6. Do not assume a pattern exists solely because a class or function has a suggestive name.
+
+The current pattern inventory includes Strategy, Observer and Role-Based Access Control (RBAC). Verify each finding and investigate other relevant patterns without assuming that the inventory is exhaustive.
+
+### 2. Implement the three changes
+
+For each change, provide:
+
+- Requirement and rationale.
+- Explicit, observable acceptance criteria.
+- Relevant existing source files and proposed modifications.
+- Implementation that fits the existing architecture.
+- Database migrations or permission-policy changes, if required.
+- Automated tests and manual verification steps.
+- Exact commands used and actual test results.
+- Changed source paths and a reproducible Git diff.
+- Security, compatibility and regression considerations.
+
+For CH01, implement useful article recommendations using the existing article metadata and data-access mechanisms where appropriate.
+
+For CH02, introduce or extend a content moderation workflow that prevents unapproved content from being published through applicable publishing paths.
+
+For CH03, implement a clearly defined premium-content access rule that preserves access to free content and protects premium content on the server. Do not confuse newsletter subscriptions with paid subscriptions.
+
+Use the smallest reasonable implementation that satisfies the requirements. Do not introduce unnecessary frameworks, services or design patterns.
+
+### 3. Analyse pattern evolution
+
+For each change, inspect the before-and-after implementation and classify every affected pattern instance as one of:
+
+- preserved
+- modified
+- extended
+- replaced
+- removed
+- newly_introduced
+
+Use the same instance name when the same collaboration continues. Give replacements and new collaborations meaningful instance names.
+
+For every confirmed instance, record:
+
+- Pattern name and category.
+- Instance name.
+- Every applicable participant role and actual class, interface, function or module.
+- Source file paths and line ranges.
+- Intent and evidence of relationships, calls, delegation and behaviour.
+- Status after the change and justification.
+
+Do not invent participant classes or declare a pattern present without evidence. Record rejected and uncertain candidates separately with reasons.
+
+### 4. Refactoring and measurements
+
+Identify at least one genuine code smell in the inspected application and apply an appropriate refactoring technique.
+
+Record the original smell, refactoring technique, source diff, relevant tests and evidence that intended behaviour was preserved.
+
+Measure before-and-after source lines of code using consistent rules and the same tool. Record actual test results and other required measurements. Explain missing measurements honestly. Do not claim that fewer lines automatically mean better design.
+
+### 5. Required deliverables
+
+Prepare the following under `B14/Part2/`:
+
+- `code/`: evolved application source or a reproducible reference to the corresponding commits.
+- `changes/Change1/`, `changes/Change2/`, `changes/Change3/`: requirements, acceptance criteria, diffs and test evidence.
+- `pattern_evolution.csv`: verified pattern instances for each source snapshot.
+- `Pattern_count.csv`: pattern counts for each snapshot, following the supplied assignment schema.
+- `diagrams/`: updated UML or component diagrams where appropriate.
+- `Part2_prompt.txt`: exact master prompt used.
+- `llm.csv`: actual AI-use records and verification status.
+- Supporting raw prompts, outputs, logs and evidence.
+
+Follow the assignment's supplied CSV schemas and report template. Keep paths relative to the B14 team folder.
+
+### 6. Working rules
+
+Work incrementally. Do not implement all three changes in one unreviewable batch.
+
+First produce an inspection report and a proposed implementation plan. Wait for approval before modifying source code.
+
+For subsequent changes, implement one at a time, run relevant tests, report failures honestly and preserve the ability to reproduce each snapshot.
+
+Never invent test results, source locations, commits, metrics, model details or AI outputs. Distinguish proposed work from completed and verified work.
+
+Begin by inspecting the supplied source and reporting the baseline findings, missing information, risks and recommended implementation sequence. Do not modify any files yet.

@@ -1,0 +1,41 @@
+// Component and request/event-flow view of campus-food-ordering @ 83998629 (baseline).
+// Render: dot -Tpdf architecture.dot -o architecture.pdf ; dot -Tpng -Gdpi=150 architecture.dot -o architecture.png
+digraph architecture {
+  graph [rankdir=TB, fontname="Helvetica", fontsize=13, nodesep=0.3, ranksep=0.45, splines=true, newrank=true];
+  node  [shape=box, style="rounded,filled", fillcolor="#f4f4f4", color="#555555", fontname="Helvetica", fontsize=13];
+  edge  [fontname="Helvetica", fontsize=11, color="#444444"];
+
+  subgraph cluster_client { label="Browser (Django templates + inline JS)"; style="rounded,dashed"; color="#888888";
+    adminui [label="Admin pages\n(e.g. adminassignorder.html)"];
+    roleui  [label="Restaurant / delivery /\ncustomer pages"];
+  }
+  subgraph cluster_http { label="HTTP path (canteen/asgi.py: \"http\")"; style="rounded"; color="#888888";
+    urls  [label="URLconf\ncanteen/urls.py"];
+    views [label="View functions\ncanteenapp/views.py\n(admin_required, csrf_protect)"];
+  }
+  subgraph cluster_domain { label="Domain and persistence"; style="rounded"; color="#888888";
+    models  [label="ORM models\ncanteenapp/models.py\n(Order, Item, Cart, DeliveryPerson, ...)"];
+    db      [label="SQLite\n(db.sqlite3; settings.DATABASES)", shape=cylinder];
+    signals [label="Signal receiver\ncanteenapp/signals.py\nremove_unavailable_item_from_cart"];
+  }
+  subgraph cluster_ws { label="WebSocket path (canteen/asgi.py: \"websocket\")"; style="rounded"; color="#888888";
+    layer   [label="Channel layer\nInMemoryChannelLayer\n(groups: admin_group, restaurant_group,\ndelivery_group, menu_group, ...)", fillcolor="#e8eef7"];
+    routing [label="canteenapp/routing.py\nwebsocket_urlpatterns"];
+    consumers [label="AsyncWebsocketConsumer subclasses\ncanteenapp/consumers.py"];
+  }
+  ext [label="External services\nPhonePe / PayU SDKs, Firebase (FCM),\nSMTP e-mail, Google OAuth", fillcolor="#fbf3e4"];
+
+  adminui -> urls [label="1  POST JSON\n(order_id, status)"];
+  urls -> views;
+  views -> models [label="2  update Order\n(order.save())"];
+  models -> db;
+  models -> signals [label="post_save(sender=Item)", style=dashed];
+  signals -> db [label="delete Cart rows", style=dashed];
+  views -> layer [label="3  group_send\n{type: ...}"];
+  layer -> consumers [label="4  dispatch by type\nto handler method"];
+  consumers -> models [label="query orders", style=dotted];
+  consumers -> roleui [label="5  WebSocket\nsend(JSON)"];
+  roleui -> routing [label="ws/... connect", style=dotted];
+  routing -> consumers [label="connect: group_add", style=dotted];
+  views -> ext [label="payments, push,\ne-mail", style=dashed];
+}

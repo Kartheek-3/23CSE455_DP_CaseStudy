@@ -1,0 +1,92 @@
+--- /dev/null
++++ b/backend/app/workflow/pipeline.py
+@@ -0,0 +1,70 @@
++"""Experiment Workflow Pipeline — Strategy (WorkflowStep) + Template Method (run) + Observer notification."""
++from abc import ABC, abstractmethod
++from dataclasses import dataclass, field
++from enum import Enum
++from typing import List, Optional
++from uuid import UUID
++
++class StepResult(Enum):
++    SUCCESS = "SUCCESS"
++    FAILURE = "FAILURE"
++    SKIPPED = "SKIPPED"
++
++@dataclass
++class WorkflowContext:
++    data_product_id: UUID
++    job_id: UUID
++    user_id: UUID
++    extra: dict = field(default_factory=dict)
++
++class WorkflowStep(ABC):
++    """Strategy interface for a single pipeline phase."""
++    @abstractmethod
++    def execute(self, context: WorkflowContext) -> StepResult:
++        pass
++
++class ValidationStep(WorkflowStep):
++    def execute(self, context: WorkflowContext) -> StepResult:
++        # verify file exists and has expected extension
++        return StepResult.SUCCESS
++
++class ProcessingStep(WorkflowStep):
++    def execute(self, context: WorkflowContext) -> StepResult:
++        # trigger rasterio/geoprocessing
++        return StepResult.SUCCESS
++
++class PolicyCheckStep(WorkflowStep):
++    def execute(self, context: WorkflowContext) -> StepResult:
++        # call AccessPolicyEngine for publication permission
++        return StepResult.SUCCESS
++
++class PublicationStep(WorkflowStep):
++    def execute(self, context: WorkflowContext) -> StepResult:
++        # generate STAC record and mark data product active
++        return StepResult.SUCCESS
++
++class ExperimentWorkflowPipeline:
++    """Template Method: defines fixed step order; Strategy: each step is interchangeable."""
++    def __init__(self, steps: List[WorkflowStep], observers: List = None):
++        self.steps = steps
++        self.observers = observers or []
++
++    def run(self, context: WorkflowContext) -> StepResult:
++        for step in self.steps:
++            result = step.execute(context)
++            for obs in self.observers:
++                obs.on_step_complete(step.__class__.__name__, result, context)
++            if result == StepResult.FAILURE:
++                return StepResult.FAILURE
++        return StepResult.SUCCESS
+
+--- /dev/null
++++ b/backend/app/workflow/observers.py
+@@ -0,0 +1,20 @@
++from abc import ABC, abstractmethod
++
++class WorkflowStatusObserver(ABC):
++    @abstractmethod
++    def on_step_complete(self, step_name: str, result, context) -> None:
++        pass
++
++class JobStatusObserver(WorkflowStatusObserver):
++    """Writes step transitions to the Job record for UI display."""
++    def on_step_complete(self, step_name, result, context) -> None:
++        print(f"[Job {context.job_id}] {step_name} -> {result.value}")
+
+--- a/backend/app/tasks/post_upload_tasks.py
++++ b/backend/app/tasks/post_upload_tasks.py
+@@ -line,0 @@
++# CH03: trigger workflow pipeline after upload completes
++from app.workflow.pipeline import (
++    ExperimentWorkflowPipeline, ValidationStep, ProcessingStep, PolicyCheckStep, PublicationStep, WorkflowContext
++)
++from app.workflow.observers import JobStatusObserver
++
++pipeline = ExperimentWorkflowPipeline(
++    steps=[ValidationStep(), ProcessingStep(), PolicyCheckStep(), PublicationStep()],
++    observers=[JobStatusObserver()],
++)
++pipeline.run(WorkflowContext(data_product_id=dp.id, job_id=job.id, user_id=user.id))

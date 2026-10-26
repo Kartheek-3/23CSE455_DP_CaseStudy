@@ -1,0 +1,11 @@
+$ (cd Part3/factory-method-executors/python) python3 -m unittest -v test_factory
+test_invalid_input_is_rejected_with_expected_error (test_factory.FactoryMethodTest.test_invalid_input_is_rejected_with_expected_error) ... ok
+test_report_matches_expected_output (test_factory.FactoryMethodTest.test_report_matches_expected_output) ... ok
+test_subclass_changes_only_the_created_product (test_factory.FactoryMethodTest.test_subclass_changes_only_the_created_product) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK
+[exit 0]
+result: 3/3 passed

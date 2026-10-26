@@ -1,0 +1,14 @@
+CH03 Password Strategy refactor — authoritative result: JUnit 5 run via Maven on the
+submission machine (OpenJDK 11.0.32, Spring Boot 2.4.0).
+
+Command: ./mvnw test -Dtest=PasswordEncoderTest -DfailIfNoTests=false
+Result:  PasswordEncoderTest — Tests run: 2, Failures: 0, Errors: 0  (BUILD SUCCESS)
+Full log: ../../../../test_result/mvn_test.log
+
+Covered (all PASS):
+ - encode() yields a $2-prefixed BCrypt hash, not plaintext (would fail on the old stub).
+ - matches() accepts the correct password and rejects a wrong one.
+
+Note: the real BCryptPasswordEncoder is already on the classpath via
+spring-boot-starter-security; CH03 only replaces the stubbed concrete strategy
+(change3.diff), leaving the Strategy structure and wiring (line 31) intact.

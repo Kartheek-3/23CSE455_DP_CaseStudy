@@ -1,0 +1,44 @@
+# CH02 test run
+# commit: 28a83c8776feff6acc2727c48306ffae825a2f7f (parent f6353555bedbe0a9bcd083b4967ce7699498c027)
+# command (repo root): npm test
+# node v22.18.0, ts-node 10.9.2 transpile-only, run 2026-10-11T15:23:33Z
+
+ok 1 - BookDriver broadcasts only to drivers within 20 km road distance and saves a PENDING trip
+ok 2 - BookDriver refuses the request when no driver is within 20 km by road
+ok 3 - rider cancelling a PENDING trip sets CANCELLED and stores the reason
+ok 4 - rider cancelling a CONFIRMED trip notifies the assigned driver
+ok 5 - driver completing a trip stores finalFare = estimatedFare + finalKm * 10
+ok 6 - completing a trip without finalKm is rejected
+ok 7 - CH02 trip state fixtures T1-T8
+ok 8 - CH02 rider policy: PENDING is free even close to the ride
+ok 9 - CH02 rider policy: CONFIRMED before the 9 PM IST cutoff is free
+ok 10 - CH02 rider policy: CONFIRMED after the cutoff pays 10% of the fare, minimum Rs 50
+ok 11 - CH02 cutoff is 21:00 IST (15:30 UTC) on the previous day
+ok 12 - CH02 driver policy never charges the rider, even one hour before the ride
+ok 13 - CH02 (fixes baseline defect) a COMPLETED trip cannot be cancelled and nothing is saved
+ok 14 - CH02 only the rider or the assigned driver of the trip may cancel it
+ok 15 - CH02 late rider cancellation stores fee and actor, and notifies the driver
+ok 16 - CH02 driver cancellation is free for the rider and notifies the rider
+ok 17 - CH02 cancelling an unaccepted broadcast request dismisses the drivers' popups
+ok 18 - CH02 driver status update follows the trip state (cannot complete a PENDING ride)
+ok 19 - CH01 state table: allowed admin transitions
+ok 20 - CH01 state table: illegal admin transitions are refused
+ok 21 - CH01 suspending requires a reason
+ok 22 - CH01 only approved drivers can receive rides
+ok 23 - CH01 admin suspends an approved driver: saved and driver notified
+ok 24 - CH01 (fixes baseline defect) a rejected driver cannot jump straight to approved; nothing saved or sent
+ok 25 - CH01 a suspended driver cannot accept a booking
+ok 26 - CH01 an approved driver accepts a PENDING booking through the repository (refactored)
+ok 27 - CH01 a rider cannot request a suspended driver directly
+ok 28 - ONE_WAY below the minimum is charged Rs 450
+ok 29 - ONE_WAY is Rs 10 per km above the minimum
+ok 30 - ONE_WAY without km is rejected
+ok 31 - ROUND_TRIP (range of dates) is Rs 1000 per calendar day, inclusive
+ok 32 - ROUND_TRIP without end date is rejected
+ok 33 - unknown booking type is rejected
+# tests 33
+# pass 33
+# fail 0
+
+# type check: npx tsc --noEmit -p .  (baseline has 7 pre-existing dependency-drift errors)
+# tsc errors: 7

@@ -1,0 +1,3 @@
+destination	id	title	category	location	details	price
+rome	atlas-rome-walk-01	Ancient Rome Walking Sampler	activity	Rome, Italy	Fictional guided walk description	EUR:24.00
+rome	atlas-rome-bad-price-01	Malformed Price Offer	activity	Rome, Italy	Fictional malformed price	EUR:2X.00

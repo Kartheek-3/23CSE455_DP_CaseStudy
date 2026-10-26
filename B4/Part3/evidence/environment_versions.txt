@@ -1,0 +1,7 @@
+PHP 8.3.35 (cli) (built: Oct  6 2026 01:28:16) (NTS)
+Copyright (c) The PHP Group
+openjdk version "17.0.20.1" 2026-08-18
+OpenJDK Runtime Environment (build 17.0.20.1+1-1-24.04-Ubuntu)
+Python 3.12.3
+v24.14.1
+g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0

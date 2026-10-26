@@ -1,0 +1,55 @@
+SUSTHANTH — WHOLE-PROJECT REVIEW PROMPT
+Project: Design Pattern Identification and Evolution in a Quarkus-Based Digital Wallet Application
+
+Act as a software-design reviewer for the complete B9 digital-wallet case study. Use the supplied final report, baseline/evolved source code, change records, UML diagrams, tests/logs, CSV files, Excel workbook, cross-language examples, and LLM evidence where available.
+
+Review the whole project in these areas:
+
+1. APPLICATION AND ARCHITECTURE
+- Identify the application/framework versions and source snapshots from actual project files.
+- Summarize the main request flow, components, storage approach, and notification flow.
+- Check whether the architecture diagrams match the implementation.
+
+2. PART 1 — PATTERN DISCOVERY
+- Review the seven baseline patterns reported: Builder, Facade, Repository, Observer, State, Command, and Value Object.
+- Verify each pattern from actual collaborating roles and source interactions, not class names alone.
+- Check the reported baseline totals and the rejected Strategy and Chain of Responsibility candidates.
+- Identify unsupported classifications and missing source evidence.
+
+3. PART 2 — EVOLUTION
+Review all three changes:
+- CH01: Multi-currency support, including Strategy, Simple Factory, Adapter, and the reported Builder replacement.
+- CH02: Transaction limits, including PerTransferLimit and DailyLimitDecorator.
+- CH03: Fraud detection, including FraudCheckChain, DenyListCheck, and VelocityCheck.
+For each, summarize the requirement, implementation change, pattern effects, tests, before/after metrics, refactoring and remaining limitations. Verify that limit/fraud rejection happens before wallet balances change.
+
+4. PART 3 — CROSS-LANGUAGE ANALYSIS
+- Review Strategy and Observer implementations in Java, Python, JavaScript, and C++.
+- Check that all languages use the same fixtures and expected behavior.
+- Compare actual test results, LOC, cyclomatic complexity, runtime/compiler versions and median timings where raw evidence exists.
+- Explain measurement limitations; do not rank languages using startup-inclusive timings alone.
+
+5. DATASETS AND LLM VERIFICATION
+- Reconcile patterns.csv, pattern_counts.csv, patterns_evolution.csv, cross_language.csv, llm.csv, and the Excel workbook with source files and logs.
+- Check prompts, raw model outputs, model/date metadata and human-review evidence.
+- Do not present a summary as a raw model response.
+
+6. FINAL SUBMISSION CHECK
+Check the report PDF and LaTeX, README, source snapshots, three change folders, diagrams, tests/logs, four-language implementations, datasets, workbook, references, team information and repository structure.
+
+Return:
+A. A concise executive assessment.
+B. A baseline pattern inventory and count summary.
+C. A compact CH01/CH02/CH03 evolution table.
+D. A cross-language comparison summary.
+E. A list of dataset/report inconsistencies.
+F. A submission-readiness checklist with statuses: Present and verified, Present but needs review, Missing, or Not verifiable.
+G. A short prioritized action list.
+
+Evidence rules:
+- Use actual source and logs as primary evidence; the report is a claim to check, not proof.
+- Never invent files, line numbers, versions, tests, timings, model metadata, or student details.
+- Clearly distinguish verified facts from report-reported claims and unresolved items.
+- If files are unavailable, state what cannot be verified.
+- Treat fixed exchange rates as demonstration values and the in-memory wallet as an educational implementation, not a production banking system.
+- Keep the response concise and practical, with tables where useful.

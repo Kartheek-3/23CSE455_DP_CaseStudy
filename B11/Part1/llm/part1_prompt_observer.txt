@@ -1,0 +1,9 @@
+[Part 1 - Observer - owner: Nithilesh (Am.sc.u4cse23311)]
+Context: analyse the open-source Spring Boot app github.com/vikash0439/legalSystem at commit 4e4ebb57 (a legal case management system: cases, lawyers, hearings, documents, payments, reminders). I am verifying ONE design pattern for a Design Patterns case study. Do not just assert the pattern exists — point to the exact class/interface/method and file:line, map each pattern role to the real symbol, and quote the few lines of code that prove the collaboration (calls/delegation/inheritance). If a role is absent or combined, say so; do not invent classes.
+
+Task: Assess whether the notification mechanism is a true Observer pattern. Look at
+LegalAppApplication.java (@EnableScheduling + @Scheduled methods) calling
+EmailServiceImpl. Map any Subject/Observer/ConcreteObserver roles with file:line.
+Critically evaluate: is there a Subject that maintains a list of registered
+observers, or is this scheduler-triggered broadcast? Give a confirmed/rejected/
+uncertain verdict and explain your reasoning.

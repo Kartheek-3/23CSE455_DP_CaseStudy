@@ -1,0 +1,184 @@
+# Source diff archive
+
+Application repository: https://github.com/nivedita-rmsh/nextjs-blog-cms
+Commit: 68cd127
+Commit URL: https://github.com/nivedita-rmsh/nextjs-blog-cms/commit/68cd127e959c238fd041dcd94129991912978e2f
+
+This is the commit diff returned by GitHub for the referenced change. Preserve the original commit as the source of truth.
+
+```diff
+@@ -0,0 +1,81 @@
++import { describe, expect, it } from 'vitest'
++import { rankRelatedPosts } from '@/features/posts/recommendations'
++import type { PostWithRelations } from '@/features/posts/types'
++
++function makePost(
++  id: string,
++  options: {
++    status?: 'draft' | 'published'
++    categoryId?: string | null
++    tagIds?: string[]
++    publishedAt?: string | null
++  } = {},
++): PostWithRelations {
++  const tagIds = options.tagIds ?? []
++
++  return {
++    id,
++    title: `Post ${id}`,
++    slug: `post-${id}`,
++    content: null,
++    excerpt: null,
++    cover_image: null,
++    cover_image_alt: '',
++    status: options.status ?? 'published',
++    published_at: options.publishedAt ?? '2026-01-01T00:00:00Z',
++    created_at: '2026-01-01T00:00:00Z',
++    updated_at: '2026-01-01T00:00:00Z',
++    author_id: null,
++    category_id: options.categoryId ?? null,
++    seo_title: null,
++    seo_description: null,
++    author: null,
++    category: options.categoryId
++      ? { id: options.categoryId, name: options.categoryId, slug: options.categoryId }
++      : null,
++    tags: tagIds.map((tagId) => ({
++      id: tagId,
++      name: tagId,
++      slug: tagId,
++      created_at: '2026-01-01T00:00:00Z',
++    })),
++  }
++}
++
++describe('rankRelatedPosts', () => {
++  const current = makePost('current', {
++    categoryId: 'tech',
++    tagIds: ['typescript', 'nextjs'],
++  })
++
++  it('ranks shared tags above a category-only match', () => {
++    const categoryOnly = makePost('category', { categoryId: 'tech' })
++    const sharedTag = makePost('tag', { tagIds: ['typescript'] })
++
++    expect(rankRelatedPosts(current, [categoryOnly, sharedTag]).map((p) => p.id))
++      .toEqual(['tag', 'category'])
++  })
++
++  it('excludes the current article and unpublished drafts', () => {
++    const draft = makePost('draft', {
++      status: 'draft',
++      tagIds: ['typescript'],
++    })
++
++    expect(rankRelatedPosts(current, [current, draft])).toEqual([])
++  })
++
++  it('returns only relevant posts and respects the limit', () => {
++    const posts = [
++      makePost('one', { tagIds: ['typescript'] }),
++      makePost('two', { categoryId: 'tech' }),
++      makePost('unrelated', { categoryId: 'food' }),
++    ]
++
++    expect(rankRelatedPosts(current, posts, 1).map((p) => p.id)).toEqual(['one'])
++  })
++
++  it('returns an empty list when no candidates are relevant', () => {
++    expect(rankRelatedPosts(current, [makePost('unrelated')])).toEqual([])
++  })
++})
+@@ -11,6 +11,7 @@ import { CommentSection } from '@/features/comments/components/CommentSection'
+ import { ShareButton } from '@/components/ShareButton'
+ import { ChevronLeftIcon } from 'lucide-react'
+ import { SubscribeForm } from '@/components/newsletter/SubscribeForm'
++import { RelatedPosts } from '@/features/posts/components/RelatedPosts'
+ 
+ export const revalidate = 3600
+ 
+@@ -122,6 +123,8 @@ export default async function PostPage({ params }: PostPageProps) {
+ 
+         <SubscribeForm />
+ 
++        <RelatedPosts currentPost={post} />
++
+         <CommentSection postId={post.id} postSlug={post.slug} />
+       </article>
+       <BackToTopButton />
+@@ -0,0 +1,24 @@
++import { getPublishedPosts } from '@/features/posts/queries'
++import { PostList } from '@/features/posts/components/PostList'
++import { rankRelatedPosts } from '@/features/posts/recommendations'
++import type { PostWithRelations } from '@/features/posts/types'
++
++export async function RelatedPosts({
++  currentPost,
++}: {
++  currentPost: PostWithRelations
++}) {
++  const { posts } = await getPublishedPosts(1, 50)
++  const recommendations = rankRelatedPosts(currentPost, posts, 3)
++
++  if (recommendations.length === 0) return null
++
++  return (
++    <section className="mt-12 border-t pt-8" aria-labelledby="related-posts-title">
++      <h2 id="related-posts-title" className="mb-6 text-2xl font-bold">
++        Related Articles
++      </h2>
++      <PostList posts={recommendations} />
++    </section>
++  )
++}
+@@ -0,0 +1,49 @@
++import type { PostWithRelations } from './types'
++
++/**
++ * Rank published articles by relevance to the current article.
++ * Shared tags carry more weight than a shared category.
++ */
++export function rankRelatedPosts(
++  currentPost: PostWithRelations,
++  candidates: PostWithRelations[],
++  limit = 3,
++): PostWithRelations[] {
++  const currentTagIds = new Set(currentPost.tags.map((tag) => tag.id))
++
++  return candidates
++    .filter(
++      (candidate) =>
++        candidate.id !== currentPost.id &&
++        candidate.status === 'published',
++    )
++    .map((candidate) => {
++      const sharedTags = candidate.tags.filter((tag) =>
++        currentTagIds.has(tag.id),
++      ).length
++
++      const sharedCategory =
++        currentPost.category?.id != null &&
++        candidate.category?.id === currentPost.category.id
++
++      return {
++        post: candidate,
++        score: sharedTags * 2 + (sharedCategory ? 1 : 0),
++      }
++    })
++    .filter(({ score }) => score > 0)
++    .sort((a, b) => {
++      if (b.score !== a.score) return b.score - a.score
++
++      const aDate = a.post.published_at
++        ? new Date(a.post.published_at).getTime()
++        : 0
++      const bDate = b.post.published_at
++        ? new Date(b.post.published_at).getTime()
++        : 0
++
++      return bDate - aDate
++    })
++    .slice(0, Math.max(0, limit))
++    .map(({ post }) => post)
++}
+```

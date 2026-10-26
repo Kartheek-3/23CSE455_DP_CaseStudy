@@ -1,0 +1,5 @@
+Current repair metadata: original submission date is not verified from retained inputs.
+The prior claim of 6 September 2027 is retained only as an unverified historical assertion and is not presented as fact.
+The report and slides label the submission date as unverified.
+Individual team contributions remain unconfirmed; the README and report both flag this and avoid assigning responsibilities pending team confirmation.
+Fresh verification is recorded under Part2/verification; prior receipts are not new test executions.

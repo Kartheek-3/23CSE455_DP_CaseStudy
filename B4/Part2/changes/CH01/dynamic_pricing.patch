@@ -1,0 +1,221 @@
+From 7e9bd9ded113e91cca10e727a7eeff29c88d0ed8 Mon Sep 17 00:00:00 2001
+From: Team B4 <team-b4@local.invalid>
+Date: Sun, 11 Oct 2026 00:52:15 +0530
+Subject: [PATCH] CH01 add strategy-based dynamic rent pricing
+
+---
+ app/Domain/Pricing/BasePricing.php            | 17 ++++++++++++
+ app/Domain/Pricing/DynamicPricing.php         | 22 ++++++++++++++++
+ app/Domain/Pricing/PricingContext.php         | 26 +++++++++++++++++++
+ app/Domain/Pricing/PricingService.php         | 15 +++++++++++
+ app/Domain/Pricing/PricingStrategy.php        |  8 ++++++
+ .../Controllers/RentReceiptController.php     | 16 ++++++++++--
+ app/Http/Requests/StoreRentReceiptRequest.php |  4 +++
+ app/Providers/AppServiceProvider.php          |  4 ++-
+ 8 files changed, 109 insertions(+), 3 deletions(-)
+ create mode 100644 app/Domain/Pricing/BasePricing.php
+ create mode 100644 app/Domain/Pricing/DynamicPricing.php
+ create mode 100644 app/Domain/Pricing/PricingContext.php
+ create mode 100644 app/Domain/Pricing/PricingService.php
+ create mode 100644 app/Domain/Pricing/PricingStrategy.php
+
+diff --git a/app/Domain/Pricing/BasePricing.php b/app/Domain/Pricing/BasePricing.php
+new file mode 100644
+index 0000000..5047931
+--- /dev/null
++++ b/app/Domain/Pricing/BasePricing.php
+@@ -0,0 +1,17 @@
++<?php
++
++namespace App\Domain\Pricing;
++
++use InvalidArgumentException;
++
++final class BasePricing implements PricingStrategy
++{
++    public function quote(float $baseMonthlyRent, PricingContext $context): float
++    {
++        if ($baseMonthlyRent <= 0) {
++            throw new InvalidArgumentException('Base monthly rent must be positive.');
++        }
++
++        return round($baseMonthlyRent, 2);
++    }
++}
+diff --git a/app/Domain/Pricing/DynamicPricing.php b/app/Domain/Pricing/DynamicPricing.php
+new file mode 100644
+index 0000000..9e72569
+--- /dev/null
++++ b/app/Domain/Pricing/DynamicPricing.php
+@@ -0,0 +1,22 @@
++<?php
++
++namespace App\Domain\Pricing;
++
++use InvalidArgumentException;
++
++final class DynamicPricing implements PricingStrategy
++{
++    public function quote(float $baseMonthlyRent, PricingContext $context): float
++    {
++        if ($baseMonthlyRent <= 0) {
++            throw new InvalidArgumentException('Base monthly rent must be positive.');
++        }
++
++        $multiplier = 1.0;
++        $multiplier += in_array($context->month, [4, 5, 12], true) ? 0.20 : 0.0;
++        $multiplier += $context->occupancyRate >= 0.80 ? 0.10 : 0.0;
++        $multiplier -= $context->leaseMonths >= 12 ? 0.05 : 0.0;
++
++        return round($baseMonthlyRent * $multiplier, 2);
++    }
++}
+diff --git a/app/Domain/Pricing/PricingContext.php b/app/Domain/Pricing/PricingContext.php
+new file mode 100644
+index 0000000..5a9f13f
+--- /dev/null
++++ b/app/Domain/Pricing/PricingContext.php
+@@ -0,0 +1,26 @@
++<?php
++
++namespace App\Domain\Pricing;
++
++use InvalidArgumentException;
++
++final readonly class PricingContext
++{
++    public function __construct(
++        public int $month,
++        public float $occupancyRate,
++        public int $leaseMonths,
++    ) {
++        if ($month < 1 || $month > 12) {
++            throw new InvalidArgumentException('Month must be between 1 and 12.');
++        }
++
++        if ($occupancyRate < 0 || $occupancyRate > 1) {
++            throw new InvalidArgumentException('Occupancy rate must be between 0 and 1.');
++        }
++
++        if ($leaseMonths < 1) {
++            throw new InvalidArgumentException('Lease months must be positive.');
++        }
++    }
++}
+diff --git a/app/Domain/Pricing/PricingService.php b/app/Domain/Pricing/PricingService.php
+new file mode 100644
+index 0000000..d9e2c95
+--- /dev/null
++++ b/app/Domain/Pricing/PricingService.php
+@@ -0,0 +1,15 @@
++<?php
++
++namespace App\Domain\Pricing;
++
++final class PricingService
++{
++    public function __construct(private PricingStrategy $strategy)
++    {
++    }
++
++    public function quote(float $baseMonthlyRent, PricingContext $context): float
++    {
++        return $this->strategy->quote($baseMonthlyRent, $context);
++    }
++}
+diff --git a/app/Domain/Pricing/PricingStrategy.php b/app/Domain/Pricing/PricingStrategy.php
+new file mode 100644
+index 0000000..c9fd126
+--- /dev/null
++++ b/app/Domain/Pricing/PricingStrategy.php
+@@ -0,0 +1,8 @@
++<?php
++
++namespace App\Domain\Pricing;
++
++interface PricingStrategy
++{
++    public function quote(float $baseMonthlyRent, PricingContext $context): float;
++}
+diff --git a/app/Http/Controllers/RentReceiptController.php b/app/Http/Controllers/RentReceiptController.php
+index 9b097d1..7474d89 100644
+--- a/app/Http/Controllers/RentReceiptController.php
++++ b/app/Http/Controllers/RentReceiptController.php
+@@ -2,6 +2,8 @@
+ 
+ namespace App\Http\Controllers;
+ 
++use App\Domain\Pricing\PricingContext;
++use App\Domain\Pricing\PricingService;
+ use App\Models\RentReceipt;
+ use App\Models\Property;
+ use App\Http\Requests\StoreRentReceiptRequest;
+@@ -40,16 +42,26 @@ public function create()
+         return view('rent-receipts.create', compact('properties'));
+     }
+ 
+-    public function store(StoreRentReceiptRequest $request)
++    public function store(StoreRentReceiptRequest $request, PricingService $pricing)
+     {
+         $property = Property::with(['owner', 'tenant'])->findOrFail($request->property_id);
++        $amount = $request->boolean('use_dynamic_pricing')
++            ? $pricing->quote(
++                (float) $property->monthly_rent,
++                new PricingContext(
++                    (int) $request->input('pricing_month', date('n')),
++                    (float) $request->input('occupancy_rate', 0),
++                    (int) $request->input('lease_months', 1),
++                ),
++            )
++            : (float) $request->amount;
+ 
+         RentReceipt::create([
+             'property_id' => $property->id,
+             'tenant_id' => $property->tenant_id,
+             'owner_id' => $property->owner_id,
+             'month' => $request->month,
+-            'amount' => $request->amount,
++            'amount' => $amount,
+             'amount_in_words' => $request->amount_in_words,
+             'payment_method' => $request->payment_method,
+             'payment_date' => $request->payment_date,
+diff --git a/app/Http/Requests/StoreRentReceiptRequest.php b/app/Http/Requests/StoreRentReceiptRequest.php
+index bccd3de..4acd248 100644
+--- a/app/Http/Requests/StoreRentReceiptRequest.php
++++ b/app/Http/Requests/StoreRentReceiptRequest.php
+@@ -17,6 +17,10 @@ public function rules(): array
+             'property_id' => 'required|exists:properties,id',
+             'month' => 'required|string|max:50',
+             'amount' => 'required|numeric|min:1',
++            'use_dynamic_pricing' => 'sometimes|boolean',
++            'pricing_month' => 'nullable|integer|min:1|max:12',
++            'occupancy_rate' => 'nullable|numeric|min:0|max:1',
++            'lease_months' => 'nullable|integer|min:1|max:120',
+             'amount_in_words' => 'required|string|max:255',
+             'payment_method' => 'required|in:cash,bank_transfer,cheque,online',
+             'payment_date' => 'required|date',
+diff --git a/app/Providers/AppServiceProvider.php b/app/Providers/AppServiceProvider.php
+index 86b1719..c1d1b31 100644
+--- a/app/Providers/AppServiceProvider.php
++++ b/app/Providers/AppServiceProvider.php
+@@ -2,6 +2,8 @@
+ 
+ namespace App\Providers;
+ 
++use App\Domain\Pricing\DynamicPricing;
++use App\Domain\Pricing\PricingStrategy;
+ use Illuminate\Pagination\Paginator;
+ use Illuminate\Support\ServiceProvider;
+ 
+@@ -12,7 +14,7 @@ class AppServiceProvider extends ServiceProvider
+      */
+     public function register(): void
+     {
+-        //
++        $this->app->bind(PricingStrategy::class, DynamicPricing::class);
+     }
+ 
+     /**
+-- 
+2.43.0
+

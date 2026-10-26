@@ -1,0 +1,35 @@
+classDiagram
+direction LR
+class InboxItemsController {
+  <<application>>
+  +update()
+}
+class InboxItem {
+  <<application>>
+  +parsed_data()
+  +build_expense()
+}
+class Trip {
+  <<application>>
+}
+class TripItem {
+  <<application>>
+}
+class Expense {
+  <<application>>
+}
+class TripMember {
+  <<application>>
+}
+class Traveler {
+  <<application>>
+}
+
+InboxItemsController ..> InboxItem : requests confirmation or relinking
+InboxItem --> Trip : belongs to
+Trip --> TripItem : has many
+Trip --> Expense : has many
+InboxItem ..> TripItem : matches or creates
+InboxItem ..> Expense : conditionally creates
+InboxItem ..> TripMember : identifies payer
+TripMember --> Traveler : belongs to

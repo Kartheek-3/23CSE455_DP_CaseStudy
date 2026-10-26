@@ -1,0 +1,8 @@
+﻿PATTERN/SUITE   : State_python
+RUNTIME/COMPILER: Python 3.13.7
+WORKDIR         : C:\Users\eswar\OneDrive\Documents\Visual Studio Code\23CSE455_DP_CaseStudy\B12\Part3\State\python
+RUN COMMAND     : python test_state.py
+PROGRAM OUTPUT  : STATE_PY PASS 13/13
+TIME INCLUDES   : whole process wall time (runtime startup + program execution), after 1 unmeasured warm-up
+TIMING SAMPLES  : 5 measured runs (ms): 58.3532, 67.4195, 90.6208, 68.6637, 66.0791
+MEDIAN_MS       : 67.42

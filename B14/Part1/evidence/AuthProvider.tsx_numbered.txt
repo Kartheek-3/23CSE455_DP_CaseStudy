@@ -1,0 +1,59 @@
+﻿   1: 'use client'
+   2: 
+   3: import { useEffect, useState } from 'react'
+   4: import type { Session, User } from '@supabase/supabase-js'
+   5: import { createClient } from '@/lib/supabase/client'
+   6: import type { Profile } from '@/lib/supabase/types'
+   7: import { AuthContext } from './AuthContext'
+   8: 
+   9: export function AuthProvider({ children }: { children: React.ReactNode }) {
+  10:   const [session, setSession] = useState<Session | null>(null)
+  11:   const [user, setUser] = useState<User | null>(null)
+  12:   const [profile, setProfile] = useState<Profile | null>(null)
+  13:   const [loading, setLoading] = useState(true)
+  14: 
+  15:   const supabase = createClient()
+  16: 
+  17:   async function loadProfile(userId: string) {
+  18:     const { data } = await supabase
+  19:       .from('profiles')
+  20:       .select('*')
+  21:       .eq('id', userId)
+  22:       .single()
+  23:     setProfile(data)
+  24:   }
+  25: 
+  26:   useEffect(() => {
+  27:     supabase.auth.getSession().then(({ data: { session } }) => {
+  28:       setSession(session)
+  29:       setUser(session?.user ?? null)
+  30:       if (session?.user) {
+  31:         loadProfile(session.user.id).finally(() => setLoading(false))
+  32:       } else {
+  33:         setLoading(false)
+  34:       }
+  35:     })
+  36: 
+  37:     const {
+  38:       data: { subscription },
+  39:     } = supabase.auth.onAuthStateChange(async (_event, session) => {
+  40:       setSession(session)
+  41:       setUser(session?.user ?? null)
+  42:       if (session?.user) {
+  43:         await loadProfile(session.user.id)
+  44:       } else {
+  45:         setProfile(null)
+  46:       }
+  47:       setLoading(false)
+  48:     })
+  49: 
+  50:     return () => subscription.unsubscribe()
+  51:     // eslint-disable-next-line react-hooks/exhaustive-deps
+  52:   }, [])
+  53: 
+  54:   return (
+  55:     <AuthContext.Provider value={{ session, user, profile, loading }}>
+  56:       {children}
+  57:     </AuthContext.Provider>
+  58:   )
+  59: }

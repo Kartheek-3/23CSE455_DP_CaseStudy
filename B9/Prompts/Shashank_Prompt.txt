@@ -1,0 +1,184 @@
+B9 DIGITAL WALLET CASE STUDY — END-TO-END TECHNICAL REVIEW PROMPT
+Prepared for: Shashank
+Project title: Design Pattern Identification and Evolution in a Quarkus-Based Digital Wallet Application
+
+ROLE AND REVIEW MISSION
+Work as an independent software-design analyst reviewing the complete B9 digital-wallet case study. Evaluate the baseline application, its three evolution stages, the cross-language demonstrations, the datasets, and the final academic submission as one connected body of work.
+
+This is a whole-project review, not a review of one part in isolation. Use the supplied B9_Report.pdf, baseline and evolved source snapshots, change folders, UML/PlantUML files, tests and logs, CSV datasets, Excel workbook, language-specific implementations, prompts, and raw model outputs when available. Treat implementation files and execution logs as primary evidence; treat narrative claims in the report as claims to verify.
+
+CORE RULES
+1. Never invent a source file, participant, class, line number, commit, test, timing, model name, date, student detail, or repository fact.
+2. Separate findings into: CONFIRMED FROM SOURCE/LOG, REPORTED BUT NOT INDEPENDENTLY VERIFIED, PARTIALLY SUPPORTED, and MISSING/CONTRADICTED.
+3. A class name or framework annotation alone is not sufficient proof of a design pattern. Map the collaborating roles and explain the observed interactions.
+4. Preserve the project’s terminology unless the source demonstrates that it is inaccurate. If a classification is questionable, explain why instead of silently changing it.
+5. Do not represent fixed demonstration exchange rates as live rates, an in-memory teaching application as a production banking platform, or a successful test run as proof that every submission requirement is complete.
+6. If required files are not supplied, continue with the available evidence and clearly list what could not be checked.
+7. Do not claim that you personally ran commands unless actual execution evidence is supplied.
+8. Write in clear technical language appropriate for a university design-pattern case study. Be detailed, but avoid repeating the same facts in multiple sections.
+
+PROJECT CONTEXT TO CHECK
+The case study concerns a Quarkus-based digital wallet supporting wallet operations, beneficiary handling, fund transfers, currency conversion, transaction limits, fraud screening, and notifications. The report describes a baseline with seven pattern collaborations and an evolved application with additional patterns after three changes. It also describes Strategy and Observer examples implemented in Java, Python, JavaScript (Node.js), and C++.
+
+PHASE A — APPLICATION IDENTITY AND ARCHITECTURE
+Inspect the project and report:
+- Source repository/URL, source snapshot or commit identifiers, access date and license only if documented.
+- Java, Quarkus, Maven, database/storage model, language runtime and compiler versions, based on manifests or logs.
+- Application modules and files actually inspected; scope exclusions and reasons.
+- Main request path and responsibilities across REST/resource boundary, service/facade, domain objects, repositories, transaction execution, policy checks and notifications.
+- Baseline and evolved request/event flows.
+- Whether the architecture diagrams and editable PlantUML accurately represent the source.
+
+Deliver:
+1. A concise application description.
+2. A component/architecture walkthrough in execution order.
+3. A source-backed diagram review, listing missing or inaccurate relationships.
+4. Run/build/test commands copied from project documentation or logs, with actual results only when evidence exists.
+
+PHASE B — PART 1: BASELINE PATTERN DISCOVERY
+Inspect all in-scope baseline source files. For each candidate pattern:
+- Give the exact pattern name and category used in the project.
+- Name the instance meaningfully.
+- Map all roles to actual classes, interfaces, methods, or modules; indicate when a role is combined or not separately declared.
+- Give exact source path and line range only after checking the file.
+- Explain the problem solved and the code interaction that demonstrates the pattern.
+- Record origin where supported: application implementation, Quarkus/framework, or dependency.
+- Assign a verification status and provide an alternative interpretation when plausible.
+
+The B9 report describes these seven baseline instances:
+1. Builder — Transfer Record Construction
+2. Facade — Wallet Transfer Application Boundary
+3. Repository — Wallet Persistence Boundary
+4. Observer — Transaction Notification
+5. State — Transfer Lifecycle
+6. Command — Transfer Execution
+7. Value Object — Money Amount and Currency
+
+It reports Strategy and Chain of Responsibility as rejected baseline candidates. Check these claims against the actual baseline rather than accepting or rejecting them automatically.
+
+Calculate or verify:
+- Distinct confirmed pattern types.
+- Confirmed instances.
+- Concrete participant classes in mapped roles.
+- Unique participant symbols, counted once.
+- Rejected and uncertain candidates with reasons.
+
+Deliver:
+1. A pattern-by-pattern inventory.
+2. A baseline totals table.
+3. UML evidence requirements for the significant collaborations.
+4. A list of ambiguities or classifications needing human review.
+
+PHASE C — PART 2: THREE EVOLUTION CHANGES AND REFACTORING
+Treat each change as a separate snapshot and also assess the cumulative final version. For every change, identify its requirement, changed files, implementation behavior, acceptance tests, actual results, pattern effects, refactoring and limitations.
+
+CH01 — Multi-currency support
+The report describes CurrencyConversionStrategy, SameCurrencyConversion, FixedRateConversion, CurrencyStrategyFactory and VendorFxAdapter. Inspect whether the strategy separates conversion algorithms, the factory selects by currency pair, and the adapter translates vendor quote formats. Check the example of USD 10.00 at a fixed 0.92 rate producing EUR 9.20 and same-currency EUR 10.00 remaining unchanged. Check unsupported pairs, precision/rounding and errors. Verify the report’s claim that Transaction.Builder was replaced by an immutable record constructor. Identify Builder status based on the actual changed code.
+
+CH02 — Transaction limits
+The report describes TransactionLimitPolicy, PerTransferLimit and DailyLimitDecorator. Check the individual transfer cap and daily aggregate behavior, including the documented EUR 1,000 limit examples. Trace where daily usage is calculated and stored; do not assume a policy argument proves persistent or rolling daily tracking. Check boundary values and whether rejection occurs before any balance or transaction mutation.
+
+CH03 — Fraud detection
+The report describes FraudCheckChain, DenyListCheck and VelocityCheck. Trace handler order and first-rejection behavior. Verify that screening occurs before wallet debit/credit and inspect the documented suspicious-amount and deny-listed-beneficiary cases. Do not describe demo rules as a production-grade fraud system.
+
+For all three changes:
+- Record before/after source paths or commits that actually exist.
+- Summarize the diff and explain the design rationale.
+- Link tests to the requirement and report actual test output.
+- Update each pattern instance using the statuses baseline, preserved, modified, extended, replaced, removed, or newly_introduced as applicable.
+- Keep the same instance name for a continuing collaboration; name replacement/new collaborations separately and explain their relationship.
+- Identify a genuine code smell before describing a refactoring. Do not invent a refactoring merely to fill the report.
+- Compare metrics only under the same counting rules and source scope.
+
+Deliver:
+1. One change record each for CH01, CH02 and CH03.
+2. A before/after table with production LOC, test LOC, tests, pattern types, instances and concrete roles where evidence exists.
+3. Updated UML review.
+4. A cumulative pattern evolution explanation.
+5. Limitations and trade-offs.
+
+PHASE D — PART 3: CROSS-LANGUAGE IMPLEMENTATIONS
+Review both selected pattern problems across Java, Python, JavaScript and C++ (eight implementations total if both patterns exist in all four languages).
+
+The report names:
+- Strategy — currency conversion with the stated fixed-rate and same-currency fixtures.
+- Observer — notify email and audit listeners for transfer ID t1, preserving the stated event order.
+
+For each language/pattern pair:
+- Identify the actual implementation files and pattern participants.
+- Check functional behavior against common fixtures, including output format, invalid input behavior, decimal precision, listener registration, dispatch order and errors.
+- Record exact test command, runtime/compiler version, passed/total result and evidence path.
+- Count production LOC excluding blank lines, comments and tests, using the project’s stated rule.
+- Report maximum function cyclomatic complexity and the documented counting method; distinguish manual counts from tool-generated values.
+- Record timing only from real measurements. The prescribed protocol is compile first, one warm-up, then five measured runs on the same machine. Preserve raw measurements and report the median.
+- State whether process startup and fixture/input processing are included.
+- Explain differences in interfaces, inheritance, composition, type checking, callable handling and memory ownership only where demonstrated by the code.
+
+Do not use the reported timing figures to declare one language universally faster. If raw timing data is missing, do not reconstruct or estimate it.
+
+Deliver:
+1. Common specifications and expected outputs.
+2. A functional equivalence matrix.
+3. A source/structure comparison.
+4. A metrics table suitable for cross_language.csv.
+5. A benchmark interpretation with limitations.
+
+PHASE E — LLM RECORDS AND HUMAN VERIFICATION
+Inspect the actual prompt files, input/context files, raw model outputs, llm.csv and manual review evidence.
+- Check that each record has the part, displayed model and actual interaction date, exact prompt path, input path, raw output path, evaluation, and verification evidence.
+- Do not fabricate model metadata or present a curated summary as a raw response.
+- For each reviewed claim, classify it as correct, partial, incorrect or cannot confirm and explain the correction.
+- If manual ground truth or a comparison dataset exists, calculate accuracy from actual rows and document label-mapping decisions.
+- Preserve original model output; put corrections in review notes rather than overwriting history.
+
+Deliver:
+1. An LLM evidence completeness table.
+2. A concise human-verification summary.
+3. Missing metadata and verification tasks.
+
+PHASE F — DATASETS, METRICS AND CONSISTENCY AUDIT
+Inspect the CSVs and workbook rather than trusting their filenames or the report summary. Check:
+- patterns.csv and pattern_counts.csv against the baseline source.
+- patterns_evolution.csv against every recorded snapshot.
+- cross_language.csv against source, commands, test results, runtime versions and timing evidence.
+- llm.csv against actual prompt/output files and human-review evidence.
+- Excel workbook sheets and values against authoritative CSVs.
+- Consistent source_version labels, instance names, status values, paths, header names, UTF-8 encoding and CSV quoting.
+- Arithmetic consistency of totals and percentages, where relevant.
+- Whether the same facts disagree between report, CSV, workbook, README and logs.
+
+Deliver a discrepancy table with: item, report/dataset claim, evidence observed, severity, correction/action, and verification status. Do not silently reconcile conflicting values.
+
+PHASE G — FINAL REPORT AND SUBMISSION READINESS
+Compare the B9 report and complete team folder against the official assignment instructions and report template. Check for:
+- Report PDF and editable LaTeX source.
+- README with source identity, environment versions, inspected scope, commands, measurement rules and limitations.
+- Original and evolved source snapshots.
+- Three change folders with requirements, diffs and actual test evidence.
+- Baseline and evolved architecture/pattern diagrams, editable PlantUML and required rendered images.
+- Required CSV datasets and formatted Excel workbook.
+- Eight cross-language implementations, their test runners, README files, fixtures, and raw timing evidence where available.
+- Actual LLM prompts, raw outputs, llm.csv and human-verification records.
+- Student/team information, contribution statements, references, and repository folder structure.
+
+For each item use one status:
+- PRESENT AND VERIFIED
+- PRESENT — NEEDS REVIEW
+- MISSING
+- NOT VERIFIABLE FROM SUPPLIED MATERIAL
+
+Do not call the submission complete solely because automated tests pass. Distinguish source correctness, test success, dataset consistency, documentation completeness, and repository readiness.
+
+FINAL RESPONSE STRUCTURE
+1. Executive assessment (what is supported and what remains uncertain).
+2. Application identity and architecture.
+3. Part 1 baseline pattern inventory and counts.
+4. Part 2 CH01/CH02/CH03 analysis and before/after evolution.
+5. Part 3 four-language comparison and metrics.
+6. LLM/human-verification audit.
+7. Dataset and cross-document discrepancies.
+8. Submission-readiness checklist.
+9. Prioritized action list: Critical, High, Medium, Low.
+10. Short conclusion.
+
+For every factual claim, indicate its evidence source when possible (file, line range, test log, CSV row, or report page). If evidence is not present, mark the claim accordingly. Prefer concise tables for inventories and status comparisons, and explanations for design reasoning. Do not repeat the same table in several sections.

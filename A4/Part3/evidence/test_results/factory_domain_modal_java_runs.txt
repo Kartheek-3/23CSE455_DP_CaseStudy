@@ -1,0 +1,32 @@
+Pattern: Factory Method
+Instance: Entity Domain Modal Factory
+Language: Java
+Compiler/Runtime: javac 23.0.2 / OpenJDK Java 23.0.2+7-58
+Warmup + 5 Runs Raw Output:
+--- Run 1 ---
+RESULT: 5/5 passed
+TIME_MS: 10.298
+
+
+--- Run 2 ---
+RESULT: 5/5 passed
+TIME_MS: 8.570
+
+
+--- Run 3 ---
+RESULT: 5/5 passed
+TIME_MS: 9.523
+
+
+--- Run 4 ---
+RESULT: 5/5 passed
+TIME_MS: 7.640
+
+
+--- Run 5 ---
+RESULT: 5/5 passed
+TIME_MS: 8.894
+
+
+Measured Milliseconds: [10.298, 8.57, 9.523, 7.64, 8.894]
+Computed Median Milliseconds: 8.894

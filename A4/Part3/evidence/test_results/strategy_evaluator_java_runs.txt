@@ -1,0 +1,32 @@
+Pattern: Strategy
+Instance: Visibility Condition Evaluator Dispatch
+Language: Java
+Compiler/Runtime: javac 23.0.2 / OpenJDK Java 23.0.2+7-58
+Warmup + 5 Runs Raw Output:
+--- Run 1 ---
+RESULT: 6/6 passed
+TIME_MS: 26.369
+
+
+--- Run 2 ---
+RESULT: 6/6 passed
+TIME_MS: 21.403
+
+
+--- Run 3 ---
+RESULT: 6/6 passed
+TIME_MS: 19.963
+
+
+--- Run 4 ---
+RESULT: 6/6 passed
+TIME_MS: 22.374
+
+
+--- Run 5 ---
+RESULT: 6/6 passed
+TIME_MS: 23.119
+
+
+Measured Milliseconds: [26.369, 21.403, 19.963, 22.374, 23.119]
+Computed Median Milliseconds: 22.374

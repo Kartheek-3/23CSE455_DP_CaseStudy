@@ -1,0 +1,55 @@
+@startuml
+' B12 Part 2 - Change 1 (dynamic slot allocation) - Strategy pattern
+' Source: Part2/code/evolved/smart-parking-backend/src/slots/allocation/
+title B12 Part 2 Change 1 - Slot Allocation Strategy
+
+skinparam classAttributeIconSize 0
+
+interface SlotAllocationStrategy {
+  +name : string
+  +select(candidates : Slot[]) : Slot | null
+}
+
+class FirstAvailableStrategy {
+  +name = "first-available"
+  +select(candidates) : Slot | null
+}
+
+class NearestToEntranceStrategy {
+  +name = "nearest-to-entrance"
+  +select(candidates) : Slot | null
+}
+
+class EvPreferredStrategy {
+  +name = "ev-preferred"
+  +select(candidates) : Slot | null
+}
+
+class SlotAllocationContext {
+  -strategies : Map<string, SlotAllocationStrategy>
+  +select(strategyName, candidates) : Slot | null
+  +available() : string[]
+}
+
+class SlotsService {
+  +allocateSlot(parkingAreaId, strategy?) : Slot
+  +allocationStrategies() : string[]
+}
+
+class SlotsController {
+  +GET /slots/allocate/:parkingAreaId
+}
+
+SlotAllocationStrategy <|.. FirstAvailableStrategy
+SlotAllocationStrategy <|.. NearestToEntranceStrategy
+SlotAllocationStrategy <|.. EvPreferredStrategy
+SlotAllocationContext o--> "*" SlotAllocationStrategy : strategies
+SlotsService --> SlotAllocationContext
+SlotsController --> SlotsService
+
+note bottom of SlotAllocationContext
+  Unknown strategy names fall back to
+  "first-available" (change1.diff).
+end note
+
+@enduml

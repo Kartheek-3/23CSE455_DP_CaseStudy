@@ -1,0 +1,241 @@
+{
+  "root": "B4/Part1/code/app",
+  "rule": "nonblank noncomment physical LOC; CC upper bound = 1 + decision tokens per file",
+  "files": [
+    {
+      "path": "B4/Part1/code/app/Http/Controllers/Auth/ConfirmPasswordController.php",
+      "source_loc": 13,
+      "file_cc_upper_bound": 2
+    },
+    {
+      "path": "B4/Part1/code/app/Http/Controllers/Auth/ForgotPasswordController.php",
+      "source_loc": 8,
+      "file_cc_upper_bound": 2
+    },
+    {
+      "path": "B4/Part1/code/app/Http/Controllers/Auth/LoginController.php",
+      "source_loc": 14,
+      "file_cc_upper_bound": 3
+    },
+    {
+      "path": "B4/Part1/code/app/Http/Controllers/Auth/RegisterController.php",
+      "source_loc": 42,
+      "file_cc_upper_bound": 5
+    },
+    {
+      "path": "B4/Part1/code/app/Http/Controllers/Auth/ResetPasswordController.php",
+      "source_loc": 9,
+      "file_cc_upper_bound": 2
+    },
+    {
+      "path": "B4/Part1/code/app/Http/Controllers/Auth/VerificationController.php",
+      "source_loc": 15,
+      "file_cc_upper_bound": 2
+    },
+    {
+      "path": "B4/Part1/code/app/Http/Controllers/Controller.php",
+      "source_loc": 9,
+      "file_cc_upper_bound": 2
+    },
+    {
+      "path": "B4/Part1/code/app/Http/Controllers/ElectricityReceiptController.php",
+      "source_loc": 163,
+      "file_cc_upper_bound": 16
+    },
+    {
+      "path": "B4/Part1/code/app/Http/Controllers/HomeController.php",
+      "source_loc": 91,
+      "file_cc_upper_bound": 3
+    },
+    {
+      "path": "B4/Part1/code/app/Http/Controllers/MaintenanceReceiptController.php",
+      "source_loc": 118,
+      "file_cc_upper_bound": 9
+    },
+    {
+      "path": "B4/Part1/code/app/Http/Controllers/OwnerController.php",
+      "source_loc": 74,
+      "file_cc_upper_bound": 2
+    },
+    {
+      "path": "B4/Part1/code/app/Http/Controllers/ProfileController.php",
+      "source_loc": 49,
+      "file_cc_upper_bound": 5
+    },
+    {
+      "path": "B4/Part1/code/app/Http/Controllers/PropertyController.php",
+      "source_loc": 95,
+      "file_cc_upper_bound": 28
+    },
+    {
+      "path": "B4/Part1/code/app/Http/Controllers/RentReceiptController.php",
+      "source_loc": 99,
+      "file_cc_upper_bound": 6
+    },
+    {
+      "path": "B4/Part1/code/app/Http/Controllers/SecurityDepositController.php",
+      "source_loc": 134,
+      "file_cc_upper_bound": 6
+    },
+    {
+      "path": "B4/Part1/code/app/Http/Controllers/TenantController.php",
+      "source_loc": 73,
+      "file_cc_upper_bound": 2
+    },
+    {
+      "path": "B4/Part1/code/app/Http/Controllers/TenantDashboardController.php",
+      "source_loc": 112,
+      "file_cc_upper_bound": 2
+    },
+    {
+      "path": "B4/Part1/code/app/Http/Controllers/UserController.php",
+      "source_loc": 65,
+      "file_cc_upper_bound": 6
+    },
+    {
+      "path": "B4/Part1/code/app/Http/Middleware/RoleMiddleware.php",
+      "source_loc": 18,
+      "file_cc_upper_bound": 4
+    },
+    {
+      "path": "B4/Part1/code/app/Http/Middleware/SecurityHeaders.php",
+      "source_loc": 17,
+      "file_cc_upper_bound": 2
+    },
+    {
+      "path": "B4/Part1/code/app/Http/Requests/StoreElectricityReceiptRequest.php",
+      "source_loc": 41,
+      "file_cc_upper_bound": 2
+    },
+    {
+      "path": "B4/Part1/code/app/Http/Requests/StoreMaintenanceReceiptRequest.php",
+      "source_loc": 26,
+      "file_cc_upper_bound": 2
+    },
+    {
+      "path": "B4/Part1/code/app/Http/Requests/StoreOwnerRequest.php",
+      "source_loc": 21,
+      "file_cc_upper_bound": 2
+    },
+    {
+      "path": "B4/Part1/code/app/Http/Requests/StorePropertyRequest.php",
+      "source_loc": 23,
+      "file_cc_upper_bound": 2
+    },
+    {
+      "path": "B4/Part1/code/app/Http/Requests/StoreRentReceiptRequest.php",
+      "source_loc": 22,
+      "file_cc_upper_bound": 2
+    },
+    {
+      "path": "B4/Part1/code/app/Http/Requests/StoreSecurityDepositRequest.php",
+      "source_loc": 23,
+      "file_cc_upper_bound": 2
+    },
+    {
+      "path": "B4/Part1/code/app/Http/Requests/StoreTenantRequest.php",
+      "source_loc": 21,
+      "file_cc_upper_bound": 2
+    },
+    {
+      "path": "B4/Part1/code/app/Http/Requests/StoreUserRequest.php",
+      "source_loc": 18,
+      "file_cc_upper_bound": 2
+    },
+    {
+      "path": "B4/Part1/code/app/Http/Requests/UpdateElectricityReceiptRequest.php",
+      "source_loc": 40,
+      "file_cc_upper_bound": 2
+    },
+    {
+      "path": "B4/Part1/code/app/Http/Requests/UpdateMaintenanceReceiptRequest.php",
+      "source_loc": 26,
+      "file_cc_upper_bound": 2
+    },
+    {
+      "path": "B4/Part1/code/app/Http/Requests/UpdateOwnerRequest.php",
+      "source_loc": 21,
+      "file_cc_upper_bound": 2
+    },
+    {
+      "path": "B4/Part1/code/app/Http/Requests/UpdatePropertyRequest.php",
+      "source_loc": 23,
+      "file_cc_upper_bound": 2
+    },
+    {
+      "path": "B4/Part1/code/app/Http/Requests/UpdateRentReceiptRequest.php",
+      "source_loc": 22,
+      "file_cc_upper_bound": 2
+    },
+    {
+      "path": "B4/Part1/code/app/Http/Requests/UpdateSecurityDepositRequest.php",
+      "source_loc": 22,
+      "file_cc_upper_bound": 2
+    },
+    {
+      "path": "B4/Part1/code/app/Http/Requests/UpdateTenantRequest.php",
+      "source_loc": 21,
+      "file_cc_upper_bound": 2
+    },
+    {
+      "path": "B4/Part1/code/app/Http/Requests/UpdateUserRequest.php",
+      "source_loc": 23,
+      "file_cc_upper_bound": 2
+    },
+    {
+      "path": "B4/Part1/code/app/Models/ElectricityReceipt.php",
+      "source_loc": 67,
+      "file_cc_upper_bound": 2
+    },
+    {
+      "path": "B4/Part1/code/app/Models/MaintenanceReceipt.php",
+      "source_loc": 51,
+      "file_cc_upper_bound": 2
+    },
+    {
+      "path": "B4/Part1/code/app/Models/Owner.php",
+      "source_loc": 35,
+      "file_cc_upper_bound": 2
+    },
+    {
+      "path": "B4/Part1/code/app/Models/Property.php",
+      "source_loc": 48,
+      "file_cc_upper_bound": 2
+    },
+    {
+      "path": "B4/Part1/code/app/Models/RateHistory.php",
+      "source_loc": 25,
+      "file_cc_upper_bound": 2
+    },
+    {
+      "path": "B4/Part1/code/app/Models/RentReceipt.php",
+      "source_loc": 35,
+      "file_cc_upper_bound": 2
+    },
+    {
+      "path": "B4/Part1/code/app/Models/SecurityDeposit.php",
+      "source_loc": 64,
+      "file_cc_upper_bound": 2
+    },
+    {
+      "path": "B4/Part1/code/app/Models/SecurityDepositDeduction.php",
+      "source_loc": 24,
+      "file_cc_upper_bound": 2
+    },
+    {
+      "path": "B4/Part1/code/app/Models/Tenant.php",
+      "source_loc": 35,
+      "file_cc_upper_bound": 2
+    },
+    {
+      "path": "B4/Part1/code/app/Models/User.php",
+      "source_loc": 46,
+      "file_cc_upper_bound": 2
+    },
+    {
+      "path": "B4/Part1/code/app/Providers/AppServiceProvider.php",
+      "source_loc": 14,
+      "file_cc_upper_bound": 2
+    }
+  ]
+}

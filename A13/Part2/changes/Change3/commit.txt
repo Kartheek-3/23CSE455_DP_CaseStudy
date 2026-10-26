@@ -1,0 +1,33 @@
+Baseline SHA: 5f501341d49d2bc3fa7e817ce7548a82174326eb
+Preceding SHA: 9a4398a103e392a0ea634eaf521470985985145d
+Implementation SHA: 39e3c987488d59045cc3ed5cfe532f6f32c0936d
+Date: 2026-10-11
+Author: vighnesh1001 <realvighnesh@gmail.com>
+Branch: develop
+
+Commit Message:
+feat: add context-aware link safety and spam protection
+
+Changed Files:
+- packages/backend/migration/1787000000000-flagged-links.js
+- packages/backend/src/core/CoreModule.ts
+- packages/backend/src/core/security/LinkReputationProvider.ts
+- packages/backend/src/core/security/LinkSafetyService.ts
+- packages/backend/src/di-symbols.ts
+- packages/backend/src/models/FlaggedLink.ts
+- packages/backend/src/models/RepositoryModule.ts
+- packages/backend/src/models/_.ts
+- packages/backend/src/postgres.ts
+- packages/backend/src/server/api/endpoint-list.ts
+- packages/backend/src/server/api/endpoints/admin/links/flagged.ts
+- packages/backend/src/server/api/endpoints/admin/links/rules/update.ts
+- packages/backend/src/server/api/endpoints/links/check.ts
+- packages/backend/test/unit/LinkSafetyService.test.ts
+- packages/frontend/src/components/MkPostForm.vue
+- packages/frontend/src/components/global/MkUrl.vue
+
+Verification Status:
+- Vitest: 29 passed (29 total) in 543ms, exit code 0
+- Regressions: CH01 (21 passed), CH02 (21 passed), CH03 (29 passed), total 71 passed (71 total), exit code 0
+- SPDX license check: OK (2486 files passed)
+- Working tree: clean

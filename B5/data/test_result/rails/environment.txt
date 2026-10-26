@@ -1,0 +1,20 @@
+DaPlanStan Rails Runtime Verification Environment
+Date: 2026-10-11
+OS: Microsoft Windows 10 [Version 10.0.26200.9457]
+Ruby: ruby 3.4.2 (2025-02-15 revision d2930f8e7a) +PRISM [x64-mingw-ucrt]
+RubyInstaller: 3.4.2-1
+Bundler initially reported: 2.6.2
+Bundler runtime later used: 4.0.9
+Rails: 8.1.3
+Puma: 7.2.0
+Ruby build compiler: GCC 14.2.0
+Current MSYS2 compiler reported by ridk: GCC 16.2.0
+
+Native extension workaround used on Windows:
+- compile native gems with -std=gnu17
+- development group excluded during bundle install
+- Puma/native-gem build configuration adjusted through local Bundler config
+
+Final dependency state:
+Bundle complete! 30 Gemfile dependencies, 144 gems now installed.
+The Gemfile's dependencies are satisfied.

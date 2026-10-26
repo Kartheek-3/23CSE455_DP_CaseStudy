@@ -1,0 +1,1500 @@
+### observer-test-listeners/java: lizard src/observer/*.java
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       3      1     14      1       3 BrokenListener::executionStarted@7-9@src/observer/BrokenListener.java
+       3      1     17      2       3 BrokenListener::executionSkipped@12-14@src/observer/BrokenListener.java
+       3      1     17      2       3 BrokenListener::executionFinished@17-19@src/observer/BrokenListener.java
+       3      1     19      1       3 CompositeTestExecutionListener::register@18-20@src/observer/CompositeTestExecutionListener.java
+       3      1     13      0       3 CompositeTestExecutionListener::failures@22-24@src/observer/CompositeTestExecutionListener.java
+       3      1     23      1       3 CompositeTestExecutionListener::executionStarted@27-29@src/observer/CompositeTestExecutionListener.java
+       3      1     28      2       3 CompositeTestExecutionListener::executionSkipped@32-34@src/observer/CompositeTestExecutionListener.java
+       3      1     28      2       3 CompositeTestExecutionListener::executionFinished@37-39@src/observer/CompositeTestExecutionListener.java
+      10      3     66      2      10 CompositeTestExecutionListener::notifyEach@41-50@src/observer/CompositeTestExecutionListener.java
+       3      1     21      2       3 EventFormatException::EventFormatException@6-8@src/observer/EventFormatException.java
+       3      1     13      1       3 EventRunner::EventRunner@16-18@src/observer/EventRunner.java
+       5      2     48      1       5 EventRunner::run@20-24@src/observer/EventRunner.java
+      25      7    222      2      25 EventRunner::dispatch@26-50@src/observer/EventRunner.java
+       8      3     54      2       8 EventRunner::parseStatus@52-59@src/observer/EventRunner.java
+       5      2     33      3       5 EventRunner::require@61-65@src/observer/EventRunner.java
+       3      1     16      1       3 LoggingListener::executionStarted@12-14@src/observer/LoggingListener.java
+       3      1     25      2       3 LoggingListener::executionSkipped@17-19@src/observer/LoggingListener.java
+       3      1     23      2       3 LoggingListener::executionFinished@22-24@src/observer/LoggingListener.java
+       7      2     69      0       7 LoggingListener::render@26-32@src/observer/LoggingListener.java
+       2      1      5      0       2 ObserverDemo::ObserverDemo@10-11@src/observer/ObserverDemo.java
+      15      1    168      1      18 ObserverDemo::report@13-30@src/observer/ObserverDemo.java
+      13      3     89      1      13 ObserverDemo::main@32-44@src/observer/ObserverDemo.java
+       3      1     13      2       3 SummaryListener::executionSkipped@13-15@src/observer/SummaryListener.java
+       3      1     23      2       3 SummaryListener::executionFinished@18-20@src/observer/SummaryListener.java
+      11      2     95      0      11 SummaryListener::render@22-32@src/observer/SummaryListener.java
+       2      1      7      1       2 executionStarted@9-10@src/observer/TestExecutionListener.java
+       2      1     10      2       2 executionSkipped@12-13@src/observer/TestExecutionListener.java
+       2      1     10      2       2 executionFinished@15-16@src/observer/TestExecutionListener.java
+9 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+     15       3.0     1.0       16.0         3     src/observer/BrokenListener.java
+     37       4.2     1.3       29.5         6     src/observer/CompositeTestExecutionListener.java
+      6       3.0     1.0       21.0         1     src/observer/EventFormatException.java
+     53       9.2     3.0       74.0         5     src/observer/EventRunner.java
+     25       4.0     1.2       33.2         4     src/observer/LoggingListener.java
+     36      10.0     1.7       87.3         3     src/observer/ObserverDemo.java
+      4       0.0     0.0        0.0         0     src/observer/Status.java
+     26       5.7     1.3       43.7         3     src/observer/SummaryListener.java
+      9       2.0     1.0        9.0         3     src/observer/TestExecutionListener.java
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+       211       5.4     1.6       41.8       28            0      0.00    0.00
+
+### observer-test-listeners/python: lizard listeners.py runner.py main.py
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       2      1      8      2       2 execution_started@20-21@listeners.py
+       2      1     10      3       2 execution_skipped@23-24@listeners.py
+       2      1     10      3       2 execution_finished@26-27@listeners.py
+       3      1     17      1       3 __init__@37-39@listeners.py
+       2      1     15      2       2 register@41-42@listeners.py
+       2      1     25      2       2 execution_started@44-45@listeners.py
+       2      1     29      3       2 execution_skipped@47-48@listeners.py
+       2      1     29      3       2 execution_finished@50-51@listeners.py
+       6      3     45      3       6 _notify_each@53-58@listeners.py
+       2      1     12      1       2 __init__@64-65@listeners.py
+       2      1     17      3       2 execution_skipped@67-68@listeners.py
+       2      1     19      3       2 execution_finished@70-71@listeners.py
+       5      4     66      1       5 render@73-77@listeners.py
+       2      1     11      1       2 __init__@83-84@listeners.py
+       2      1     17      2       2 execution_started@86-87@listeners.py
+       2      1     22      3       2 execution_skipped@89-90@listeners.py
+       2      1     23      3       2 execution_finished@92-93@listeners.py
+       2      2     31      1       2 render@95-96@listeners.py
+       2      1     12      2       2 execution_started@102-103@listeners.py
+       2      1     14      3       2 execution_skipped@105-106@listeners.py
+       2      1     14      3       2 execution_finished@108-109@listeners.py
+       2      1     21      3       2 __init__@9-10@runner.py
+       2      1     12      2       2 __init__@14-15@runner.py
+       3      2     33      2       3 run@17-19@runner.py
+       3      2     19      1       3 _dispatch.require@27-29@runner.py
+      21      8    192      3      25 _dispatch@21-45@runner.py
+      15      2    112      1      18 report@9-26@main.py
+      10      3     66      1      10 main@29-38@main.py
+3 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+     61       2.4     1.3       21.2        21     listeners.py
+     34       6.2     2.8       55.4         5     runner.py
+     30      12.5     2.5       89.0         2     main.py
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+       125       3.8     1.6       32.2       28            0      0.00    0.00
+
+### observer-test-listeners/javascript: lizard src/*.js
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       1      1      7      0       1 (anonymous)@23-23@src/app.js
+      13      1    116      1      16 report@9-24@src/app.js
+       1      1      5      1       1 executionStarted@8-8@src/listeners.js
+       1      1      7      2       1 executionSkipped@9-9@src/listeners.js
+       1      1      7      2       1 executionFinished@10-10@src/listeners.js
+       3      1     14      1       3 register@20-22@src/listeners.js
+       1      1      7      0       1 (anonymous)@25-25@src/listeners.js
+       3      1     22      1       3 executionStarted@24-26@src/listeners.js
+       1      1      9      0       1 (anonymous)@29-29@src/listeners.js
+       3      1     24      2       3 executionSkipped@28-30@src/listeners.js
+       1      1      9      0       1 (anonymous)@33-33@src/listeners.js
+       3      1     24      2       3 executionFinished@32-34@src/listeners.js
+       9      3     53      2       9 #notifyEach@36-44@src/listeners.js
+       1      1      6      0       1 (anonymous)@49-49@src/listeners.js
+       3      1     27      2       3 executionSkipped@51-53@src/listeners.js
+       3      1     27      2       3 executionFinished@55-57@src/listeners.js
+       1      1      6      0       1 (anonymous)@61-61@src/listeners.js
+       1      1     10      0       1 (anonymous)@62-62@src/listeners.js
+       1      1      7      0       1 (anonymous)@63-63@src/listeners.js
+       6      1     70      0       6 render@59-64@src/listeners.js
+       3      1     19      1       3 executionStarted@71-73@src/listeners.js
+       3      1     26      2       3 executionSkipped@75-77@src/listeners.js
+       3      1     25      2       3 executionFinished@79-81@src/listeners.js
+       1      1     11      0       1 (anonymous)@84-84@src/listeners.js
+       3      1     24      0       3 render@83-85@src/listeners.js
+       3      1     11      0       3 executionStarted@90-92@src/listeners.js
+       3      1     11      0       3 executionSkipped@94-96@src/listeners.js
+       3      1     11      0       3 executionFinished@98-100@src/listeners.js
+       4      1     27      2       4 constructor@8-11@src/runner.js
+       3      1     11      1       3 constructor@17-19@src/runner.js
+       1      1     15      0       1 (anonymous)@22-22@src/runner.js
+       3      1     17      1       3 run@21-23@src/runner.js
+       3      2     26      1       3 require@29-31@src/runner.js
+      28      8    216      2      31 #dispatch@25-55@src/runner.js
+4 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+     18       7.0     1.0       61.5         2     src/app.js
+     72       2.5     1.1       18.2        26     src/listeners.js
+     14       0.0     0.0        0.0         0     src/main.js
+     47       7.0     2.3       52.0         6     src/runner.js
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+       151       3.6     1.3       26.7       34            0      0.00    0.00
+
+### observer-test-listeners/cpp: lizard listeners.hpp listeners.cpp runner.hpp runner.cpp main.cpp
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       1      1     10      1       1 TestExecutionListener::execution_started@22-22@listeners.hpp
+       1      1     16      2       1 TestExecutionListener::execution_skipped@23-23@listeners.hpp
+       1      1     12      2       1 TestExecutionListener::execution_finished@24-24@listeners.hpp
+       1      1      9      0       1 CompositeTestExecutionListener::failures@34-34@listeners.hpp
+       1      1     10      0       1 CompositeTestExecutionListener::name@36-36@listeners.hpp
+       1      1     10      0       1 SummaryListener::name@51-51@listeners.hpp
+       1      1     10      0       1 LoggingListener::name@64-64@listeners.hpp
+       1      1     10      0       1 BrokenListener::name@77-77@listeners.hpp
+       8      4     40      1       8 to_string@8-15@listeners.cpp
+       3      1     26      1       3 CompositeTestExecutionListener::register_listener@17-19@listeners.cpp
+       3      1     38      1       3 CompositeTestExecutionListener::execution_started@21-23@listeners.cpp
+       3      1     47      2       3 CompositeTestExecutionListener::execution_skipped@25-27@listeners.cpp
+       3      1     43      2       3 CompositeTestExecutionListener::execution_finished@29-31@listeners.cpp
+      10      3     81      2      10 CompositeTestExecutionListener::notify_each@33-42@listeners.cpp
+       3      1     21      2       3 SummaryListener::execution_skipped@44-46@listeners.cpp
+       3      1     21      2       3 SummaryListener::execution_finished@48-50@listeners.cpp
+      12      3    116      0      12 SummaryListener::render@52-63@listeners.cpp
+       3      1     22      1       3 LoggingListener::execution_started@65-67@listeners.cpp
+       3      1     35      2       3 LoggingListener::execution_skipped@69-71@listeners.cpp
+       3      1     32      2       3 LoggingListener::execution_finished@73-75@listeners.cpp
+       7      2     61      0       7 LoggingListener::render@77-83@listeners.cpp
+       3      1     20      1       3 BrokenListener::execution_started@85-87@listeners.cpp
+       3      1     26      2       3 BrokenListener::execution_skipped@89-91@listeners.cpp
+       3      1     22      2       3 BrokenListener::execution_finished@93-95@listeners.cpp
+       2      1     32      2       2 EventFormatError::EventFormatError@12-13@runner.hpp
+       1      1     13      1       1 EventRunner::EventRunner@19-19@runner.hpp
+       6      3     59      2       6 parse_status@12-17@runner.cpp
+       5      2     58      1       5 EventRunner::run@21-25@runner.cpp
+      25     10    300      2      27 EventRunner::dispatch@27-53@runner.cpp
+      10      5     96      1      10 read_lines@55-64@runner.cpp
+      15      2    155      1      18 report@66-83@runner.cpp
+      13      3     81      1      13 main@6-18@main.cpp
+5 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+     55       1.0     1.0       10.9         8     listeners.hpp
+     78       4.6     1.5       40.7        16     listeners.cpp
+     19       1.5     1.0       22.5         2     runner.hpp
+     69      12.2     4.4      133.6         5     runner.cpp
+     15      13.0     3.0       81.0         1     main.cpp
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+       236       4.9     1.8       47.9       32            0      0.00    0.00
+
+### composite-test-tree/java: lizard src/composite/*.java
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       2      1      5      0       2 CompositeDemo::CompositeDemo@12-13@src/composite/CompositeDemo.java
+      18      1    214      2      20 CompositeDemo::report@15-34@src/composite/CompositeDemo.java
+       3      2     40      1       3 CompositeDemo::listed@36-38@src/composite/CompositeDemo.java
+      13      3     94      1      13 CompositeDemo::main@40-52@src/composite/CompositeDemo.java
+       3      1      8      0       3 TestCase::countTests@13-15@src/composite/TestCase.java
+       3      1     15      1       3 TestCase::hasTag@18-20@src/composite/TestCase.java
+       2      1     13      2       3 TestCase::removeTestsTagged@23-25@src/composite/TestCase.java
+       2      1     10      1       2 TestCase::pruneEmpty@28-29@src/composite/TestCase.java
+       5      1     58      2       5 TestCase::print@32-36@src/composite/TestCase.java
+       4      1     22      2       4 TestContainer::TestContainer@13-16@src/composite/TestContainer.java
+       3      1     14      1       3 TestContainer::addChild@18-20@src/composite/TestContainer.java
+       3      1      8      0       3 TestContainer::name@23-25@src/composite/TestContainer.java
+       3      1     23      0       3 TestContainer::countTests@28-30@src/composite/TestContainer.java
+       3      1     10      1       3 TestContainer::hasTag@33-35@src/composite/TestContainer.java
+      14      3     89      2      14 TestContainer::removeTestsTagged@38-51@src/composite/TestContainer.java
+      14      3     85      1      14 TestContainer::pruneEmpty@54-67@src/composite/TestContainer.java
+       6      2     88      2       6 TestContainer::print@70-75@src/composite/TestContainer.java
+       3      1     12      1       3 TreeFormatException::TreeFormatException@6-8@src/composite/TreeFormatException.java
+       3      1     21      2       3 TreeFormatException::TreeFormatException@10-12@src/composite/TreeFormatException.java
+       2      1      5      0       2 TreeParser::TreeParser@13-14@src/composite/TreeParser.java
+      64     22    514      1      66 TreeParser::parse@16-81@src/composite/TreeParser.java
+6 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+     44       9.0     1.8       88.2         4     src/composite/CompositeDemo.java
+     27       3.0     1.0       20.8         5     src/composite/TestCase.java
+     64       6.2     1.6       42.4         8     src/composite/TestContainer.java
+     10       0.0     0.0        0.0         0     src/composite/TestNode.java
+      9       3.0     1.0       16.5         2     src/composite/TreeFormatException.java
+     74      33.0    11.5      259.5         2     src/composite/TreeParser.java
+
+===========================================================================================================
+!!!! Warnings (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100) !!!!
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+      64     22    514      1      66 TreeParser::parse@16-81@src/composite/TreeParser.java
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+       228       8.2     2.4       64.2       21            1      0.05    0.37
+
+### composite-test-tree/python: lizard nodes.py tree_parser.py main.py
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       2      1     12      2       2 __init__@9-10@nodes.py
+       1      1      6      1       2 count_tests@13-14@nodes.py
+       1      1      8      2       2 has_tag@17-18@nodes.py
+       1      1     10      3       2 remove_tests_tagged@21-22@nodes.py
+       1      1      8      2       2 prune_empty@25-26@nodes.py
+       1      1     10      2       2 render@29-30@nodes.py
+       3      1     28      3       3 __init__@36-38@nodes.py
+       2      1      7      1       2 count_tests@40-41@nodes.py
+       2      1     13      2       2 has_tag@43-44@nodes.py
+       2      1     10      3       2 remove_tests_tagged@46-47@nodes.py
+       2      1      8      2       2 prune_empty@49-50@nodes.py
+       3      2     36      2       3 render@52-54@nodes.py
+       4      1     28      3       4 __init__@60-63@nodes.py
+       2      1     15      2       2 add_child@65-66@nodes.py
+       2      2     20      1       2 count_tests@68-69@nodes.py
+       2      1      9      2       2 has_tag@71-72@nodes.py
+       9      3     57      3       9 remove_tests_tagged@74-82@nodes.py
+       9      3     54      2       9 prune_empty@84-92@nodes.py
+       5      3     65      2       5 render@94-98@nodes.py
+       2      2     29      3       2 __init__@9-10@tree_parser.py
+       2      1     12      1       2 parse.fail@22-23@tree_parser.py
+      42     22    287      1      48 parse@13-60@tree_parser.py
+       2      2     23      1       2 _listed@8-9@main.py
+      14      1    122      2      16 report@12-27@main.py
+      10      3     71      1      10 main@30-39@main.py
+3 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+     63       2.8     1.4       21.3        19     nodes.py
+     48      15.3     8.3      109.3         3     tree_parser.py
+     30       8.7     2.0       72.0         3     main.py
+
+===========================================================================================================
+!!!! Warnings (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100) !!!!
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+      42     22    287      1      48 parse@13-60@tree_parser.py
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+       141       5.0     2.3       37.9       25            1      0.04    0.33
+
+### composite-test-tree/javascript: lizard src/*.js
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       1      1     15      1       1 listed@6-6@src/app.js
+      15      1    134      2      17 report@8-24@src/app.js
+       4      2     26      1       4 constructor@6-9@src/nodes.js
+       1      1     16      0       1 countTests@12-12@src/nodes.js
+       1      1     17      1       1 hasTag@15-15@src/nodes.js
+       1      1     19      2       1 removeTestsTagged@18-18@src/nodes.js
+       1      1     17      1       1 pruneEmpty@21-21@src/nodes.js
+       1      1     19      1       1 render@24-24@src/nodes.js
+       4      1     29      2       4 constructor@29-32@src/nodes.js
+       1      1      7      0       1 countTests@34-34@src/nodes.js
+       1      1     15      1       1 hasTag@36-36@src/nodes.js
+       1      1      4      0       1 removeTestsTagged@38-38@src/nodes.js
+       1      1      4      0       1 pruneEmpty@40-40@src/nodes.js
+      38      3    250      1      47 render@42-88@src/nodes.js
+       4      2     33      2       4 constructor@8-11@src/tree-parser.js
+       1      1     15      1       1 fail@20-20@src/tree-parser.js
+       1      2     12      0       1 (anonymous)@29-29@src/tree-parser.js
+       1      1      7      0       1 (anonymous)@30-30@src/tree-parser.js
+      28     17    311      0      30 (anonymous)@18-47@src/tree-parser.js
+       7      2     45      1      38 parse@14-51@src/tree-parser.js
+4 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+     18       8.0     1.0       74.5         2     src/app.js
+     14       0.0     0.0        0.0         0     src/main.js
+     61       4.6     1.2       35.2        12     src/nodes.js
+     42       7.0     4.2       70.5         6     src/tree-parser.js
+
+===========================================================================================================
+!!!! Warnings (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100) !!!!
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+      28     17    311      0      30 (anonymous)@18-47@src/tree-parser.js
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+       135       5.7     2.1       49.8       20            1      0.05    0.25
+
+### composite-test-tree/cpp: lizard nodes.hpp nodes.cpp tree_parser.hpp tree_parser.cpp main.cpp
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       1      1     19      1       1 TestNode::TestNode@12-12@nodes.hpp
+       1      1      9      0       1 TestNode::name@17-17@nodes.hpp
+       1      1     10      0       1 TestCase::count_tests@39-39@nodes.hpp
+       1      1     20      2       1 TestCase::remove_tests_tagged@41-41@nodes.hpp
+       1      1     15      1       1 TestCase::prune_empty@42-42@nodes.hpp
+       1      1     14      1       1 TestContainer::has_tag@59-59@nodes.hpp
+       3      1     27      1       3 indent@8-10@nodes.cpp
+       2      1     41      2       2 TestCase::TestCase@14-15@nodes.cpp
+       3      1     40      1       3 TestCase::has_tag@17-19@nodes.cpp
+       5      2     46      1       5 TestCase::render@21-25@nodes.cpp
+       2      1     36      2       2 TestContainer::TestContainer@27-28@nodes.cpp
+       4      1     34      1       4 TestContainer::add_child@30-33@nodes.cpp
+       5      2     33      0       5 TestContainer::count_tests@35-39@nodes.cpp
+      10      2     85      2      10 TestContainer::remove_tests_tagged@41-50@nodes.cpp
+       8      2     75      1       8 TestContainer::prune_empty@52-59@nodes.cpp
+       7      3     79      1       7 TestContainer::render@61-67@nodes.cpp
+       1      1     18      1       1 TreeFormatError::TreeFormatError@13-13@tree_parser.hpp
+       2      1     32      2       2 TreeFormatError::TreeFormatError@14-15@tree_parser.hpp
+      46     24    554      1      51 parse@6-56@tree_parser.cpp
+      10      5     96      1      10 read_lines@58-67@tree_parser.cpp
+       5      4     74      1       5 listed@71-75@tree_parser.cpp
+      15      1    164      2      17 report@79-95@tree_parser.cpp
+      13      3     86      1      13 main@6-18@main.cpp
+5 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+     43       1.0     1.0       14.5         6     nodes.hpp
+     54       4.9     1.6       49.6        10     nodes.cpp
+     14       1.5     1.0       25.0         2     tree_parser.hpp
+     81      19.0     8.5      222.0         4     tree_parser.cpp
+     15      13.0     3.0       86.0         1     main.cpp
+
+===========================================================================================================
+!!!! Warnings (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100) !!!!
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+      46     24    554      1      51 parse@6-56@tree_parser.cpp
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+       207       6.4     2.7       69.9       23            1      0.04    0.31
+
+### strategy-test-filters/java: lizard src/strategy/*.java
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       3      1     20      1       3 ExcludeTag::includes@4-6@src/strategy/ExcludeTag.java
+       3      1     10      0       3 ExcludeTag::describe@8-10@src/strategy/ExcludeTag.java
+       3      1     19      1       3 IncludeTag::includes@4-6@src/strategy/IncludeTag.java
+       3      1     10      0       3 IncludeTag::describe@8-10@src/strategy/IncludeTag.java
+       3      1     19      1       3 NameContains::includes@4-6@src/strategy/NameContains.java
+       3      1     10      0       3 NameContains::describe@8-10@src/strategy/NameContains.java
+       3      1     12      1       3 InputFormatException::InputFormatException@16-18@src/strategy/StrategyDemo.java
+       2      1      5      0       2 InputFormatException::StrategyDemo@21-22@src/strategy/StrategyDemo.java
+       4      3     39      1       4 InputFormatException::fields@25-28@src/strategy/StrategyDemo.java
+      15      6    169      1      15 InputFormatException::parse@30-44@src/strategy/StrategyDemo.java
+      11      2    166      1      11 InputFormatException::report@46-56@src/strategy/StrategyDemo.java
+      13      3     89      1      13 InputFormatException::main@58-70@src/strategy/StrategyDemo.java
+       3      1     13      1       3 TestSelector::TestSelector@8-10@src/strategy/TestSelector.java
+       3      1     32      1       3 TestSelector::select@12-14@src/strategy/TestSelector.java
+7 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+      9       3.0     1.0       15.0         2     src/strategy/ExcludeTag.java
+      9       3.0     1.0       14.5         2     src/strategy/IncludeTag.java
+      9       3.0     1.0       14.5         2     src/strategy/NameContains.java
+     59       8.0     2.7       80.0         6     src/strategy/StrategyDemo.java
+      3       0.0     0.0        0.0         0     src/strategy/TestCase.java
+      5       0.0     0.0        0.0         0     src/strategy/TestFilter.java
+     10       3.0     1.0       22.5         2     src/strategy/TestSelector.java
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+       104       5.1     1.7       43.8       14            0      0.00    0.00
+
+### strategy-test-filters/python: lizard strategy.py main.py
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       2      1      8      2       2 includes@14-15@strategy.py
+       2      1      6      1       2 describe@18-19@strategy.py
+       2      1     12      2       2 __init__@23-24@strategy.py
+       2      1     15      2       2 includes@26-27@strategy.py
+       2      1     11      1       2 describe@29-30@strategy.py
+       2      1     12      2       2 __init__@34-35@strategy.py
+       2      1     16      2       2 includes@37-38@strategy.py
+       2      1     11      1       2 describe@40-41@strategy.py
+       2      1     12      2       2 __init__@45-46@strategy.py
+       2      1     15      2       2 includes@48-49@strategy.py
+       2      1     11      1       2 describe@51-52@strategy.py
+       3      1     19      3       3 __init__@56-58@strategy.py
+       2      1     12      2       2 __init__@64-65@strategy.py
+       2      3     24      2       2 select@67-68@strategy.py
+      12      7    100      1      12 parse@71-82@strategy.py
+      10      3    101      1      10 report@88-97@strategy.py
+      10      3     66      1      10 main@6-15@main.py
+2 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+     63       3.2     1.6       24.1        16     strategy.py
+     14      10.0     3.0       66.0         1     main.py
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+        77       3.6     1.7       26.5       17            0      0.00    0.00
+
+### strategy-test-filters/javascript: lizard src/*.js
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       4      1     16      1       4 constructor@5-8@src/strategy.js
+       4      3     35      1       4 fields@12-15@src/strategy.js
+       3      1     18      1       3 readLines@17-19@src/strategy.js
+       3      2     19      0       3 constructor@23-25@src/strategy.js
+       3      1     17      1       3 includes@27-29@src/strategy.js
+       3      1     16      0       3 describe@31-33@src/strategy.js
+       4      1     15      1       4 constructor@39-42@src/strategy.js
+       3      1     17      1       3 includes@44-46@src/strategy.js
+       3      1     12      0       3 describe@48-50@src/strategy.js
+       4      1     15      1       4 constructor@56-59@src/strategy.js
+       3      1     18      1       3 includes@61-63@src/strategy.js
+       3      1     12      0       3 describe@65-67@src/strategy.js
+       4      1     15      1       4 constructor@73-76@src/strategy.js
+       3      1     17      1       3 includes@78-80@src/strategy.js
+       3      1     12      0       3 describe@82-84@src/strategy.js
+       3      1     11      1       3 constructor@91-93@src/strategy.js
+       1      1      9      0       1 (anonymous)@96-96@src/strategy.js
+       3      1     16      1       3 select@95-97@src/strategy.js
+       9      5     95      0       9 (anonymous)@102-110@src/strategy.js
+       5      1     27      1      13 parse@100-112@src/strategy.js
+       1      1      4      0       1 (anonymous)@119-119@src/strategy.js
+       9      2    108      1       9 report@114-122@src/strategy.js
+2 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+     13       0.0     0.0        0.0         0     src/main.js
+     95       3.7     1.4       23.8        22     src/strategy.js
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+       108       3.7     1.4       23.8       22            0      0.00    0.00
+
+### strategy-test-filters/cpp: lizard strategy.hpp main.cpp
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       7      4     81      1       7 fields@19-25@strategy.hpp
+      10      5     96      1      10 read_lines@27-36@strategy.hpp
+       1      1     23      1       1 where@38-38@strategy.hpp
+       3      2     32      1       3 is_number@40-42@strategy.hpp
+       1      1     38      1       1 TestCase::has_tag@47-47@strategy.hpp
+       1      1     19      1       1 IncludeTag::IncludeTag@60-60@strategy.hpp
+       1      1     19      1       1 IncludeTag::includes@61-61@strategy.hpp
+       1      1     12      0       1 IncludeTag::describe@62-62@strategy.hpp
+       1      1     19      1       1 ExcludeTag::ExcludeTag@70-70@strategy.hpp
+       1      1     20      1       1 ExcludeTag::includes@71-71@strategy.hpp
+       1      1     12      0       1 ExcludeTag::describe@72-72@strategy.hpp
+       1      1     19      1       1 NameContains::NameContains@80-80@strategy.hpp
+       1      1     27      1       1 NameContains::includes@81-81@strategy.hpp
+       1      1     12      0       1 NameContains::describe@82-82@strategy.hpp
+       1      1     14      1       1 TestSelector::TestSelector@91-91@strategy.hpp
+       6      1     70      1       6 TestSelector::select@92-97@strategy.hpp
+      12      7    184      1      12 parse@103-114@strategy.hpp
+      15      3    172      1      15 report@116-130@strategy.hpp
+      13      3     79      2      13 main@5-17@main.cpp
+2 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+    107       3.6     1.9       48.3        18     strategy.hpp
+     15      13.0     3.0       79.0         1     main.cpp
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+       122       4.1     1.9       49.9       19            0      0.00    0.00
+
+### adapter-listener-bridge/java: lizard src/adapter/*.java
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       3      1     12      1       3 InputFormatException::InputFormatException@15-17@src/adapter/AdapterDemo.java
+       2      1      5      0       2 InputFormatException::AdapterDemo@20-21@src/adapter/AdapterDemo.java
+       4      3     39      1       4 InputFormatException::fields@24-27@src/adapter/AdapterDemo.java
+      27     10    270      2      27 InputFormatException::runEngine@33-59@src/adapter/AdapterDemo.java
+       5      1     47      1       5 InputFormatException::report@61-65@src/adapter/AdapterDemo.java
+      13      3     89      1      13 InputFormatException::main@67-79@src/adapter/AdapterDemo.java
+       3      1     13      1       3 ListenerAdapter::ListenerAdapter@15-17@src/adapter/ListenerAdapter.java
+      10      3    136      1      10 ListenerAdapter::toIdentifier@19-28@src/adapter/ListenerAdapter.java
+       3      1     17      1       3 ListenerAdapter::executionStarted@31-33@src/adapter/ListenerAdapter.java
+       3      1     22      2       3 ListenerAdapter::executionFinished@36-38@src/adapter/ListenerAdapter.java
+       3      1     20      1       3 PrintingTestListener::testStarted@11-13@src/adapter/PrintingTestListener.java
+       3      1     27      2       3 PrintingTestListener::testFinished@16-18@src/adapter/PrintingTestListener.java
+       3      3     30      0       3 TestIdentifier::describe@4-6@src/adapter/TestIdentifier.java
+       2      1      7      1       2 testStarted@6-7@src/adapter/TestListener.java
+       2      1     10      2       2 testFinished@9-10@src/adapter/TestListener.java
+6 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+     66       9.0     3.2       77.0         6     src/adapter/AdapterDemo.java
+      5       0.0     0.0        0.0         0     src/adapter/EngineListener.java
+     30       4.8     1.5       47.0         4     src/adapter/ListenerAdapter.java
+     14       3.0     1.0       23.5         2     src/adapter/PrintingTestListener.java
+      6       3.0     3.0       30.0         1     src/adapter/TestIdentifier.java
+      7       2.0     1.0        8.5         2     src/adapter/TestListener.java
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+       128       5.7     2.1       49.6       15            0      0.00    0.00
+
+### adapter-listener-bridge/python: lizard adapter.py main.py
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       2      1      8      2       2 execution_started@18-19@adapter.py
+       2      1     10      3       2 execution_finished@21-22@adapter.py
+       4      1     26      4       4 __init__@26-29@adapter.py
+       4      3     36      1       4 describe@31-34@adapter.py
+       2      1      8      2       2 test_started@40-41@adapter.py
+       2      1     10      3       2 test_finished@43-44@adapter.py
+       2      1     11      1       2 __init__@48-49@adapter.py
+       2      1     21      2       2 test_started@51-52@adapter.py
+       2      1     25      3       2 test_finished@54-55@adapter.py
+       5      2     52      1       5 to_identifier@58-62@adapter.py
+       2      1     12      2       2 __init__@68-69@adapter.py
+       2      1     18      2       2 execution_started@71-72@adapter.py
+       2      1     22      3       2 execution_finished@74-75@adapter.py
+      19     10    170      2      20 run_engine@78-97@adapter.py
+       6      1     53      1       6 report@100-105@adapter.py
+      10      3     66      1      10 main@6-15@main.py
+2 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+     68       3.9     1.8       32.1        15     adapter.py
+     14      10.0     3.0       66.0         1     main.py
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+        82       4.2     1.9       34.2       16            0      0.00    0.00
+
+### adapter-listener-bridge/javascript: lizard src/*.js
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       4      1     16      1       4 constructor@5-8@src/adapter.js
+       4      3     35      1       4 fields@12-15@src/adapter.js
+       3      1     18      1       3 readLines@17-19@src/adapter.js
+       1      1      5      1       1 executionStarted@26-26@src/adapter.js
+       1      1      7      2       1 executionFinished@28-28@src/adapter.js
+       5      1     27      3       5 constructor@32-36@src/adapter.js
+       4      2     35      0       4 describe@38-41@src/adapter.js
+       1      1      5      1       1 testStarted@46-46@src/adapter.js
+       1      1      7      2       1 testFinished@48-48@src/adapter.js
+       3      1     19      1       3 testStarted@54-56@src/adapter.js
+       3      1     25      2       3 testFinished@58-60@src/adapter.js
+       1      1     12      0       1 (anonymous)@64-64@src/adapter.js
+       5      2     71      1       5 toIdentifier@63-67@src/adapter.js
+       4      1     15      1       4 constructor@73-76@src/adapter.js
+       3      1     17      1       3 executionStarted@78-80@src/adapter.js
+       3      1     21      2       3 executionFinished@82-84@src/adapter.js
+      15      9    201      0      15 (anonymous)@89-103@src/adapter.js
+       3      1     20      2      17 runEngine@88-104@src/adapter.js
+       5      1     39      1       5 report@106-110@src/adapter.js
+2 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+     84       3.6     1.6       31.3        19     src/adapter.js
+     13       0.0     0.0        0.0         0     src/main.js
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+        97       3.6     1.6       31.3       19            0      0.00    0.00
+
+### adapter-listener-bridge/cpp: lizard adapter.hpp main.cpp
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       7      4     81      1       7 fields@19-25@adapter.hpp
+      10      5     96      1      10 read_lines@27-36@adapter.hpp
+       1      1     23      1       1 where@38-38@adapter.hpp
+       3      2     32      1       3 is_number@40-42@adapter.hpp
+       5      2     39      1       5 join_lines@44-48@adapter.hpp
+       3      3     33      0       3 TestIdentifier::describe@62-64@adapter.hpp
+       1      1      8      0       1 TestListener::test_started@71-71@adapter.hpp
+       1      1     14      1       1 TestListener::test_finished@72-72@adapter.hpp
+       1      1     23      1       1 PrintingTestListener::test_started@77-77@adapter.hpp
+       3      1     34      2       3 PrintingTestListener::test_finished@78-80@adapter.hpp
+      10      3    153      1      10 to_identifier@84-93@adapter.hpp
+       1      1     13      1       1 ListenerAdapter::ListenerAdapter@98-98@adapter.hpp
+       1      1     22      1       1 ListenerAdapter::execution_started@99-99@adapter.hpp
+       3      1     31      2       3 ListenerAdapter::execution_finished@100-102@adapter.hpp
+      17     12    262      2      17 run_engine@109-125@adapter.hpp
+       6      1     38      1       6 report@127-132@adapter.hpp
+      13      3     79      2      13 main@5-17@main.cpp
+2 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+    109       4.6     2.5       56.4        16     adapter.hpp
+     15      13.0     3.0       79.0         1     main.cpp
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+       124       5.1     2.5       57.7       17            0      0.00    0.00
+
+### decorator-timeout-invocation/java: lizard src/decorator/*.java
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       3      1     12      1       3 InputFormatException::InputFormatException@16-18@src/decorator/DecoratorDemo.java
+       2      1      5      0       2 InputFormatException::DecoratorDemo@21-22@src/decorator/DecoratorDemo.java
+       4      3     39      1       4 InputFormatException::fields@25-28@src/decorator/DecoratorDemo.java
+      21      7    205      1      21 InputFormatException::parse@32-52@src/decorator/DecoratorDemo.java
+      16      3    205      1      16 InputFormatException::report@54-69@src/decorator/DecoratorDemo.java
+      13      3     89      1      13 InputFormatException::main@71-83@src/decorator/DecoratorDemo.java
+       3      1     13      1       3 InvocationDecorator::InvocationDecorator@8-10@src/decorator/InvocationDecorator.java
+       3      1     12      0       3 InvocationDecorator::name@12-14@src/decorator/InvocationDecorator.java
+       3      1     12      0       3 InvocationDecorator::durationMs@16-18@src/decorator/InvocationDecorator.java
+       3      1     12      0       3 InvocationDecorator::proceed@20-22@src/decorator/InvocationDecorator.java
+       4      1     24      2       4 LoggingInvocation::LoggingInvocation@9-12@src/decorator/LoggingInvocation.java
+       6      1     43      0       6 LoggingInvocation::proceed@15-20@src/decorator/LoggingInvocation.java
+       3      1      8      0       3 TestInvocation::proceed@5-7@src/decorator/TestInvocation.java
+       4      1     21      2       4 TimeoutInvocation::TimeoutInvocation@7-10@src/decorator/TimeoutInvocation.java
+       4      2     35      0       4 TimeoutInvocation::proceed@13-16@src/decorator/TimeoutInvocation.java
+6 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+     71       9.8     3.0       92.5         6     src/decorator/DecoratorDemo.java
+      6       0.0     0.0        0.0         0     src/decorator/Invocation.java
+     16       3.0     1.0       12.2         4     src/decorator/InvocationDecorator.java
+     16       5.0     1.0       33.5         2     src/decorator/LoggingInvocation.java
+      6       3.0     1.0        8.0         1     src/decorator/TestInvocation.java
+     13       4.0     1.5       28.0         2     src/decorator/TimeoutInvocation.java
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+       128       6.1     1.9       49.0       15            0      0.00    0.00
+
+### decorator-timeout-invocation/python: lizard decorator.py main.py
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       2      1      6      1       2 name@17-18@decorator.py
+       2      1      6      1       2 duration_ms@21-22@decorator.py
+       2      1      6      1       2 proceed@25-26@decorator.py
+       2      1     28      4       2 __init__@32-33@decorator.py
+       2      1      9      1       2 name@35-36@decorator.py
+       2      1      9      1       2 duration_ms@38-39@decorator.py
+       2      1      9      1       2 proceed@41-42@decorator.py
+       2      1     12      2       2 __init__@46-47@decorator.py
+       2      1     13      1       2 name@49-50@decorator.py
+       2      1     13      1       2 duration_ms@52-53@decorator.py
+       2      1     13      1       2 proceed@55-56@decorator.py
+       3      1     22      3       3 __init__@60-62@decorator.py
+       5      2     40      1       5 proceed@64-68@decorator.py
+       3      1     22      3       3 __init__@72-74@decorator.py
+       5      1     46      1       5 proceed@76-80@decorator.py
+      15      7    124      1      15 parse@83-97@decorator.py
+       9      3    119      1       9 report@100-108@decorator.py
+      10      3     66      1      10 main@6-15@main.py
+2 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+     74       3.6     1.5       29.2        17     decorator.py
+     14      10.0     3.0       66.0         1     main.py
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+        88       4.0     1.6       31.3       18            0      0.00    0.00
+
+### decorator-timeout-invocation/javascript: lizard src/*.js
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       4      1     16      1       4 constructor@5-8@src/decorator.js
+       4      3     35      1       4 fields@12-15@src/decorator.js
+       3      1     18      1       3 readLines@17-19@src/decorator.js
+       5      1     27      3       5 constructor@25-29@src/decorator.js
+       3      1      9      0       3 proceed@31-33@src/decorator.js
+       3      1     11      1       3 constructor@38-40@src/decorator.js
+       3      1     11      0       3 get name@42-44@src/decorator.js
+       3      1     11      0       3 get durationMs@46-48@src/decorator.js
+       3      1     13      0       3 proceed@50-52@src/decorator.js
+       4      1     18      2       4 constructor@58-61@src/decorator.js
+       4      2     38      0       4 proceed@63-66@src/decorator.js
+       4      1     18      2       4 constructor@72-75@src/decorator.js
+       6      1     50      0       6 proceed@77-82@src/decorator.js
+       9      6    137      0       9 (anonymous)@87-95@src/decorator.js
+       5      1     27      1      13 parse@85-97@src/decorator.js
+       1      1     10      0       1 (anonymous)@106-106@src/decorator.js
+       9      2    114      1       9 report@99-107@src/decorator.js
+2 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+     85       4.3     1.5       33.1        17     src/decorator.js
+     13       0.0     0.0        0.0         0     src/main.js
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+        98       4.3     1.5       33.1       17            0      0.00    0.00
+
+### decorator-timeout-invocation/cpp: lizard decorator.hpp main.cpp
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       7      4     81      1       7 fields@19-25@decorator.hpp
+      10      5     96      1      10 read_lines@27-36@decorator.hpp
+       1      1     23      1       1 where@38-38@decorator.hpp
+       3      2     32      1       3 is_number@40-42@decorator.hpp
+       5      2     39      1       5 join_lines@44-48@decorator.hpp
+       2      1     42      3       2 TestInvocation::TestInvocation@64-65@decorator.hpp
+       1      1     10      0       1 TestInvocation::name@66-66@decorator.hpp
+       1      1     10      0       1 TestInvocation::duration_ms@67-67@decorator.hpp
+       1      1      9      0       1 TestInvocation::proceed@68-68@decorator.hpp
+       1      1     22      1       1 InvocationDecorator::InvocationDecorator@79-79@decorator.hpp
+       1      1     14      0       1 InvocationDecorator::name@80-80@decorator.hpp
+       1      1     14      0       1 InvocationDecorator::duration_ms@81-81@decorator.hpp
+       1      1     13      0       1 InvocationDecorator::proceed@82-82@decorator.hpp
+       1      1     30      2       1 TimeoutInvocation::TimeoutInvocation@90-90@decorator.hpp
+       6      2     49      0       6 TimeoutInvocation::proceed@91-96@decorator.hpp
+       1      1     38      2       1 LoggingInvocation::LoggingInvocation@104-104@decorator.hpp
+       6      1     44      0       6 LoggingInvocation::proceed@105-110@decorator.hpp
+      12      7    192      1      12 parse@116-127@decorator.hpp
+      14      5    184      1      14 report@129-142@decorator.hpp
+      13      3     79      2      13 main@5-17@main.cpp
+2 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+    117       3.9     2.1       49.6        19     decorator.hpp
+     15      13.0     3.0       79.0         1     main.cpp
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+       132       4.4     2.1       51.0       20            0      0.00    0.00
+
+### template-method-engine/java: lizard src/template/*.java
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       3      1      8      0       3 LifecycleEngine::name@6-8@src/template/LifecycleEngine.java
+       3      1     13      2       3 LifecycleEngine::runTest@10-12@src/template/LifecycleEngine.java
+       3      1     22      2       3 LifecycleEngine::beforeEach@15-17@src/template/LifecycleEngine.java
+       3      1     22      2       3 LifecycleEngine::afterEach@20-22@src/template/LifecycleEngine.java
+       3      1      8      0       3 SimpleEngine::name@4-6@src/template/SimpleEngine.java
+       3      1     13      2       3 SimpleEngine::runTest@8-10@src/template/SimpleEngine.java
+       3      1     12      1       3 InputFormatException::InputFormatException@16-18@src/template/TemplateDemo.java
+       2      1      5      0       2 InputFormatException::TemplateDemo@21-22@src/template/TemplateDemo.java
+       4      3     39      1       4 InputFormatException::fields@25-28@src/template/TemplateDemo.java
+      17      6    153      1      17 InputFormatException::parseTests@31-47@src/template/TemplateDemo.java
+       9      2    109      1       9 InputFormatException::report@49-57@src/template/TemplateDemo.java
+      13      3     89      1      13 InputFormatException::main@59-71@src/template/TemplateDemo.java
+      16      3    156      1      16 TestEngine::execute@10-25@src/template/TestEngine.java
+       2      1     13      2       2 TestEngine::beforeEach@33-34@src/template/TestEngine.java
+       2      1     13      2       2 TestEngine::afterEach@37-38@src/template/TestEngine.java
+4 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+     18       3.0     1.0       16.2         4     src/template/LifecycleEngine.java
+      9       3.0     1.0       10.5         2     src/template/SimpleEngine.java
+     59       8.0     2.7       67.8         6     src/template/TemplateDemo.java
+     27       6.7     1.7       60.7         3     src/template/TestEngine.java
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+       113       5.7     1.8       45.0       15            0      0.00    0.00
+
+### template-method-engine/python: lizard template.py main.py
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+      11      2     98      2      12 execute@11-22@template.py
+       2      1      6      1       2 name@25-26@template.py
+       1      1     10      3       2 run_test@29-30@template.py
+       1      1     10      3       2 before_each@32-33@template.py
+       1      1     10      3       2 after_each@35-36@template.py
+       2      1      7      1       2 name@40-41@template.py
+       2      1     11      3       2 run_test@43-44@template.py
+       2      1      7      1       2 name@48-49@template.py
+       2      1     11      3       2 run_test@51-52@template.py
+       2      1     17      3       2 before_each@54-55@template.py
+       2      1     17      3       2 after_each@57-58@template.py
+      12      6    105      1      12 parse@61-72@template.py
+       8      2     81      1       8 report@75-82@template.py
+      10      3     66      1      10 main@6-15@main.py
+2 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+     56       3.7     1.5       30.0        13     template.py
+     14      10.0     3.0       66.0         1     main.py
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+        70       4.1     1.6       32.6       14            0      0.00    0.00
+
+### template-method-engine/javascript: lizard src/*.js
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       4      1     16      1       4 constructor@5-8@src/template.js
+       4      3     35      1       4 fields@12-15@src/template.js
+       3      1     18      1       3 readLines@17-19@src/template.js
+       9      5     91      0       9 (anonymous)@24-32@src/template.js
+       5      1     27      1      13 parseTests@22-34@src/template.js
+       3      2     19      0       3 constructor@37-39@src/template.js
+      13      3    118      1      13 execute@42-54@src/template.js
+       3      1     16      0       3 name@56-58@src/template.js
+       3      1     19      2       3 runTest@61-63@src/template.js
+       1      1      7      2       1 beforeEach@66-66@src/template.js
+       1      1      7      2       1 afterEach@69-69@src/template.js
+       3      1      7      0       3 name@73-75@src/template.js
+       3      1     10      2       3 runTest@77-79@src/template.js
+       3      1      7      0       3 name@83-85@src/template.js
+       3      1     10      2       3 runTest@87-89@src/template.js
+       3      1     19      2       3 beforeEach@91-93@src/template.js
+       3      1     19      2       3 afterEach@95-97@src/template.js
+       8      2     72      1       8 report@100-107@src/template.js
+2 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+     13       0.0     0.0        0.0         0     src/main.js
+     83       4.2     1.6       28.7        18     src/template.js
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+        96       4.2     1.6       28.7       18            0      0.00    0.00
+
+### template-method-engine/cpp: lizard template.hpp main.cpp
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       7      4     81      1       7 fields@17-23@template.hpp
+      10      5     96      1      10 read_lines@25-34@template.hpp
+       1      1     23      1       1 where@36-36@template.hpp
+       3      2     32      1       3 is_number@38-40@template.hpp
+      12      6    142      1      12 parse_tests@48-59@template.hpp
+       5      2     39      1       5 join_lines@61-65@template.hpp
+      13      3    154      1      13 TestEngine::execute@72-84@template.hpp
+       1      1     20      2       1 TestEngine::before_each@92-92@template.hpp
+       1      1     20      2       1 TestEngine::after_each@93-93@template.hpp
+       1      1     10      0       1 SimpleEngine::name@98-98@template.hpp
+       1      1     21      2       1 SimpleEngine::run_test@101-101@template.hpp
+       1      1     10      0       1 LifecycleEngine::name@106-106@template.hpp
+       1      1     21      2       1 LifecycleEngine::run_test@109-109@template.hpp
+       1      1     32      2       1 LifecycleEngine::before_each@110-110@template.hpp
+       1      1     32      2       1 LifecycleEngine::after_each@111-111@template.hpp
+      11      3    109      1      11 report@114-124@template.hpp
+      13      3     79      2      13 main@5-17@main.cpp
+2 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+     99       4.4     2.1       52.6        16     template.hpp
+     15      13.0     3.0       79.0         1     main.cpp
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+       114       4.9     2.2       54.2       17            0      0.00    0.00
+
+### command-task-queue/java: lizard src/command/*.java
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       3      1     12      1       3 InputFormatException::InputFormatException@16-18@src/command/CommandDemo.java
+       2      1      5      0       2 InputFormatException::CommandDemo@21-22@src/command/CommandDemo.java
+       4      3     39      1       4 InputFormatException::fields@25-28@src/command/CommandDemo.java
+      22     11    250      1      22 InputFormatException::parse@30-51@src/command/CommandDemo.java
+      11      1    176      1      11 InputFormatException::report@53-63@src/command/CommandDemo.java
+      13      3     89      1      13 InputFormatException::main@65-77@src/command/CommandDemo.java
+       3      1     15      1       3 NoteCommand::execute@6-8@src/command/NoteCommand.java
+       4      1     26      1       4 RunTestCommand::execute@6-9@src/command/RunTestCommand.java
+       3      1     14      1       3 TaskExecutor::submit@12-14@src/command/TaskExecutor.java
+       8      2     74      0       8 TaskExecutor::runAll@17-24@src/command/TaskExecutor.java
+5 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+      5       0.0     0.0        0.0         0     src/command/Command.java
+     66       9.2     3.3       95.2         6     src/command/CommandDemo.java
+      7       3.0     1.0       15.0         1     src/command/NoteCommand.java
+      8       4.0     1.0       26.0         1     src/command/RunTestCommand.java
+     18       5.5     1.5       44.0         2     src/command/TaskExecutor.java
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+       104       7.3     2.5       70.0       10            0      0.00    0.00
+
+### command-task-queue/python: lizard command.py main.py
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       1      1      8      2       2 execute@12-13@command.py
+       2      1     20      3       2 __init__@17-18@command.py
+       3      1     25      2       3 execute@20-22@command.py
+       2      1     12      2       2 __init__@26-27@command.py
+       2      1     13      2       2 execute@29-30@command.py
+       3      1     17      1       3 __init__@36-38@command.py
+       2      1     15      2       2 submit@40-41@command.py
+       4      2     55      1       4 run_all@43-46@command.py
+      15     10    158      1      15 parse@49-63@command.py
+      13      2    120      1      13 report@66-78@command.py
+      10      3     66      1      10 main@6-15@main.py
+2 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+     55       4.7     2.1       44.3        10     command.py
+     14      10.0     3.0       66.0         1     main.py
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+        69       5.2     2.2       46.3       11            0      0.00    0.00
+
+### command-task-queue/javascript: lizard src/*.js
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       4      1     16      1       4 constructor@5-8@src/command.js
+       4      3     35      1       4 fields@12-15@src/command.js
+       3      1     18      1       3 readLines@17-19@src/command.js
+       4      1     19      2       4 constructor@22-25@src/command.js
+       4      1     26      1       4 execute@27-30@src/command.js
+       3      1     11      1       3 constructor@34-36@src/command.js
+       3      1     12      0       3 execute@38-40@src/command.js
+       3      1     14      1       3 submit@48-50@src/command.js
+       1      1     11      0       1 (anonymous)@53-53@src/command.js
+       5      1     31      0       5 runAll@52-56@src/command.js
+      13     10    161      0      13 (anonymous)@61-73@src/command.js
+       5      1     27      1      17 parse@59-75@src/command.js
+       1      1      7      0       1 (anonymous)@80-80@src/command.js
+       1      1      4      0       1 (anonymous)@82-82@src/command.js
+       9      1    106      1       9 report@77-85@src/command.js
+2 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+     70       4.2     1.7       33.2        15     src/command.js
+     13       0.0     0.0        0.0         0     src/main.js
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+        83       4.2     1.7       33.2       15            0      0.00    0.00
+
+### command-task-queue/cpp: lizard command.hpp main.cpp
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       7      4     81      1       7 fields@19-25@command.hpp
+      10      5     96      1      10 read_lines@27-36@command.hpp
+       1      1     23      1       1 where@38-38@command.hpp
+       3      2     32      1       3 is_number@40-42@command.hpp
+       5      2     39      1       5 join_lines@44-48@command.hpp
+       1      1     34      2       1 RunTestCommand::RunTestCommand@59-59@command.hpp
+       4      1     32      1       4 RunTestCommand::execute@60-63@command.hpp
+       1      1     19      1       1 NoteCommand::NoteCommand@72-72@command.hpp
+       1      1     20      1       1 NoteCommand::execute@73-73@command.hpp
+       1      1     24      1       1 TaskExecutor::submit@82-82@command.hpp
+       6      2     72      0       6 TaskExecutor::run_all@83-88@command.hpp
+      19     12    258      1      19 parse@95-113@command.hpp
+      12      3    184      1      12 report@115-126@command.hpp
+      13      3     79      2      13 main@5-17@main.cpp
+2 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+    105       5.5     2.8       70.3        13     command.hpp
+     15      13.0     3.0       79.0         1     main.cpp
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+       120       6.0     2.8       70.9       14            0      0.00    0.00
+
+### null-object-listener/java: lizard src/nullobject/*.java
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       3      1     16      1       3 ConsoleListener::ConsoleListener@9-11@src/nullobject/ConsoleListener.java
+       3      1     23      2       3 ConsoleListener::testFinished@14-16@src/nullobject/ConsoleListener.java
+       3      1     12      1       3 InputFormatException::InputFormatException@16-18@src/nullobject/NullObjectDemo.java
+       2      1      5      0       2 InputFormatException::NullObjectDemo@21-22@src/nullobject/NullObjectDemo.java
+       4      3     39      1       4 InputFormatException::fields@25-28@src/nullobject/NullObjectDemo.java
+      17      6    153      1      17 InputFormatException::parseTests@31-47@src/nullobject/NullObjectDemo.java
+       9      1    101      1       9 InputFormatException::report@49-57@src/nullobject/NullObjectDemo.java
+      13      3     89      1      13 InputFormatException::main@59-71@src/nullobject/NullObjectDemo.java
+       3      1     12      0       3 TestRunner::TestRunner@9-11@src/nullobject/TestRunner.java
+       3      1     13      1       3 TestRunner::TestRunner@13-15@src/nullobject/TestRunner.java
+      10      3     79      1      10 TestRunner::run@17-26@src/nullobject/TestRunner.java
+4 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+     12       3.0     1.0       19.5         2     src/nullobject/ConsoleListener.java
+     59       8.0     2.5       66.5         6     src/nullobject/NullObjectDemo.java
+      6       0.0     0.0        0.0         0     src/nullobject/TestListener.java
+     21       5.3     1.7       34.7         3     src/nullobject/TestRunner.java
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+        98       6.4     2.0       49.3       11            0      0.00    0.00
+
+### null-object-listener/python: lizard nullobject.py main.py
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       2      1     11      3       2 test_finished@10-11@nullobject.py
+       2      1     10      3       2 test_finished@17-18@nullobject.py
+       2      1     12      2       2 __init__@25-26@nullobject.py
+       2      1     21      3       2 test_finished@28-29@nullobject.py
+       2      1     14      2       2 __init__@33-34@nullobject.py
+       6      2     44      2       6 run@36-41@nullobject.py
+      12      6    105      1      12 parse@44-55@nullobject.py
+       8      1     81      1       8 report@58-65@nullobject.py
+      10      3     66      1      10 main@6-15@main.py
+2 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+     43       4.5     1.8       37.2         8     nullobject.py
+     14      10.0     3.0       66.0         1     main.py
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+        57       5.1     1.9       40.4        9            0      0.00    0.00
+
+### null-object-listener/javascript: lizard src/*.js
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       4      1     16      1       4 constructor@5-8@src/nullobject.js
+       4      3     35      1       4 fields@12-15@src/nullobject.js
+       3      1     18      1       3 readLines@17-19@src/nullobject.js
+       9      5     91      0       9 (anonymous)@24-32@src/nullobject.js
+       5      1     27      1      13 parseTests@22-34@src/nullobject.js
+       1      1      4      0       1 testFinished@37-37@src/nullobject.js
+       3      1     11      1       3 constructor@42-44@src/nullobject.js
+       3      1     25      2       3 testFinished@46-48@src/nullobject.js
+       3      1     13      1       3 constructor@52-54@src/nullobject.js
+       8      3     57      1       8 run@56-63@src/nullobject.js
+       7      1     70      1       7 report@66-72@src/nullobject.js
+2 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+     13       0.0     0.0        0.0         0     src/main.js
+     57       4.5     1.7       33.4        11     src/nullobject.js
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+        70       4.5     1.7       33.4       11            0      0.00    0.00
+
+### null-object-listener/cpp: lizard nullobject.hpp main.cpp
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       7      4     81      1       7 fields@17-23@nullobject.hpp
+      10      5     96      1      10 read_lines@25-34@nullobject.hpp
+       1      1     23      1       1 where@36-36@nullobject.hpp
+       3      2     32      1       3 is_number@38-40@nullobject.hpp
+      12      6    142      1      12 parse_tests@48-59@nullobject.hpp
+       5      2     39      1       5 join_lines@61-65@nullobject.hpp
+       1      1     17      2       1 NoOpListener::test_finished@76-76@nullobject.hpp
+       4      1     12      0       4 NoOpListener::instance@77-80@nullobject.hpp
+       1      1     20      1       1 ConsoleListener::ConsoleListener@85-85@nullobject.hpp
+       1      1     32      2       1 ConsoleListener::test_finished@86-86@nullobject.hpp
+       1      1     19      1       1 TestRunner::TestRunner@95-95@nullobject.hpp
+       8      3     81      1       8 TestRunner::run@96-103@nullobject.hpp
+      10      1     88      1      10 report@107-116@nullobject.hpp
+      13      3     79      2      13 main@5-17@main.cpp
+2 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+     95       4.9     2.2       52.5        13     nullobject.hpp
+     15      13.0     3.0       79.0         1     main.cpp
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+       110       5.5     2.3       54.4       14            0      0.00    0.00
+
+### chain-of-responsibility-interceptors/java: lizard src/chain/*.java
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       3      1     12      1       3 InputFormatException::InputFormatException@16-18@src/chain/ChainDemo.java
+       2      1      5      0       2 InputFormatException::ChainDemo@21-22@src/chain/ChainDemo.java
+       4      3     39      1       4 InputFormatException::fields@25-28@src/chain/ChainDemo.java
+      24     10    254      1      24 InputFormatException::parse@30-53@src/chain/ChainDemo.java
+      11      2    121      1      11 InputFormatException::report@55-65@src/chain/ChainDemo.java
+      13      3     89      1      13 InputFormatException::main@67-79@src/chain/ChainDemo.java
+       3      1      8      0       3 DisabledInterceptor::label@6-8@src/chain/DisabledInterceptor.java
+       3      2     26      2       3 DisabledInterceptor::intercept@10-12@src/chain/DisabledInterceptor.java
+       3      1     16      1       3 InterceptorChain::InterceptorChain@9-11@src/chain/InterceptorChain.java
+       3      1     15      1       3 InterceptorChain::run@13-15@src/chain/InterceptorChain.java
+       9      2     79      2       9 InterceptorChain::link@18-26@src/chain/InterceptorChain.java
+       6      1     40      4       6 Invocation::Invocation@15-20@src/chain/Invocation.java
+       3      1      8      0       3 LoggingInterceptor::label@6-8@src/chain/LoggingInterceptor.java
+       3      1     20      2       3 LoggingInterceptor::intercept@10-12@src/chain/LoggingInterceptor.java
+       3      1      8      0       3 TimeoutInterceptor::label@9-11@src/chain/TimeoutInterceptor.java
+       4      2     43      2       4 TimeoutInterceptor::intercept@13-16@src/chain/TimeoutInterceptor.java
+7 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+     68       9.5     3.3       86.7         6     src/chain/ChainDemo.java
+     10       3.0     1.5       17.0         2     src/chain/DisabledInterceptor.java
+      6       0.0     0.0        0.0         0     src/chain/Interceptor.java
+     20       5.0     1.3       36.7         3     src/chain/InterceptorChain.java
+     16       6.0     1.0       40.0         1     src/chain/Invocation.java
+     10       3.0     1.0       14.0         2     src/chain/LoggingInterceptor.java
+     12       3.5     1.5       25.5         2     src/chain/TimeoutInterceptor.java
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+       142       6.1     2.1       48.9       16            0      0.00    0.00
+
+### chain-of-responsibility-interceptors/python: lizard chain.py main.py
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       3      1     42      5       3 __init__@15-17@chain.py
+       2      1      6      1       2 label@24-25@chain.py
+       1      1     10      3       2 intercept@28-29@chain.py
+       2      1      7      1       2 label@33-34@chain.py
+       2      1     13      3       2 intercept@36-37@chain.py
+       2      1      7      1       2 label@41-42@chain.py
+       4      2     20      3       4 intercept@44-47@chain.py
+       2      1      7      1       2 label@51-52@chain.py
+       5      2     32      3       5 intercept@54-58@chain.py
+       7      2     59      1       7 run_chain.link@64-70@chain.py
+       3      1     15      2      12 run_chain@61-72@chain.py
+      16      9    178      1      16 parse@75-90@chain.py
+       8      2     78      1       8 report@96-103@chain.py
+      10      3     66      1      10 main@6-15@main.py
+2 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+     68       4.4     1.9       36.5        13     chain.py
+     14      10.0     3.0       66.0         1     main.py
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+        82       4.8     2.0       38.6       14            0      0.00    0.00
+
+### chain-of-responsibility-interceptors/javascript: lizard src/*.js
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       4      1     16      1       4 constructor@5-8@src/chain.js
+       4      3     35      1       4 fields@12-15@src/chain.js
+       3      1     18      1       3 readLines@17-19@src/chain.js
+       4      1     35      4       4 constructor@24-27@src/chain.js
+       3      1     12      2       3 intercept@34-36@src/chain.js
+       3      2     18      2       3 intercept@42-44@src/chain.js
+       4      2     35      2       4 intercept@50-53@src/chain.js
+       1      1      7      0       1 (anonymous)@64-64@src/chain.js
+       8      2     59      1       8 link@58-65@src/chain.js
+       4      1     18      2      11 runChain@57-67@src/chain.js
+      10      9    180      0      10 (anonymous)@71-80@src/chain.js
+       5      1     27      1      14 parse@69-82@src/chain.js
+       4      1     28      0       4 (anonymous)@87-90@src/chain.js
+       6      1     50      1       9 report@84-92@src/chain.js
+2 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+     74       4.5     1.9       38.4        14     src/chain.js
+     13       0.0     0.0        0.0         0     src/main.js
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+        87       4.5     1.9       38.4       14            0      0.00    0.00
+
+### chain-of-responsibility-interceptors/cpp: lizard chain.hpp main.cpp
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       7      4     81      1       7 fields@19-25@chain.hpp
+      10      5     96      1      10 read_lines@27-36@chain.hpp
+       1      1     23      1       1 where@38-38@chain.hpp
+       3      2     32      1       3 is_number@40-42@chain.hpp
+       5      2     39      1       5 join_lines@44-48@chain.hpp
+       1      1     10      0       1 LoggingInterceptor::label@70-70@chain.hpp
+       1      1     27      1       1 LoggingInterceptor::intercept@71-71@chain.hpp
+       1      1     10      0       1 DisabledInterceptor::label@76-76@chain.hpp
+       3      2     34      2       3 DisabledInterceptor::intercept@77-79@chain.hpp
+       1      1     10      0       1 TimeoutInterceptor::label@84-84@chain.hpp
+       6      2     64      2       6 TimeoutInterceptor::intercept@85-90@chain.hpp
+       8      2    101      3       8 run_chain@94-101@chain.hpp
+      13     10    235      1      13 parse@103-115@chain.hpp
+       7      1     63      0       7 default_chain@117-123@chain.hpp
+      11      4    123      1      11 report@125-135@chain.hpp
+      13      3     79      2      13 main@5-17@main.cpp
+2 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+    113       5.2     2.6       63.2        15     chain.hpp
+     15      13.0     3.0       79.0         1     main.cpp
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+       128       5.7     2.6       64.2       16            0      0.00    0.00
+
+### factory-method-executors/java: lizard src/factory/*.java
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       3      1     12      1       3 InputFormatException::InputFormatException@16-18@src/factory/FactoryDemo.java
+       2      1      5      0       2 InputFormatException::FactoryDemo@21-22@src/factory/FactoryDemo.java
+       4      3     39      1       4 InputFormatException::fields@25-28@src/factory/FactoryDemo.java
+      17      6    153      1      17 InputFormatException::parseTests@31-47@src/factory/FactoryDemo.java
+       8      2     88      1       8 InputFormatException::report@49-56@src/factory/FactoryDemo.java
+      13      3     89      1      13 InputFormatException::main@58-70@src/factory/FactoryDemo.java
+       3      1      8      0       3 PooledEngine::name@4-6@src/factory/PooledEngine.java
+       3      1     12      0       3 PooledEngine::createExecutor@8-10@src/factory/PooledEngine.java
+       3      1     13      1       3 PooledExecutor::PooledExecutor@11-13@src/factory/PooledExecutor.java
+       3      1     12      0       3 PooledExecutor::describe@15-17@src/factory/PooledExecutor.java
+       7      2     87      1       7 PooledExecutor::run@19-25@src/factory/PooledExecutor.java
+       3      1      8      0       3 SameThreadEngine::name@4-6@src/factory/SameThreadEngine.java
+       3      1     11      0       3 SameThreadEngine::createExecutor@8-10@src/factory/SameThreadEngine.java
+       3      1      8      0       3 SameThreadExecutor::describe@6-8@src/factory/SameThreadExecutor.java
+       3      1     42      1       3 SameThreadExecutor::run@10-12@src/factory/SameThreadExecutor.java
+       6      1     67      1       6 TestEngine::execute@14-19@src/factory/TestEngine.java
+7 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+      6       0.0     0.0        0.0         0     src/factory/Executor.java
+     58       7.8     2.7       64.3         6     src/factory/FactoryDemo.java
+      9       3.0     1.0       10.0         2     src/factory/PooledEngine.java
+     19       4.3     1.3       37.3         3     src/factory/PooledExecutor.java
+      9       3.0     1.0        9.5         2     src/factory/SameThreadEngine.java
+     10       3.0     1.0       25.0         2     src/factory/SameThreadExecutor.java
+     13       6.0     1.0       67.0         1     src/factory/TestEngine.java
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+       124       5.2     1.7       40.9       16            0      0.00    0.00
+
+### factory-method-executors/python: lizard factory.py main.py
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       2      1      6      1       2 describe@14-15@factory.py
+       2      1      8      2       2 run@18-19@factory.py
+       2      1      7      1       2 describe@23-24@factory.py
+       2      2     21      2       2 run@26-27@factory.py
+       2      1     12      2       2 __init__@33-34@factory.py
+       2      1     12      1       2 describe@36-37@factory.py
+       2      2     36      2       2 run@39-40@factory.py
+       2      1      6      1       2 name@47-48@factory.py
+       1      1      6      1       2 create_executor@51-52@factory.py
+       3      1     40      2       3 execute@54-56@factory.py
+       2      1      7      1       2 name@60-61@factory.py
+       2      1      9      1       2 create_executor@63-64@factory.py
+       2      1      7      1       2 name@68-69@factory.py
+       2      1     10      1       2 create_executor@71-72@factory.py
+      12      6    105      1      12 parse@75-86@factory.py
+       7      2     68      1       7 report@89-95@factory.py
+      10      3     66      1      10 main@6-15@main.py
+2 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+     60       2.9     1.5       22.5        16     factory.py
+     14      10.0     3.0       66.0         1     main.py
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+        74       3.4     1.6       25.1       17            0      0.00    0.00
+
+### factory-method-executors/javascript: lizard src/*.js
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       4      1     16      1       4 constructor@5-8@src/factory.js
+       4      3     35      1       4 fields@12-15@src/factory.js
+       3      1     18      1       3 readLines@17-19@src/factory.js
+       9      5     91      0       9 (anonymous)@24-32@src/factory.js
+       5      1     27      1      13 parseTests@22-34@src/factory.js
+       3      1      7      0       3 describe@37-39@src/factory.js
+       1      1     11      0       1 (anonymous)@42-42@src/factory.js
+       3      1     20      1       3 run@41-43@src/factory.js
+       3      1     11      1       3 constructor@50-52@src/factory.js
+       3      1     13      0       3 describe@54-56@src/factory.js
+       1      1     15      0       1 (anonymous)@59-59@src/factory.js
+       3      1     22      1       3 run@58-60@src/factory.js
+       3      2     19      0       3 constructor@65-67@src/factory.js
+       3      1     16      0       3 name@69-71@src/factory.js
+       3      1     16      0       3 createExecutor@73-75@src/factory.js
+       4      1     40      1       4 execute@77-80@src/factory.js
+       3      1      7      0       3 name@84-86@src/factory.js
+       3      1     10      0       3 createExecutor@88-90@src/factory.js
+       3      1      7      0       3 name@94-96@src/factory.js
+       3      1     11      0       3 createExecutor@98-100@src/factory.js
+       1      1      7      0       1 (anonymous)@105-105@src/factory.js
+       4      1     44      1       4 report@103-106@src/factory.js
+2 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+     82       3.3     1.3       21.0        22     src/factory.js
+     13       0.0     0.0        0.0         0     src/main.js
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+        95       3.3     1.3       21.0       22            0      0.00    0.00
+
+### factory-method-executors/cpp: lizard factory.hpp main.cpp
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       7      4     81      1       7 fields@18-24@factory.hpp
+      10      5     96      1      10 read_lines@26-35@factory.hpp
+       1      1     23      1       1 where@37-37@factory.hpp
+       3      2     32      1       3 is_number@39-41@factory.hpp
+      12      6    142      1      12 parse_tests@49-60@factory.hpp
+       5      2     39      1       5 join_lines@62-66@factory.hpp
+       1      1     10      0       1 SameThreadExecutor::describe@78-78@factory.hpp
+       5      2     55      1       5 SameThreadExecutor::run@79-83@factory.hpp
+       1      1     14      1       1 PooledExecutor::PooledExecutor@89-89@factory.hpp
+       1      1     19      0       1 PooledExecutor::describe@90-90@factory.hpp
+       6      2     85      1       6 PooledExecutor::run@91-96@factory.hpp
+       6      2     77      1       6 TestEngine::execute@107-112@factory.hpp
+       1      1     10      0       1 SameThreadEngine::name@120-120@factory.hpp
+       1      1     17      0       1 SameThreadEngine::create_executor@123-123@factory.hpp
+       1      1     10      0       1 PooledEngine::name@128-128@factory.hpp
+       1      1     18      0       1 PooledEngine::create_executor@131-131@factory.hpp
+       7      3     82      1       7 report@134-140@factory.hpp
+      13      3     79      2      13 main@5-17@main.cpp
+2 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+    113       4.1     2.1       47.6        17     factory.hpp
+     15      13.0     3.0       79.0         1     main.cpp
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+       128       4.6     2.2       49.4       18            0      0.00    0.00

@@ -1,0 +1,5 @@
+Language,Source File,Execution Command,Observer Result,Strategy Result,Execution Status
+Java,DesignPatterns.java,javac DesignPatterns.java; java DesignPatterns,"Admin, Restaurant and Delivery Partner were notified",Availability Strategy assigned Partner A; Priority Strategy assigned Partner C,Successful
+Python,design_patterns.py,python3 design_patterns.py,"Admin, Restaurant and Delivery Partner were notified",Availability Strategy assigned Partner A; Priority Strategy assigned Partner C,Successful
+JavaScript,design-patterns.js,node design-patterns.js,"Admin, Restaurant and Delivery Partner were notified",Availability Strategy assigned Partner A; Priority Strategy assigned Partner C,Successful
+C++,design_patterns.cpp,g++ design_patterns.cpp -o design_patterns; ./design_patterns,"Admin, Restaurant and Delivery Partner were notified",Availability Strategy assigned Partner A; Priority Strategy assigned Partner C,Successful

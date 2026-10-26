@@ -1,0 +1,7 @@
+# case|commands: add <inbox url> <text>; block <host>; run|expected (<id>:<label>:<result>@<attempts>)
+delivers|add https://a.example/inbox hi;run|1:a.example:delivered@1
+fifo_order|add https://a.example/inbox x;add https://b.example/inbox y;run|1:a.example:delivered@1~2:b.example:delivered@1
+blocked_host_skipped|block b.blocked;add https://b.blocked/inbox x;run|1:b.blocked:skip (blocked)@1
+retries_until_success|add https://d.flaky/inbox z;run|1:d.flaky:delivered@2
+gives_up_after_max_attempts|add https://c.down/inbox y;run|1:c.down:failed@12
+empty_queue|run|

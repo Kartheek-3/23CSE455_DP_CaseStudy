@@ -1,0 +1,10 @@
+ruby 3.3.8 (2025-04-09 revision b200bad6cd) [x86_64-linux-gnu]
+Run options: --seed 38303
+
+# Running:
+
+..........
+
+Finished in 0.006632s, 1507.7417 runs/s, 10101.8691 assertions/s.
+
+10 runs, 67 assertions, 0 failures, 0 errors, 0 skips

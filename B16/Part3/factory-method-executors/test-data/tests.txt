@@ -1,0 +1,4 @@
+# <test> PASS|FAIL
+add PASS
+div FAIL
+sub PASS

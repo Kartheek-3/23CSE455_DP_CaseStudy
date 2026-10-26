@@ -1,0 +1,5 @@
+[Model: Claude Opus 4.8 | 2026-10-10 | Part 3 Template Method | owner: Sai Tharun]
+All 4 languages implemented and run; output identical (HEARING/PAYMENT report blocks).
+Measured on submission machine (median ms): C++ 4.7 | Python 14.1 | JavaScript 43.9 | Java 44.4.
+Source LOC: Java 27, Python 24, JS 22, C++ 29. Max function CC: 1-2.
+Verified: outputs diffed identical across the four languages.

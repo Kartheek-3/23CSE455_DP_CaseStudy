@@ -1,0 +1,37 @@
+@startuml C2
+!pragma layout smetana
+title C2 Observer: LauncherSessionListener
+
+interface LauncherSessionListener <<Observer>> {
+  +launcherSessionOpened(LauncherSession)
+  +launcherSessionClosed(LauncherSession)
+}
+class CompositeLauncherSessionListener <<Notifier>> {
+  -listeners : List<LauncherSessionListener>
+}
+class LauncherSessionListeners <<Factory>> {
+  {static} +composite(List<LauncherSessionListener>)
+}
+class DefaultLauncherSession <<Subject>> {
+  -listener : LauncherSessionListener
+}
+
+CompositeLauncherSessionListener ..|> LauncherSessionListener
+CompositeLauncherSessionListener o--> "0..*" LauncherSessionListener : listeners
+LauncherSessionListeners ..> CompositeLauncherSessionListener : creates when more than one
+DefaultLauncherSession o--> LauncherSessionListener : listener
+DefaultLauncherSession ..> LauncherSessionListener : launcherSessionOpened() / Closed()
+
+note bottom of LauncherSessionListener
+  Concrete observers come from users and tools
+  through ServiceLoader; none are in the four modules.
+end note
+' aligned-with-record
+legend right
+  <b>Counted participants</b> (record in the dataset)
+  Observer: LauncherSessionListener
+  Subject: DefaultLauncherSession
+  Multicaster: CompositeLauncherSessionListener
+  Grey classes: real, shown for context, not counted
+endlegend
+@enduml

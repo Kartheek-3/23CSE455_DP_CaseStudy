@@ -1,0 +1,18 @@
+PART 1 PROMPTS (pattern discovery). Tool: Claude chat. Date: 2026-10-10.
+
+PROMPT 1 (verbatim):
+i need to do part one - we are using https://github.com/thepracticalengineer/nextjs-blog-cms.git
+
+PROMPT 2: tell me step by step what needs to be done
+
+PROMPT 3: [paste your message that included package.json, README and the folder listing]
+
+PROMPT 4: [paste the message with the llmService.ts listing]
+
+PROMPT 5: give me code for this (AuthProvider, supabase server/client, user-confirmed notifications, permissions)
+
+PROMPT 6: [paste your message with the AuthContext, useSession, service, static, webhook route, newsletter and publication listings]
+
+PROMPT 7: proxy.ts?
+
+PROMPT 8: [paste your message with the users page and proxy.ts getUser output]

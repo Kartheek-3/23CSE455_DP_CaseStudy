@@ -1,0 +1,32 @@
+@startuml D1
+!pragma layout smetana
+title D1 Strategy: TempDirFactory
+
+interface TempDirFactory <<Strategy>> {
+  +createTempDirectory(AnnotatedElementContext, ExtensionContext) : Path
+  +close()
+}
+class "TempDirFactory.Standard" as Standard <<ConcreteStrategy>> {
+  {static} +INSTANCE : TempDirFactory
+}
+class TempDirectory <<Context>> {
+  -determineTempDirFactory(TempDir) : TempDirFactory
+}
+class "TempDirectory.CloseablePath" as CloseablePath <<Context>> {
+  -factory : TempDirFactory
+}
+
+Standard ..|> TempDirFactory
+TempDirectory ..> TempDirFactory : picks from @TempDir(factory) or config
+TempDirectory ..> CloseablePath : creates
+CloseablePath o--> TempDirFactory : factory
+' aligned-with-record
+legend right
+  <b>Counted participants</b> (record in the dataset)
+  Strategy: TempDirFactory
+  ConcreteStrategy: Standard
+  Selection: TempDirectory#determineTempDirFactory
+  Context: TempDirectory
+  Grey classes: real, shown for context, not counted
+endlegend
+@enduml

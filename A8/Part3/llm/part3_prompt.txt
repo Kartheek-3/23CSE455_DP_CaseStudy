@@ -1,0 +1,89 @@
+﻿Part 3 Cross-Language Implementation Prompt
+
+Implement the selected confirmed design-pattern instances in Java, Python, JavaScript, and C++ while preserving the same pattern structure and observable behavior across languages.
+
+Selected patterns:
+
+1. Dynamic Guard Factory — Role-Based Guard Synthesis
+
+Problem:
+Create a role-based authorization guard factory that accepts a set of allowed roles and produces a guard capable of determining whether a user's role is authorized.
+
+Input:
+- allowed_roles: list of role strings
+- user_role: string or null
+
+Output:
+- boolean
+
+Rules:
+- If the user's role is in the allowed roles, return true.
+- If the user's role is not allowed, return false.
+- If the allowed-role list is empty, return false.
+- If the user role is missing/null, return false.
+
+Shared test cases:
+1. ["ADMIN", "CREW"], ADMIN -> true
+2. ["ADMIN", "CREW"], CREW -> true
+3. ["ADMIN", "CREW"], USER -> false
+4. ["ADMIN", "CREW"], SECURITY -> false
+5. [], ADMIN -> false
+6. ["USER"], USER -> true
+7. ["USER"], null/missing -> false
+
+The implementation must preserve the factory behavior while removing framework-specific dependencies such as NestJS decorators, GraphQL context, sessions, database access, UsersService, and mixin infrastructure.
+
+
+2. Producer-Consumer — Async Email Processing Queue
+
+Problem:
+Implement a producer-consumer system where producers enqueue email jobs and a consumer retrieves and processes them according to job type.
+
+Job structure:
+- type
+- recipient
+- payload
+
+Supported job types:
+- SENDGRID
+- MAILTRAP
+
+Behavior:
+- Producers enqueue jobs into a FIFO queue.
+- Producers do not process the jobs themselves.
+- The consumer retrieves the next queued job.
+- SENDGRID jobs produce:
+  "SENDGRID email processed for <recipient>"
+- MAILTRAP jobs produce:
+  "MAILTRAP email processed for <recipient>"
+- Processing must preserve FIFO order.
+- No actual email delivery, external APIs, network calls, Redis, BullMQ, or credentials are required.
+
+Shared test cases:
+1. SENDGRID, alice@example.com, Welcome
+2. MAILTRAP, bob@example.com, Reset: 1234
+3. SENDGRID, charlie@example.com, Flight confirmed
+
+Expected processing order:
+- alice@example.com
+- bob@example.com
+- charlie@example.com
+
+The implementation should preserve the producer-consumer separation and observable queue-processing behavior of the original application while remaining standalone and deterministic.
+
+Languages:
+- Java
+- Python
+- JavaScript
+- C++
+
+For each implementation:
+- provide a standalone source file;
+- provide a test program;
+- execute the tests;
+- record the test result;
+- measure process execution time using one warmup followed by five measured runs;
+- report the median of the five measured runs;
+- exclude compilation time from measured execution time;
+- record the timing methodology and environment;
+- avoid external dependencies, network calls, credentials, and generated binaries in the repository.

@@ -1,0 +1,6 @@
+source_version,summary,pattern_name,count
+Original code (commit 90ec6565877053ee0e93e9f09dcc7c7213aa4832),per_pattern,Strategy,1
+Original code (commit 90ec6565877053ee0e93e9f09dcc7c7213aa4832),per_pattern,Observer,1
+Original code (commit 90ec6565877053ee0e93e9f09dcc7c7213aa4832),per_pattern,Role-Based Access Control (RBAC),1
+Original code (commit 90ec6565877053ee0e93e9f09dcc7c7213aa4832),total_pattern_types,,3
+Original code (commit 90ec6565877053ee0e93e9f09dcc7c7213aa4832),total_pattern_instances,,3

@@ -1,0 +1,206 @@
+<!--
+SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-License-Identifier: AGPL-3.0-only
+-->
+
+<template>
+<div
+	ref="playerEl"
+	:class="[
+		$style.root,
+		(audio.isSensitive && prefer.s.highlightSensitiveMedia) && $style.sensitive,
+	]"
+	@contextmenu.stop="onContextmenu"
+>
+	<button v-if="hide" :class="$style.hidden" @click="reveal">
+		<div :class="$style.hiddenTextWrapper">
+			<b v-if="audio.isSensitive" style="display: block;"><i class="ti ti-eye-exclamation"></i> {{ i18n.ts.sensitive }}{{ prefer.s.dataSaver.media ? ` (${i18n.ts.audio}${audio.size ? ' ' + bytes(audio.size) : ''})` : '' }}</b>
+			<b v-else style="display: block;"><i class="ti ti-music"></i> {{ prefer.s.dataSaver.media && audio.size ? bytes(audio.size) : i18n.ts.audio }}</b>
+			<span style="display: block;">{{ i18n.ts.clickToShow }}</span>
+		</div>
+	</button>
+	<div v-else :class="$style.audioContainer">
+		<MkAudioPlayer :file="audio" :canManage="true" />
+	</div>
+</div>
+</template>
+
+<script lang="ts" setup>
+import { ref } from 'vue';
+import * as Misskey from 'misskey-js';
+import MkAudioPlayer from '@/components/MkAudioPlayer.vue';
+import bytes from '@/filters/bytes.js';
+import { i18n } from '@/i18n.js';
+import { prefer } from '@/preferences.js';
+import * as os from '@/os.js';
+import { getFileMenu } from '@/utility/get-file-menu.js';
+import { shouldHideFileByDefault, canRevealFile } from '@/utility/sensitive-file.js';
+
+const props = defineProps<{
+	audio: Misskey.entities.DriveFile;
+}>();
+
+const emit = defineEmits<{
+	(event: 'mediaClick', ev: PointerEvent | KeyboardEvent): void;
+}>();
+
+// eslint-disable-next-line vue/no-setup-props-reactivity-loss
+const hide = ref(shouldHideFileByDefault(props.audio));
+
+async function reveal() {
+	if (!(await canRevealFile(props.audio))) {
+		return;
+	}
+
+	hide.value = false;
+}
+
+function showMenu(ev: PointerEvent) {
+	os.popupMenu(getFileMenu(props.audio, (newHide) => { hide.value = newHide; }), (ev.currentTarget ?? ev.target ?? undefined) as HTMLElement | undefined);
+}
+
+function onContextmenu(ev: PointerEvent) {
+	os.contextMenu(getFileMenu(props.audio, (newHide) => { hide.value = newHide; }), ev);
+}
+</script>
+
+<style lang="scss" module>
+.root {
+	container-type: inline-size;
+	position: relative;
+	overflow: clip;
+
+	&:focus-visible {
+		outline: none;
+	}
+
+	&:hover {
+		.playIcon {
+			scale: 1.2;
+		}
+	}
+}
+
+.sensitive {
+	position: relative;
+
+	&::after {
+		content: "";
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		pointer-events: none;
+		border-radius: inherit;
+		box-shadow: inset 0 0 0 4px var(--MI_THEME-warn);
+	}
+}
+
+.hidden {
+	width: 100%;
+	height: 100%;
+	background: #000;
+	border: none;
+	outline: none;
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
+	padding: 12px 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.hiddenTextWrapper {
+	text-align: center;
+	font-size: 0.8em;
+	color: #fff;
+}
+
+.audioContainer {
+	width: 100%;
+}
+
+.audioRoot {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+}
+
+.audioRootSkelton {
+	position: relative;
+	width: min(100cqw, calc(100cqh * 16 / 9));
+	height: auto;
+	aspect-ratio: 16 / 9;
+	pointer-events: none;
+}
+
+.audioWave {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+	fill: color(from var(--MI_THEME-fg) srgb r g b / 0.5);
+}
+
+.audioText {
+	position: absolute;
+	bottom: 12px;
+	left: 12px;
+	font-size: 0.85em;
+	user-select: none;
+	pointer-events: none;
+}
+
+.playIconWrapper {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	display: grid;
+	place-items: center;
+}
+
+.playIcon {
+	display: grid;
+	place-items: center;
+	width: 50px;
+	height: 50px;
+	border-radius: 100%;
+	font-size: 120%;
+	background: var(--MI_THEME-accent);
+	color: var(--MI_THEME-fgOnAccent);
+	scale: 1;
+	transition: scale 100ms ease;
+}
+
+.menu {
+	display: block;
+	position: absolute;
+	background-color: rgba(0, 0, 0, 0.3);
+	-webkit-backdrop-filter: var(--MI-blur, blur(15px));
+	backdrop-filter: var(--MI-blur, blur(15px));
+	color: #fff;
+	font-size: 0.8em;
+	width: 28px;
+	height: 28px;
+	text-align: center;
+}
+
+.menuBottom {
+	border-radius: 8px 0 8px 0;
+	bottom: 0;
+	right: 0;
+}
+
+.menuTop {
+	border-radius: 0 8px 0 8px;
+	top: 0;
+	right: 0;
+}
+</style>

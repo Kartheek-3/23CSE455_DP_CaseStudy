@@ -1,0 +1,40 @@
+classDiagram
+direction TB
+class OmniAuth {
+  <<framework>>
+}
+class SessionsController {
+  <<application>>
+  +create()
+  +provision_account_or_gate()
+  +create_account_for()
+}
+class UserIdentity {
+  <<application>>
+}
+class User {
+  <<application>>
+}
+class Traveler {
+  <<application>>
+}
+class Account {
+  <<application>>
+}
+class Invite {
+  <<application>>
+}
+class ApplicationController {
+  <<application>>
+  +current_user()
+}
+
+ApplicationController <|-- SessionsController
+OmniAuth ..> SessionsController : supplies omniauth.auth
+SessionsController ..> UserIdentity : finds or creates provider identity
+SessionsController ..> User : finds or initializes by email
+UserIdentity --> User : belongs to
+SessionsController ..> Traveler : accepts pending profiles
+SessionsController ..> Invite : checks signup eligibility
+SessionsController ..> Account : provisions when eligible
+Account --> Traveler : has many

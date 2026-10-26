@@ -1,0 +1,20 @@
+# factory / cpp
+# working folder: Part3/code/pattern_factory/cpp
+# runtime: g++ 16.1.1 20260625, -std=c++17
+$ mkdir -p build
+
+
+$ g++ -std=c++17 -Wall -Wextra -o build/test logging_factory.test.cpp
+
+
+$ build/test ../../../test-cases/factory.txt
+PASS default_is_pretty
+PASS explicit_pretty
+PASS json
+PASS unknown_format
+PASS format_is_case_sensitive
+PASS empty_string_rejected
+passed 6/6
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 3.4, 3.4, 3.5, 3.4, 3.2 -> median 3.4

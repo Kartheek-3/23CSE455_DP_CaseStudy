@@ -1,0 +1,10 @@
+﻿PATTERN/SUITE   : State_cpp
+RUNTIME/COMPILER: g++.exe (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r1) 16.2.0
+WORKDIR         : C:\Users\eswar\OneDrive\Documents\Visual Studio Code\23CSE455_DP_CaseStudy\B12\Part3\State\cpp
+BUILD COMMAND   : & 'C:\Users\eswar\AppData\Local\Microsoft\WinGet\Packages\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\mingw64\bin\g++.exe' -O2 -static state_test.cpp -o state_test.exe
+BUILD OUTPUT    : 
+RUN COMMAND     : .\state_test.exe 
+PROGRAM OUTPUT  : STATE_CPP PASS 13/13
+TIME INCLUDES   : whole process wall time (runtime startup + program execution), after 1 unmeasured warm-up
+TIMING SAMPLES  : 5 measured runs (ms): 23.1094, 15.9852, 22.4651, 20.8331, 19.216
+MEDIAN_MS       : 20.833

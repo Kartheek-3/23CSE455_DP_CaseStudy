@@ -1,0 +1,32 @@
+classDiagram
+direction TB
+class ImportView["trip_items/import.html.erb"] {
+  <<application view>>
+}
+class TripItemsController {
+  <<application>>
+  +import()
+  +bulk_create_items()
+  +parse_import_time()
+}
+class Trip {
+  <<application>>
+}
+class TripItem {
+  <<application>>
+}
+class Geocodable {
+  <<application concern>>
+}
+class GeocodeTripItemsJob {
+  <<application>>
+  +perform()
+}
+
+ImportView ..> TripItemsController : submits preview then confirmation
+TripItemsController ..> Trip : imports into
+Trip --> TripItem : has many
+TripItemsController ..> TripItem : checks duplicates and creates ideas
+TripItem ..> Geocodable : includes concern
+TripItemsController ..> GeocodeTripItemsJob : enqueues missing coordinate IDs
+GeocodeTripItemsJob ..> TripItem : invokes geocode operation

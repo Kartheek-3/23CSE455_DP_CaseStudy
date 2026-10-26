@@ -1,0 +1,373 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=20mm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{booktabs,tabularx,longtable,array,enumitem,hyperref,xcolor,listings}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt}
+\renewcommand{\arraystretch}{1.15}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcommand{\code}[1]{\texttt{\small #1}}
+\begin{document}
+
+\begin{titlepage}
+\centering
+{\Large 23CSE455 -- Design Patterns\par}
+\vspace{12mm}
+{\huge\bfseries Design Pattern Analysis in a\par SvelteKit-Based Smart Home Application\par}
+\vspace{8mm}
+{\Large Team A4\par}
+\vspace{4mm}
+{\large Case study: \textit{ha-fusion}\par}
+\vfill
+\begin{tabular}{ll}
+\toprule
+Roll number & Student name \\
+\midrule
+AM.AI.U4AID23027 & Adwaith S Menon (AIDS) \\
+AM.SC.U4CSE23153 & Sai Samay (AIDS) \\
+AM.AI.U4AID23044 & Karthikeya Sai (AIDS) \\
+AM.AI.U4AID23028 & Amitha K Anilkumar (AIDS) \\
+AM.SC.U4CSE23052 & Meenakshi Manoj (AIDS) \\
+\bottomrule
+\end{tabular}
+
+\vspace{4mm}
+\vfill
+Submission repository: \url{https://github.com/aswathymohan-amrita/23CSE455_DP_CaseStudy}\\
+Report date: 11 October 2026
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+\section{Application and architecture}
+\subsection{Original source and environment}
+The case study examines \textit{ha-fusion}, an open-source SvelteKit dashboard
+for Home Assistant: \url{https://github.com/knowald/ha-fusion}. The frozen
+baseline is commit \code{65cc1957c39c6005609102c33650c32abc8d12f0}; the recorded
+license is MIT. The latest stable release tag at the frozen default-branch
+HEAD is \code{2026.8.2}; its commit date is 2026-08-16. The inspection access
+date is 2026-10-11. The submission
+README records Node.js 22.15.0, pnpm 12.11.2, Svelte 5.56.8, SvelteKit 2.69.2,
+Vite 8.1.4, and Vitest 4.1.10. Static analysis used cloc 2.10 and Lizard
+1.24.1. The application uses Home Assistant as its external entity and control
+service; the inspected project metadata does not identify a separate database
+for the in-scope flows.
+
+The baseline application source is preserved in \code{data/code/}; the evolved
+source is in \code{Part2/code/}. Setup and test commands and inspected modules
+are documented in \code{README.md}. The baseline test log reports 13 test files
+and 46 tests passing. The final cumulative Part 2 logs report 15 test files and
+68 tests passing, with \code{pnpm check} reporting zero errors and warnings.
+These are saved run results; see \code{data/test\_result/} for the logs.
+
+\subsection{Run and configuration commands}
+Commands are run from the application root (\code{data/code/} for baseline,
+\code{Part2/code/} for evolved source):
+\begin{center}
+\begin{tabularx}{\linewidth}{p{0.31\linewidth}p{0.18\linewidth}Y}
+\toprule
+Command & Recorded status & Result / note \\
+\midrule
+\code{pnpm install} & Run for baseline setup & Dependencies installed for the recorded baseline test run. \\
+\code{pnpm dev -- --open} & Not run in this review & Requires a configured, reachable Home Assistant instance. \\
+\code{pnpm build} & Not run in this review & No build result is claimed. \\
+\code{pnpm test} & Baseline and evolved logs & Baseline: 13 files / 46 tests pass. Evolved final: 15 files / 68 tests pass. \\
+\code{pnpm lint} & Not run in this review & No lint result is claimed. \\
+\code{pnpm check} & Evolved final log & Zero errors and zero warnings in the saved final check. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+The application README requires \code{HASS\_URL}; \code{TZ} is optional.
+Development or end-to-end operation needs a running Home Assistant instance.
+The baseline \code{package.json} does not declare a Node engine constraint;
+the recorded environment uses Node.js 22.15.0 and pnpm 12.11.2.
+
+\subsection{Inspection scope}
+The pattern inventory covers the baseline collaboration records in
+\code{data/patterns.csv}. Inspected areas include dashboard/entity stores,
+recursive condition evaluation, Hearth configuration and history, entity modal
+selection, Home Assistant subscriptions, and the Picture Elements canvas. The
+full file/module inventory and exclusions (dependencies, generated output,
+static assets, and unrelated tooling) are in \code{README.md} and the Part 1
+evidence. Communication details are discussed only where needed to explain the
+entity update flow; this report does not classify the protocol layer as a
+separate design pattern.
+
+\subsection{Architecture and representative flows}
+The UI uses Svelte components and stores for dashboard and Hearth state.
+Condition functions evaluate visibility trees; modal utilities select a
+domain-specific entity modal. The Socket connection receives entity updates
+from Home Assistant and publishes them through the \code{states} store for
+reactive UI consumers.
+
+\begin{lstlisting}[basicstyle=\ttfamily\small,frame=single]
+User click
+  -> Main/Button.svelte click handler and toggle()
+  -> Utils.getTogglableService() chooses domain.service
+  -> home-assistant-js-websocket.callService(connection, ...)
+  -> Home Assistant service / device
+  -> Socket.ts subscribeEntities callback
+  -> Stores.states
+  -> Main/Button.svelte $states effect updates entity view
+\end{lstlisting}
+
+Representative source traces recorded in the inventory are:
+\begin{itemize}[nosep]
+  \item Entity state updates: \code{Socket.ts:107--116} subscribes to entity
+  changes; \code{Stores.ts:23} exposes the state store; the entity UI consumes
+  that store (\code{Main/Entities.svelte:1--50}).
+  \item Visibility: \code{Types.ts:58--69} defines the recursive condition
+  shape; \code{Conditional.ts:70--90,132--163} dispatches and recursively
+  evaluates conditions.
+  \item Entity modal selection: \code{Hearth/modals.ts:11--171} chooses a
+  modal using the entity domain, with domain extraction in \code{Utils.ts:74--76}
+  and modal invocation in \code{Modals.ts:17--21}.
+  \item Canvas behavior: \code{konvaBase.ts:13--517} supplies shared canvas
+  lifecycle behavior specialized by \code{konvaViewer.ts} and
+  \code{konvaEditor.ts}.
+\end{itemize}
+
+The device-control path is traceable in the baseline source: the selected
+entity identifier is derived from \code{sel.entity\_id}
+(\code{data/code/src/lib/Main/Button.svelte:41}); a non-edit-mode click invokes
+\code{toggle()} (same file, lines 755--767 and 189--218). That function asks
+\code{getTogglableService(entity)} to choose a domain-specific service
+(\code{data/code/src/lib/Utils.ts:96--149}) and sends the selected service
+with \code{entity\_id} through \code{callService(\$connection, ...)}
+(\code{Main/Button.svelte:239--244}). The Socket connection subscribes to
+Home Assistant entity updates and writes them to \code{states}
+(\code{data/code/src/lib/Socket.ts:107--116}; \code{Stores.ts:21--24}); the
+button effect reads \code{\$states[entity\_id]} to refresh its entity and
+optimistic UI state (\code{Main/Button.svelte:100--118}). This traces the
+application call to the Home Assistant library boundary; network delivery and
+the remote device response are outside this source-level trace.
+
+Preferences/configuration have a distinct persistence flow. The page server
+loads \code{data/configuration.yaml} and \code{data/dashboard.yaml}, adds the
+Home Assistant URL from the environment or proxy request, and returns them to
+the UI (\code{data/code/src/routes/+page.server.ts:33--67}). Hearth edit state
+is mutated through \code{updateConfig()} and saved by \code{saveEdit()} as a
+revisioned POST (\code{data/code/src/lib/Hearth/store.ts:43--53,112--148});
+the server serializes YAML and atomically writes the configuration file
+(\code{save\_hearth/+server.ts:94--140}). These
+configuration values affect dashboard layout, widgets, theme, localization,
+and application settings. No separate database-backed preference store is
+identified in this trace.
+
+\section{Part 1 -- Pattern discovery and verification}
+\subsection{Method and scope limits}
+For Part 1, we used the frozen source to record participant roles, source
+locations, and distinct collaborations. The saved historical prompt, model
+output, and review are in \code{Part1/llm/}. We separated two independent
+Memento collaborations that the initial output had combined and added source
+locations to the inventory. A follow-up audit of the assigned smart-device,
+control, and preference scope is now recorded in
+\code{Part1/llm/p1\_discovery\_audit.md}; its confirmed-looking-only draft is
+\code{Part1/llm/patterns\_p1\_discovery.csv}. The follow-up is a source-based
+addition and is not presented as a historical model response.
+
+That scoped audit records five confirmed-looking collaborations, two
+uncertain candidates, and five rejected candidates. It is limited to the
+inspected P1 paths listed in the audit note and makes no repository-wide
+exhaustiveness claim. The canonical \code{data/patterns.csv} and its totals
+remain the P2-owned baseline inventory; the P1 draft is a discovery handoff,
+not a replacement for those final records.
+
+\subsection{Baseline totals and inventory}
+The recorded counts are five pattern types and eight pattern instances:
+three Memento, two Composite, one Observer, one Factory Method, and one
+Template Method. The count file records two distinct concrete participant
+classes (\code{KonvaEditor} and \code{KonvaViewer}) under its stated counting
+rule. A consolidated unique-participant-symbol total is \textbf{UNVERIFIED}:
+the P2 inventory participant fields combine role aliases, variants, shorthand,
+and grouped products and have not been normalized into a symbol-level ledger.
+The scoped P1 draft separately deduplicates 32 participant symbols, as listed
+in its audit note. The P2-owned canonical inventory contains only its confirmed
+rows; the scoped P1 audit separately records two uncertain and five rejected
+candidates.
+
+\begin{longtable}{p{0.13\linewidth}p{0.25\linewidth}p{0.50\linewidth}}
+\toprule
+Pattern & Instance & Principal source participants and evidence location \\
+\midrule
+\endhead
+Memento & Classic Dashboard Edit History & \code{dashboard}, \code{history}, \code{HistoryButtons.svelte}; \code{data/code/src/lib/Stores.ts:29,147--152}; \code{Drawer/HistoryButtons.svelte:18,43--82}. \\
+Memento & Hearth Config History \& Edit Transaction & \code{hearthConfig}, snapshot stacks and edit operations; \code{data/code/src/lib/Hearth/store.ts:18,32--110}; configuration type in \code{Hearth/config.ts:324--341}. \\
+Memento & Konva Editor History & \code{KonvaEditor} and \code{KonvaHistory}; \code{Modal/PictureElements/konvaEditor.ts:754--840}; type in \code{data/code/src/lib/Types.ts:350--353}. \\
+Composite & Dashboard Section Layout Hierarchy & recursive \code{Section} and \code{findInSections}; \code{data/code/src/lib/Types.ts:42--56}; \code{data/code/src/lib/Utils.ts:25--60}. \\
+Composite & Visibility Condition Tree & \code{Condition}, \code{validateCondition}, and \code{handleAnd}/\code{handleOr}; \code{data/code/src/lib/Types.ts:58--69}; \code{data/code/src/lib/Conditional.ts:58--216}. \\
+Observer & Home Assistant WebSocket Entity Subscriptions & connection subscription, \code{states} store, and UI consumers; \code{data/code/src/lib/Socket.ts:107--116}; \code{data/code/src/lib/Stores.ts:23}; \code{data/code/src/lib/Main/Entities.svelte:1--50}. \\
+Factory Method & Entity Domain Modal Factory & \code{openEntityModal}, \code{getDomain}, \code{openModal}, and concrete modal components; \code{data/code/src/lib/Hearth/modals.ts:11--171}; \code{Utils.ts:74--76}; \code{Modals.ts:17--21}. \\
+Template Method & Picture Elements Konva Canvas Base & \code{KonvaBase}, \code{KonvaViewer}, and \code{KonvaEditor}; \code{konvaBase.ts:13--517}; \code{konvaViewer.ts} and \code{konvaEditor.ts} in the same directory. \\
+\bottomrule
+\end{longtable}
+
+Full P2-owned role mappings are in \code{data/patterns.csv}; the scoped P1
+discovery draft and disposition ledger are in \code{Part1/llm/}. Editable and
+rendered architecture diagrams are in \code{Part1/pattern\_architecture/}.
+The source audit note records that the first model output combined distinct
+history mechanisms; the final inventory separates them. Strategy is not a
+baseline type in this inventory; it first appears during Change 1.
+
+\section{Part 2 -- Evolution and refactoring}
+Three changes were implemented on the baseline and recorded in
+\code{data/patterns\_evolution.csv}. Requirements, acceptance criteria, diffs,
+and logs are under \code{Part2/code/changes/Change1--Change3/}.
+
+\begin{longtable}{p{0.13\linewidth}p{0.30\linewidth}p{0.46\linewidth}}
+\toprule
+Change & Requirement and design work & Verification and measured effect \\
+\midrule
+\endhead
+CH01 & Add recursive \code{not} evaluation and dispatch through a function-based Strategy map. Extends the Visibility Condition Tree Composite and introduces the evaluator Strategy. & Final cumulative suite: 68 tests pass; type check: zero errors/warnings. Measured \code{Conditional.ts} + \code{Types.ts}: 468 to 484 LOC; \code{validateCondition()} CCN 6 to 3. \\
+CH02 & Extract bounded Hearth undo/redo state into generic \code{HistoryManager\textless T\textgreater} using Extract Class and Encapsulate Collection. & Final cumulative suite: 68 tests pass; clean type check. Measured Hearth directory: 17,063 to 17,186 LOC; maximum history-operation CCN remains 2. \\
+CH03 & Add configurable alert rail widget and dispatch configuration predicates through \code{WIDGET\_CONFIG\_VALIDATORS}. & Final cumulative suite: 68 tests pass; clean type check. Measured Hearth directory: 17,186 to 17,293 LOC; \code{railWidgetNeedsConfiguration()} CCN 7 to 2. \\
+\bottomrule
+\end{longtable}
+
+Pattern effects, source-version totals, limitations, and exact logs are recorded
+in \code{Part2/Part2\_Report.md}, \code{data/patterns\_evolution.csv},
+\code{data/pattern\_counts.csv}, and \code{Part2/evolution\_metrics.csv}.
+Across tracked snapshots, the inventory moves from 5 types/8 instances at the
+baseline to 6 types/10 instances after CH03. One CH03 Factory Method candidate
+was rejected because the registry and renderer branches do not show the
+Factory Method collaboration. Baseline pattern rows were carried forward in
+the evolution table; CH01--CH03 did not perform a new exhaustive Part 1 sweep.
+
+\begin{center}
+\begin{tabular}{lrrrrr}
+\toprule
+Snapshot & Types & Instances & Concrete classes & Rejected & Uncertain \\
+\midrule
+Original & 5 & 8 & 2 & 0 & 0 \\
+After CH01 & 6 & 9 & 2 & 0 & 0 \\
+After CH02 & 6 & 9 & 3 & 0 & 0 \\
+After CH03 & 6 & 10 & 3 & 1 & 0 \\
+\bottomrule
+\end{tabular}
+\end{center}
+These are tracked-inventory counts. Baseline rejected/uncertain zeros mean no
+such rows were carried into the inventory; they do not represent the result
+of an exhaustive baseline candidate sweep.
+
+\section{Part 3 -- Cross-language comparison}
+Six selected collaborations were implemented as small behavior-matched
+examples in Java, Python, JavaScript, and C++: Composite / Visibility Condition
+Tree; Observer / Entity Subscriptions; Memento / Hearth History; Strategy /
+Visibility Condition Evaluator; Factory Method / Entity Modal; and Template
+Method / Canvas Renderer. The common fixtures and expected behavior are in
+\code{Part3/test-cases/common\_spec.md}; production snippets and separate
+runners are grouped by pattern and language.
+
+\begin{center}
+\begin{tabular}{lrrrrl}
+\toprule
+Language & Mean LOC & Mean max CCN & Saved suites & Local rerun & Mean saved ms \\
+\midrule
+Java & 68.0 & 5.0 & 6/6 pass & 6/6 pass & 8.196 \\
+Python & 59.7 & 4.8 & 6/6 pass & 6/6 pass & 0.028 \\
+JavaScript & 61.3 & 3.7 & 6/6 pass & 6/6 pass & 0.301 \\
+C++ & 97.0 & 4.7 & 6/6 pass & not rerun here & 0.038 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The canonical per-pattern/per-language data, exact runtimes and commands are
+in \code{data/cross\_language.csv}; test logs and recomputed static metrics
+are in \code{Part3/evidence/}. Python, JavaScript, and Java runners passed
+locally (18 suites) on Python 3.12.2, Node.js 22.15.0, and OpenJDK 17.0.10.
+The six C++ runners were not rerun on this macOS host because their timing
+harnesses require Windows headers and performance-counter APIs; saved Windows
+logs report their earlier MinGW runs passing.
+
+LOC excludes blanks and comments. Maximum function CCN is measured with Lizard
+1.24.1; C++ counts include both implementation and header. The saved timing
+values are medians of five measured runner-body runs after one warm-up. They
+exclude process creation and VM/interpreter startup. The original timing
+hardware and operating system were not preserved, so these small test timings
+are not a controlled cross-language performance ranking. The earlier slide
+PDF is retained as historical output; its C++ LOC omitted headers.
+
+Java uses declared interfaces/classes and runtime dispatch; Python supports
+abstract base classes and dynamic/structural use; JavaScript class syntax uses
+prototype-based objects and dynamic dispatch; C++ examples use abstract base
+classes and virtual functions. These are language-specific expression choices,
+not evidence that one language is superior. References to the relevant
+language documentation are listed at the end.
+
+\section{LLM records and human verification}
+AI-assisted work and its verification are recorded in \code{data/llm.csv};
+supporting prompts, inputs, and review notes are stored with each part. The
+Part 1 record describes how we separated the merged Memento collaborations
+and added source locations. The Part 2 completion record notes that the
+historical CH01--CH03 model prompts and outputs were unavailable. The current
+reference task specification is labeled as reconstructed, not historical. For Part 3, the
+earlier raw model response was unavailable. Its prompt/context and the later
+completion review are preserved, and the later review is explicitly not
+presented as the earlier raw response. Evidence and limitations are in
+\code{Part2/llm/verification.md} and \code{Part3/evidence/verification.md}.
+
+The current Part 1 task specification is stored in
+\code{Part1/Part1\_prompt.txt}. The shorter historical Gemini prompt is
+preserved separately at \code{Part1/llm/historical\_discovery\_prompt.txt}
+and is the prompt linked to the saved historical output. Part 2's reference
+prompt is explicitly marked as reconstructed; it is not presented as a recovered
+historical transcript.
+
+\section{Findings, contributions, and limitations}
+The baseline inventory describes undo/redo in three separate subsystems,
+recursive compositions for layouts and conditions, a domain-specific modal
+selection collaboration, an entity-state subscription flow, and a shared
+canvas lifecycle specialized by viewer/editor subclasses. The evolution added
+condition negation, extracted history management, and introduced an alert
+widget; test evidence records behavior preservation and new behavior. The
+cross-language examples retain the same stated fixtures, but their small test
+workloads and differing historical runtime environments limit conclusions
+about performance.
+
+\begin{longtable}{p{0.27\linewidth}p{0.66\linewidth}}
+\toprule
+Team member & Contribution recorded from the team's work-division note \\
+\midrule
+\endhead
+Adwaith S Menon & Part 1 pattern discovery. \\
+Sai Samay & Part 1 pattern discovery (shared with Adwaith S Menon). \\
+Karthikeya Sai & Part 1 pattern /inventory; Part 2 evolution and refactoring. \\
+Amitha K Anilkumar & Part 3 implementations in Java, Python, and JavaScript. \\
+Meenakshi Manoj & Part 3 C++ implementation and report writing. \\
+\bottomrule
+\end{longtable}
+
+The team confirmed that Amitha K Anilkumar implemented the Part 3 examples in
+Java, Python, and JavaScript, while Meenakshi Manoj handled the report and C++
+implementation. Karthikeya Sai handled Part 1 verification and Part 2 evolution/refactoring, and all five members
+are in the AIDS batch. The other contribution descriptions follow the work-
+division details supplied by the team.
+
+\subsection{References}
+\begin{itemize}[nosep]
+\item Ha-Fusion repository and baseline: \url{https://github.com/knowald/ha-fusion}; MIT License.
+\item Oracle Java Tutorials, Polymorphism: \url{https://docs.oracle.com/javase/tutorial/java/IandI/polymorphism.html}.
+\item Oracle Java Tutorials, Defining an Interface: \url{https://docs.oracle.com/javase/tutorial/java/IandI/interfaceDef.html}.
+\item Python 3.12 documentation, Abstract Base Classes: \url{https://docs.python.org/3.12/library/abc.html}.
+\item MDN Web Docs, JavaScript Classes: \url{https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes}.
+\item C++ working draft, virtual functions: \url{https://eel.is/c++draft/class.virtual}.
+\item Gamma, Helm, Johnson, and Vlissides, \textit{Design Patterns: Elements of Reusable Object-Oriented Software}, Addison-Wesley, 1994.
+\item Larman, \textit{Applying UML and Patterns}, 3rd ed., Prentice Hall, 2004.
+\item cloc 2.10 and Lizard 1.24.1 measurement tools; versions and rules are documented in \code{README.md} and \code{Part3/evidence/measurement\_notes.md}.
+\end{itemize}
+
+\appendix
+\section{Submission contents and checks}
+This team folder contains the consolidated report source and compiled PDF,
+README, the canonical datasets in \code{data/}, original source and test logs,
+Part 1 diagrams and evidence, Part 2 changes and snapshots, and Part 3
+snippets, shared test cases, evidence, and report. The course instructions request one \code{A4/} team folder and one pull
+request to the upstream repository's main branch. Capture the requested repository screenshot after
+the team folder is uploaded. Before submission, make sure the PDF is compiled from the final version of
+this TeX source.
+
+\end{document}

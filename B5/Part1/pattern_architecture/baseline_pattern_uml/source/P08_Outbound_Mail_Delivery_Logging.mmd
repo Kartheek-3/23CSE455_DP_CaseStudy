@@ -1,0 +1,40 @@
+classDiagram
+direction TB
+class InvitationMailer {
+  <<application>>
+  +invite()
+  +invite_to_trip()
+}
+class TripMailer {
+  <<application>>
+  +pending_sender_notification()
+}
+class ApplicationMailer {
+  <<application>>
+}
+class MailLogger {
+  <<application>>
+  +delivered_email(message)
+}
+class ActionMailerBase["ActionMailer::Base"] {
+  <<framework>>
+  +register_observer(observer)
+}
+class Mail {
+  <<framework module>>
+  +register_observer(observer)
+  +inform_observers(mail)
+}
+class MailMessage["Mail::Message"] {
+  <<framework>>
+}
+
+ActionMailerBase <|-- ApplicationMailer
+ApplicationMailer <|-- InvitationMailer
+ApplicationMailer <|-- TripMailer
+MailLogger ..> ActionMailerBase : registered through
+ActionMailerBase ..> Mail : delegates registration
+InvitationMailer ..> MailMessage : constructs outgoing message
+TripMailer ..> MailMessage : constructs outgoing message
+MailMessage ..> Mail : delivery notification
+Mail ..> MailLogger : invokes delivered_email

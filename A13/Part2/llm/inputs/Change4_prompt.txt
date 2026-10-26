@@ -1,0 +1,777 @@
+# CH04 IMPLEMENTATION PROMPT — Explainable, User-Controlled Personalized Feed in Misskey
+
+## 1. Objective
+
+Implement **Change 4 (CH04): Explainable, User-Controlled Personalized Feed** in the actual Misskey application.
+
+You have already supplied the master implementation instruction, codebase context, repository details and evidence-generation requirements.
+
+The earlier changes are:
+
+- CH01: Native Events, RSVP and Reminder Notifications.
+- CH02: First-Class Audio Posts with Transcription.
+- CH03: Context-Aware Link Safety and Spam Protection.
+
+Your current task is the personalized feed only. Do not reimplement those features and do not undertake unrelated refactoring.
+
+Deliver two outcomes:
+
+1. A functional, separate, opt-in personalized recommendation feed integrated with Misskey's existing frontend and backend.
+2. Complete Part 2 evidence of the implementation, automated tests, Git commit, source-code metrics, pattern evolution, architecture diagrams and AI-use verification.
+
+Do not return only a recommendation algorithm or a standalone demonstration. Implement the feature within the real Misskey application.
+
+## 2. Repository and source-version requirements
+
+Misskey repository:
+
+`/home/vighnesh/DP-case_study/misskey`
+
+Case-study evidence:
+
+`/home/vighnesh/DP-case_study/A1/Part2`
+
+The original source baseline is:
+
+`5f501341d49d2bc3fa7e817ce7548a82174326eb`
+
+Earlier implementation reports identify CH01 and CH02 commits as:
+
+- CH01: `608b45de20dce0a78459025320bfdeb0c4e47a78`
+- CH02: `9a4398a103e392a0ea634eaf521470985985145d`
+
+Do not assume these remain the final verified commits. Corrective commits may have changed the source.
+
+Before implementation:
+
+1. Inspect `git status`, the current branch, `HEAD` and recent Git history.
+2. Identify the latest actual, verified CH03 source snapshot.
+3. Confirm which parts of CH01–CH03 are present in the current tree.
+4. Preserve earlier changes and all pre-existing user modifications.
+5. Record the actual preceding commit SHA and the source scope affected by CH04.
+
+Use the real current repository state. Do not reset or rewrite existing history.
+
+## 3. Core feature specification
+
+Introduce a separate, opt-in **For You** feed that ranks eligible public posts according to a user's interests and interactions.
+
+Misskey already has chronological timelines, Antennas, hashtag-related discovery and other ways of finding posts. Do not simply rename an existing timeline and claim to have implemented personalised recommendations.
+
+The new feed must provide:
+
+- A separate recommendation API.
+- A transparent, deterministic ranking algorithm.
+- Ranking signals based on explicit interests and relevant user interactions.
+- Recency-aware relevance.
+- Content and author diversity.
+- An understandable explanation for each recommendation.
+- User controls to mute topics and reduce recommendations from selected authors.
+- A way to reset the recommendation profile.
+- A clear way to switch between the personalized feed and chronological ordering.
+- Enforcement of existing privacy, visibility, block, mute and safety restrictions.
+- Automated tests covering ranking, explanation, user controls and restricted-content exclusion.
+
+Start with a small weighted-scoring algorithm. Do not train a large machine-learning model or introduce an external AI dependency.
+
+Recommendations must be user-controlled and explainable. Do not implement opaque ranking that cannot identify why a post was recommended.
+
+## 4. Inspect the existing timeline and discovery architecture
+
+Before implementing, inspect the actual source files responsible for:
+
+- The existing home, local and social timelines.
+- Note selection, query construction and pagination.
+- Existing Antennas and hashtag discovery behaviour.
+- Followed users, followed hashtags and related interest mechanisms, where available.
+- Reactions, bookmarks, replies or other interaction records available for ranking.
+- Existing note visibility, block, mute and content restrictions.
+- Note entity packing.
+- API endpoint registration and endpoint schemas.
+- The frontend timeline components and navigation.
+- Existing caching and invalidation conventions.
+- User settings and server-side preferences.
+- SDK types and API generation.
+- Search, moderation and safety integration points.
+
+Trace how an existing timeline fetches notes, applies privacy rules, returns a page of results and updates the frontend.
+
+Reuse that architecture where appropriate.
+
+Do not assume Misskey has a particular hashtag-following table, preference API or ranking service until you verify it in the current source.
+
+If an explicit hashtag-following mechanism is unavailable, use supported interest signals that actually exist in Misskey, or implement a narrowly scoped user-controlled topic-preference mechanism.
+
+Do not claim to use a signal that is not available in the implementation.
+
+## 5. Opt-in behaviour and timeline integration
+
+The For You feed must be an additional timeline, not a replacement for existing chronological timelines.
+
+Implement a clear way for a user to enable or open the personalized feed. The user must be able to return to the ordinary chronological feed without losing their existing timeline configuration.
+
+Respect the opt-in choice. Do not silently replace the user's home timeline or change the ordering of existing timelines.
+
+A reasonable initial design is a distinct For You timeline option or route, integrated with the current timeline navigation conventions.
+
+The frontend must:
+
+- Clearly distinguish the recommendation feed from chronological feeds.
+- Show a useful empty or onboarding state if the user has insufficient recommendation data.
+- Provide access to recommendation controls.
+- Preserve ordinary timeline navigation and pagination behaviour.
+- Handle API errors without breaking the rest of the application.
+- Avoid inserting duplicated posts when loading another page or refreshing the feed.
+
+Use the existing Vue component, API client and timeline conventions rather than building a separate social application.
+
+## 6. Candidate selection and eligibility
+
+The recommendation system should not attempt to score every note in the entire database for every request.
+
+Design a bounded and efficient candidate-selection process using existing Misskey queries and data-access patterns.
+
+Select candidate notes from applicable sources, such as:
+
+- Recent eligible public posts.
+- Posts from followed accounts that are accessible to the user.
+- Posts associated with topics of demonstrated interest.
+- Other sources justified by the existing architecture and the actual available data.
+
+The exact candidate sources must be documented.
+
+Use reasonable candidate and time-window limits so the service does not perform unbounded scans.
+
+Before returning recommendations, enforce the applicable eligibility rules.
+
+Exclude notes that the requesting user cannot access, including private or restricted notes that are not intended for them.
+
+Apply existing rules for:
+
+- Note visibility.
+- Blocks and mutes.
+- Muted or restricted content.
+- Deleted notes and unavailable authors.
+- Existing moderation and content-safety restrictions.
+- Any other applicable timeline-eligibility constraints in the current implementation.
+
+Treat eligibility as a hard constraint, not merely another ranking score.
+
+A high recommendation score must never make an inaccessible post eligible.
+
+For CH04, prioritise the eligible public-content feed specified by this requirement. Do not broaden access to private, specified-recipient, followers-only or otherwise restricted posts in order to improve recommendation quality.
+
+Avoid duplicating the existing eligibility logic if a suitable query or service already enforces it. Inspect and test the actual behaviour.
+
+## 7. Transparent weighted recommendation algorithm
+
+Implement a deterministic, explainable weighted scorer.
+
+The implementation should be small enough to understand, test and document.
+
+A conceptual model is:
+
+`score(user, note) = interest relevance + interaction relevance + recency contribution + diversity adjustment`
+
+This is a design outline, not a mandatory equation. Choose the actual feature definitions, normalisation and weights based on the available Misskey data.
+
+Document the implemented formula and ensure its components can be independently tested.
+
+### 7.1 Interest relevance
+
+Use appropriate interest signals, such as:
+
+- User-controlled topic or hashtag preferences.
+- Explicitly followed topics, if supported by the actual source.
+- Relevant interests inferred from recent interactions, where the available data makes this practical.
+
+Explicit user preferences should provide a clear and predictable signal.
+
+Do not assume that every post interaction means the user wants more of the same content. Consider context and avoid treating negative or dismissive interactions as positive preference signals.
+
+### 7.2 Interaction relevance
+
+Investigate the existing interaction models and select signals that are meaningful and practically available.
+
+Possible signals include:
+
+- Bookmarked posts.
+- Reactions.
+- Replies or other meaningful engagement.
+- Followed authors.
+
+Use a modest, documented weighting scheme.
+
+Avoid unnecessarily expensive per-post aggregation or N+1 database queries.
+
+Where user-specific data influences recommendations, ensure it is only accessed for the authorised user and is not exposed to other users.
+
+### 7.3 Recency
+
+Recent content should generally remain competitive with older content when relevance is otherwise comparable.
+
+Implement a deterministic recency contribution based on post creation time or another justified signal.
+
+Use an explicit, documented decay function or time-window rule.
+
+Test the expected ordering of comparable recent and older notes.
+
+Avoid allowing recency to overwhelm every other signal or giving old, highly popular content an unlimited advantage.
+
+### 7.4 Content diversity
+
+Prevent the feed from repeatedly showing the same author or a narrow set of topics.
+
+Use a simple, explainable approach, such as an author repetition penalty or a bounded diversity adjustment for previously selected topics.
+
+Do not introduce a complicated learning-to-rank framework for this initial implementation.
+
+Explain how diversity affects ordering and ensure it does not violate eligibility or privacy rules.
+
+### 7.5 Determinism
+
+Given the same candidate notes, user preferences, interaction data and current time reference, the scorer should produce the same ranking.
+
+Provide stable tie-breaking so pagination and tests do not produce arbitrary ordering.
+
+Avoid relying on uncontrolled randomisation.
+
+If diversity adjustments use the already-selected posts, document the ordering process and ensure it remains deterministic.
+
+## 8. Explain every recommendation
+
+Every recommended post must have an understandable explanation.
+
+Examples include:
+
+- "Recommended because you follow #opensource."
+- "Recommended because you frequently interact with posts about Linux."
+- "Recommended because you saved a similar post."
+- "Recommended because this topic matches your selected interests."
+
+Use only the explanation supported by the actual scoring signals.
+
+Do not display an explanation that is inconsistent with the score, inferred from a signal the system did not use, or based on data the current user is not authorised to access.
+
+If a post receives a diversity adjustment or recency-based contribution, the user-facing explanation does not need to expose the numerical score. Explain the principal relevance reason in a concise, comprehensible way.
+
+When no meaningful relevance explanation exists, either omit the post from the personalized candidates or provide a truthful, clearly defined fallback explanation. Do not falsely claim that a user follows a topic.
+
+Store or compute explanations using a design that remains consistent with the actual ranking. Do not maintain duplicate explanation state that can become inconsistent with the computed score.
+
+## 9. Topic muting and author recommendation controls
+
+Implement user controls that make personalization genuinely controllable.
+
+### 9.1 Mute a topic
+
+Users must be able to prevent recommendations for a selected topic or hashtag.
+
+Apply the preference to eligible recommendation candidates so that matching content is excluded or appropriately suppressed according to the defined behaviour.
+
+Explicitly muted topics must not be recommended merely because another relevance signal gives the post a high score.
+
+Define normalisation rules for topic identifiers so that the same topic cannot evade a mute because of trivial differences in representation.
+
+Use existing hashtag conventions where possible.
+
+### 9.2 Reduce recommendations from an author
+
+Provide a user control to reduce recommendations from a selected author.
+
+Define clearly whether the control excludes that author's posts from For You or assigns them a strong penalty. The initial implementation should prefer a predictable, easy-to-test policy.
+
+Keep this control distinct from an actual block or mute if those existing mechanisms have different platform-wide effects.
+
+A user selecting reduced recommendations should not unexpectedly block, unfollow or mute the author across the entire Misskey application.
+
+### 9.3 Reset recommendation profile
+
+Give users a way to reset the recommendation-specific profile and preferences as appropriate to the design.
+
+This should clear the relevant persisted personalisation data, such as inferred interest weights or recommendation interactions, without accidentally deleting unrelated Misskey data such as the user's bookmarks, posts, follows or reactions.
+
+Document precisely what the reset operation removes and preserve unrelated account settings.
+
+After reset, ensure that recommendations no longer depend on cleared personalised state. The feed may use an explicitly documented fallback based on recency or newly gathered preferences.
+
+### 9.4 User preference persistence
+
+Inspect Misskey's existing user-setting and preference mechanisms before adding new storage.
+
+Use a suitable existing abstraction if possible. Introduce a database model or settings structure only when necessary.
+
+Validate all topic and author identifiers.
+
+Ensure users can only modify their own recommendation preferences unless a specifically authorised administrative operation is being implemented.
+
+## 10. Separate chronological ordering
+
+Provide a clear user control for switching from the personalized feed to chronological ordering.
+
+The feature must preserve the existing behaviour of Misskey's ordinary timelines.
+
+Make it easy for the user to understand whether they are viewing:
+
+- The personalized For You feed.
+- A normal chronological timeline.
+
+Do not silently change the API semantics of existing timeline operations.
+
+If a UI control or setting is used to switch feeds, ensure that the corresponding request actually selects the correct backend behaviour.
+
+Test that the chronological mode returns results in the existing expected order and does not accidentally retain personalized ranking adjustments.
+
+## 11. Recommendation service and API design
+
+Introduce a dedicated recommendation service and API endpoint following the existing backend conventions.
+
+Inspect existing timeline services, query builders, entities and API schemas to determine the appropriate integration point.
+
+The endpoint should:
+
+1. Authenticate and identify the requesting user.
+2. Obtain eligible recommendation candidates.
+3. Apply the authoritative eligibility and safety rules.
+4. Load or compute the user's available recommendation signals.
+5. Apply explicit topic mutes and author controls.
+6. Calculate scores.
+7. Apply deterministic ordering and content diversity.
+8. Produce supported recommendation explanations.
+9. Pack and return the appropriate note objects.
+10. Return pagination information using the established API conventions.
+
+Keep the service focused on ranking rather than copying the entire timeline implementation.
+
+Use bounded query parameters and reasonable result limits.
+
+Avoid returning internal ranking state, another user's preference data or private interaction history in API responses.
+
+Follow Misskey's established authentication, permission, validation, error and entity-packing conventions.
+
+Register the new endpoint and generate/update SDK metadata according to the repository's actual build workflow.
+
+Do not manually alter generated files when the repository expects them to be regenerated.
+
+## 12. Caching and invalidation
+
+Implement a reasonable cache where it improves performance.
+
+Inspect the existing caching conventions before choosing a cache key, storage location or expiry policy.
+
+A cached result must be appropriately scoped to the requesting user and relevant preference state. Never allow one user's recommendation profile or ranked result to be served to another user.
+
+Document which inputs affect the result, such as:
+
+- User preference version.
+- Explicit topic mutes.
+- Reduced-recommendation authors.
+- Relevant interaction signals.
+- Candidate-note changes.
+- The current ranking time reference, where recency influences ordering.
+
+Invalidate or refresh cached results when a meaningful preference change occurs.
+
+At minimum, a topic mute, author-reduction change and profile reset must affect the next applicable recommendation request. Do not let a stale cache continue recommending content the user has explicitly suppressed.
+
+Avoid building an unnecessary caching system if Misskey's existing infrastructure or inexpensive recomputation is more appropriate for the bounded candidate set.
+
+Measure or explain the chosen approach rather than adding caching solely to satisfy the feature description.
+
+## 13. Security, privacy and content safety
+
+The recommendation system must preserve Misskey's existing access-control guarantees.
+
+Enforce applicable visibility, block, mute and moderation restrictions before a candidate can be returned.
+
+Never trust the frontend to perform eligibility filtering by itself.
+
+Ensure:
+
+- A user cannot read another user's personalised profile.
+- Preferences are written only for the authorised account.
+- Private interaction data is not exposed through recommendations or explanations.
+- Draft, deleted or inaccessible notes are excluded.
+- Explicitly muted topics remain excluded.
+- Reduced-recommendation author controls are applied consistently.
+- Existing block and mute semantics remain effective.
+- CH03 link-safety warnings or restrictions remain respected where they apply.
+- Resetting the profile cannot delete unrelated user content.
+- Cache keys and entries do not leak personalised data across accounts.
+
+Use existing permission and note-visibility mechanisms rather than reproducing an incomplete copy of them.
+
+If the exact restrictions cannot be determined from the supplied context, inspect the actual implementation and tests before deciding what may be returned.
+
+## 14. Frontend integration
+
+Integrate the personalized feed with Misskey's existing timeline navigation, components, API client and design conventions.
+
+Provide:
+
+- A distinct For You entry or equivalent opt-in control.
+- A list that displays normal Misskey note content.
+- A short explanation for each recommendation.
+- Topic-muting controls.
+- An author-recommendation control.
+- A profile-reset action with clear confirmation when destructive preferences are being cleared.
+- A way to return to chronological ordering.
+- Useful loading, empty and failure states.
+- Correct pagination and refresh behaviour.
+
+Reuse existing note-rendering components and controls wherever possible.
+
+Do not invent a parallel social feed UI that bypasses established components.
+
+Ensure that the recommendation explanation does not replace the content, author, media, link-safety indicator or other normal post information.
+
+Follow the repository's localisation conventions. Add any required translated interface strings according to the rules for the current Misskey checkout.
+
+Do not claim full visual testing if you have only run unit tests.
+
+## 15. Automated testing — focused CLI tests only
+
+Automated tests are mandatory.
+
+Inspect the actual backend and frontend test frameworks and conventions before adding tests. Use deterministic fixtures and the repository's existing utilities.
+
+Do not run the entire Misskey test suite.
+
+### 15.1 Ranking algorithm tests
+
+Test the actual recommendation-scoring implementation.
+
+At minimum, cover:
+
+- A post matching an explicit topic interest outranking an otherwise comparable unrelated post.
+- Relevant interaction signals influencing ranking according to the documented scoring rules.
+- Recency affecting otherwise comparable posts as specified.
+- Author or topic diversity changing ordering predictably.
+- Stable tie-breaking for equal scores.
+- Repeatability for identical input data and a fixed time reference.
+- A muted topic being excluded regardless of its otherwise high relevance score.
+- A reduced-recommendation author receiving the configured treatment.
+
+Use controlled notes and signals. Do not make tests depend on whichever posts happen to exist in a live instance.
+
+### 15.2 Explanation tests
+
+Test that:
+
+- A recommendation matching an explicit topic carries the corresponding explanation.
+- Interaction-driven explanations are emitted only when the signal exists.
+- Explanations do not make claims unsupported by the ranking input.
+- The fallback case is truthful.
+- Explanation output does not expose private interaction data.
+
+### 15.3 User-control tests
+
+Test:
+
+- Applying a topic mute affects the next recommendation request.
+- Applying an author reduction affects the next request according to the chosen policy.
+- Resetting the profile clears recommendation-specific personalisation state.
+- Reset does not delete unrelated posts, bookmarks, follows or reactions.
+- One user cannot change another user's profile.
+- Unauthorised or invalid preference inputs are rejected.
+
+### 15.4 Visibility and moderation tests
+
+This is a critical acceptance requirement.
+
+Construct deterministic test data containing eligible public posts and representative restricted or excluded notes.
+
+Verify that the endpoint never returns a note that the user must not access, including relevant cases involving:
+
+- Private or specified-recipient visibility.
+- Followers-only or otherwise restricted notes.
+- Blocked or muted users.
+- Deleted or unavailable notes.
+- Existing moderation or content-safety restrictions.
+- Explicitly muted topics.
+- Reduced-recommendation authors.
+
+Use the applicable actual Misskey visibility rules and authorised-user context.
+
+Do not create arbitrary simplified rules that contradict the existing application behaviour.
+
+### 15.5 API and pagination tests
+
+Where practical, cover:
+
+- The authenticated API returning the expected ranked response shape.
+- Appropriate handling of invalid request parameters.
+- Stable pagination and no duplicated notes across the tested pages.
+- Chronological mode preserving existing ordering.
+- Recommendation requests respecting bounded candidate and result limits.
+
+Avoid adding a separate end-to-end deployment merely to test the ranking algorithm.
+
+### 15.6 Cache tests
+
+If caching is implemented, test:
+
+- Appropriate user-specific cache isolation.
+- Cache invalidation after topic or author controls change.
+- Profile reset invalidating relevant personalised results.
+- No cross-user result leakage.
+
+If caching is unnecessary for the selected bounded design, document that decision and do not add redundant cache tests.
+
+### 15.7 Test scope and failure policy
+
+Run only relevant backend service/API tests and targeted frontend tests where practical.
+
+Do not automatically execute:
+
+- The complete backend suite.
+- The complete frontend suite.
+- All end-to-end tests.
+- Full browser automation.
+- Large performance tests.
+- Unrelated package tests.
+
+Run relevant type-check or lint commands if feasible.
+
+If a test fails, investigate and fix genuine defects. Do not weaken correct assertions merely to force a pass.
+
+If a check cannot run, record the exact command, the reason and `not_run` status. Never fabricate a successful test result.
+
+Save actual CLI output in:
+
+`A1/Part2/changes/Change4/test_result.log`
+
+Include commands, working directory, relevant versions, actual output, exit codes, pass/fail counts where available and any limitations.
+
+## 16. Git commit requirements
+
+Implement CH04 in the actual Misskey repository.
+
+Before committing:
+
+- Check `git status`.
+- Inspect the complete source diff.
+- Run `git diff --check`.
+- Verify the relevant tests.
+- Ensure that unrelated modifications from CH01, CH02 or CH03 are not accidentally staged.
+- Confirm that the change is based on the latest verified preceding commit.
+
+Stage the relevant CH04 production code, required migrations and focused tests explicitly.
+
+Create a separate local commit with a descriptive message, for example:
+
+`feat: add explainable personalized feed`
+
+Do not push to a remote repository.
+
+Record the actual preceding and implementation commit SHAs in:
+
+`A1/Part2/changes/Change4/commit.txt`
+
+Verify the commit and final working-tree status.
+
+## 17. CH04 evidence files
+
+Create these files from the actual implementation and executed tests.
+
+### Requirement
+
+`A1/Part2/changes/Change4/requirement.md`
+
+Record the feature specification, acceptance criteria, relevant source modules, chosen scoring policy, available interest signals and explicit scope exclusions.
+
+### Diff
+
+`A1/Part2/changes/Change4/diff.patch`
+
+Generate the actual patch from the preceding verified commit to the CH04 implementation commit. Confirm that it matches the recorded SHAs.
+
+### Tests
+
+`A1/Part2/changes/Change4/test_result.log`
+
+Preserve actual CLI commands and results.
+
+### Commit information
+
+`A1/Part2/changes/Change4/commit.txt`
+
+Record actual commit identifiers, message, changed source paths and date where available.
+
+### Metrics
+
+`A1/Part2/changes/Change4/metrics.csv`
+
+Record comparable before/after source LOC using the same documented counting rules.
+
+Identify the measured files and source commits. Report production and test code separately. Include actual relevant test outcomes, and do not estimate unavailable metrics.
+
+### Pattern effects
+
+`A1/Part2/changes/Change4/pattern_effects.md`
+
+Describe the actual existing pattern collaborations affected by CH04, their participants before and after, their evolution statuses, supporting source evidence, the code smell addressed, the refactoring technique used and relevant behaviour-preservation test evidence.
+
+Do not invent pattern collaborations or code smells to increase counts.
+
+## 18. Update pattern evolution and counts
+
+Update the root files:
+
+`A1/Part2/pattern_evalution.csv`
+
+`A1/Part2/Pattern_count.csv`
+
+Preserve the existing column schemas.
+
+For `pattern_evalution.csv`:
+
+`source_version,pattern_name,pattern_type,instance_name,participant_roles,source_locations,intent_and_evidence,status_after_change,change_description`
+
+For `Pattern_count.csv`:
+
+`source_version,summary,pattern_name,count`
+
+Retain the verified baseline and CH01–CH03 history. Add records for the resulting CH04 source version.
+
+Use these version labels consistently:
+
+- `baseline`
+- `CH01`
+- `CH02`
+- `CH03`
+- `CH04`
+
+Use the actual commits corresponding to each snapshot.
+
+Keep an existing `instance_name` when the same collaboration continues. Record modified, extended, replaced, removed and newly introduced collaborations accurately. Retain removal history while excluding removed collaborations from the active count in the new snapshot.
+
+Recalculate counts from the confirmed pattern records rather than manually adjusting totals.
+
+Inspect the actual implementation before claiming that the ranking mechanism introduces Strategy, Specification, State, Repository or another design pattern.
+
+Do not claim that the entire monorepo has been exhaustively analysed; retain the documented inspection scope.
+
+## 19. Architecture diagrams
+
+Save relevant diagrams under:
+
+`A1/Part2/diagrams/Change4/`
+
+Where CH04 materially changes the architecture or a confirmed pattern collaboration, provide an editable PlantUML source and a corresponding rendered image, for example:
+
+- `class_diagram.puml`
+- `class_diagram.png`
+
+The diagram should reflect the actual implementation. Depending on the chosen design, it may show the recommendation endpoint, service, scorer, candidate-selection mechanism, user preferences, eligibility filtering and frontend consumer.
+
+Show only components that actually exist and relationships that are supported by the implementation.
+
+If a separate diagram is not necessary, document why rather than drawing a hypothetical architecture.
+
+## 20. LLM input, output and verification evidence
+
+Create and maintain the following records.
+
+### Prompt
+
+`A1/Part2/llm/inputs/Change4_prompt.txt`
+
+Save the actual prompt used to implement CH04.
+
+### Context
+
+`A1/Part2/llm/inputs/Change4_context.md`
+
+Record the actual preceding commit, relevant source files inspected, supplied requirements, current timeline architecture and available interest signals.
+
+### Output
+
+`A1/Part2/llm/outputs/Change4_output.txt`
+
+Preserve the actual available implementation report or tool output. Do not fabricate a transcript. If the complete interaction cannot be captured, record the available output and state the limitation.
+
+### Verification
+
+`A1/Part2/llm/verification/Change4_verification.md`
+
+Record significant implementation claims, relevant source evidence, actual commands and test results, the implementation commit and any outstanding limitations.
+
+The verification must include the privacy and eligibility checks. Do not accept the agent's own description as proof without checking the source and test evidence.
+
+## 21. Update the root LLM CSV
+
+Update:
+
+`A1/Part2/llm.csv`
+
+Preserve its existing columns:
+
+`part,model_and_date,prompt_file,input_file,output_file,evaluation,verification_file`
+
+Add the actual CH04 prompt/context/output/verification mapping using paths relative to the `A1/` folder:
+
+- `Part2/llm/inputs/Change4_prompt.txt`
+- `Part2/llm/inputs/Change4_context.md`
+- `Part2/llm/outputs/Change4_output.txt`
+- `Part2/llm/verification/Change4_verification.md`
+
+Use the actual model and interaction date when available; never invent values.
+
+Validate every path and ensure the evaluation is consistent with the verification evidence.
+
+## 22. Update the evolved source README
+
+Update:
+
+`A1/Part2/code/README.md`
+
+Document the actual CH04 commit, the preceding commit, new and modified production source files, focused CLI test commands and results, metric methodology and remaining limitations.
+
+Ensure the evolved-source evidence directory represents the relevant new and modified application files from CH01 through CH04 with correct relative paths. Do not copy dependency caches, compiled artifacts or unrelated files.
+
+## 23. Completion requirements
+
+Do not declare CH04 complete until:
+
+1. The personalized feed is opt-in and separate from existing chronological timelines.
+2. The recommendation service uses real available Misskey data and deterministic scoring.
+3. Every recommendation has a truthful, understandable explanation.
+4. Topic mutes and author-recommendation controls work as documented.
+5. Profile reset clears the intended recommendation state without deleting unrelated user data.
+6. Chronological mode retains existing ordering.
+7. Note visibility, blocks, mutes and applicable content-safety rules are enforced on the backend.
+8. Focused automated tests have actually run and the results are recorded.
+9. Relevant type-check and lint checks have been executed where practical.
+10. The change has its own local Git commit.
+11. The patch and commit references agree.
+12. Metrics are reproducible.
+13. Pattern history and counts match the actual source.
+14. Diagrams reflect real implementation relationships.
+15. Actual LLM input, output and verification records are saved.
+16. The root `llm.csv` maps the CH04 records correctly.
+17. The evolved source README is updated.
+18. No unrelated changes or earlier evidence have been overwritten.
+
+If a particular recommendation signal is unavailable in the actual codebase, choose a supported alternative, document it and implement the required user-visible behaviour without inventing data.
+
+If an external dependency is unavailable, verify the feature with suitable deterministic fixtures and disclose what remains untested.
+
+## 24. Final report
+
+After implementation, provide a concise report containing:
+
+- The actual features implemented.
+- Main changed source paths.
+- Ranking formula and evidence signals used.
+- User controls and visibility safeguards.
+- Actual focused CLI tests and results.
+- Any unexecuted checks and reasons.
+- Type-check or lint results, if run.
+- Baseline and implementation commit SHAs.
+- Before/after metrics.
+- Confirmed pattern effects and refactoring.
+- Paths of the generated evidence.
+- Outstanding defects or limitations.
+
+Do not begin any further feature after CH04. Complete the implementation and evidence package, report the actual results honestly and wait for my next instruction.

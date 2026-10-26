@@ -1,0 +1,4 @@
+Input (adapter cross-language) - legalSystem @ commit 4e4ebb574d6730614855899e032fd5a79b04da63 (2023-03-18).
+- The confirmed Part 1 instance for this pattern, reframed to the case-management domain.
+- Shared test cases: fixed inputs and expected output lines (same for all four languages).
+- Measurement toolchain recorded in data/cross_language.csv and README.

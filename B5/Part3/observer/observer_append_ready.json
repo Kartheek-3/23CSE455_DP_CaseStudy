@@ -1,0 +1,54 @@
+[
+  {
+    "pattern_name": "Observer",
+    "instance_name": "Outbound Mail Delivery Logging",
+    "language": "Java",
+    "snippet_path": "Part3/observer/java/Main.java",
+    "source_loc": 47,
+    "max_function_cc": 5,
+    "runtime_compiler": "OpenJDK openjdk version \"21.0.12.1\" 2026-08-18; javac 21.0.12.1",
+    "test_command": "(cd Part3/observer/java && java TestMain)",
+    "test_result": "7/7 passed; failures=0; errors=0; skipped=0; exit_code=0",
+    "median_process_ms": 109.548044,
+    "language_notes": "MailObserver interface; MailMessage event; MailLogger implementation; MailDeliveryPublisher stores observer list.  No real email; fixture-level role fidelity verified."
+  },
+  {
+    "pattern_name": "Observer",
+    "instance_name": "Outbound Mail Delivery Logging",
+    "language": "Python",
+    "snippet_path": "Part3/observer/python/main.py",
+    "source_loc": 32,
+    "max_function_cc": 5,
+    "runtime_compiler": "Python 3.13.5",
+    "test_command": "(cd Part3/observer/python && python3 test_main.py)",
+    "test_result": "7/7 passed; failures=0; errors=0; skipped=0; exit_code=0",
+    "median_process_ms": 1133.244762,
+    "language_notes": "MailObserver ABC; MailMessage dataclass; MailLogger concrete observer; MailDeliveryPublisher stores observer references.  No real email; fixture-level role fidelity verified."
+  },
+  {
+    "pattern_name": "Observer",
+    "instance_name": "Outbound Mail Delivery Logging",
+    "language": "JavaScript",
+    "snippet_path": "Part3/observer/javascript/main.js",
+    "source_loc": 43,
+    "max_function_cc": 5,
+    "runtime_compiler": "Node.js v22.16.0",
+    "test_command": "(cd Part3/observer/javascript && node test_main.js)",
+    "test_result": "7/7 passed; failures=0; errors=0; skipped=0; exit_code=0",
+    "median_process_ms": 43.67267,
+    "language_notes": "MailObserver base callback contract; MailMessage object; MailLogger concrete observer; MailDeliveryPublisher uses Set.  No real email; fixture-level role fidelity verified."
+  },
+  {
+    "pattern_name": "Observer",
+    "instance_name": "Outbound Mail Delivery Logging",
+    "language": "C++",
+    "snippet_path": "Part3/observer/cpp/main.cpp",
+    "source_loc": 60,
+    "max_function_cc": 4,
+    "runtime_compiler": "g++ (Debian 14.2.0-19) 14.2.0; C++17",
+    "test_command": "(cd Part3/observer/cpp && ./observer_tests)",
+    "test_result": "7/7 passed; failures=0; errors=0; skipped=0; exit_code=0",
+    "median_process_ms": 2.325304,
+    "language_notes": "MailObserver pure virtual interface; MailMessage event; MailLogger concrete observer; publisher stores nonowning observer pointers; main.hpp and main.cpp count as production. C++ uses registerObserver/unregisterObserver (register is a C++ language keyword); observer lifetime must outlive the publisher. No real email; fixture-level role fidelity verified."
+  }
+]

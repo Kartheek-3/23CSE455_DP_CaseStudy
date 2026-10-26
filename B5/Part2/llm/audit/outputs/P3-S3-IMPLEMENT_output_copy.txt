@@ -1,0 +1,276 @@
+# DaPlanStan — Scenario 3 Implementation Complete
+
+AFTER source packaged
+
+Scenario 3 — Different Cancellation Policies has been implemented in a separate source version:
+
+`scenario3_cancellation_policies`
+
+The implementation starts from the completed Scenario 2 AFTER source, not the original DaPlanStan baseline.
+
+It introduces three deterministic cancellation policies and a read-only quote interface. No external reservation is cancelled, no refund is issued and no booking or Expense record is modified by the new feature.
+
+## 1. Download the deliverables
+
+Scenario 3 Complete AFTER Source
+
+Full Rails project · ZIP · Approximately 23 MB
+
+Download Scenario 3 AFTER Source
+
+Scenario 2 → Scenario 3 Patch
+
+Unified source patch · Approximately 49 KB · Application verified
+
+Download Source Patch
+
+Scenario 3 Change Record
+
+Source locations, policy rules, acceptance coverage, verification evidence and limitations
+
+Download Change Record
+
+The ZIP passed integrity verification. The patch passed its dry-run check and reproduced the AFTER files byte-for-byte when applied to the Scenario 2 snapshot.
+
+## 2. Exact source changes
+
+# 3
+
+Modified files
+
+# 15
+
+New files
+
+# 0
+
+Deleted files
+
+### Modified existing files
+
+| File                                 | AFTER lines            | Change                                            |
+| ------------------------------------ | ---------------------- | ------------------------------------------------- |
+| `config/routes.rb`                   | 37                     | Added nested cancellation-quote resource          |
+| `app/views/trip_items/show.html.erb` | 207–212                | Added owner-only quote entry point                |
+| `README.md`                          | New Scenario 3 section | Documented feature, policy rules and verification |
+
+The route declaration is:
+
+```
+resource :cancellation_quote, only: [ :new, :create ]
+```
+
+### New production files
+
+| File                                                    | AFTER lines | Responsibility                                           |
+| ------------------------------------------------------- | ----------- | -------------------------------------------------------- |
+| `app/controllers/cancellation_quotes_controller.rb`     | 1–43        | Authorization, eligibility and quote coordination        |
+| `app/services/cancellation_policies/flexible.rb`        | 1–13        | Flexible cancellation calculation                        |
+| `app/services/cancellation_policies/moderate.rb`        | 1–13        | Moderate calculation                                     |
+| `app/services/cancellation_policies/strict.rb`          | 1–10        | Strict calculation                                       |
+| `app/services/cancellation_policies/quote_evaluator.rb` | 1–84        | Eligibility, selection, money-safe evaluation and errors |
+| `app/views/cancellation_quotes/new.html.erb`            | 1–35        | Policy selection and hypothetical result interface       |
+
+The remaining nine new files contain Rails tests, standalone validation checks, execution logs and the Scenario 3 change record.
+
+## 3. Implemented cancellation policies
+
+All policies implement:
+
+```
+fee_rate(seconds_until_start:)
+```
+
+Their rules match the frozen design.
+
+| Time until booking starts         | Flexible fee | Moderate fee | Strict fee |
+| --------------------------------- | ------------ | ------------ | ---------- |
+| At least 72 hours                 | 0%           | 0%           | 100%       |
+| 24 to less than 72 hours          | 0%           | 50%          | 100%       |
+| More than 0 to less than 24 hours | 10%          | 100%         | 100%       |
+| At or after start                 | 100%         | 100%         | 100%       |
+
+All three implementations are stateless and perform no database access or network calls.
+
+### Example: €200 booking, 48 hours before start
+
+Flexible refund
+
+## €200
+
+€0 fee
+
+Moderate refund
+
+## €100
+
+€100 fee
+
+Strict refund
+
+## €0
+
+€200 fee
+
+These are application demonstration rules, not actual airline or hotel cancellation terms.
+
+## 4. Eligibility implementation
+
+`CancellationPolicies::QuoteEvaluator` independently checks that the item:
+
+- Has `status = confirmed`.
+- Has an associated InboxItem with confirmed review status.
+- Contains its own confirmation reference.
+- Has a valid start timestamp and nonnegative amount.
+- Uses EUR, GBP or USD.
+
+This means a Scenario 1 generated idea or Scenario 2 demo-provider idea cannot receive a quote merely because a user changes its status to confirmed.
+
+The service also refuses to use another itinerary item's displayed fallback confirmation reference.
+
+## 5. QuoteEvaluator behavior
+
+The evaluator at `quote_evaluator.rb:32–55` selects one of the three explicitly permitted policies and calculates:
+
+\\[ \text{Fee}=\operatorname{round}\_{2}(\text{Amount}\times\text{Rate}) \\]
+
+\\[ \text{Refund}=\text{Amount}-\text{Fee} \\]
+
+It uses `BigDecimal` and `ROUND_HALF_UP` rather than floating-point money calculations.
+
+The output includes the policy code and name, original amount, fee, refund, currency, refundable flag and explanation.
+
+Unknown policies, negative amounts, missing required fields, unsupported currencies and invalid evaluation times produce controlled errors.
+
+## 6. Final user workflow
+
+Owner opens a confirmed email-linked TripItem
+
+Selects Estimate cancellation (demo)
+
+Controller verifies trip ownership and booking eligibility
+
+Owner selects Flexible, Moderate or Strict
+
+QuoteEvaluator calculates hypothetical fee and refund
+
+Application displays result and disclaimer
+
+TripItem, InboxItem and Expense remain unchanged
+
+Both `new` and `create` enforce owner authorization in the controller. The POST action reads booking details from the server-loaded record, not browser-supplied amounts or booking fields.
+
+The UI states explicitly that the result is hypothetical and that no reservation has been cancelled.
+
+## 7. Read-only and persistence verification
+
+Source inspection confirms that the new controller and evaluator contain no calls to save, update, destroy or create booking records.
+
+They also do not invoke cancellation APIs, payment operations, email delivery or background jobs.
+
+No migration or cancellation-status enum was added.
+
+Important distinction: This is confirmed by source inspection and isolated calculation tests. Full database read-only behavior still requires the blocked Rails integration tests.
+
+## 8. Tests written
+
+Two new Rails test files were added:
+
+| File                                                      | Coverage                                                                                                |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `test/services/cancellation_policies_test.rb`             | Boundaries, all policies, money arithmetic, eligibility, invalid values and no mutation                 |
+| `test/controllers/cancellation_quotes_controller_test.rb` | Owner access, unauthorized users, quote requests, tampering, read-only behavior and demo-item rejection |
+
+A separate `evidence/isolated_cancellation_policy_checks.rb` exercises the pure Ruby policy logic without Rails.
+
+## 9. Actual test results
+
+Standalone policy checks
+
+# 10/10
+
+45 assertions · 0 failures/errors
+
+Ruby syntax checks
+
+# 8/8
+
+All Syntax OK
+
+Rails integration testing remains blocked.
+
+| Test detail                        | Actual outcome                    |
+| ---------------------------------- | --------------------------------- |
+| Available Ruby                     | 3.3.8                             |
+| Required Ruby                      | 3.4.2                             |
+| Focused Rails test command         | Exit code 1                       |
+| Full `ruby bin/rails test`         | Exit code 1                       |
+| Error                              | `Bundler::GemNotFound`            |
+| Missing dependencies               | Rails 8.1.3 and other locked gems |
+| Rails tests executed               | 0                                 |
+| Rails passes/failures/errors/skips | Not available                     |
+
+The full error logs are preserved in the ZIP under `evidence/`.
+
+No live Anthropic, provider, geocoding or Turbo integration testing was performed.
+
+## 10. Regression preservation
+
+The file comparison confirms that the following source areas are unchanged from Scenario 2:
+
+| Existing functionality                    | Source-level status |
+| ----------------------------------------- | ------------------- |
+| Scenario 1 personalized generation        | Preserved           |
+| Generated preview/confirmation            | Preserved           |
+| Original JSON import                      | Preserved           |
+| Manual TripItem creation                  | Preserved           |
+| Instance-scoped geocoding                 | Preserved           |
+| Scenario 2 Atlas/Beacon adapters          | Preserved           |
+| Provider browsing and duplicate detection | Preserved           |
+| Genuine email intake/linking              | Preserved           |
+| Authentication and membership             | Preserved           |
+| Existing Expense behavior                 | Preserved           |
+| Geocoding/Turbo mechanism                 | Preserved           |
+| Database schema/migrations                | Unchanged           |
+
+These are byte-level source-preservation results; runtime regression tests remain unexecuted.
+
+## 11. Remaining limitations
+
+The implementation intentionally cannot cancel an actual booking or guarantee a real refund. It does not retrieve provider-specific contractual terms.
+
+Bookings without required start, amount, currency or confirmation data cannot receive estimates. No historical quote is persisted, and the controller uses the actual current time when generating a quote.
+
+A compatible Rails environment is still required to verify rendering, authorization, database interactions and the complete application regression suite.
+
+## 12. Pattern candidates for next verification
+
+No new patterns have been confirmed during implementation.
+
+| Candidate          | Collaboration to examine                                                 |
+| ------------------ | ------------------------------------------------------------------------ |
+| Strategy (GoF)     | QuoteEvaluator and the three interchangeable policy calculators          |
+| Controller (GRASP) | CancellationQuotesController coordinating a distinct quote-request event |
+
+A fixed policy lookup is not automatically a Factory.
+
+The existing pattern counts remain unchanged pending source-level AFTER verification:
+
+| Pattern                    | Count |
+| -------------------------- | ----- |
+| Controller (GRASP)         | 8     |
+| Information Expert (GRASP) | 1     |
+| Observer (GoF)             | 2     |
+| Adapter (GoF)              | 1     |
+| Total instances            | 12    |
+| Distinct pattern types     | 4     |
+
+## Final handoff status
+
+The complete Scenario 3 implementation, source patch, change record and available test evidence are packaged.
+
+The source ZIP has 444 files, including the unchanged Scenario 2 application and the fifteen additions. The input Scenario 2 archive remains unchanged.
+
+Scenario 3 implementation is complete at the source level, but not fully Rails-runtime-verified. The next step is independent Scenario 3 AFTER verification and pattern-evolution classification.
+
+No final pattern classifications, cross-scenario aggregation or cross-language work have been performed.

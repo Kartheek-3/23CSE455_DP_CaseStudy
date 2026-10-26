@@ -1,0 +1,38 @@
+classDiagram
+direction TB
+class TripsController {
+  <<application>>
+  +create()
+}
+class Trip {
+  <<application>>
+  +generate_inbound_email()
+  +build_inbound_email()
+}
+class Account {
+  <<application>>
+  +owner_traveler()
+}
+class Traveler {
+  <<application>>
+}
+class TripMember {
+  <<application>>
+}
+class FetchTripCoverImageJob {
+  <<application>>
+  +perform()
+}
+class Pexels["Pexels API"] {
+  <<external provider>>
+}
+
+TripsController ..> Trip : constructs and saves
+TripsController ..> Account : finds owner traveler
+TripsController ..> TripMember : creates owner membership
+Account --> Traveler : has many
+Trip --> TripMember : has many
+TripMember --> Traveler : belongs to
+TripsController ..> FetchTripCoverImageJob : enqueues cover retrieval
+FetchTripCoverImageJob ..> Trip : stores cover image URL
+FetchTripCoverImageJob ..> Pexels : searches photos

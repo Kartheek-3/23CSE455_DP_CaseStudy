@@ -1,0 +1,16 @@
+PASS sign_in_refresh_sign_out
+PASS empty_events
+PASS unsubscribe_after_one
+PASS unsubscribe_before_events
+PASS unsubscribe_after_event_count
+PASS numeric_integer_unsubscribe_after
+PASS input_not_object
+PASS missing_events
+PASS event_not_object
+PASS unknown_event
+PASS missing_user_id
+PASS signed_out_with_user
+PASS negative_unsubscribe_after
+PASS boolean_unsubscribe_after
+PASS unsafe_unsubscribe_after
+15/15 cases passed

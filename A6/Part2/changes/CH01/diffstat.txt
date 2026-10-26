@@ -1,0 +1,18 @@
+ .../use_cases/Admin/AdminChangeDriverStatus.ts     |  27 ++--
+ .../Admin/Interfaces/IAdminChangeDriverStatus.ts   |   3 +-
+ src/application/use_cases/Driver/AcceptBooking.ts  |  30 +++--
+ src/application/use_cases/Login.ts                 |   6 +
+ src/application/use_cases/User/BookDriver.ts       |   5 +
+ src/domain/driver/DriverAccountState.ts            | 144 +++++++++++++++++++++
+ src/domain/errors/InvalidTransitionError.ts        |   9 ++
+ src/domain/models/Driver.ts                        |   3 +-
+ src/domain/repositories/IBookingrepository.ts      |   2 +
+ src/domain/repositories/IDriverepository.ts        |   3 +-
+ .../database/MongoBookingRepository.ts             |  11 +-
+ .../database/MongodriverRepository.ts              |   5 +-
+ src/infrastructure/database/modals/Driverschema.ts |   2 +-
+ src/infrastructure/socket/SocketNotification.ts    |   2 +
+ src/presentation/schemas/admin/AdminRequestDTO.ts  |   4 +-
+ tests/baseline_defects.test.ts                     |  12 +-
+ tests/driverStatus.test.ts                         |  99 ++++++++++++++
+ 17 files changed, 322 insertions(+), 45 deletions(-)

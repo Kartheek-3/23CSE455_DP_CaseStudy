@@ -1,0 +1,103 @@
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/HierarchicalTestEngine.java|31|public abstract class HierarchicalTestEngine
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/HierarchicalTestEngine.java|53|public final void execute(ExecutionRequest request)
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/HierarchicalTestEngine.java|54|createExecutorService(request)
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/HierarchicalTestEngine.java|55|createExecutionContext(request)
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/HierarchicalTestEngine.java|56|createThrowableCollectorFactory(request)
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/HierarchicalTestEngine.java|57|new HierarchicalTestExecutor
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/HierarchicalTestEngine.java|117|protected abstract C createExecutionContext
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/HierarchicalTestEngine.java|83|createExecutorService(ExecutionRequest request)
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/HierarchicalTestEngine.java|84|new SameThreadHierarchicalTestExecutorService()
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/HierarchicalTestEngine.java|106|createThrowableCollectorFactory(ExecutionRequest request)
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/HierarchicalTestEngine.java|107|OpenTest4JAwareThrowableCollector::new
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/JupiterTestEngine.java|44|public final class JupiterTestEngine extends HierarchicalTestEngine
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/JupiterTestEngine.java|80|createExecutorService(ExecutionRequest request)
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/JupiterTestEngine.java|82|isParallelExecutionEnabled()
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/JupiterTestEngine.java|83|ParallelHierarchicalTestExecutorServiceFactory.create
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/JupiterTestEngine.java|86|super.createExecutorService(request)
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/JupiterTestEngine.java|90|createExecutionContext(ExecutionRequest request)
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/JupiterTestEngine.java|99|createThrowableCollectorFactory(ExecutionRequest request)
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/JupiterTestEngine.java|100|JupiterThrowableCollectorFactory::createThrowableCollector
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/ThrowableCollector.java|209|interface Factory
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/NodeTestTask.java|46|class NodeTestTask<C extends EngineExecutionContext> implements TestTask
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/NodeTestTask.java|76|NodeUtils.asNode(testDescriptor)
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/NodeTestTask.java|106|public void execute()
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/NodeTestTask.java|110|prepare();
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/NodeTestTask.java|113|checkWhetherSkipped()
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/NodeTestTask.java|116|executeRecursively();
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/NodeTestTask.java|119|cleanUp();
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/NodeTestTask.java|121|reportCompletion();
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/NodeTestTask.java|158|executionStarted(testDescriptor)
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/NodeTestTask.java|169|new NodeTestTask<C>(taskContext, descriptor)
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/NodeTestTask.java|180|invokeAll(children)
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/NodeTestTask.java|209|executionSkipped(testDescriptor
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/NodeTestTask.java|224|executionFinished(testDescriptor, throwableCollector.toTestExecutionResult())
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/Node.java|38|public interface Node<C extends EngineExecutionContext>
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/Node.java|47|default C prepare(C context)
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/Node.java|69|default SkipResult shouldBeSkipped(C context)
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/Node.java|87|default C before(C context)
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/Node.java|125|default void after(C context)
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/HierarchicalTestExecutorService.java|34|public interface HierarchicalTestExecutorService extends AutoCloseable
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/HierarchicalTestExecutorService.java|55|submit(TestTask testTask)
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/HierarchicalTestExecutorService.java|74|void invokeAll(List<? extends TestTask> testTasks)
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/HierarchicalTestExecutorService.java|88|interface TestTask
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/HierarchicalTestExecutorService.java|93|ExecutionMode getExecutionMode()
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/HierarchicalTestExecutorService.java|98|ResourceLock getResourceLock()
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/HierarchicalTestExecutorService.java|114|void execute()
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/SameThreadHierarchicalTestExecutorService.java|29|implements HierarchicalTestExecutorService
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/SameThreadHierarchicalTestExecutorService.java|36|testTask.execute()
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/SameThreadHierarchicalTestExecutorService.java|42|tasks.forEach(TestTask::execute)
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/ForkJoinPoolHierarchicalTestExecutorService.java|51|implements HierarchicalTestExecutorService
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/ForkJoinPoolHierarchicalTestExecutorService.java|144|public void invokeAll
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/ForkJoinPoolHierarchicalTestExecutorService.java|152|forkConcurrentTasks
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/ForkJoinPoolHierarchicalTestExecutorService.java|210|class ExclusiveTask extends ForkJoinTask
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/ForkJoinPoolHierarchicalTestExecutorService.java|266|testTask.execute()
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/WorkerThreadPoolHierarchicalTestExecutorService.java|70|implements HierarchicalTestExecutorService
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/WorkerThreadPoolHierarchicalTestExecutorService.java|150|submit(TestTask testTask)
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/WorkerThreadPoolHierarchicalTestExecutorService.java|175|invokeAll(List<? extends TestTask> testTasks)
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/ParallelExecutionConfigurationStrategy.java|25|public interface ParallelExecutionConfigurationStrategy
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/ParallelExecutionConfigurationStrategy.java|31|createConfiguration(ConfigurationParameters configurationParameters)
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/DefaultParallelExecutionConfigurationStrategy.java|33|enum DefaultParallelExecutionConfigurationStrategy implements ParallelExecutionConfigurationStrategy
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/DefaultParallelExecutionConfigurationStrategy.java|39|FIXED {
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/DefaultParallelExecutionConfigurationStrategy.java|63|DYNAMIC {
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/DefaultParallelExecutionConfigurationStrategy.java|74|availableProcessors()
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/DefaultParallelExecutionConfigurationStrategy.java|97|CUSTOM {
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/DefaultParallelExecutionConfigurationStrategy.java|108|ReflectionSupport.newInstance(strategyClass)
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/DefaultParallelExecutionConfigurationStrategy.java|220|getStrategy(configurationParameters).createConfiguration
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/DefaultParallelExecutionConfigurationStrategy.java|225|orElse("dynamic")
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/Launcher.java|53|public interface Launcher
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/DelegatingLauncher.java|24|class DelegatingLauncher implements Launcher
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/DelegatingLauncher.java|26|protected Launcher delegate
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/DelegatingLauncher.java|57|delegate.execute(discoveryRequest, listeners)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/InterceptingLauncher.java|25|class InterceptingLauncher extends DelegatingLauncher
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/InterceptingLauncher.java|27|LauncherInterceptor interceptor
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/InterceptingLauncher.java|65|interceptor.
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/InterceptingLauncher.java|66|super.execute(executionRequest)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/DefaultLauncherSession.java|67|new InterceptingLauncher
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/DefaultLauncherSession.java|70|new DelegatingLauncher(launcher)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/DefaultLauncherSession.java|155|a.intercept(() -> b.intercept(invocation))
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/DefaultLauncherSession.java|86|ClosedLauncher.INSTANCE
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/DefaultLauncherSession.java|98|ClosedLauncher
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/DelegatingEngineExecutionListener.java|22|class DelegatingEngineExecutionListener implements EngineExecutionListener
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/DelegatingEngineExecutionListener.java|24|EngineExecutionListener delegate
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/StackTracePruningEngineExecutionListener.java|31|extends DelegatingEngineExecutionListener
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/StackTracePruningEngineExecutionListener.java|44|pruneStackTrace
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/StackTracePruningEngineExecutionListener.java|46|super.executionFinished
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineExecutionOrchestrator.java|149|new MemoryCleanupListener(listener, testPlan)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineExecutionOrchestrator.java|198|new StackTracePruningEngineExecutionListener
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineExecutionOrchestrator.java|253|new OutcomeDelayingEngineExecutionListener
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineExecutionOrchestrator.java|145|new ExecutionListenerAdapter(testPlan, testExecutionListener)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineExecutionOrchestrator.java|104|testPlanExecutionStarted
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineExecutionOrchestrator.java|113|testPlanExecutionFinished
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineExecutionOrchestrator.java|188|for (TestEngine testEngine
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/ExecutionListenerAdapter.java|28|class ExecutionListenerAdapter implements EngineExecutionListener
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/ExecutionListenerAdapter.java|31|TestExecutionListener testExecutionListener
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/ExecutionListenerAdapter.java|47|executionStarted(getTestIdentifier(testDescriptor))
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/ExecutionListenerAdapter.java|71|getTestIdentifier(testDescriptor.getUniqueId())
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/NodeUtils.java|26|instanceof Node node ? node : noOpNode
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/NodeUtils.java|30|noOpNode = new Node()
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/ParallelHierarchicalTestExecutorServiceFactory.java|33|class ParallelHierarchicalTestExecutorServiceFactory
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/ParallelHierarchicalTestExecutorServiceFactory.java|93|private ParallelHierarchicalTestExecutorServiceFactory()
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/HierarchicalTestExecutor.java|36|class HierarchicalTestExecutor
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/HierarchicalTestExecutor.java|52|submit(
+junit-platform-engine/src/main/java/org/junit/platform/engine/TestEngine.java|49|public interface TestEngine
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/execution/LauncherStoreFacade.java|23|class LauncherStoreFacade

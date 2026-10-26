@@ -1,0 +1,21 @@
+# cache_aside / cpp
+# working folder: Part3/code/pattern_cache_aside/cpp
+# runtime: g++ 16.1.1 20260625, -std=c++17
+$ mkdir -p build
+
+
+$ g++ -std=c++17 -Wall -Wextra -o build/test federated_instance_service.test.cpp
+
+
+$ build/test ../../../test-cases/cache_aside.txt
+PASS register_on_first_fetch
+PASS second_fetch_from_cache
+PASS cache_reloaded_from_db
+PASS ids_are_sequential
+PASS lookup_unknown_caches_negative
+PASS lookup_known_after_cache_drop
+PASS register_after_negative_lookup
+passed 7/7
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 3.3, 3.2, 3.2, 3.3, 3.3 -> median 3.3

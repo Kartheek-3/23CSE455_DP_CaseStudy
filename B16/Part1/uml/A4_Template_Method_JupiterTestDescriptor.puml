@@ -1,0 +1,48 @@
+@startuml A4
+!pragma layout smetana
+title A4 Template Method: JupiterTestDescriptor
+
+abstract class JupiterTestDescriptor <<AbstractClass>> {
+  +{method} final getExecutionMode()
+  #getExplicitExecutionMode()
+  #getExplicitChildExecutionMode()
+  #getDefaultChildExecutionMode()
+  #getDefaultExecutionMode()
+  +{method} final getLegacyReportingName()
+  #getLegacyReportingBaseName()
+  #getLegacyReportingIndex()
+  +copyIncludingDescendants(...)
+  #{abstract} withUniqueId(...)
+}
+abstract class ClassBasedTestDescriptor <<ConcreteClass>>
+abstract class MethodBasedTestDescriptor <<ConcreteClass>>
+abstract class DynamicNodeTestDescriptor <<ConcreteClass, not counted>> #E6E6E6
+class ClassTestDescriptor <<ConcreteClass>>
+class TestMethodTestDescriptor <<ConcreteClass, not counted>> #E6E6E6
+class DynamicContainerTestDescriptor <<ConcreteClass, not counted>> #E6E6E6
+
+ClassBasedTestDescriptor --|> JupiterTestDescriptor
+MethodBasedTestDescriptor --|> JupiterTestDescriptor
+DynamicNodeTestDescriptor --|> JupiterTestDescriptor
+ClassTestDescriptor --|> ClassBasedTestDescriptor
+TestMethodTestDescriptor --|> MethodBasedTestDescriptor
+DynamicContainerTestDescriptor --|> DynamicNodeTestDescriptor
+
+note right of JupiterTestDescriptor
+  final template methods call the
+  protected hooks that subclasses override
+end note
+' aligned-with-record
+legend right
+  <b>Counted participants</b> (record in the dataset)
+  AbstractClass: JupiterTestDescriptor
+  TemplateMethod: JupiterTestDescriptor#getExecutionMode
+  TemplateMethod: JupiterTestDescriptor#getLegacyReportingName
+  TemplateMethod: JupiterTestDescriptor#copyIncludingDescendants
+  PrimitiveOperation: JupiterTestDescriptor#withUniqueId
+  ConcreteClass (hook): ClassBasedTestDescriptor#getExplicitExecutionMode
+  ConcreteClass (hook): MethodBasedTestDescriptor#getExplicitExecutionMode
+  ConcreteClass (primitive): ClassTestDescriptor#withUniqueId
+  Grey classes: real, shown for context, not counted
+endlegend
+@enduml

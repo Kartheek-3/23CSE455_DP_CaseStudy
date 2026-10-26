@@ -1,0 +1,31 @@
+@startuml D2
+!pragma layout smetana
+title D2 Strategy: TempDirDeletionStrategy
+
+interface TempDirDeletionStrategy <<Strategy>> {
+  +delete(Path, AnnotatedElementContext, ExtensionContext) : DeletionResult
+}
+class "TempDirDeletionStrategy.Standard" as Standard <<ConcreteStrategy>>
+class "TempDirDeletionStrategy.IgnoreFailures" as IgnoreFailures <<ConcreteStrategy>>
+class "TempDirectory.Cleanup" as Cleanup <<Context>> {
+  deletionStrategy : Supplier<TempDirDeletionStrategy>
+  run(Path, ...)
+}
+class TempDirectory <<Selector>> {
+  -determineDeletionStrategy(TempDir)
+}
+
+Standard ..|> TempDirDeletionStrategy
+IgnoreFailures ..|> TempDirDeletionStrategy
+Cleanup o--> TempDirDeletionStrategy : deletionStrategy (Supplier)
+TempDirectory ..> Cleanup : creates with chosen strategy
+' aligned-with-record
+legend right
+  <b>Counted participants</b> (record in the dataset)
+  Strategy: TempDirDeletionStrategy
+  ConcreteStrategy: IgnoreFailures
+  ConcreteStrategy: Standard
+  Selection: TempDirectory#determineDeletionStrategy
+  Grey classes: real, shown for context, not counted
+endlegend
+@enduml

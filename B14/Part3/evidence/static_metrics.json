@@ -1,0 +1,122 @@
+[
+  {
+    "file": "llm_provider_streaming/python/implementation.py",
+    "source_loc": 53,
+    "max_function_cc": 8,
+    "functions": [
+      {
+        "name": "stream_claude",
+        "cc": 7
+      },
+      {
+        "name": "stream_openai",
+        "cc": 8
+      },
+      {
+        "name": "stream_gemini",
+        "cc": 4
+      },
+      {
+        "name": "run",
+        "cc": 7
+      }
+    ]
+  },
+  {
+    "file": "llm_provider_streaming/javascript/implementation.mjs",
+    "source_loc": 47,
+    "max_function_cc": 9,
+    "functions": [
+      {
+        "name": "streamClaude",
+        "cc": 8
+      },
+      {
+        "name": "streamOpenAI",
+        "cc": 9
+      },
+      {
+        "name": "streamGemini",
+        "cc": 4
+      },
+      {
+        "name": "(anonymous)",
+        "cc": 3
+      },
+      {
+        "name": "run",
+        "cc": 8
+      }
+    ]
+  },
+  {
+    "file": "auth_state_observer/python/implementation.py",
+    "source_loc": 74,
+    "max_function_cc": 21,
+    "functions": [
+      {
+        "name": "__init__",
+        "cc": 1
+      },
+      {
+        "name": "unsubscribe",
+        "cc": 1
+      },
+      {
+        "name": "__init__",
+        "cc": 1
+      },
+      {
+        "name": "subscribe",
+        "cc": 2
+      },
+      {
+        "name": "publish",
+        "cc": 2
+      },
+      {
+        "name": "__init__",
+        "cc": 1
+      },
+      {
+        "name": "on_auth_change",
+        "cc": 2
+      },
+      {
+        "name": "run",
+        "cc": 21
+      }
+    ]
+  },
+  {
+    "file": "auth_state_observer/javascript/implementation.mjs",
+    "source_loc": 62,
+    "max_function_cc": 20,
+    "functions": [
+      {
+        "name": "unsubscribe",
+        "cc": 1
+      },
+      {
+        "name": "subscribe",
+        "cc": 1
+      },
+      {
+        "name": "publish",
+        "cc": 2
+      },
+      {
+        "name": "onAuthChange",
+        "cc": 2
+      },
+      {
+        "name": "(anonymous)",
+        "cc": 3
+      },
+      {
+        "name": "run",
+        "cc": 20
+      }
+    ]
+  }
+]

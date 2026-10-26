@@ -1,0 +1,11 @@
+ src/application/services/FareCalculatorService.ts  | 10 +--
+ .../use_cases/Driver/UpdateBookingstatus.ts        | 14 ++--
+ src/application/use_cases/User/BookDriver.ts       | 16 +++--
+ src/domain/models/Booking.ts                       |  2 +
+ src/domain/pricing/DynamicPricing.ts               | 40 +++++++++++
+ src/domain/pricing/FareStrategy.ts                 | 68 ++++++++++++++++++
+ .../services/FareCalculatorService.ts              | 52 +++++++-------
+ tests/booking.test.ts                              | 20 +++---
+ tests/cancellation.test.ts                         |  3 +-
+ tests/pricing.test.ts                              | 82 ++++++++++++++++++++++
+ 10 files changed, 250 insertions(+), 57 deletions(-)

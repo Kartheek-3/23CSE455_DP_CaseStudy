@@ -1,0 +1,6 @@
+[Model: Claude Opus 4.8 | 2026-10-10 | CH02 | owner: Nithilesh]
+Code: observer/{HearingObserver, CaseRegister, EmailReminderObserver, SmsReminderObserver}.java.
+Pattern effect: Hearing/Reminder Notification = modified -> now a genuine Observer
+(CaseRegister holds registered observers; adding SMS touched no existing caller).
+Test: CaseRegisterTest -> 2 run, 0 fail (recording observer confirms both channels
+notified from one call). See test_result/mvn_test.log.

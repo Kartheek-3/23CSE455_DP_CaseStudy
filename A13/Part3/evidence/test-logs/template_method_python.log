@@ -1,0 +1,13 @@
+# template_method / python
+# working folder: Part3/code/pattern_template_method/python
+# runtime: CPython 3.14.6
+$ python3 -B test_chart.py ../../../test-cases/template_method.txt
+PASS major_clamps_and_prefixes
+PASS minor_hook
+PASS negative_clamped_to_zero
+PASS empty_result_not_stored
+PASS hook_error_propagates
+passed 5/5
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 23.7, 23.6, 23.8, 23.8, 24.7 -> median 23.8

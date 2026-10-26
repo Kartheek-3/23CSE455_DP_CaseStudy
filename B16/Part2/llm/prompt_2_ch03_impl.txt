@@ -1,0 +1,8 @@
+CH03 implementation was done by Claude Code (Claude Opus 5.5, CLI, on my machine) on 2026-10-10,
+not in the claude.ai chat. There was no separate written prompt: I approved this plan by replying "yeah".
+
+Plan I approved (from Claude Code, based on Part2/llm/output_1_design.md after my verification D1-01..D1-20):
+- CH03: off / exclude / only filter policy built from tags and method patterns, set in junit-platform.properties.
+  Implementation change (JUnit's own code). Refactoring first: extract the filter-collecting step.
+- Order of work: refactoring commit, then feature, then tests; rerun JUnit's launcher tests after each step.
+- Do not count the 'mode' enum as a new Strategy (D1-18); call the refactoring preparatory, not Long Method (D1-20).

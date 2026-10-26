@@ -1,0 +1,32 @@
+Pattern: Strategy
+Instance: Visibility Condition Evaluator Dispatch
+Language: JavaScript
+Compiler/Runtime: Node.js v22.16.0 (V8 12.4.254.20)
+Warmup + 5 Runs Raw Output:
+--- Run 1 ---
+RESULT: 6/6 passed
+TIME_MS: 0.446
+
+
+--- Run 2 ---
+RESULT: 6/6 passed
+TIME_MS: 0.159
+
+
+--- Run 3 ---
+RESULT: 6/6 passed
+TIME_MS: 0.327
+
+
+--- Run 4 ---
+RESULT: 6/6 passed
+TIME_MS: 0.754
+
+
+--- Run 5 ---
+RESULT: 6/6 passed
+TIME_MS: 0.395
+
+
+Measured Milliseconds: [0.446, 0.159, 0.327, 0.754, 0.395]
+Computed Median Milliseconds: 0.395

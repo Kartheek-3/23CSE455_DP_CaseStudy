@@ -1,0 +1,2 @@
+code	label	type	address	summary	amount	currency	destination
+beacon-rome-invalid-01	Invalid Beacon Kind	not_a_kind	Rome, Italy	Invalid type offer	12.00	EUR	rome

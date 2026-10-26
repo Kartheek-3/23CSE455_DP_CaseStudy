@@ -1,0 +1,5 @@
+snapshot,production_loc,test_loc,tests_passed,tests_total,pattern_types,pattern_instances,concrete_participant_classes,unique_participant_symbols,notes
+Original code,2055,27,1,2,5,5,18,15,"Exact public baseline; one stale upstream example test expects 200 although the root redirects to login."
+After CH01,2143,27,2,2,6,6,21,20,"Strategy pricing added and two pricing acceptance checks passed."
+After CH02,2303,27,4,4,7,7,32,32,"Specification filtering added; four cumulative pricing/filter checks passed."
+After CH03,2450,120,10,10,8,8,38,41,"State contract lifecycle added; focused evolution runner passed 10/10."

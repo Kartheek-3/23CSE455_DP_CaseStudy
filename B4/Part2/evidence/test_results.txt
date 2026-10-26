@@ -1,0 +1,24 @@
+Evolved source based on public baseline commit f127b4e218018715586a52cede08e182ca45c983
+Verified final evolution commit: 27b78c16c897c845efe052101e7f47f2ad7c25cf
+Executed: 2026-10-11
+
+Laravel suite:
+PASS  Tests\Unit\ExampleTest
+PASS  Tests\Feature\ExampleTest - application redirects to login
+Tests: 2 passed (3 assertions)
+Duration: 0.17s
+
+Focused evolution runner:
+PASS: base pricing preserves rent
+PASS: dynamic pricing combines demand, season and lease term
+PASS: composed specifications return one property
+PASS: composed specifications select the expected property
+PASS: contract begins in draft
+PASS: draft contract can be sent
+PASS: sent contract can be signed
+PASS: signature hash is retained
+PASS: signed contract rejects expiry
+PASS: invalid document hash is rejected
+RESULT: 10/10 passed
+
+PHP lint: all 108 inspected PHP files reported no syntax errors; raw output is in php_lint.txt.

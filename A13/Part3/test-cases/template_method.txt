@@ -1,0 +1,6 @@
+# case|chart and tick kind (chart: users, notes, faulty; kind: major, minor)|expected (stored columns sorted by name, or none)
+major_clamps_and_prefixes|users major|___local_total=40,___total=1000
+minor_hook|users minor|___local_total=41
+negative_clamped_to_zero|notes major|___total=0
+empty_result_not_stored|notes minor|none
+hook_error_propagates|faulty major|ERR:source unavailable

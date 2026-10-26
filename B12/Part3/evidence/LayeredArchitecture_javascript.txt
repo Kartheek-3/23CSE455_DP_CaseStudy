@@ -1,0 +1,8 @@
+PATTERN/SUITE   : LayeredArchitecture_javascript
+RUNTIME/COMPILER: Node.js v24.18.0
+WORKDIR         : C:\Users\eswar\OneDrive\Documents\Visual Studio Code\23CSE455_DP_Submission\B12\Part3\LayeredArchitecture\javascript
+RUN COMMAND     : node test_layered_architecture.js
+PROGRAM OUTPUT  : LAYERED_ARCHITECTURE_JS PASS 8/8
+TIME INCLUDES   : whole process wall time (runtime startup + program execution), after 1 unmeasured warm-up
+TIMING SAMPLES  : 5 measured runs (ms): 71.6733, 73.5904, 76.0821, 74.6976, 81.9094
+MEDIAN_MS       : 74.698

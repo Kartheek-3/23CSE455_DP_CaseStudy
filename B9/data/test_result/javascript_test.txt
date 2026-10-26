@@ -1,0 +1,2 @@
+Command: Node.js pattern_demos.js
+4/4 passed

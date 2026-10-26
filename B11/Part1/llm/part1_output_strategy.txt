@@ -1,0 +1,20 @@
+[Model: Claude Opus 4.8 | Date: 2026-10-10 | Pattern: Strategy | Owner: Rakshann]
+
+VERDICT: Confirmed structurally; concrete strategy is defective (stubbed).
+
+Role mapping (verified against source):
+- Strategy         = PasswordEncoder            config/SecurityConfiguration.java:12
+- ConcreteStrategy = anonymous BCryptPasswordEncoder subclass           lines 57-77
+- Context          = AuthenticationManagerBuilder via auth.passwordEncoder(...)  line 31
+
+Evidence:
+getPasswordEncoder() returns a PasswordEncoder that is injected into the
+authentication context (line 31), so the encoding algorithm is pluggable behind the
+PasswordEncoder interface - the Strategy shape.
+
+Critical finding: the concrete strategy is a STUB. Its encode() returns the
+plaintext unchanged and matches() compares plaintext with equals() (lines 60-76).
+So the Strategy structure is present and correct, but the concrete behaviour defeats
+its own purpose and is insecure. This makes it an ideal CH03 refactor target
+(replace with a real BCryptPasswordEncoder) while the Strategy structure stays
+intact - demonstrating substitutability.

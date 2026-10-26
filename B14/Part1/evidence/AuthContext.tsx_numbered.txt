@@ -1,0 +1,23 @@
+﻿   1: 'use client'
+   2: 
+   3: import { createContext, useContext } from 'react'
+   4: import type { Session, User } from '@supabase/supabase-js'
+   5: import type { Profile } from '@/lib/supabase/types'
+   6: 
+   7: export type AuthContextType = {
+   8:   session: Session | null
+   9:   user: User | null
+  10:   profile: Profile | null
+  11:   loading: boolean
+  12: }
+  13: 
+  14: export const AuthContext = createContext<AuthContextType>({
+  15:   session: null,
+  16:   user: null,
+  17:   profile: null,
+  18:   loading: true,
+  19: })
+  20: 
+  21: export function useAuth() {
+  22:   return useContext(AuthContext)
+  23: }

@@ -1,0 +1,19 @@
+================================================================================
+PART 3 LLM PROMPT SUITE — TEAM A4 COLLABORATIVE RE-IMPLEMENTATION
+================================================================================
+
+In accordance with our team's collaborative workflow for Part 3, the cross-language implementation was divided between two contributors specializing in different runtime paradigms:
+
+1. Track A: Managed & Interpreted Runtimes (Java, Python, JavaScript)
+   - Contributor: Contributor 1 (Application & Managed Languages Lead)
+   - Prompt File: Part3/llm/part3_prompt_managed_runtimes.txt
+   - Input Context: Part3/llm/input_code_context_managed.md
+   - Focus: Object-oriented architecture, web application parity with SvelteKit, dynamic duck typing vs static interface hierarchies, JIT runtime benchmarking.
+
+2. Track B: Native Systems & Embedded Programming (C++14)
+   - Contributor: Contributor 2 (Systems & Native Performance Lead)
+   - Prompt File: Part3/llm/part3_prompt_cpp_native.txt
+   - Input Context: Part3/llm/input_code_context_cpp.md
+   - Focus: Zero-overhead abstraction, RAII memory management (std::shared_ptr), MinGW GCC -O2 optimization, resolving Windows 15ms clock coarseness using QueryPerformanceCounter (QPC).
+
+Both contributors collaborated to enforce identical scenario specifications, assertions, and test passing criteria (6/6 and 5/5) across all six patterns, merging their results into the unified dataset `data/cross_language.csv`.

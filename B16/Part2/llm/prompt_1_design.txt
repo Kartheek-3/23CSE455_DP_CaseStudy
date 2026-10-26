@@ -1,0 +1,16 @@
+Part 2 of my case study: I must implement three changes in JUnit 6.1.3 (commit f59f60d).
+CH01: a test execution listener that produces a custom summary.
+CH02: a Jupiter extension for a resource that must be created and cleaned up around tests.
+CH03: extend test selection with a configurable filtering policy.
+
+For each change:
+
+What already exists in JUnit for this? (classes, file paths, line numbers)
+What can't the existing feature do? That gap is what I'll build.
+Suggest a small, realistic design for the extension and 3-4 acceptance criteria I can test.
+Can it be done only with an existing extension point, or does JUnit's own code have to change? Which files?
+In what order will JUnit call my new code, and what happens if a test fails, my code throws, or the configuration is wrong?
+Which patterns from my Part 1 list would be preserved / modified / extended / replaced / removed / newly introduced?
+Is there a real code smell near the code I'd touch that justifies one small refactoring?
+
+Keep the designs small. I'm doing this alone.

@@ -1,0 +1,423 @@
+# DaPlanStan — Frontend Observer Verification
+
+Candidate Review 06 · Original source ZIP · Static source and framework-contract verification
+
+## 1. Final decisions
+
+Itinerary Timeline–Map Event Coordination
+
+Proposed GoF Observer
+
+REJECTED
+
+Trip-Scoped Turbo Refresh Notifications
+
+Framework-mediated Observer
+
+CONFIRMED
+
+The distinction is based on what the collaborations actually do, not simply whether they use events.
+
+The timeline–map implementation sends commands to a specifically identified map element through browser events. The Turbo implementation establishes a genuine trip-scoped publication/subscription relationship through the framework's documented contract.
+
+The Turbo confirmation is for a framework-mediated Observer instance, not an independently implemented application-owned GoF Observer framework. Runtime operation and independent human sign-off remain separate verification matters.
+
+## 2. Candidate A — Itinerary Timeline–Map Event Coordination
+
+### Minimum Observer mechanism
+
+A defensible Observer implementation should have an identifiable subject or event publisher, an observer that registers interest, a notification mechanism and a response triggered by that notification.
+
+For this investigation, merely using `CustomEvent` is insufficient. The key question is whether the application implements a meaningful subscription relationship or simply uses events as an indirect way to direct operations at a known component.
+
+### Actual publishers
+
+Publisher 1: `TimelineController#select`
+
+`app/javascript/controllers/timeline_controller.js:11–33`
+
+The method receives a Stimulus click action from an itinerary row. It locates the map using:
+
+```
+const map = document.getElementById("trip-map")
+```
+
+When a selected row is clicked again, it dispatches `map:reset` at lines 21–22.
+
+When a new geocoded row is selected, it dispatches `map:locate` with latitude, longitude and the itinerary-item ID at lines 26–34.
+
+The row click binding is defined in `app/views/trip_items/_item_row.html.erb:7–17`.
+
+Publisher 2: `TripNavController#show`
+
+`app/javascript/controllers/trip_nav_controller.js:31–56`
+
+When the itinerary panel becomes visible after being hidden, it executes:
+
+```
+const mapEl = p.querySelector("[data-controller='map']")
+if (mapEl) mapEl.dispatchEvent(new CustomEvent("map:resize"))
+```
+
+The dispatch occurs at lines 40–43. Its purpose is specifically to tell the map to recalculate its dimensions.
+
+### Actual subscriber
+
+`MapController` registers all three event handlers in `app/javascript/controllers/map_controller.js:51–56`:
+
+```
+this.handleLocate = this.onLocate.bind(this)
+this.handleReset  = this.onReset.bind(this)
+this.handleResize = this.onResize.bind(this)
+
+this.element.addEventListener("map:locate", this.handleLocate)
+this.element.addEventListener("map:reset", this.handleReset)
+this.element.addEventListener("map:resize", this.handleResize)
+```
+
+It removes these listeners during `disconnect`, lines 60–64.
+
+The registered methods perform real application behavior:
+
+| Event        | Handler                  | Source lines | Effect                                       |
+| ------------ | ------------------------ | ------------ | -------------------------------------------- |
+| `map:locate` | `MapController#onLocate` | `92–109`     | Moves map and highlights an itinerary marker |
+| `map:reset`  | `MapController#onReset`  | `77–89`      | Restores markers and overall map bounds      |
+| `map:resize` | `MapController#onResize` | `68–74`      | Recalculates Leaflet map size and bounds     |
+
+These are actual dispatch/listener relationships. They are not merely similarly named methods.&#x20;
+
+
+
+### Does either publisher directly call `MapController`?
+
+No.
+
+Neither publisher retrieves a `MapController` instance and invokes its methods. Instead, each dispatches a browser event onto the map's DOM element.
+
+That creates a degree of implementation separation: the publishers do not need to know how Leaflet markers are created or moved.
+
+However, the separation is limited.
+
+### Strongest evidence against Observer
+
+The producers explicitly identify the destination map element:
+
+- `TimelineController` uses `document.getElementById("trip-map")`.
+- `TripNavController` searches for `[data-controller='map']`.
+
+They also know the map-specific event names.
+
+The collaboration has one intended receiver, `MapController`, and the three events encode requests for particular map operations.
+
+There is no demonstrated application-defined subject whose changing state is published to independently interested observers. Nor does the source show a broader registration contract that allows different application components to subscribe to itinerary-selection changes.
+
+Although the browser's `EventTarget` mechanism technically supports multiple listeners, the application uses it here primarily to deliver targeted commands.
+
+This is the decisive distinction: the code implements a genuine DOM event relationship, but the more precise architectural description is targeted inter-controller communication through browser events.
+
+A one-receiver implementation can qualify as Observer in principle. The rejection is not based on receiver count alone. It is based on the combination of explicit destination targeting, event semantics and the absence of a substantive subject/observer responsibility beyond ordinary DOM event dispatch.
+
+### Origin and decision
+
+Origin: Mixed. DaPlanStan defines event names, dispatch conditions and reactions. The browser supplies `CustomEvent`, `EventTarget`, listener registration and dispatch. Stimulus supplies controller lifecycle integration.
+
+Final decision: REJECTED as a distinct GoF Observer instance.
+
+This is not a rejection of the implementation's functionality. It is a decision not to inflate the design-pattern inventory by relabeling ordinary targeted DOM event communication.
+
+All three events remain documented together as one rejected candidate, rather than three pattern instances.
+
+## 3. Candidate B — Trip-Scoped Turbo Refresh Notifications
+
+CONFIRMED — Framework-mediated Observer
+
+### Essential mechanism
+
+For Observer to be defensible, this collaboration must provide an identifiable notification source, a subscribed receiver and a mechanism that delivers updates to that receiver without the publisher directly invoking its UI-update methods.
+
+The application supplies all the necessary configuration and invocation points. The checked Turbo Rails 2.0.23 source supplies the missing subscription and dispatch infrastructure.
+
+### A. Application publishers
+
+Publisher path 1: `InboxItem` changes
+
+`app/models/inbox_item.rb:1–5`
+
+```
+class InboxItem < ApplicationRecord
+  belongs_to :trip
+  belongs_to :reviewed_by, class_name: "User", optional: true
+
+  broadcasts_refreshes_to :trip
+end
+```
+
+The meaningful line is:
+
+```
+broadcasts_refreshes_to :trip
+```
+
+In Turbo Rails 2.0.23, this declaration registers an `after_commit` callback that schedules a refresh broadcast to the specified streamable, which here resolves to the `InboxItem`'s associated trip.&#x20;
+
+[image](https://www.google.com/s2/favicons?domain=https://github.com\&sz=32)
+
+GitHub
+
+
+
+Thus, the model does not directly find a browser and refresh it. It requests a notification through Turbo's infrastructure.
+
+Publisher path 2: Geocoding completion
+
+`app/jobs/geocode_trip_items_job.rb:4–21`
+
+After processing the requested itinerary items, the job invokes:
+
+```
+Turbo::StreamsChannel.broadcast_refresh_to(trip)
+```
+
+The framework constructs a Turbo Stream refresh action and publishes it to the stream identified by the supplied trip.&#x20;
+
+[image](https://www.google.com/s2/favicons?domain=https://github.com\&sz=32)
+
+GitHub
+
+
+
+These are two triggers for the same kind of trip-scoped notification.
+
+### B. Application subscribers
+
+The trip page declares:
+
+`app/views/trips/show.html.erb:2`
+
+```
+<%= turbo_stream_from @trip %>
+```
+
+The inbox index declares the same subscription:
+
+`app/views/inbox_items/index.html.erb:1`
+
+```
+<%= turbo_stream_from @trip %>
+```
+
+The views do not call the publishing model or geocoding job.
+
+Instead, each rendered page independently subscribes to its trip's stream.
+
+### C. Verified Turbo Rails 2.0.23 contract
+
+I checked the actual tagged framework source rather than relying on a description of Turbo's behavior.
+
+1. Subscription declaration
+
+   `turbo_stream_from` produces a `turbo-cable-stream-source` element containing the channel and signed stream name.&#x20;
+
+   [image](https://www.google.com/s2/favicons?domain=https://github.com\&sz=32)
+
+   GitHub
+
+2. Server-side registration
+
+   `Turbo::StreamsChannel#subscribed` verifies the signed stream name and calls `stream_from` to establish the Action Cable subscription.&#x20;
+
+   [image](https://www.google.com/s2/favicons?domain=https://github.com\&sz=32)
+
+   GitHub
+
+3. Publication
+
+   `broadcast_refresh_to` builds a refresh action. `broadcast_stream_to` delivers its content through `ActionCable.server.broadcast` for the computed stream name.&#x20;
+
+   [image](https://www.google.com/s2/favicons?domain=https://github.com\&sz=32)
+
+   GitHub
+
+   +1
+
+4. Client reaction
+
+   The Turbo client receives the stream action and applies its standard refresh behavior. DaPlanStan's trip view requests morph-style refresh and scroll preservation through meta tags at `app/views/trips/show.html.erb:5–9`.
+
+The resulting structure is:
+
+\#chatgpt-mermaid-\_r_31a\_{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;fill:rgb(237, 237, 237);}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#chatgpt-mermaid-\_r_31a\_ .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-\_r_31a\_ .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-\_r_31a\_ .error-icon{fill:rgb(48, 48, 48);}#chatgpt-mermaid-\_r_31a\_ .error-text{fill:rgb(237, 237, 237);stroke:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_31a\_ .edge-thickness-normal{stroke-width:1px;}#chatgpt-mermaid-\_r_31a\_ .edge-thickness-thick{stroke-width:3.5px;}#chatgpt-mermaid-\_r_31a\_ .edge-pattern-solid{stroke-dasharray:0;}#chatgpt-mermaid-\_r_31a\_ .edge-thickness-invisible{stroke-width:0;fill:none;}#chatgpt-mermaid-\_r_31a\_ .edge-pattern-dashed{stroke-dasharray:3;}#chatgpt-mermaid-\_r_31a\_ .edge-pattern-dotted{stroke-dasharray:2;}#chatgpt-mermaid-\_r_31a\_ .marker{fill:rgb(175, 175, 175);stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_31a\_ .marker.cross{stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_31a\_ svg{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;}#chatgpt-mermaid-\_r_31a\_ p{margin:0;}#chatgpt-mermaid-\_r_31a\_ .label{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_31a\_ .cluster-label text{fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_31a\_ .cluster-label span{color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_31a\_ .cluster-label span p{background-color:transparent;}#chatgpt-mermaid-\_r_31a\_ .label text,#chatgpt-mermaid-\_r_31a\_ span{fill:rgb(237, 237, 237);color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_31a\_ .node rect,#chatgpt-mermaid-\_r_31a\_ .node circle,#chatgpt-mermaid-\_r_31a\_ .node ellipse,#chatgpt-mermaid-\_r_31a\_ .node polygon,#chatgpt-mermaid-\_r_31a\_ .node path{fill:rgb(9, 23, 44);stroke:rgb(31, 78, 148);stroke-width:1px;}#chatgpt-mermaid-\_r_31a\_ .rough-node .label text,#chatgpt-mermaid-\_r_31a\_ .node .label text,#chatgpt-mermaid-\_r_31a\_ .image-shape .label,#chatgpt-mermaid-\_r_31a\_ .icon-shape .label{text-anchor:middle;}#chatgpt-mermaid-\_r_31a\_ .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#chatgpt-mermaid-\_r_31a\_ .rough-node .label,#chatgpt-mermaid-\_r_31a\_ .node .label,#chatgpt-mermaid-\_r_31a\_ .image-shape .label,#chatgpt-mermaid-\_r_31a\_ .icon-shape .label{text-align:center;}#chatgpt-mermaid-\_r_31a\_ .node.clickable{cursor:pointer;}#chatgpt-mermaid-\_r_31a\_ .root .anchor path{fill:rgb(175, 175, 175)!important;stroke-width:0;stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_31a\_ .arrowheadPath{fill:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_31a\_ .edgePath .path{stroke:rgb(175, 175, 175);stroke-width:1px;}#chatgpt-mermaid-\_r_31a\_ .flowchart-link{stroke:rgb(175, 175, 175);fill:none;}#chatgpt-mermaid-\_r_31a\_ .edgeLabel{background-color:rgb(0, 0, 0);text-align:center;}#chatgpt-mermaid-\_r_31a\_ .edgeLabel p{background-color:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_31a\_ .edgeLabel rect{opacity:0.5;background-color:rgb(0, 0, 0);fill:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_31a\_ .labelBkg{background-color:rgba(0, 0, 0, 0.5);}#chatgpt-mermaid-\_r_31a\_ .cluster rect{fill:rgb(48, 48, 48);stroke:rgba(255, 255, 255, 0.15);stroke-width:1px;}#chatgpt-mermaid-\_r_31a\_ .cluster text{fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_31a\_ .cluster span{color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_31a\_ div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:12px;background:rgb(48, 48, 48);border:1px solid rgba(255, 255, 255, 0.15);border-radius:2px;pointer-events:none;z-index:100;}#chatgpt-mermaid-\_r_31a\_ .flowchartTitleText{text-anchor:middle;font-size:18px;fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_31a\_ rect.text{fill:none;stroke-width:0;}#chatgpt-mermaid-\_r_31a\_ .icon-shape,#chatgpt-mermaid-\_r_31a\_ .image-shape{background-color:rgb(0, 0, 0);text-align:center;}#chatgpt-mermaid-\_r_31a\_ .icon-shape p,#chatgpt-mermaid-\_r_31a\_ .image-shape p{background-color:rgb(0, 0, 0);padding:2px;}#chatgpt-mermaid-\_r_31a\_ .icon-shape .label rect,#chatgpt-mermaid-\_r_31a\_ .image-shape .label rect{opacity:0.5;background-color:rgb(0, 0, 0);fill:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_31a\_ .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#chatgpt-mermaid-\_r_31a\_ .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#chatgpt-mermaid-\_r_31a\_ .node .neo-node{stroke:rgb(31, 78, 148);}#chatgpt-mermaid-\_r_31a\_ [data-look="neo"].node rect,#chatgpt-mermaid-\_r_31a\_ [data-look="neo"].cluster rect,#chatgpt-mermaid-\_r_31a\_ [data-look="neo"].node polygon{stroke:url(#chatgpt-mermaid-\_r_31a\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_31a\_ [data-look="neo"].swimlane.cluster rect{filter:none;}#chatgpt-mermaid-\_r_31a\_ [data-look="neo"].node path{stroke:url(#chatgpt-mermaid-\_r_31a\_-gradient);stroke-width:1px;}#chatgpt-mermaid-\_r_31a\_ [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_31a\_ [data-look="neo"].node .neo-line path{stroke:rgb(31, 78, 148);filter:none;}#chatgpt-mermaid-\_r_31a\_ [data-look="neo"].node circle{stroke:url(#chatgpt-mermaid-\_r_31a\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_31a\_ [data-look="neo"].node circle .state-start{fill:#000000;}#chatgpt-mermaid-\_r_31a\_ [data-look="neo"].icon-shape .icon{fill:url(#chatgpt-mermaid-\_r_31a\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_31a\_ [data-look="neo"].icon-shape .icon-neo path{stroke:url(#chatgpt-mermaid-\_r_31a\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_31a\_ .node text{font-size:14px;font-weight:600;letter-spacing:normal;fill:rgb(153, 206, 255);}#chatgpt-mermaid-\_r_31a\_ .edgeLabels text{font-size:13px;font-weight:600;letter-spacing:-0.08px;fill:rgb(153, 206, 255);}#chatgpt-mermaid-\_r_31a\_ .node tspan[font-weight="normal"],#chatgpt-mermaid-\_r_31a\_ .edgeLabels tspan[font-weight="normal"]{font-weight:600;}#chatgpt-mermaid-\_r_31a\_ .edgeLabel .label rect{opacity:1;rx:13px;ry:13px;fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-width:1px;}#chatgpt-mermaid-\_r_31a\_ .node rect,#chatgpt-mermaid-\_r_31a\_ .node circle,#chatgpt-mermaid-\_r_31a\_ .node ellipse,#chatgpt-mermaid-\_r_31a\_ .node polygon,#chatgpt-mermaid-\_r_31a\_ .node path{fill:rgb(0, 40, 77);stroke:rgba(255, 255, 255, 0.1);stroke-width:1px;}#chatgpt-mermaid-\_r_31a\_ .node rect{rx:16px;ry:16px;}#chatgpt-mermaid-\_r_31a\_ .node.mermaid-decision .label-container{fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-dasharray:2,2;}#chatgpt-mermaid-\_r_31a\_ .edgePaths .flowchart-link{stroke:rgb(175, 175, 175);stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;}#chatgpt-mermaid-\_r_31a\_ .marker{fill:rgb(175, 175, 175);stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_31a\_ :root{--mermaid-font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";}InboxItem after_commitTurbo refresh broadcastGeocodeTripItemsJobcompletionTrip show view subscriptionTurbo::StreamsChannelInbox index subscriptionAction Cable deliverySubscribed Turbo browsercomponentsTurbo refresh action
+
+The source and framework contract therefore establish an actual publication/subscription relationship, not merely an event-like method name.
+
+### 4. Comparison with Outbound Mail Delivery Logging
+
+| Dimension                           | Outbound Mail Delivery Logging        | Trip-Scoped Turbo Refresh Notifications                                        |
+| ----------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------ |
+| Pattern                             | Observer                              | Observer                                                                       |
+| Application publisher configuration | `register_observer(MailLogger)`       | `broadcasts_refreshes_to :trip` and `broadcast_refresh_to(trip)`               |
+| Framework mechanism                 | Action Mailer / Mail gem              | Turbo Rails / Action Cable                                                     |
+| Concrete observer/subscriber        | Application-defined `MailLogger`      | Framework-provided browser stream subscriber instantiated by application views |
+| Registration/subscription           | Explicit registration call            | `turbo_stream_from @trip` generates subscription                               |
+| Notification callback/reaction      | `MailLogger.delivered_email(message)` | Turbo refresh action handled by browser-side Turbo                             |
+| Application-defined reaction        | Custom log message                    | Choice of trip stream and refresh behavior/configuration                       |
+| Source mechanism                    | Confirmed                             | Confirmed                                                                      |
+| Implementation origin               | Mixed                                 | Mainly framework-provided                                                      |
+
+### Why Turbo has slightly weaker application ownership
+
+The mail logging instance includes a concrete observer method written by DaPlanStan:
+
+`MailLogger.delivered_email(message)`, `config/initializers/mail_logger.rb:2–4`.
+
+The Turbo collaboration does not implement a custom browser observer class or notification callback. Instead, its concrete subscriber is provided by Turbo, and DaPlanStan activates it through the view helper.
+
+Nevertheless, the application explicitly defines both sides of the communication:
+
+- It chooses the trip as the notification subject.
+- It declares model-driven and job-driven broadcasts.
+- It renders pages subscribing to that trip's stream.
+- The versioned framework implementation connects those publishers and subscribers.
+
+Under the same acceptance rule used for the mail Observer—framework-mediated collaborations are eligible when the application explicitly participates in a documented Observer mechanism—this is sufficient.
+
+Final decision: CONFIRMED as a framework-mediated Observer instance.
+
+It should not be described as a custom GoF Observer implementation written entirely by DaPlanStan.
+
+### Stable instance name
+
+Trip-Scoped Turbo Refresh Notifications
+
+This preserves the name already used during the geocoding and inbound-email investigations.
+
+It also prevents the discovery process from introducing multiple labels for the same mechanism.
+
+## 5. Final decision table
+
+| Candidate                                 | Actual mechanism                                                                                                                                | Strongest objection                                                                                                                             | Origin                                                             | Final decision |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ | -------------- |
+| Itinerary Timeline–Map Event Coordination | Two controllers dispatch map-specific DOM events to a known map element; `MapController` registers listeners and reacts                         | Targeted commands to one intended component are better explained as ordinary DOM event communication than a substantive Observer responsibility | Mixed application/browser                                          | REJECTED       |
+| Trip-Scoped Turbo Refresh Notifications   | Application declares trip-stream subscriptions and publishes refresh requests; Turbo Rails and Action Cable implement subscription and delivery | Concrete subscriber and delivery mechanism are framework-provided, with no custom application observer callback                                 | Mainly framework-provided, with explicit application participation | CONFIRMED      |
+
+## 6. Final participant-role mapping
+
+Only the confirmed Turbo collaboration receives an inventory participant mapping.
+
+| Pattern role / responsibility         | Actual participant                                                          | Source location                                           |
+| ------------------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------- |
+| Publication source — model            | `InboxItem`                                                                 | `app/models/inbox_item.rb:1–5`                            |
+| Publication source — job              | `GeocodeTripItemsJob#perform`                                               | `app/jobs/geocode_trip_items_job.rb:4–21`                 |
+| Publisher/broadcast infrastructure    | `Turbo::StreamsChannel` and `Turbo::Streams::Broadcasts`                    | Turbo Rails 2.0.23 dependency source                      |
+| Subscription declaration — trip page  | `turbo_stream_from @trip`                                                   | `app/views/trips/show.html.erb:2`                         |
+| Subscription declaration — inbox page | `turbo_stream_from @trip`                                                   | `app/views/inbox_items/index.html.erb:1`                  |
+| Subscription implementation           | `Turbo::StreamsChannel#subscribed`                                          | Turbo Rails 2.0.23                                        |
+| Concrete subscriber                   | Turbo cable stream source element rendered for each subscribed browser page | Generated by Turbo Rails helper and client infrastructure |
+| Delivery mechanism                    | Action Cable stream subscription and broadcasting                           | Rails framework                                           |
+| Notification reaction                 | Turbo refresh processing                                                    | Turbo browser runtime                                     |
+| Application refresh configuration     | Morph refresh and scroll preservation                                       | `app/views/trips/show.html.erb:5–9`                       |
+
+There is no independently declared DaPlanStan `Subject` interface, `Observer` interface or custom subscriber callback class. Those roles are implemented through the documented framework infrastructure.
+
+## 7. Counting decision
+
+### Observer instances after frontend verification
+
+| Outbound Mail Delivery Logging            | 1 confirmed  |
+| ----------------------------------------- | ------------ |
+| Trip-Scoped Turbo Refresh Notifications   | 1 confirmed  |
+| Itinerary Timeline–Map Event Coordination | 0 — rejected |
+
+Total source-confirmed Observer instances
+
+# 2
+
+The Turbo instance should be counted once, even though it appears in both the geocoding and inbound-email workflows and has two subscribing views.
+
+Its instance boundary is the trip-scoped notification mechanism, not each model callback, job invocation, message or connected browser.
+
+This changes the previous Turbo candidate from uncertain to confirmed. It does not add a newly discovered, separate Turbo collaboration.
+
+## 8. Source evidence to preserve
+
+For the confirmed Turbo instance, preserve the source declarations and versioned framework contract:
+
+| Evidence                                     | Location                                   | Purpose                                   |
+| -------------------------------------------- | ------------------------------------------ | ----------------------------------------- |
+| Inbox broadcast declaration                  | `app/models/inbox_item.rb:5`               | Establish model publication               |
+| Explicit geocoding broadcast                 | `app/jobs/geocode_trip_items_job.rb:20–21` | Establish job publication                 |
+| Trip page subscription                       | `app/views/trips/show.html.erb:2`          | Establish receiving page                  |
+| Inbox page subscription                      | `app/views/inbox_items/index.html.erb:1`   | Establish second receiving page           |
+| Turbo refresh configuration                  | `app/views/trips/show.html.erb:5–9`        | Record requested browser refresh behavior |
+| Dependency version                           | `Gemfile.lock:424`                         | Identify Turbo Rails 2.0.23               |
+| Tagged `Turbo::Broadcastable` implementation | Turbo Rails 2.0.23 source                  | Establish after-commit notification       |
+| Tagged subscription channel                  | StreamsChannel source                      | Establish stream registration             |
+| Tagged broadcasts module                     | Broadcasts source                          | Establish delivery                        |
+
+For the rejected timeline–map candidate, retain the three event dispatch sites, listener registration/removal, map handlers and the explanation for why targeted DOM communication is a stronger classification.
+
+## 9. Runtime questions — separate from pattern identification
+
+The confirmed static mechanism does not prove every notification produces the desired UI outcome.
+
+The following remain appropriate for runtime testing:
+
+- Whether an active trip page and inbox page both receive refresh actions after an `InboxItem` commit.
+- Whether a geocoding job's explicit broadcast refreshes the subscribed trip page.
+- Whether `data-turbo-permanent` preserves an outdated Leaflet map or marker collection despite a successful page refresh.
+- Whether repeated or closely spaced broadcasts are debounced as expected.
+- Whether timeline-to-map events behave correctly when desktop and mobile timelines are both present.
+- Whether listeners reconnect correctly after navigation and Turbo morphing.
+
+These do not need to block the static identification of the Turbo Observer collaboration. They should be recorded as functional and integration-verification questions.
+
+## 10. Final frontend candidate-review record
+
+### Frontend Interaction — Final Candidate Verification
+
+**Source version:** Original DaPlanStan uploaded source ZIP\
+**Review scope:** Application-defined map events and trip-scoped Turbo refresh notifications\
+**Method:** Static application-source verification and Turbo Rails 2.0.23 framework-contract verification\
+**Runtime tests:** Not performed\
+**Independent human sign-off:** Pending
+
+**Candidate 1: Itinerary Timeline–Map Event Coordination**
+
+- Proposed pattern: Observer
+- Final decision: REJECTED
+- Origin: Mixed application/browser behavior
+
+`TimelineController#select` publishes `map:locate` and `map:reset` through DOM events. `TripNavController#show` publishes `map:resize`. `MapController` registers corresponding listeners and uses Leaflet to update the map.
+
+Although explicit event dispatch and registration exist, the producers target the known map element and use map-specific event names to request particular operations. The stronger explanation is ordinary targeted DOM event communication rather than a distinct GoF Observer collaboration.
+
+Preserve all three events as one rejected candidate. Do not create pattern-inventory rows for them.
+
+**Candidate 2: Trip-Scoped Turbo Refresh Notifications**
+
+- Pattern: Observer
+- Category: GoF Behavioral — framework-mediated implementation
+- Final decision: CONFIRMED
+- Stable instance name: Trip-Scoped Turbo Refresh Notifications
+- Origin: Mixed, with framework-provided subscription and notification infrastructure
+
+`InboxItem` declares `broadcasts_refreshes_to :trip`, and `GeocodeTripItemsJob` calls `Turbo::StreamsChannel.broadcast_refresh_to(trip)`. The trip show page and inbox index subscribe through `turbo_stream_from @trip`.
+
+Turbo Rails 2.0.23 provides the documented subscription and broadcasting mechanism. Its stream channel establishes subscriptions using signed stream names, while broadcasts deliver refresh actions through Action Cable.
+
+The application configures publishers and subscribers for the same trip-scoped stream. This supports a framework-mediated Observer classification without claiming that DaPlanStan implements its own observer registry or browser notification runtime.
+
+**Counting decision**
+
+Count one Trip-Scoped Turbo Refresh Notifications instance across geocoding and inbound-email processing.
+
+Together with Outbound Mail Delivery Logging, there are two source-confirmed Observer instances in the investigations completed so far.
+
+**Limitations**
+
+Runtime stream delivery, Turbo morphing behavior, permanent-map updates and browser reconnection have not been tested. These remain separate from the static pattern decision.
+
+The original archive's correspondence with the stated Git commit and independent human verification also remain unresolved.
+
+Frontend investigation conclusion: One proposed Observer classification is rejected as targeted DOM event communication. The existing Turbo candidate is confirmed as one framework-mediated Observer collaboration. No additional Observer instance should be created for its repeated appearances across source areas.

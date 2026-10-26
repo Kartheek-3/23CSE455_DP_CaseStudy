@@ -1,0 +1,200 @@
+CH03 demo run on 2026-10-10 18:27, openjdk version "25.0.4.1" 2026-08-18 LTS
+
+================================================================
+== 1 BEFORE: official 6.1.3 ignores the policy keys (all 4 tests run, 2 flaky fail)
+== jar: junit-platform-console-standalone-6.1.3.jar   args: --config junit.platform.filter.policy.mode=exclude --config junit.platform.filter.policy.tags=flaky
+================================================================
+╷
+├─ JUnit Platform Suite ✔
+├─ JUnit Jupiter ✔
+│  ├─ InventoryTests ✔
+│  │  └─ warehouseSync() ✘ simulated flaky warehouse sync ==> expected: <true> but was: <false>
+│  └─ CheckoutTests ✔
+│     ├─ paymentGatewayTimeout() ✘ simulated flaky external call ==> expected: <OK> but was: <TIMEOUT>
+│     ├─ fastTotal() ✔
+│     └─ fastDiscount() ✔
+└─ JUnit Vintage ✔
+Failures (2):
+  JUnit Jupiter:InventoryTests:warehouseSync()
+    MethodSource [className = 'demo.InventoryTests', methodName = 'warehouseSync', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: simulated flaky warehouse sync ==> expected: <true> but was: <false>
+       org.junit.jupiter.api.Assertions.assertTrue(Assertions.java:232)
+       demo.InventoryTests.warehouseSync(InventoryTests.java:13)
+  JUnit Jupiter:CheckoutTests:paymentGatewayTimeout()
+    MethodSource [className = 'demo.CheckoutTests', methodName = 'paymentGatewayTimeout', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: simulated flaky external call ==> expected: <OK> but was: <TIMEOUT>
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1210)
+       demo.CheckoutTests.paymentGatewayTimeout(CheckoutTests.java:25)
+Test run finished after 36 ms
+[         5 containers found      ]
+[         0 containers skipped    ]
+[         5 containers started    ]
+[         0 containers aborted    ]
+[         5 containers successful ]
+[         0 containers failed     ]
+[         4 tests found           ]
+[         0 tests skipped         ]
+[         4 tests started         ]
+[         0 tests aborted         ]
+[         2 tests successful      ]
+[         2 tests failed          ]
+== exit code: 1
+
+================================================================
+== 2 AFTER, no policy keys: identical to 1 (default mode is off)
+== jar: junit-console-b16-ch03.jar   args: 
+================================================================
+╷
+├─ JUnit Platform Suite ✔
+├─ JUnit Jupiter ✔
+│  ├─ InventoryTests ✔
+│  │  └─ warehouseSync() ✘ simulated flaky warehouse sync ==> expected: <true> but was: <false>
+│  └─ CheckoutTests ✔
+│     ├─ paymentGatewayTimeout() ✘ simulated flaky external call ==> expected: <OK> but was: <TIMEOUT>
+│     ├─ fastTotal() ✔
+│     └─ fastDiscount() ✔
+└─ JUnit Vintage ✔
+Failures (2):
+  JUnit Jupiter:InventoryTests:warehouseSync()
+    MethodSource [className = 'demo.InventoryTests', methodName = 'warehouseSync', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: simulated flaky warehouse sync ==> expected: <true> but was: <false>
+       org.junit.jupiter.api.Assertions.assertTrue(Assertions.java:232)
+       demo.InventoryTests.warehouseSync(InventoryTests.java:13)
+  JUnit Jupiter:CheckoutTests:paymentGatewayTimeout()
+    MethodSource [className = 'demo.CheckoutTests', methodName = 'paymentGatewayTimeout', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: simulated flaky external call ==> expected: <OK> but was: <TIMEOUT>
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1210)
+       demo.CheckoutTests.paymentGatewayTimeout(CheckoutTests.java:25)
+Test run finished after 37 ms
+[         5 containers found      ]
+[         0 containers skipped    ]
+[         5 containers started    ]
+[         0 containers aborted    ]
+[         5 containers successful ]
+[         0 containers failed     ]
+[         4 tests found           ]
+[         0 tests skipped         ]
+[         4 tests started         ]
+[         0 tests aborted         ]
+[         2 tests successful      ]
+[         2 tests failed          ]
+== exit code: 1
+
+================================================================
+== 3 AFTER, mode=exclude tags=flaky: normal CI job, flaky tests removed before execution
+== jar: junit-console-b16-ch03.jar   args: --config junit.platform.filter.policy.mode=exclude --config junit.platform.filter.policy.tags=flaky
+================================================================
+[JUL CONFIG] 0 containers and 2 tests were excluded by filter policy (mode=exclude)
+╷
+├─ JUnit Platform Suite ✔
+├─ JUnit Jupiter ✔
+│  └─ CheckoutTests ✔
+│     ├─ fastTotal() ✔
+│     └─ fastDiscount() ✔
+└─ JUnit Vintage ✔
+Test run finished after 36 ms
+[         4 containers found      ]
+[         0 containers skipped    ]
+[         4 containers started    ]
+[         0 containers aborted    ]
+[         4 containers successful ]
+[         0 containers failed     ]
+[         2 tests found           ]
+[         0 tests skipped         ]
+[         2 tests started         ]
+[         0 tests aborted         ]
+[         2 tests successful      ]
+[         0 tests failed          ]
+== exit code: 0
+
+================================================================
+== 4 AFTER, mode=only tags=flaky: quarantine job, same list, only flaky tests run
+== jar: junit-console-b16-ch03.jar   args: --config junit.platform.filter.policy.mode=only --config junit.platform.filter.policy.tags=flaky
+================================================================
+[JUL CONFIG] 0 containers and 2 tests were not selected by filter policy (mode=only)
+╷
+├─ JUnit Platform Suite ✔
+├─ JUnit Jupiter ✔
+│  ├─ InventoryTests ✔
+│  │  └─ warehouseSync() ✘ simulated flaky warehouse sync ==> expected: <true> but was: <false>
+│  └─ CheckoutTests ✔
+│     └─ paymentGatewayTimeout() ✘ simulated flaky external call ==> expected: <OK> but was: <TIMEOUT>
+└─ JUnit Vintage ✔
+Failures (2):
+  JUnit Jupiter:InventoryTests:warehouseSync()
+    MethodSource [className = 'demo.InventoryTests', methodName = 'warehouseSync', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: simulated flaky warehouse sync ==> expected: <true> but was: <false>
+       org.junit.jupiter.api.Assertions.assertTrue(Assertions.java:232)
+       demo.InventoryTests.warehouseSync(InventoryTests.java:13)
+  JUnit Jupiter:CheckoutTests:paymentGatewayTimeout()
+    MethodSource [className = 'demo.CheckoutTests', methodName = 'paymentGatewayTimeout', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: simulated flaky external call ==> expected: <OK> but was: <TIMEOUT>
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1210)
+       demo.CheckoutTests.paymentGatewayTimeout(CheckoutTests.java:25)
+Test run finished after 36 ms
+[         5 containers found      ]
+[         0 containers skipped    ]
+[         5 containers started    ]
+[         0 containers aborted    ]
+[         5 containers successful ]
+[         0 containers failed     ]
+[         2 tests found           ]
+[         0 tests skipped         ]
+[         2 tests started         ]
+[         0 tests aborted         ]
+[         0 tests successful      ]
+[         2 tests failed          ]
+== exit code: 1
+
+================================================================
+== 5 AFTER, policy only methods=.*#fast.* AND console --include-tag 'smoke | flaky': policy narrows, never re-includes
+== jar: junit-console-b16-ch03.jar   args: --config junit.platform.filter.policy.mode=only --config junit.platform.filter.policy.methods=.*#fast.* --include-tag smoke | flaky
+================================================================
+[JUL CONFIG] 0 containers and 2 tests were not selected by filter policy (mode=only)
+[JUL CONFIG] 0 containers and 1 tests were excluded because tags do not match tag expression(s): [smoke | flaky]
+╷
+├─ JUnit Platform Suite ✔
+├─ JUnit Jupiter ✔
+│  └─ CheckoutTests ✔
+│     └─ fastTotal() ✔
+└─ JUnit Vintage ✔
+Test run finished after 28 ms
+[         4 containers found      ]
+[         0 containers skipped    ]
+[         4 containers started    ]
+[         0 containers aborted    ]
+[         4 containers successful ]
+[         0 containers failed     ]
+[         1 tests found           ]
+[         0 tests skipped         ]
+[         1 tests started         ]
+[         0 tests aborted         ]
+[         1 tests successful      ]
+[         0 tests failed          ]
+== exit code: 0
+
+================================================================
+== 6 AFTER, failure handling: mode=bogus -> discovery fails, no test runs
+== jar: junit-console-b16-ch03.jar   args: --config junit.platform.filter.policy.mode=bogus
+================================================================
+org.junit.platform.commons.JUnitException: Invalid value 'bogus' for configuration parameter 'junit.platform.filter.policy.mode': expected off, exclude or only
+[console usage help omitted]
+== exit code: 255
+
+================================================================
+== 7 AFTER, failure handling: mode=exclude with an invalid tag expression
+== jar: junit-console-b16-ch03.jar   args: --config junit.platform.filter.policy.mode=exclude --config junit.platform.filter.policy.tags=flaky &
+================================================================
+org.junit.platform.commons.JUnitException: Invalid value for configuration parameter 'junit.platform.filter.policy.tags': Unable to parse tag expression "flaky &": missing rhs operand for '&' at index <6>
+Caused by: org.junit.platform.commons.PreconditionViolationException: Unable to parse tag expression "flaky &": missing rhs operand for '&' at index <6>
+[console usage help omitted]
+== exit code: 255
+
+================================================================
+== 8 AFTER, failure handling: mode=only with no tags and no methods
+== jar: junit-console-b16-ch03.jar   args: --config junit.platform.filter.policy.mode=only
+================================================================
+org.junit.platform.commons.JUnitException: Configuration parameter 'junit.platform.filter.policy.mode' is 'only' but neither 'junit.platform.filter.policy.tags' nor 'junit.platform.filter.policy.methods' is set
+[console usage help omitted]
+== exit code: 255
+

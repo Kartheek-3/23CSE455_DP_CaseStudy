@@ -1,0 +1,31 @@
+classDiagram
+direction TB
+class SettingsView["settings/show.html.erb"] {
+  <<application view>>
+}
+class TravelersController {
+  <<application>>
+  +create()
+  +set_account()
+}
+class Account {
+  <<application>>
+}
+class Traveler {
+  <<application>>
+}
+class User {
+  <<application>>
+}
+class InvitationMailer {
+  <<application>>
+  +invite()
+}
+
+SettingsView ..> TravelersController : submits enrollment request
+TravelersController ..> Account : authorizes owner and scopes travelers
+TravelersController ..> User : searches registered user
+TravelersController ..> Traveler : creates account participant
+TravelersController ..> InvitationMailer : requests email invitation
+Account --> Traveler : has many
+Traveler --> User : optionally belongs to

@@ -1,0 +1,242 @@
+[
+  {
+    "pattern_name": "Strategy",
+    "instance_name": "Ride Fare Pricing",
+    "language": "Java",
+    "snippet_path": "Part3/strategy_ride_fare/java/RideFare.java",
+    "source_loc": 57,
+    "max_function_cc": 3,
+    "runtime_compiler": "java version 25 2025-09-16 LTS",
+    "test_command": "cd Part3/strategy_ride_fare/java && javac -d <build> RideFare.java RideFareTest.java && java -cp <build> RideFareTest",
+    "test_result": "8/8 passed",
+    "median_process_ms": 102.7,
+    "functions": 10,
+    "runs_ms": [
+      102.7,
+      101.1,
+      103.3,
+      102.0,
+      109.9
+    ]
+  },
+  {
+    "pattern_name": "Strategy",
+    "instance_name": "Ride Fare Pricing",
+    "language": "Python",
+    "snippet_path": "Part3/strategy_ride_fare/python/ride_fare.py",
+    "source_loc": 51,
+    "max_function_cc": 3,
+    "runtime_compiler": "Python 3.13.7",
+    "test_command": "cd Part3/strategy_ride_fare/python && python test_ride_fare.py",
+    "test_result": "8/8 passed",
+    "median_process_ms": 59.8,
+    "functions": 8,
+    "runs_ms": [
+      62.2,
+      65.4,
+      59.7,
+      59.7,
+      59.8
+    ]
+  },
+  {
+    "pattern_name": "Strategy",
+    "instance_name": "Ride Fare Pricing",
+    "language": "JavaScript",
+    "snippet_path": "Part3/strategy_ride_fare/javascript/ride_fare.js",
+    "source_loc": 47,
+    "max_function_cc": 3,
+    "runtime_compiler": "Node.js v22.18.0",
+    "test_command": "cd Part3/strategy_ride_fare/javascript && node test_ride_fare.js",
+    "test_result": "8/8 passed",
+    "median_process_ms": 49.4,
+    "functions": 8,
+    "runs_ms": [
+      59.2,
+      50.3,
+      46.1,
+      49.4,
+      42.8
+    ]
+  },
+  {
+    "pattern_name": "Strategy",
+    "instance_name": "Ride Fare Pricing",
+    "language": "C++",
+    "snippet_path": "Part3/strategy_ride_fare/cpp/ride_fare.hpp",
+    "source_loc": 69,
+    "max_function_cc": 3,
+    "runtime_compiler": "g++ (GCC) 13.5.0 -std=c++20 -O2 (Docker gcc:13)",
+    "test_command": "cd Part3/strategy_ride_fare/cpp && g++ -std=c++20 -O2 -Wall -Wextra test_ride_fare.cpp -o test_bin && ./test_bin",
+    "test_result": "8/8 passed",
+    "median_process_ms": 2.1,
+    "functions": 8,
+    "runs_ms": [
+      2.1,
+      2.4,
+      2.2,
+      1.9,
+      2.0
+    ]
+  },
+  {
+    "pattern_name": "State",
+    "instance_name": "Trip Lifecycle and Cancellation",
+    "language": "Java",
+    "snippet_path": "Part3/state_trip_lifecycle/java/TripLifecycle.java",
+    "source_loc": 58,
+    "max_function_cc": 6,
+    "runtime_compiler": "java version 25 2025-09-16 LTS",
+    "test_command": "cd Part3/state_trip_lifecycle/java && javac -d <build> TripLifecycle.java TripLifecycleTest.java && java -cp <build> TripLifecycleTest",
+    "test_result": "8/8 passed",
+    "median_process_ms": 98.3,
+    "functions": 21,
+    "runs_ms": [
+      95.8,
+      98.3,
+      101.6,
+      94.8,
+      100.1
+    ]
+  },
+  {
+    "pattern_name": "State",
+    "instance_name": "Trip Lifecycle and Cancellation",
+    "language": "Python",
+    "snippet_path": "Part3/state_trip_lifecycle/python/trip_lifecycle.py",
+    "source_loc": 52,
+    "max_function_cc": 2,
+    "runtime_compiler": "Python 3.13.7",
+    "test_command": "cd Part3/state_trip_lifecycle/python && python test_trip_lifecycle.py",
+    "test_result": "8/8 passed",
+    "median_process_ms": 31.0,
+    "functions": 17,
+    "runs_ms": [
+      30.9,
+      31.2,
+      31.0,
+      41.5,
+      29.1
+    ]
+  },
+  {
+    "pattern_name": "State",
+    "instance_name": "Trip Lifecycle and Cancellation",
+    "language": "JavaScript",
+    "snippet_path": "Part3/state_trip_lifecycle/javascript/trip_lifecycle.js",
+    "source_loc": 41,
+    "max_function_cc": 2,
+    "runtime_compiler": "Node.js v22.18.0",
+    "test_command": "cd Part3/state_trip_lifecycle/javascript && node test_trip_lifecycle.js",
+    "test_result": "8/8 passed",
+    "median_process_ms": 45.3,
+    "functions": 16,
+    "runs_ms": [
+      42.8,
+      49.7,
+      44.6,
+      45.5,
+      45.3
+    ]
+  },
+  {
+    "pattern_name": "State",
+    "instance_name": "Trip Lifecycle and Cancellation",
+    "language": "C++",
+    "snippet_path": "Part3/state_trip_lifecycle/cpp/trip_lifecycle.hpp",
+    "source_loc": 57,
+    "max_function_cc": 6,
+    "runtime_compiler": "g++ (GCC) 13.5.0 -std=c++20 -O2 (Docker gcc:13)",
+    "test_command": "cd Part3/state_trip_lifecycle/cpp && g++ -std=c++20 -O2 -Wall -Wextra test_trip_lifecycle.cpp -o test_bin && ./test_bin",
+    "test_result": "8/8 passed",
+    "median_process_ms": 1.9,
+    "functions": 21,
+    "runs_ms": [
+      1.9,
+      2.4,
+      1.8,
+      1.9,
+      2.0
+    ]
+  },
+  {
+    "pattern_name": "Observer",
+    "instance_name": "Ride Event Notification",
+    "language": "Java",
+    "snippet_path": "Part3/observer_ride_notification/java/RideNotification.java",
+    "source_loc": 33,
+    "max_function_cc": 3,
+    "runtime_compiler": "java version 25 2025-09-16 LTS",
+    "test_command": "cd Part3/observer_ride_notification/java && javac -d <build> RideNotification.java RideNotificationTest.java && java -cp <build> RideNotificationTest",
+    "test_result": "6/6 passed",
+    "median_process_ms": 110.8,
+    "functions": 7,
+    "runs_ms": [
+      116.9,
+      116.1,
+      106.9,
+      110.8,
+      110.7
+    ]
+  },
+  {
+    "pattern_name": "Observer",
+    "instance_name": "Ride Event Notification",
+    "language": "Python",
+    "snippet_path": "Part3/observer_ride_notification/python/ride_notification.py",
+    "source_loc": 31,
+    "max_function_cc": 3,
+    "runtime_compiler": "Python 3.13.7",
+    "test_command": "cd Part3/observer_ride_notification/python && python test_ride_notification.py",
+    "test_result": "6/6 passed",
+    "median_process_ms": 63.5,
+    "functions": 6,
+    "runs_ms": [
+      63.5,
+      64.9,
+      62.3,
+      61.6,
+      71.4
+    ]
+  },
+  {
+    "pattern_name": "Observer",
+    "instance_name": "Ride Event Notification",
+    "language": "JavaScript",
+    "snippet_path": "Part3/observer_ride_notification/javascript/ride_notification.js",
+    "source_loc": 24,
+    "max_function_cc": 2,
+    "runtime_compiler": "Node.js v22.18.0",
+    "test_command": "cd Part3/observer_ride_notification/javascript && node test_ride_notification.js",
+    "test_result": "6/6 passed",
+    "median_process_ms": 46.3,
+    "functions": 6,
+    "runs_ms": [
+      46.0,
+      56.1,
+      43.8,
+      52.4,
+      46.3
+    ]
+  },
+  {
+    "pattern_name": "Observer",
+    "instance_name": "Ride Event Notification",
+    "language": "C++",
+    "snippet_path": "Part3/observer_ride_notification/cpp/ride_notification.hpp",
+    "source_loc": 40,
+    "max_function_cc": 3,
+    "runtime_compiler": "g++ (GCC) 13.5.0 -std=c++20 -O2 (Docker gcc:13)",
+    "test_command": "cd Part3/observer_ride_notification/cpp && g++ -std=c++20 -O2 -Wall -Wextra test_ride_notification.cpp -o test_bin && ./test_bin",
+    "test_result": "6/6 passed",
+    "median_process_ms": 2.3,
+    "functions": 5,
+    "runs_ms": [
+      2.3,
+      2.5,
+      2.7,
+      2.1,
+      2.0
+    ]
+  }
+]

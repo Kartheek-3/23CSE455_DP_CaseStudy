@@ -1,0 +1,18 @@
+# plugin_architecture / java
+# working folder: Part3/code/pattern_plugin_architecture/java
+# runtime: OpenJDK 17.0.19 (javac 17.0.19)
+$ javac -d build *.java
+
+
+$ java -cp build PluginHostTest ../../../test-cases/plugin_architecture.txt
+PASS no_plugins_no_change
+PASS interruptors_run_in_install_order
+PASS abort_removes_handlers
+PASS actions_collected
+PASS reinstall_after_abort
+PASS failed_install_keeps_handlers
+PASS abort_cleans_failed_plugin
+passed 7/7
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 79.0, 78.5, 94.4, 79.0, 75.9 -> median 79.0

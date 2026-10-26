@@ -1,0 +1,4 @@
+part,model_and_date,prompt_file,input_file,output_file,evaluation,verification_file
+Pattern discovery,"Codex (GPT-5; 2026-10-09)",Part1/llm/part1_prompt.txt,Part1/code/digital-wallet,Part1/llm/part1_output.md,"passed: pattern discovery and source collaboration claims manually checked against the baseline implementation",Part1/evidence/baseline_scope.md
+Evolution,"Codex (GPT-5; 2026-10-09)",Part2/llm/part2_prompt.txt,Part2/code/digital-wallet,Part2/llm/part2_output.md,"passed: evolution scenarios and acceptance checks passed; Java runtime verified",Part2/evidence/manual_acceptance_results.md
+Cross-language analysis,"Codex (GPT-5; 2026-10-09)",Part3/llm/part3_prompt.txt,Part3,Part3/llm/part3_output.md,"passed: Python, JavaScript, Java, and C++ checks passed",Part3/evidence

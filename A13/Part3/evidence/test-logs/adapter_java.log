@@ -1,0 +1,19 @@
+# adapter / java
+# working folder: Part3/code/pattern_adapter/java
+# runtime: OpenJDK 17.0.19 (javac 17.0.19)
+$ javac -d build *.java
+
+
+$ java -cp build TelemetryRegistryTest ../../../test-cases/adapter.txt
+PASS no_adapter_runs_function
+PASS message_with_user
+PASS message_without_user
+PASS span_returns_value
+PASS span_propagates_error
+PASS shutdown_has_time_limit
+PASS two_adapters_fan_out
+PASS two_adapters_nest_spans
+passed 8/8
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 88.5, 89.1, 89.0, 94.9, 96.6 -> median 89.1

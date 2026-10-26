@@ -1,0 +1,2 @@
+part,model_and_date,prompt_file,input_file,output_file,evaluation,verification_file
+Part3,GPT-5.6 Luna - 2026-10-06,Part3/llm/part3_prompt.txt,,,Reconstructed implementation record; no separate literal model-output transcript was preserved. The implementations were executed and independently verified with the language-specific test programs and raw timing files.,Part3/pattern_crosslanguage.csv

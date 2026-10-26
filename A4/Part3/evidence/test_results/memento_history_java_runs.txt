@@ -1,0 +1,32 @@
+Pattern: Memento
+Instance: Hearth Config History & Edit Transaction
+Language: Java
+Compiler/Runtime: javac 23.0.2 / OpenJDK Java 23.0.2+7-58
+Warmup + 5 Runs Raw Output:
+--- Run 1 ---
+RESULT: 6/6 passed
+TIME_MS: 2.533
+
+
+--- Run 2 ---
+RESULT: 6/6 passed
+TIME_MS: 1.962
+
+
+--- Run 3 ---
+RESULT: 6/6 passed
+TIME_MS: 2.118
+
+
+--- Run 4 ---
+RESULT: 6/6 passed
+TIME_MS: 4.951
+
+
+--- Run 5 ---
+RESULT: 6/6 passed
+TIME_MS: 2.520
+
+
+Measured Milliseconds: [2.533, 1.962, 2.118, 4.951, 2.52]
+Computed Median Milliseconds: 2.520

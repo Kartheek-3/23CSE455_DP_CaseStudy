@@ -1,0 +1,16 @@
+case_id	policy_code	seconds_until_start	amount_cents	currency
+S01	moderate	259200	20000	EUR
+S02	moderate	259199	20000	EUR
+S03	moderate	86400	20000	EUR
+S04	moderate	86399	20000	EUR
+S05	flexible	86400	20000	EUR
+S06	flexible	86399	20000	EUR
+S07	flexible	1	20000	EUR
+S08	flexible	0	20000	EUR
+S09	strict	345600	20000	EUR
+S10	moderate	172800	5	EUR
+S11	strict	100	0	EUR
+S12	unknown	86400	20000	EUR
+S13	flexible	86400	-100	EUR
+S14	flexible	86400	20000	JPY
+S15	flexible	~	20000	EUR

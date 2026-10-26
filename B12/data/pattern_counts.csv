@@ -1,0 +1,28 @@
+source_version,summary,pattern_name,count
+940daee,per_pattern,Strategy,1
+940daee,per_pattern,Repository,4
+940daee,per_pattern,Dependency Injection / Inversion of Control,1
+940daee,per_pattern,Layered Architecture (Controller-Service-Repository),1
+940daee,total_pattern_types,,4
+940daee,total_pattern_instances,,7
+after-change1,per_pattern,Strategy,2
+after-change1,per_pattern,Repository,4
+after-change1,per_pattern,Dependency Injection / Inversion of Control,1
+after-change1,per_pattern,Layered Architecture (Controller-Service-Repository),1
+after-change1,total_pattern_types,,4
+after-change1,total_pattern_instances,,8
+after-change2,per_pattern,Strategy,2
+after-change2,per_pattern,State,1
+after-change2,per_pattern,Repository,4
+after-change2,per_pattern,Dependency Injection / Inversion of Control,1
+after-change2,per_pattern,Layered Architecture (Controller-Service-Repository),1
+after-change2,total_pattern_types,,5
+after-change2,total_pattern_instances,,9
+after-change3,per_pattern,Strategy,2
+after-change3,per_pattern,State,1
+after-change3,per_pattern,Observer,1
+after-change3,per_pattern,Repository,4
+after-change3,per_pattern,Dependency Injection / Inversion of Control,1
+after-change3,per_pattern,Layered Architecture (Controller-Service-Repository),1
+after-change3,total_pattern_types,,6
+after-change3,total_pattern_instances,,10

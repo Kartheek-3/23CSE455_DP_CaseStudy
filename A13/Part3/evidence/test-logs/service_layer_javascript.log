@@ -1,0 +1,16 @@
+# service_layer / javascript
+# working folder: Part3/code/pattern_service_layer/javascript
+# runtime: Node.js v24.15.0
+$ node announcementService.test.js ../../../test-cases/service_layer.txt
+PASS create_global_with_moderator
+PASS create_user_specific
+PASS unread_lists_global_and_own
+PASS read_last_unread_publishes_event
+PASS read_twice_is_ignored
+PASS get_hides_private_from_others
+PASS get_reports_read_flag
+PASS get_missing
+passed 8/8
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 50.9, 47.5, 44.0, 46.5, 44.1 -> median 46.5

@@ -1,0 +1,82 @@
+# Part 1 — Prompt Record
+
+Record date: 2026-10-10
+Baseline commit: 940daeeab52d5a0b101ce0e76813bcfac88e01a1
+
+## Method used
+
+Pattern discovery for Part 1 was performed by **direct source inspection** of
+`code/original/Smart-Parking-Reservation-System/`. **No LLM was used to identify
+patterns, count instances, or validate evidence.** The prompts below are the
+actual task instructions that drove the tooling session; they are recorded
+verbatim for provenance. Every claim produced by that session was then verified
+against source `file:line` locations, and no claim rests on an LLM assertion.
+
+No Part 1-specific LLM input/output artefact was generated. The only registered
+entry in `data/llm.csv` is the shared research conversation catalogued in
+`LLM_RESEARCH_REFERENCES.md`, which is not treated as evidence for any Part 1
+pattern or count.
+
+---
+
+## Prompt 1 (planning request) — verbatim
+
+We are starting Part 1 — Pattern Discovery for our B12 Design Pattern Case Study.
+
+**Original application source:**
+`B12/code/original/Smart-Parking-Reservation-System/`
+
+**Case study requirements:**
+Investigate parking-slot management, vehicle management, reservation, payment, occupancy, EV charging and notifications.
+
+Do not modify the original application.
+
+First perform a baseline source-code analysis.
+
+1. Identify the original repository URL, branch, commit hash and project structure.
+2. Inspect the backend and frontend source code.
+3. Identify the actual modules, controllers, services, entities, interfaces, providers and relevant methods.
+4. Investigate the seven required functional areas. If a module or feature is absent, document it as absent rather than inventing it.
+5. Identify possible design patterns, but confirm a pattern only when the source code provides sufficient evidence.
+6. For every confirmed pattern, record its name, source file, class/method, relevant line range, participants, responsibilities and justification.
+7. Record alternative pattern candidates, uncertain findings and reasons for rejecting a candidate.
+8. Create a pattern inventory and pattern-to-source-code mapping for Part 1.
+9. Propose UML diagrams based on actual source relationships.
+10. Update the Part 1 deliverables and CSV files with verified findings only. Do not invent metrics, source evidence, test results or pattern counts.
+
+Use the labels CONFIRMED, UNCERTAIN and NOT FOUND.
+
+Before changing any files, show me the proposed analysis plan and the files you intend to create or update. Preserve all existing B12 work and do not implement the three evolution scenarios yet.
+
+---
+
+## Prompt 2 (execution request) — verbatim
+
+Proceed with completing Part 1 of the B12 Design Pattern Case Study using the investigation you have already performed.
+
+I approve the proposed Part 1 file set, with the following conditions.
+
+### A. Complete the baseline analysis
+Use the original application at `B12/code/original/Smart-Parking-Reservation-System/`. Preserve the original source code unchanged. Verify the branch, commit hash, module structure and relevant source locations before documenting findings.
+
+### B. Validate pattern classifications carefully
+Review every proposed pattern before marking it CONFIRMED. Distinguish: GoF design patterns; Architectural patterns; NestJS framework features; TypeORM/Passport framework abstractions; ordinary language features and decorators. Do not classify a pattern as confirmed merely because a framework class or method has a similar name. Explain the participants, responsibilities, relationships and actual source evidence. In particular, re-evaluate Strategy, Repository, Singleton, Adapter, Template Method, Factory Method and Chain of Responsibility. Record the classification and justification for each.
+
+### C. Create the Part 1 deliverables
+Create the previously proposed files (report, evidence files, three UML sources). Update `data/patterns.csv`, `data/pattern_counts.csv`, `README.md`, `Part1/prompts/Part1_prompt.txt`, `Part1/report/README.md`. Keep the existing CSV headers unchanged. Document the counting method and count only distinct, evidence-supported pattern instances. Do not inflate counts by counting every occurrence of a framework feature as a separate pattern. Record the actual LLM prompts used and distinguish LLM-assisted analysis from direct source inspection. Do not fabricate prompt history.
+
+### D. Verify the findings
+For each confirmed finding, provide the exact source path, class/method and verified line range. Ensure every confirmed pattern has evidence; every missing module is explicitly recorded; uncertain patterns remain uncertain until verified; UML diagrams match actual source relationships; CSV rows agree with the report; and no invented metrics, test results or implementation claims appear. Do not modify the original application's source, and do not begin Part 2 or Part 3.
+
+### E. Final review before Git operations
+After completing Part 1: run consistency checks; show files created and modified; summarise confirmed patterns, rejected candidates and unresolved issues; show the Git diff and current Git status. Do not commit, push, create a pull request, or modify repository remotes. Wait for review and approval.
+
+---
+
+## Outputs produced (for cross-reference)
+
+- `Part1/report/B12_Part1_Pattern_Discovery.md`
+- `Part1/evidence/pattern_evidence.md`
+- `Part1/evidence/rejected_and_uncertain.md`
+- `Part1/diagrams/module_component.puml`, `class_model.puml`, `reservation_sequence.puml`
+- `data/patterns.csv` (7 rows), `data/pattern_counts.csv` (4 rows)

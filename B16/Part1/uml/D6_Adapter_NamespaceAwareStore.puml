@@ -1,0 +1,41 @@
+@startuml D6
+!pragma layout smetana
+title D6 Adapter: NamespaceAwareStore
+
+interface "ExtensionContext.Store" as JStore <<Target>> {
+  +get(Object)
+  +put(Object, Object)
+  +computeIfAbsent(...)
+}
+class NamespaceAwareStore <<Adapter>> {
+  -valuesStore : NamespacedHierarchicalStore<Namespace>
+  -namespace : Namespace
+  -accessStore(Supplier)
+}
+class "NamespacedHierarchicalStore<N>" as PStore <<Adaptee>> {
+  +get(N, Object)
+  +put(N, Object, Object)
+  +computeIfAbsent(N, ...)
+}
+class LauncherStoreFacade <<AdapterFactory>> {
+  +getStoreAdapter(NamespacedHierarchicalStore, ExtensionContext.Namespace)
+}
+abstract class "AbstractExtensionContext<T>" as AEC <<Client>> {
+  +getStore(Namespace) : Store
+}
+
+NamespaceAwareStore ..|> JStore
+NamespaceAwareStore o--> PStore : valuesStore
+LauncherStoreFacade ..> NamespaceAwareStore : creates (converts Namespace)
+AEC ..> LauncherStoreFacade : getStoreAdapter(valuesStore, namespace)
+' aligned-with-record
+legend right
+  <b>Counted participants</b> (record in the dataset)
+  Target: Store
+  Adapter: NamespaceAwareStore
+  Adaptee: NamespacedHierarchicalStore
+  Adapter factory: LauncherStoreFacade#getStoreAdapter
+  Client: AbstractExtensionContext#getStore
+  Grey classes: real, shown for context, not counted
+endlegend
+@enduml

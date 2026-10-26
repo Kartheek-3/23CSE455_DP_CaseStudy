@@ -1,0 +1,9 @@
+CH01 implementation was done by Claude Code (Claude Opus 5.5, CLI, on my machine) on 2026-10-10,
+not in the claude.ai chat. There was no separate written prompt: I approved continuing with "yeah".
+
+Plan I approved (from Claude Code, based on Part2/llm/output_1_design.md section CH01 after my verification):
+- CH01: ClassSummaryListener (per-class rows + N slowest tests, written to a file), auto-registered via
+  ServiceLoader, disabled by default. Uses the existing TestExecutionListener extension point.
+- Refactoring first: Extract Method for the counting code duplicated in SummaryGeneratingListener.
+- Order of work: refactoring commit, then feature, then tests and a demo; rerun JUnit's tests after each step.
+- Write the code fresh from my design, not copied from the earlier A1 version; compare with A1 only afterwards.

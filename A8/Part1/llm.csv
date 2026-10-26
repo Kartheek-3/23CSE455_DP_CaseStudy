@@ -1,0 +1,7 @@
+part,model_and_date,prompt_file,input_file,output_file,evaluation,verification_file
+Part1,Gemini 3.6 Flash (High) - Oct 2026,Part1/Part1_prompt.txt,DP_REPOSITORY_ANALYSIS.md,Part1/part1_antigravity_output.md,Correct,Part1/patterns.csv
+Part1,Gemini 3.6 Flash (High) - Oct 2026,Part1/Part1_prompt.txt,src/users/guards/allAuth.guard.ts,Part1/part1_antigravity_output.md,Partial,Part1/patterns.csv
+Part1,Gemini 3.6 Flash (High) - Oct 2026,Part1/Part1_prompt.txt,src/flight/guards/roles.restrict.guard.ts,Part1/patterns.csv,Correct,Part1/patterns.csv
+Part1,Gemini 3.6 Flash (High) - Oct 2026,Part1/Part1_prompt.txt,src/users/loaders/user.loader.ts,Part1/patterns.csv,Correct,Part1/patterns.csv
+Part1,Gemini 3.6 Flash (High) - Oct 2026,Part1/Part1_prompt.txt,src/users/workers/email.worker.ts,Part1/patterns.csv,Correct,Part1/patterns.csv
+Part1,Gemini 3.6 Flash (High) - Oct 2026,Part1/Part1_prompt.txt,Part1/patterns.csv,Part1/Pattern_count.csv,Correct,Part1/Pattern_count.csv

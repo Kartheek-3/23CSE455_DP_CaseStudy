@@ -1,0 +1,345 @@
+﻿diff --git a/src/slots/allocation/ev-preferred.strategy.ts b/src/slots/allocation/ev-preferred.strategy.ts
+new file mode 100644
+index 0000000..a3f4c43
+--- /dev/null
++++ b/src/slots/allocation/ev-preferred.strategy.ts
+@@ -0,0 +1,16 @@
++import { Injectable } from '@nestjs/common';
++import { Slot, SlotType } from '../slot.entity';
++import { EV_PREFERRED, SlotAllocationStrategy } from './slot-allocation.strategy';
++
++@Injectable()
++export class EvPreferredStrategy implements SlotAllocationStrategy {
++  readonly name = EV_PREFERRED;
++
++  select(candidates: Slot[]): Slot | null {
++    const evSlot = candidates.find((slot) => slot.type === SlotType.EV);
++    if (evSlot) {
++      return evSlot;
++    }
++    return candidates.length > 0 ? candidates[0] : null;
++  }
++}
+diff --git a/src/slots/allocation/first-available.strategy.ts b/src/slots/allocation/first-available.strategy.ts
+new file mode 100644
+index 0000000..787e960
+--- /dev/null
++++ b/src/slots/allocation/first-available.strategy.ts
+@@ -0,0 +1,12 @@
++import { Injectable } from '@nestjs/common';
++import { Slot } from '../slot.entity';
++import { FIRST_AVAILABLE, SlotAllocationStrategy } from './slot-allocation.strategy';
++
++@Injectable()
++export class FirstAvailableStrategy implements SlotAllocationStrategy {
++  readonly name = FIRST_AVAILABLE;
++
++  select(candidates: Slot[]): Slot | null {
++    return candidates.length > 0 ? candidates[0] : null;
++  }
++}
+diff --git a/src/slots/allocation/nearest-to-entrance.strategy.ts b/src/slots/allocation/nearest-to-entrance.strategy.ts
+new file mode 100644
+index 0000000..7e52f1d
+--- /dev/null
++++ b/src/slots/allocation/nearest-to-entrance.strategy.ts
+@@ -0,0 +1,22 @@
++import { Injectable } from '@nestjs/common';
++import { Slot } from '../slot.entity';
++import {
++  NEAREST_TO_ENTRANCE,
++  SlotAllocationStrategy,
++} from './slot-allocation.strategy';
++
++@Injectable()
++export class NearestToEntranceStrategy implements SlotAllocationStrategy {
++  readonly name = NEAREST_TO_ENTRANCE;
++
++  select(candidates: Slot[]): Slot | null {
++    if (candidates.length === 0) {
++      return null;
++    }
++    return candidates.reduce((best, slot) => {
++      const bestDistance = best.distanceToEntrance ?? Number.MAX_SAFE_INTEGER;
++      const slotDistance = slot.distanceToEntrance ?? Number.MAX_SAFE_INTEGER;
++      return slotDistance < bestDistance ? slot : best;
++    });
++  }
++}
+diff --git a/src/slots/allocation/slot-allocation.context.ts b/src/slots/allocation/slot-allocation.context.ts
+new file mode 100644
+index 0000000..5555934
+--- /dev/null
++++ b/src/slots/allocation/slot-allocation.context.ts
+@@ -0,0 +1,28 @@
++import { Slot } from '../slot.entity';
++import {
++  FIRST_AVAILABLE,
++  SlotAllocationStrategy,
++} from './slot-allocation.strategy';
++
++export class SlotAllocationContext {
++  private readonly strategies = new Map<string, SlotAllocationStrategy>();
++
++  constructor(strategies: SlotAllocationStrategy[]) {
++    for (const strategy of strategies) {
++      this.strategies.set(strategy.name, strategy);
++    }
++  }
++
++  select(strategyName: string, candidates: Slot[]): Slot | null {
++    const strategy =
++      this.strategies.get(strategyName) ?? this.strategies.get(FIRST_AVAILABLE);
++    if (!strategy) {
++      return null;
++    }
++    return strategy.select(candidates);
++  }
++
++  available(): string[] {
++    return [...this.strategies.keys()];
++  }
++}
+diff --git a/src/slots/allocation/slot-allocation.spec.ts b/src/slots/allocation/slot-allocation.spec.ts
+new file mode 100644
+index 0000000..ec6201c
+--- /dev/null
++++ b/src/slots/allocation/slot-allocation.spec.ts
+@@ -0,0 +1,87 @@
++import { Slot, SlotStatus, SlotType } from '../slot.entity';
++import { FirstAvailableStrategy } from './first-available.strategy';
++import { NearestToEntranceStrategy } from './nearest-to-entrance.strategy';
++import { EvPreferredStrategy } from './ev-preferred.strategy';
++import { SlotAllocationContext } from './slot-allocation.context';
++import {
++  EV_PREFERRED,
++  FIRST_AVAILABLE,
++  NEAREST_TO_ENTRANCE,
++} from './slot-allocation.strategy';
++
++function slot(
++  id: number,
++  slotNumber: string,
++  type: SlotType,
++  distanceToEntrance?: number,
++): Slot {
++  return {
++    id,
++    slotNumber,
++    type,
++    status: SlotStatus.AVAILABLE,
++    distanceToEntrance,
++  } as Slot;
++}
++
++const candidates: Slot[] = [
++  slot(1, 'A-01', SlotType.STANDARD, 40),
++  slot(2, 'A-02', SlotType.EV, 10),
++  slot(3, 'A-03', SlotType.STANDARD, 25),
++];
++
++describe('SlotAllocationStrategy', () => {
++  it('first-available returns the first candidate and null when empty', () => {
++    const strategy = new FirstAvailableStrategy();
++    expect(strategy.select(candidates)?.id).toBe(1);
++    expect(strategy.select([])).toBeNull();
++  });
++
++  it('nearest-to-entrance picks the smallest distance', () => {
++    const strategy = new NearestToEntranceStrategy();
++    expect(strategy.select(candidates)?.id).toBe(2);
++    expect(strategy.select([])).toBeNull();
++  });
++
++  it('nearest-to-entrance treats a missing distance as furthest', () => {
++    const strategy = new NearestToEntranceStrategy();
++    const withUnknown = [slot(9, 'A-09', SlotType.STANDARD), ...candidates];
++    expect(strategy.select(withUnknown)?.id).toBe(2);
++  });
++
++  it('ev-preferred returns the first EV slot', () => {
++    const strategy = new EvPreferredStrategy();
++    expect(strategy.select(candidates)?.id).toBe(2);
++  });
++
++  it('ev-preferred falls back to the first slot when no EV is free', () => {
++    const strategy = new EvPreferredStrategy();
++    const noEv = candidates.filter((c) => c.type !== SlotType.EV);
++    expect(strategy.select(noEv)?.id).toBe(1);
++    expect(strategy.select([])).toBeNull();
++  });
++});
++
++describe('SlotAllocationContext', () => {
++  const context = new SlotAllocationContext([
++    new FirstAvailableStrategy(),
++    new NearestToEntranceStrategy(),
++    new EvPreferredStrategy(),
++  ]);
++
++  it('exposes the registered strategy names', () => {
++    expect(context.available().sort()).toEqual(
++      [EV_PREFERRED, FIRST_AVAILABLE, NEAREST_TO_ENTRANCE].sort(),
++    );
++  });
++
++  it('dispatches to the requested strategy', () => {
++    expect(context.select(NEAREST_TO_ENTRANCE, candidates)?.id).toBe(2);
++    expect(context.select(EV_PREFERRED, candidates)?.id).toBe(2);
++    expect(context.select(FIRST_AVAILABLE, candidates)?.id).toBe(1);
++  });
++
++  it('falls back to first-available for an unknown strategy', () => {
++    expect(context.select('does-not-exist', candidates)?.id).toBe(1);
++  });
++});
+diff --git a/src/slots/allocation/slot-allocation.strategy.ts b/src/slots/allocation/slot-allocation.strategy.ts
+new file mode 100644
+index 0000000..9979881
+--- /dev/null
++++ b/src/slots/allocation/slot-allocation.strategy.ts
+@@ -0,0 +1,10 @@
++import { Slot } from '../slot.entity';
++
++export const FIRST_AVAILABLE = 'first-available';
++export const NEAREST_TO_ENTRANCE = 'nearest-to-entrance';
++export const EV_PREFERRED = 'ev-preferred';
++
++export interface SlotAllocationStrategy {
++  readonly name: string;
++  select(candidates: Slot[]): Slot | null;
++}
+diff --git a/src/slots/slot.entity.ts b/src/slots/slot.entity.ts
+index b9a25ad..f20e4af 100644
+--- a/src/slots/slot.entity.ts
++++ b/src/slots/slot.entity.ts
+@@ -43,6 +43,9 @@ export class Slot {
+   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+   pricePerHour?: number;
+ 
++  @Column({ type: 'int', nullable: true })
++  distanceToEntrance?: number;
++
+   @DeleteDateColumn()
+   deletedAt?: Date;
+ 
+diff --git a/src/slots/slots.controller.ts b/src/slots/slots.controller.ts
+index 8142d07..2aa46cf 100644
+--- a/src/slots/slots.controller.ts
++++ b/src/slots/slots.controller.ts
+@@ -57,6 +57,24 @@ export class SlotsController {
+     );
+   }
+ 
++  @Get('allocate/:parkingAreaId')
++  allocate(
++    @Param('parkingAreaId') parkingAreaId: string,
++    @Query('startTime') startTime: string,
++    @Query('endTime') endTime: string,
++    @Query('strategy') strategy?: string,
++  ) {
++    if (!startTime || !endTime) {
++      throw new BadRequestException('startTime and endTime are required');
++    }
++    return this.slotsService.allocateSlot(
++      +parkingAreaId,
++      new Date(startTime),
++      new Date(endTime),
++      strategy,
++    );
++  }
++
+   @UseGuards(JwtAuthGuard, RolesGuard)
+   @Roles(UserRole.ADMIN)
+   @Patch(':id')
+diff --git a/src/slots/slots.module.ts b/src/slots/slots.module.ts
+index cc6da5e..7b343c9 100644
+--- a/src/slots/slots.module.ts
++++ b/src/slots/slots.module.ts
+@@ -5,10 +5,37 @@ import { Slot } from './slot.entity';
+ import { Reservation } from '../reservations/reservation.entity';
+ import { SlotsController } from './slots.controller';
+ import { SlotsService } from './slots.service';
++import { FirstAvailableStrategy } from './allocation/first-available.strategy';
++import { NearestToEntranceStrategy } from './allocation/nearest-to-entrance.strategy';
++import { EvPreferredStrategy } from './allocation/ev-preferred.strategy';
++import { SlotAllocationContext } from './allocation/slot-allocation.context';
+ 
+ @Module({
+   imports: [TypeOrmModule.forFeature([Slot, ParkingArea, Reservation])],
+   controllers: [SlotsController],
+-  providers: [SlotsService],
++  providers: [
++    SlotsService,
++    FirstAvailableStrategy,
++    NearestToEntranceStrategy,
++    EvPreferredStrategy,
++    {
++      provide: SlotAllocationContext,
++      useFactory: (
++        firstAvailable: FirstAvailableStrategy,
++        nearestToEntrance: NearestToEntranceStrategy,
++        evPreferred: EvPreferredStrategy,
++      ) =>
++        new SlotAllocationContext([
++          firstAvailable,
++          nearestToEntrance,
++          evPreferred,
++        ]),
++      inject: [
++        FirstAvailableStrategy,
++        NearestToEntranceStrategy,
++        EvPreferredStrategy,
++      ],
++    },
++  ],
+ })
+ export class SlotsModule {}
+diff --git a/src/slots/slots.service.ts b/src/slots/slots.service.ts
+index 5b1b1be..cf94a13 100644
+--- a/src/slots/slots.service.ts
++++ b/src/slots/slots.service.ts
+@@ -10,6 +10,8 @@ import {
+   ReservationStatus,
+ } from '../reservations/reservation.entity';
+ import { MailService } from '../mail/mail.service';
++import { SlotAllocationContext } from './allocation/slot-allocation.context';
++import { FIRST_AVAILABLE } from './allocation/slot-allocation.strategy';
+ 
+ @Injectable()
+ export class SlotsService {
+@@ -24,6 +26,8 @@ export class SlotsService {
+     private reservationsRepository: Repository<Reservation>,
+ 
+     private mailService: MailService,
++
++    private allocationContext: SlotAllocationContext,
+   ) {}
+ 
+   async create(createSlotDto: CreateSlotDto): Promise<Slot> {
+@@ -190,4 +194,25 @@ export class SlotsService {
+         !busySlotIds.has(slot.id) && slot.status !== SlotStatus.OCCUPIED,
+     );
+   }
++
++  async allocateSlot(
++    parkingAreaId: number,
++    startTime: Date,
++    endTime: Date,
++    strategy: string = FIRST_AVAILABLE,
++  ): Promise<Slot | null> {
++    const candidates = await this.findAvailableByParkingArea(
++      parkingAreaId,
++      startTime,
++      endTime,
++    );
++    const ordered = [...candidates].sort((a, b) =>
++      a.slotNumber.localeCompare(b.slotNumber),
++    );
++    return this.allocationContext.select(strategy, ordered);
++  }
++
++  allocationStrategies(): string[] {
++    return this.allocationContext.available();
++  }
+ }
