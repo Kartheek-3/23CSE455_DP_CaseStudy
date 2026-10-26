@@ -1,0 +1,237 @@
+
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=22mm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern,tabularx,booktabs,hyperref,xcolor}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt}
+
+\begin{document}
+
+\begin{center}
+{\Large\textbf{23CSE455 Design Patterns}}\\[4pt]
+{\LARGE\textbf{Case Study Report}}\\[8pt]
+{\large Team A2}
+\end{center}
+
+\textbf{Case Study:} MBTA API -- Strategy pattern discovery,
+evolution, and illustrative cross-language comparison\\
+\textbf{Application:} MBTA API repository,
+\url{https://github.com/mbta/api}\\
+\textbf{Date:} 2026-10-15\\
+\textbf{Submission Repository:}
+\url{https://github.com/aswathymohan-amrita/23CSE455_DP_CaseStudy}
+
+\section*{Team Members}
+
+\begin{tabularx}{\linewidth}{@{}lXl@{}}
+\toprule
+Roll Number & Student Name & Batch\\
+\midrule
+AM.SC.U4CSE23201 & Aadhav Gugan DU & A\\
+AM.SC.U4CSE23220 & G Yaswanth Ram Saran & A\\
+AM.SC.U4CSE23227 & KB Sai Prasad Reddy & A\\
+\bottomrule
+\end{tabularx}
+
+\section{Application and Architecture}
+
+The application studied is the MBTA API, an Elixir/Phoenix
+application available at \url{https://github.com/mbta/api}.
+The source was inspected from a downloaded archive. Its exact
+baseline Git commit could not be independently verified.
+
+The repository specifies Elixir 1.19.5-otp-28 and Erlang/OTP
+28.5.0.3 in its \texttt{.tool-versions} file.
+
+The analysis focuses on two candidate Strategy pattern
+collaborations:
+\begin{enumerate}
+    \item Rate Limiter Backend Selection.
+    \item State Data Parsing.
+\end{enumerate}
+
+\section{Part 1: Pattern Discovery}
+
+The candidates were identified by examining common behaviours,
+implementations, configuration, and delegation calls in the
+source code.
+
+\subsection{Rate Limiter Backend Selection}
+
+The common behaviour is
+\texttt{ApiWeb.RateLimiter.Limiter}. The concrete backends are
+\texttt{ApiWeb.RateLimiter.ETS} and
+\texttt{ApiWeb.RateLimiter.Memcache}. The
+\texttt{ApiWeb.RateLimiter} module acts as the context by
+selecting a configured backend and delegating operations.
+
+This is a Strategy pattern candidate because the application
+can use interchangeable implementations through a shared
+contract.
+
+\subsection{State Data Parsing}
+
+The parsing contract is \texttt{Parse.parse/1}. The parser
+implementations include \texttt{Parse.Alerts},
+\texttt{Parse.Line}, and \texttt{Parse.Routes}. The
+\texttt{State.Server} module obtains a configured parser and
+delegates parsing to it.
+
+This is a Strategy pattern candidate because parsing behavior
+is delegated to a selected parser implementation.
+
+\section{Part 2: Evolution and Refactoring}
+
+Three changes were prepared in the evolved source copy.
+
+\subsection{Change 1: Rate Limiter Test Coverage}
+
+Tests were added for clearing rate-limiter state and keeping
+different users' counters independent.
+
+Observed result:
+\begin{itemize}
+    \item Command:
+    \texttt{mix test apps/api\_web/test/api\_web/rate\_limiter\_test.exs}
+    \item 8 tests, 0 failures.
+    \item Memcache and integration tests were excluded.
+\end{itemize}
+
+The Strategy pattern participants remained unchanged.
+
+\subsection{Change 2: ETS Rate Limiter Tests}
+
+Targeted tests covered requests within and over the limit,
+independent keys, clearing, and concurrent requests.
+
+Observed result:
+\begin{itemize}
+    \item Command:
+    \texttt{mix test apps/api\_web/test/api\_web/rate\_limiter/ets\_test.exs}
+    \item 5 tests, 0 failures.
+    \item Memcache and integration tests were excluded.
+\end{itemize}
+
+The Strategy pattern remained unchanged. The recorded diff
+is descriptive because the original source archive did not
+contain the added test file.
+
+\subsection{Change 3: Parser Exception Handling}
+
+The \texttt{parse\_new\_state/3} function was updated to handle
+parser exceptions separately and avoid publishing a successful
+update event when parsing fails.
+
+The targeted test command was:
+
+\begin{verbatim}
+mix test --no-compile apps/state/test/state/server_test.exs
+--name-pattern "invalid parsed state does not emit a successful update event"
+\end{verbatim}
+
+Observed result: 1 test passed and 18 were excluded. Because
+the command used \texttt{--no-compile}, it does not prove that
+the latest source compiles cleanly. A separate compile/test
+attempt encountered a warning treated as an error in
+\texttt{apps/state/lib/state/shape.ex}.
+
+The State Data Parsing pattern remained in place; the change
+improved exception handling.
+
+\section{Part 3: Cross-Language Comparison}
+
+Illustrative examples were created in Java, Python,
+JavaScript, and C++ for both pattern candidates.
+
+\begin{center}
+\begin{tabularx}{\linewidth}{@{}lXX@{}}
+\toprule
+Language & Rate Limiter Example & State Parser Example\\
+\midrule
+Python & Pass; delegation placeholder & Pass\\
+JavaScript & Pass; delegation placeholder & Pass\\
+Java & Pass; delegation placeholder & Pass\\
+C++ & Pass; delegation placeholder & Pass\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+The C++ test results were reported as passing with GCC 14.2.0
+and C++17. Keep the actual compiler output with the test
+evidence.
+
+These examples demonstrate the structure of the Strategy
+pattern; they are not production-equivalent implementations
+of the MBTA application. In particular, the rate-limiter
+examples return a hard-coded \texttt{false} and do not test
+real rate-limiting behavior.
+
+Source LOC, maximum function cyclomatic complexity, and
+median execution times were not measured. No estimates are
+reported.
+
+\section{LLM Records and Verification}
+
+Prompt files, model outputs, and LLM CSV records are
+maintained in the Part 1, Part 2, and Part 3 directories.
+These records should be interpreted alongside the source code
+and test evidence. Generated explanations alone do not prove
+that a pattern or test result is correct.
+
+\section{Findings}
+
+Two candidate Strategy collaborations were identified in the
+inspected MBTA source. The rate limiter delegates operations
+to configurable backends through a common behaviour. State
+parsing delegates to configured parser modules.
+
+Two changes expanded rate-limiter test coverage, and one
+change improved parser exception handling. The cross-language
+examples illustrate the pattern structure but do not reproduce
+the full production behavior.
+
+\section*{Team Contributions}
+
+\begin{itemize}
+    \item \textbf{Aadhav Gugan DU (AM.SC.U4CSE23201, Batch A):}
+    Responsible for Part 1, including design pattern discovery,
+    source code analysis, pattern identification, and documentation.
+
+    \item \textbf{G Yaswanth Ram Saran (AM.SC.U4CSE23220, Batch A):}
+    Responsible for Part 2, including code changes, refactoring,
+    test development, test execution, and pattern evolution analysis.
+
+    \item \textbf{KB Sai Prasad Reddy (AM.SC.U4CSE23227, Batch A):}
+    Responsible for Part 3, including cross-language Strategy pattern
+    implementations in Java, Python, JavaScript, and C++,
+    test runners, and comparison documentation.
+\end{itemize}
+
+The team-level work covered pattern discovery, source
+evolution and testing, cross-language examples, documentation,
+and report preparation.
+
+\section{Limitations}
+
+The exact baseline Git commit could not be independently
+verified. Participant counts, source LOC, cyclomatic
+complexity, and median process timing were not measured.
+The cross-language examples are illustrative, and the
+targeted parser test used \texttt{--no-compile}. A separate
+compile/test attempt encountered a warning treated as an error.
+
+These limitations are documented explicitly rather than
+replaced with estimated values.
+
+\section{References}
+
+\begin{itemize}
+    \item MBTA API source repository:
+    \url{https://github.com/mbta/api}
+    \item 23CSE455 Design Patterns case study instructions.
+    \item Source files, diffs, CSV inventories, and test logs
+    included in the Team A2 folder.
+\end{itemize}
+
+\end{document}

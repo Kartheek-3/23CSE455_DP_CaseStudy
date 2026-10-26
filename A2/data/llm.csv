@@ -1,0 +1,2 @@
+﻿part,model_and_date,prompt_file,input_file,output_file,evaluation,verification_file
+Part1,"GPT-6 2026-10-25","Part1/llm/prompt.txt","../api-master (2).zip","Part1/llm/llm_output.txt","Partial - candidate patterns identified; source and line-level verification still required","Part1/evidence/"

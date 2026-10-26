@@ -1,0 +1,75 @@
+
+defmodule ApiWeb.RateLimiter.ETSTest do
+  use ExUnit.Case, async: false
+
+  alias ApiWeb.RateLimiter.ETS
+
+  setup do
+    if Process.whereis(ETS) do
+      GenServer.stop(ETS)
+    end
+
+    {:ok, pid} = ETS.start_link(clear_interval: 60_000)
+    ETS.clear()
+
+    on_exit(fn ->
+      if Process.alive?(pid) do
+        GenServer.stop(pid)
+      end
+    end)
+
+    :ok
+  end
+
+  describe "rate_limited?/2" do
+    test "allows requests up to the configured limit" do
+      key = "ets-test-#{System.unique_integer([:positive])}"
+
+      assert {:remaining, 1} = ETS.rate_limited?(key, 2)
+      assert {:remaining, 0} = ETS.rate_limited?(key, 2)
+    end
+
+    test "rate-limits requests beyond the configured limit" do
+      key = "ets-test-#{System.unique_integer([:positive])}"
+
+      assert {:remaining, 0} = ETS.rate_limited?(key, 1)
+      assert :rate_limited = ETS.rate_limited?(key, 1)
+    end
+
+    test "maintains independent counters for different keys" do
+      key1 = "ets-test-#{System.unique_integer([:positive])}"
+      key2 = "ets-test-#{System.unique_integer([:positive])}"
+
+      assert {:remaining, 0} = ETS.rate_limited?(key1, 1)
+      assert {:remaining, 0} = ETS.rate_limited?(key2, 1)
+    end
+
+    test "clear resets the stored counters" do
+      key = "ets-test-#{System.unique_integer([:positive])}"
+
+      assert {:remaining, 0} = ETS.rate_limited?(key, 1)
+      assert :ok = ETS.clear()
+      assert {:remaining, 0} = ETS.rate_limited?(key, 1)
+    end
+
+    test "handles concurrent requests without exceeding the limit" do
+      key = "ets-concurrent-#{System.unique_integer([:positive])}"
+      limit = 10
+
+      results =
+        1..30
+        |> Task.async_stream(
+          fn _ -> ETS.rate_limited?(key, limit) end,
+          max_concurrency: 30,
+          timeout: 5_000
+        )
+        |> Enum.map(fn {:ok, result} -> result end)
+
+      accepted = Enum.count(results, &match?({:remaining, _}, &1))
+      limited = Enum.count(results, &(&1 == :rate_limited))
+
+      assert accepted == limit
+      assert limited == 20
+    end
+  end
+end

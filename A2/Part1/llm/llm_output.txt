@@ -1,0 +1,45 @@
+# Part 1 — Design Pattern Analysis Output
+
+## Application
+- Application: MBTA V3 API
+- Language: Elixir
+- Source repository: https://github.com/mbta/api
+- Analysis date: 2026-10-25
+- Model: GPT-6
+
+## Candidate 1: Strategy — Rate Limiter Backend Selection
+
+**Participants**
+- Common behaviour: `ApiWeb.RateLimiter.Limiter`
+- Concrete implementations: `ApiWeb.RateLimiter.ETS`, `ApiWeb.RateLimiter.Memcache`
+- Context/delegator: `ApiWeb.RateLimiter`
+
+**Evidence**
+- Both ETS and Memcache declare `@behaviour ApiWeb.RateLimiter.Limiter`.
+- The context obtains its backend using `ApiWeb.config(:rate_limiter, :limiter)`.
+- The context delegates `start_link` and `rate_limited?` operations to the configured backend.
+
+**Assessment:** Strong Strategy-pattern candidate supported by the inspected source code. Final confirmation should include verification against the exact baseline version.
+
+## Candidate 2: Strategy — State Data Parsing
+
+**Participants**
+- Common behaviour: `Parse`
+- Shared parsing support: `Parse.Simple`
+- Candidate concrete implementations: `Parse.Alerts`, `Parse.Line`, `Parse.Routes`
+- Context: `State.Server`
+
+**Evidence**
+- The candidate parsers provide different parsing implementations.
+- `State.Server` uses a configured parser to process incoming data.
+
+**Assessment:** Strategy-pattern candidate. Verify the behaviour callbacks, parser configuration, and delegation in the exact baseline source before marking it confirmed.
+
+## Limitations and Verification
+- The supplied source ZIP does not include Git history, so the baseline commit SHA has not been independently verified against the archive.
+- Source paths and line ranges must be checked against the exact submitted source version.
+- No test results, execution times, or complexity measurements are claimed by this analysis.
+- The current count of two Strategy instances is provisional until the source evidence has been fully checked.
+
+## Human Verification Required
+Check each participant and source location against the original source files. Record corrections and actual test results, if any, before final submission.

@@ -1,0 +1,12 @@
+
+Analyze the MBTA API source code from the supplied baseline version for genuine design pattern collaborations.
+
+Focus on:
+1. Strategy — Rate Limiter Backend Selection.
+2. Strategy — State Data Parsing.
+
+For each candidate, identify the actual participants and their roles, source file paths and line ranges, callback or method relationships, configuration, intent, and supporting evidence.
+
+Verify claims against the source code. Do not invent classes, methods, patterns, tests, or metrics. Distinguish confirmed findings from uncertain candidates. Count each independent collaboration once, regardless of how many concrete implementations it has.
+
+Produce CSV-compatible records using the course's required patterns.csv columns and explain any limitations in verifying the source version.

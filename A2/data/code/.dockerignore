@@ -1,0 +1,23 @@
+*~
+Mnesia*
+_build
+deps
+apps/*/node_modules
+apps/*/test
+cache
+rel
+!rel/env.sh.eex
+!rel/vm.args.eex
+erl_crash.dump
+build.sh
+deploy.sh
+api-build.zip
+DynamoDBLocal*
+Dockerfile
+
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+aws
+.git
+.gitignore
+.dockerignore

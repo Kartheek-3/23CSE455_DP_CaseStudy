@@ -1,0 +1,15 @@
+**Change 3: Improve State Update Error Handling**
+
+**Goal:** Prevent invalid state data from being reported as a successful update.
+
+**Identified issue:** When the configured parser raises an exception, `State.Server` logs the error but previously continues through the update flow, publishing a misleading zero-item update event.
+
+**Implementation:** Updated `parse_new_state/3` in `apps/state/lib/state/server.ex` to catch parser exceptions before calling the successful update flow. On parsing failure, the error is logged and the function returns `:ok` without publishing the successful update event or updating metadata.
+
+**Regression test:** `invalid parsed state does not emit a successful update event`
+
+**Test result:** 1 passed, 18 excluded in the targeted test run. See `test_change3.log`.
+
+**Pattern effect:** The existing State Server update-handling collaboration is preserved; its error-handling behavior is modified.
+
+**Limitations:** Compilation produced existing warnings in other code. The test was verified using the project's already compiled code after the source change; a clean full compilation and full test suite have not been verified.

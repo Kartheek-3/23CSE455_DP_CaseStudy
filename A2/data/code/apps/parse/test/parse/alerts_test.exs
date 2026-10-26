@@ -1,0 +1,1070 @@
+defmodule Parse.AlertsTest do
+  use ExUnit.Case, async: true
+  use Timex
+
+  alias Model.Alert
+
+  import Parse.Alerts
+
+  test "can parse a basic JSON string" do
+    body = ~s({
+      "alerts": [
+        {
+          "active_period": [
+            {
+              "start": 1463992200
+            }
+          ],
+          "informed_entity": [
+              {
+                "route_type": 2,
+                "mode_name": "Commuter Rail",
+                "route_id": "CR-Fairmount",
+                "route_name": "Fairmount Line"
+              },
+              {
+                "mode_name": "Bus",
+                "route_id": "5",
+                "route_name": "5",
+                "stop_id": "10032",
+                "stop_name": "E 1st St opp O St",
+                "trip": {
+                  "direction_id": 1,
+                  "trip_id": "trip"
+                }
+              }
+          ],
+          "alert_lifecycle": "NEW",
+          "banner_text": [
+            {
+              "translation": {
+                "language": "en",
+                "text": "Banner Text!"
+              }
+            }
+          ],
+          "cause": "UNKNOWN_CAUSE",
+          "created_timestamp": 1460656996,
+          "description_text": [
+            {
+              "translation": {
+                "language": "en",
+                "text": "description"
+              }
+            }
+          ],
+          "effect": "MODIFIED_SERVICE",
+          "effect_detail": [
+            {
+              "translation": {
+                "language": "en",
+                "text": "SCHEDULE_CHANGE"
+              }
+            }
+          ],
+          "header_text": [
+            {
+              "translation": {
+                "language": "en",
+                "text": "New Commuter Rail schedules become effective today, Monday, May 23rd. To view updated schedules, go to mbta.com."
+              }
+            }
+          ],
+          "id": "122425",
+          "last_modified_timestamp": 1463995626,
+          "reminder_times": [1757970000, 1758013200],
+          "service_effect_text": [
+            {
+              "translation": {
+                "language": "en",
+                "text": "Commuter Rail schedule change"
+              }
+            }
+          ],
+          "severity": 3,
+          "short_header_text": [
+            {
+              "translation": {
+                "language": "en",
+                "text": "New Commuter Rail schedules become effective today, Monday, May 23rd. To view updated schedules, go to mbta.com."
+              }
+            }
+          ],
+          "timeframe_text": [
+            {
+              "translation": {
+                "language": "en",
+                "text": "starting Monday"
+              }
+            }
+          ],
+          "image_alternative_text": [
+            {
+              "translation": {
+                "language": "en",
+                "text": "that's an alert image"
+              }
+            }
+          ],
+          "url": [
+            {
+              "translation": {
+                "language": "en",
+                "text": "http://www.mbta.com/about_the_mbta/news_events/?id=6442456143&month=&year="
+              }
+            }
+          ]
+        }
+      ]
+    })
+
+    assert Parse.Alerts.parse(body) == [
+             %Alert{
+               id: "122425",
+               active_period: [
+                 {Timex.to_datetime({{2016, 5, 23}, {4, 30, 0}}, "America/New_York"), nil}
+               ],
+               banner: "Banner Text!",
+               cause: "UNKNOWN_CAUSE",
+               created_at: Timex.to_datetime({{2016, 4, 14}, {14, 3, 16}}, "America/New_York"),
+               description: "description",
+               effect: "SCHEDULE_CHANGE",
+               header:
+                 "New Commuter Rail schedules become effective today, Monday, May 23rd. To view updated schedules, go to mbta.com.",
+               informed_entity: [
+                 %{route_type: 2, route: "CR-Fairmount"},
+                 %{route: "5", route_type: 3, stop: "10032", trip: "trip", direction_id: 1}
+               ],
+               lifecycle: "NEW",
+               reminder_times: [
+                 Timex.to_datetime({{2025, 9, 15}, {17, 0, 0}}, "America/New_York"),
+                 Timex.to_datetime({{2025, 9, 16}, {5, 0, 0}}, "America/New_York")
+               ],
+               service_effect: "Commuter Rail schedule change",
+               severity: 3,
+               short_header:
+                 "New Commuter Rail schedules become effective today, Monday, May 23rd. To view updated schedules, go to mbta.com.",
+               timeframe: "starting Monday",
+               updated_at: Timex.to_datetime({{2016, 5, 23}, {5, 27, 6}}, "America/New_York"),
+               image_alternative_text: "that's an alert image",
+               url: "http://www.mbta.com/about_the_mbta/news_events/?id=6442456143&month=&year="
+             }
+           ]
+  end
+
+  test "can parse elevator alerts" do
+    body = ~s({
+      "alerts": [
+        {
+          "active_period": [
+            {
+              "start": 1439307059
+            }
+          ],
+          "alert_lifecycle": "ONGOING",
+          "cause": "MAINTENANCE",
+          "cause_name": "maintenance",
+          "created_timestamp": 1439307067,
+          "effect": "OTHER_EFFECT",
+          "effect_detail": [
+            {
+              "translation": {
+                "language": "en",
+                "text": "ACCESS_ISSUE"
+              }
+            }
+          ],
+          "header_text": [
+            {
+              "translation": {
+                "language": "en",
+                "text": "Escalator 417 COURTHOUSE - Outbound to Lobby South unavailable due to maintenance"
+              }
+            }
+          ],
+          "id": "89517",
+          "informed_entity": [
+            {
+              "facility_id": "417",
+              "stop_id": "74612"
+            },
+            {
+              "facility_id": "417",
+              "stop_id": "74616"
+            }
+          ],
+          "last_modified_timestamp": 1439307067,
+          "service_effect_text": [
+            {
+              "translation": {
+                "language": "en",
+                "text": "escalator unavailable"
+              }
+            }
+          ],
+          "severity": 3,
+          "short_header_text": [
+            {
+              "translation": {
+                "language": "en",
+                "text": "Escalator 417 COURTHOUSE - Outbound to Lobby South unavailable due to maintenance"
+              }
+            }
+          ],
+          "timeframe_text": [
+            {
+              "translation": {
+                "language": "en",
+                "text": "ongoing"
+              }
+            }
+          ]
+        }
+      ]
+    })
+
+    assert Parse.Alerts.parse(body) == [
+             %Alert{
+               id: "89517",
+               effect: "ACCESS_ISSUE",
+               cause: "MAINTENANCE",
+               service_effect: "escalator unavailable",
+               url: nil,
+               header:
+                 "Escalator 417 COURTHOUSE - Outbound to Lobby South unavailable due to maintenance",
+               short_header:
+                 "Escalator 417 COURTHOUSE - Outbound to Lobby South unavailable due to maintenance",
+               description: nil,
+               severity: 3,
+               created_at: Timex.to_datetime(~N[2015-08-11T11:31:07], "America/New_York"),
+               updated_at: Timex.to_datetime(~N[2015-08-11T11:31:07], "America/New_York"),
+               timeframe: "ongoing",
+               lifecycle: "ONGOING",
+               active_period: [
+                 {Timex.to_datetime(~N[2015-08-11T11:30:59], "America/New_York"), nil}
+               ],
+               informed_entity: [
+                 %{stop: "74612", facility: "417"},
+                 %{stop: "74616", facility: "417"}
+               ]
+             }
+           ]
+  end
+
+  describe "parse_json/1" do
+    test "can parse a basic JSON map" do
+      map = %{
+        "timestamp" => "1496832813",
+        "alerts" => [
+          %{
+            "active_period" => [
+              %{
+                "start" => 1_496_305_800,
+                "end" => 1_496_989_800
+              }
+            ],
+            "alert_lifecycle" => "NEW",
+            "cause" => "CONSTRUCTION",
+            "cause_detail" => [
+              %{"translation" => %{"language" => "en", "text" => "CONSTRUCTION"}}
+            ],
+            "created_timestamp" => 1_494_947_991,
+            "description_text" => [
+              %{"translation" => %{"language" => "en", "text" => "description"}}
+            ],
+            "duration_certainty" => "KNOWN",
+            "effect" => "NO_SERVICE",
+            "effect_detail" => [
+              %{"translation" => %{"language" => "en", "text" => "STATION_CLOSURE"}}
+            ],
+            "header_text" => [%{"translation" => %{"language" => "en", "text" => "Salem closed"}}],
+            "id" => "113791",
+            "image" => %{
+              "localized_image" => [
+                %{
+                  "url" => "https://example.com/alert_image.png",
+                  "media_type" => "image/png",
+                  "language" => "en"
+                }
+              ]
+            },
+            "image_alternative_text" => [
+              %{
+                "translation" => %{
+                  "language" => "en",
+                  "text" => "alert image showing things"
+                }
+              }
+            ],
+            "informed_entity" => [
+              %{
+                "agency_id" => "1",
+                "route_id" => "CR-Newburyport",
+                "stop_id" => "Salem",
+                "route_type" => 2,
+                "trip" => %{
+                  "trip_id" => "trip ID",
+                  "route_id" => "CR-Newburyport",
+                  "direction_id" => 1
+                },
+                "facility_id" => "facility ID"
+              }
+            ],
+            "last_modified_timestamp" => 1_494_947_991,
+            "last_push_notification_timestamp" => 1_494_947_991,
+            "service_effect_text" => [
+              %{"translation" => %{"language" => "en", "text" => "Salem closed"}}
+            ],
+            "severity" => 7,
+            "short_header_text" => [
+              %{
+                "translation" => %{
+                  "language" => "en",
+                  "text" => "Salem closed from Thu Jun 1 through Thu Jun 8 due to construction"
+                }
+              }
+            ],
+            "timeframe_text" => [
+              %{"translation" => %{"language" => "en", "text" => "through tomorrow"}}
+            ],
+            "url" => [%{"translation" => %{"language" => "en", "text" => "http://www.mbta.com/"}}]
+          }
+        ]
+      }
+
+      assert parse_json(map) == [
+               %Alert{
+                 id: "113791",
+                 effect: "STATION_CLOSURE",
+                 cause: "CONSTRUCTION",
+                 header: "Salem closed",
+                 short_header:
+                   "Salem closed from Thu Jun 1 through Thu Jun 8 due to construction",
+                 description: "description",
+                 severity: 7,
+                 created_at: iso_date("2017-05-16T11:19:51-04:00"),
+                 updated_at: iso_date("2017-05-16T11:19:51-04:00"),
+                 active_period: [
+                   {iso_date("2017-06-01T04:30:00-04:00"), iso_date("2017-06-09T02:30:00-04:00")}
+                 ],
+                 image: "https://example.com/alert_image.png",
+                 image_alternative_text: "alert image showing things",
+                 informed_entity: [
+                   %{
+                     stop: "Salem",
+                     route: "CR-Newburyport",
+                     route_type: 2,
+                     direction_id: 1,
+                     trip: "trip ID",
+                     facility: "facility ID"
+                   }
+                 ],
+                 duration_certainty: "KNOWN",
+                 service_effect: "Salem closed",
+                 timeframe: "through tomorrow",
+                 last_push_notification_timestamp: iso_date("2017-05-16T11:19:51-04:00"),
+                 lifecycle: "NEW",
+                 url: "http://www.mbta.com/"
+               }
+             ]
+    end
+
+    test "handles unknown causes" do
+      map = %{
+        "timestamp" => "1496832813",
+        "alerts" => [
+          %{
+            "active_period" => [],
+            "alert_lifecycle" => "NEW",
+            "cause" => "UNKNOWN_CAUSE",
+            "created_timestamp" => 1_494_947_991,
+            "description_text" => [],
+            "duration_certainty" => "KNOWN",
+            "effect" => "NO_SERVICE",
+            "effect_detail" => [
+              %{"translation" => %{"language" => "en", "text" => "STATION_CLOSURE"}}
+            ],
+            "header_text" => [],
+            "id" => "113791",
+            "informed_entity" => [%{}],
+            "last_modified_timestamp" => 1_494_947_991,
+            "last_push_notification_timestamp" => 1_494_947_991,
+            "service_effect_text" => [],
+            "severity" => 3,
+            "short_header_text" => [],
+            "timeframe_text" => []
+          }
+        ]
+      }
+
+      assert [%Alert{cause: "UNKNOWN_CAUSE"}] = parse_json(map)
+    end
+
+    test "ignores text in a different language" do
+      map = %{
+        "timestamp" => "1496832813",
+        "alerts" => [
+          %{
+            "active_period" => [],
+            "alert_lifecycle" => "NEW",
+            "cause" => "UNKNOWN_CAUSE",
+            "created_timestamp" => 1_494_947_991,
+            "description_text" => [
+              %{"translation" => %{"language" => "es", "text" => "Buenos días"}},
+              %{"translation" => %{"language" => "en", "text" => "Good morning"}}
+            ],
+            "duration_certainty" => "KNOWN",
+            "effect" => "NO_SERVICE",
+            "effect_detail" => [
+              %{"translation" => %{"language" => "en", "text" => "STATION_CLOSURE"}}
+            ],
+            "header_text" => [],
+            "id" => "113791",
+            "informed_entity" => [%{}],
+            "last_modified_timestamp" => 1_494_947_991,
+            "last_push_notification_timestamp" => 1_494_947_991,
+            "service_effect_text" => [],
+            "severity" => 3,
+            "short_header_text" => [],
+            "timeframe_text" => []
+          }
+        ]
+      }
+
+      assert [%Alert{description: "Good morning"}] = parse_json(map)
+    end
+
+    test "parses a description with an object translation" do
+      map = %{
+        "timestamp" => "1496832813",
+        "alerts" => [
+          %{
+            "active_period" => [],
+            "alert_lifecycle" => "NEW",
+            "cause" => "UNKNOWN_CAUSE",
+            "created_timestamp" => 1_494_947_991,
+            "description_text" => %{
+              "translation" => [%{"language" => "en", "text" => "Good morning"}]
+            },
+            "duration_certainty" => "KNOWN",
+            "effect" => "NO_SERVICE",
+            "effect_detail" => [
+              %{"translation" => %{"language" => "en", "text" => "STATION_CLOSURE"}}
+            ],
+            "header_text" => [],
+            "id" => "113791",
+            "informed_entity" => [%{}],
+            "last_modified_timestamp" => 1_494_947_991,
+            "last_push_notification_timestamp" => 1_494_947_991,
+            "service_effect_text" => [],
+            "severity" => 3,
+            "short_header_text" => [],
+            "timeframe_text" => []
+          }
+        ]
+      }
+
+      assert [%Alert{description: "Good morning"}] = parse_json(map)
+    end
+
+    # This is for backwards compatability and can be removed once all alerts manager
+    # environments are all sending translated objects instead of strings
+    test "string cause_detail and effect_detail are still accepted" do
+      map = %{
+        "timestamp" => "1496832813",
+        "alerts" => [
+          %{
+            "active_period" => [],
+            "alert_lifecycle" => "NEW",
+            "cause" => "UNKNOWN_CAUSE",
+            "cause_detail" => "UNKNOWN_CAUSE",
+            "created_timestamp" => 1_494_947_991,
+            "description_text" => [%{"translation" => %{"language" => "en", "text" => ""}}],
+            "banner_text" => [],
+            "duration_certainty" => "KNOWN",
+            "effect" => "NO_SERVICE",
+            "effect_detail" => "STATION_CLOSURE",
+            "header_text" => [],
+            "id" => "113791",
+            "informed_entity" => [%{}],
+            "last_modified_timestamp" => 1_494_947_991,
+            "last_push_notification_timestamp" => 1_494_947_991,
+            "service_effect_text" => [],
+            "severity" => 3,
+            "short_header_text" => [],
+            "timeframe_text" => []
+          }
+        ]
+      }
+
+      assert [%Alert{cause: "UNKNOWN_CAUSE", effect: "STATION_CLOSURE"}] = parse_json(map)
+    end
+
+    test "returns english image url over other language" do
+      url =
+        "https://dev-mbta.pantheonsite.io/sites/default/files/styles/max_2600x2600/public/media/2023-09/QuincyCenter-Braintree-EA.png"
+
+      map = %{
+        "timestamp" => "1496832813",
+        "alerts" => [
+          %{
+            "active_period" => [],
+            "alert_lifecycle" => "NEW",
+            "cause" => "UNKNOWN_CAUSE",
+            "created_timestamp" => 1_494_947_991,
+            "description_text" => [],
+            "duration_certainty" => "KNOWN",
+            "effect" => "NO_SERVICE",
+            "effect_detail" => [
+              %{"translation" => %{"language" => "en", "text" => "STATION_CLOSURE"}}
+            ],
+            "header_text" => [],
+            "id" => "113791",
+            "image" => %{
+              "localized_image" => [
+                %{
+                  "url" => "some_other_url",
+                  "media_type" => "image/png",
+                  "language" => "fr"
+                },
+                %{
+                  "url" => "some_other_url",
+                  "media_type" => "image/png"
+                },
+                %{
+                  "url" => url,
+                  "media_type" => "image/png",
+                  "language" => "en"
+                }
+              ]
+            },
+            "informed_entity" => [%{}],
+            "last_modified_timestamp" => 1_494_947_991,
+            "last_push_notification_timestamp" => 1_494_947_991,
+            "service_effect_text" => [],
+            "severity" => 3,
+            "short_header_text" => [],
+            "timeframe_text" => []
+          }
+        ]
+      }
+
+      assert [%Alert{image: ^url}] = parse_json(map)
+    end
+
+    test "returns english image url over unspecified language" do
+      url =
+        "https://dev-mbta.pantheonsite.io/sites/default/files/styles/max_2600x2600/public/media/2023-09/QuincyCenter-Braintree-EA.png"
+
+      map = %{
+        "timestamp" => "1496832813",
+        "alerts" => [
+          %{
+            "active_period" => [],
+            "alert_lifecycle" => "NEW",
+            "cause" => "UNKNOWN_CAUSE",
+            "created_timestamp" => 1_494_947_991,
+            "description_text" => [],
+            "duration_certainty" => "KNOWN",
+            "effect" => "NO_SERVICE",
+            "effect_detail" => [
+              %{"translation" => %{"language" => "en", "text" => "STATION_CLOSURE"}}
+            ],
+            "header_text" => [],
+            "id" => "113791",
+            "image" => %{
+              "localized_image" => [
+                %{
+                  "url" => "some_other_url",
+                  "media_type" => "image/png"
+                },
+                %{
+                  "url" => url,
+                  "media_type" => "image/png",
+                  "language" => "en"
+                }
+              ]
+            },
+            "informed_entity" => [%{}],
+            "last_modified_timestamp" => 1_494_947_991,
+            "last_push_notification_timestamp" => 1_494_947_991,
+            "service_effect_text" => [],
+            "severity" => 3,
+            "short_header_text" => [],
+            "timeframe_text" => []
+          }
+        ]
+      }
+
+      assert [%Alert{image: ^url}] = parse_json(map)
+    end
+
+    test "returns unspecified url over non-english language if english is not present" do
+      url =
+        "https://dev-mbta.pantheonsite.io/sites/default/files/styles/max_2600x2600/public/media/2023-09/QuincyCenter-Braintree-EA.png"
+
+      map = %{
+        "timestamp" => "1496832813",
+        "alerts" => [
+          %{
+            "active_period" => [],
+            "alert_lifecycle" => "NEW",
+            "cause" => "UNKNOWN_CAUSE",
+            "created_timestamp" => 1_494_947_991,
+            "description_text" => [],
+            "duration_certainty" => "KNOWN",
+            "effect" => "NO_SERVICE",
+            "effect_detail" => [
+              %{"translation" => %{"language" => "en", "text" => "STATION_CLOSURE"}}
+            ],
+            "header_text" => [],
+            "id" => "113791",
+            "image" => %{
+              "localized_image" => [
+                %{
+                  "url" => "some_other_url",
+                  "media_type" => "image/png",
+                  "language" => "fr"
+                },
+                %{
+                  "url" => url,
+                  "media_type" => "image/png"
+                }
+              ]
+            },
+            "informed_entity" => [%{}],
+            "last_modified_timestamp" => 1_494_947_991,
+            "last_push_notification_timestamp" => 1_494_947_991,
+            "service_effect_text" => [],
+            "severity" => 3,
+            "short_header_text" => [],
+            "timeframe_text" => []
+          }
+        ]
+      }
+
+      assert [%Alert{image: ^url}] = parse_json(map)
+    end
+
+    test "still returns image url even if no language specified" do
+      url =
+        "https://dev-mbta.pantheonsite.io/sites/default/files/styles/max_2600x2600/public/media/2023-09/QuincyCenter-Braintree-EA.png"
+
+      map = %{
+        "timestamp" => "1496832813",
+        "alerts" => [
+          %{
+            "active_period" => [],
+            "alert_lifecycle" => "NEW",
+            "cause" => "UNKNOWN_CAUSE",
+            "created_timestamp" => 1_494_947_991,
+            "description_text" => [],
+            "duration_certainty" => "KNOWN",
+            "effect" => "NO_SERVICE",
+            "effect_detail" => [
+              %{"translation" => %{"language" => "en", "text" => "STATION_CLOSURE"}}
+            ],
+            "header_text" => [],
+            "id" => "113791",
+            "image" => %{
+              "localized_image" => [
+                %{
+                  "url" => url,
+                  "media_type" => "image/png"
+                }
+              ]
+            },
+            "informed_entity" => [%{}],
+            "last_modified_timestamp" => 1_494_947_991,
+            "last_push_notification_timestamp" => 1_494_947_991,
+            "service_effect_text" => [],
+            "severity" => 3,
+            "short_header_text" => [],
+            "timeframe_text" => []
+          }
+        ]
+      }
+
+      assert [%Alert{image: ^url}] = parse_json(map)
+    end
+
+    test "does not require all fields in informed entity" do
+      map = %{
+        "timestamp" => "1496832813",
+        "alerts" => [
+          %{
+            "active_period" => [],
+            "alert_lifecycle" => "NEW",
+            "cause" => "UNKNOWN_CAUSE",
+            "created_timestamp" => 1_494_947_991,
+            "description_text" => [],
+            "duration_certainty" => "KNOWN",
+            "effect" => "NO_SERVICE",
+            "effect_detail" => [
+              %{"translation" => %{"language" => "en", "text" => "STATION_CLOSURE"}}
+            ],
+            "header_text" => [],
+            "id" => "113791",
+            "informed_entity" => [
+              %{"route_id" => "CR-Lowell", "direction_id" => 1}
+            ],
+            "last_modified_timestamp" => 1_494_947_991,
+            "last_push_notification_timestamp" => 1_494_947_991,
+            "service_effect_text" => [],
+            "severity" => 3,
+            "short_header_text" => [],
+            "timeframe_text" => []
+          }
+        ]
+      }
+
+      assert [alert] = parse_json(map)
+      assert alert.informed_entity == [%{route: "CR-Lowell", direction_id: 1, route_type: 2}]
+    end
+
+    test "can parse banner text" do
+      map = %{
+        "timestamp" => "1496832813",
+        "alerts" => [
+          %{
+            "active_period" => [],
+            "alert_lifecycle" => "NEW",
+            "cause" => "UNKNOWN_CAUSE",
+            "created_timestamp" => 1_494_947_991,
+            "description_text" => [],
+            "banner_text" => [
+              %{"translation" => %{"language" => "es", "text" => "Buenos días"}},
+              %{"translation" => %{"language" => "en", "text" => "Good morning"}}
+            ],
+            "duration_certainty" => "KNOWN",
+            "effect" => "NO_SERVICE",
+            "effect_detail" => [
+              %{"translation" => %{"language" => "en", "text" => "STATION_CLOSURE"}}
+            ],
+            "header_text" => [],
+            "id" => "113791",
+            "informed_entity" => [%{}],
+            "last_modified_timestamp" => 1_494_947_991,
+            "last_push_notification_timestamp" => 1_494_947_991,
+            "service_effect_text" => [],
+            "severity" => 3,
+            "short_header_text" => [],
+            "timeframe_text" => []
+          }
+        ]
+      }
+
+      assert [%Alert{banner: "Good morning"}] = parse_json(map)
+    end
+
+    test "empty descriptions are nil" do
+      map = %{
+        "timestamp" => "1496832813",
+        "alerts" => [
+          %{
+            "active_period" => [],
+            "alert_lifecycle" => "NEW",
+            "cause" => "UNKNOWN_CAUSE",
+            "created_timestamp" => 1_494_947_991,
+            "description_text" => [%{"translation" => %{"language" => "en", "text" => ""}}],
+            "banner_text" => [],
+            "duration_certainty" => "KNOWN",
+            "effect" => "NO_SERVICE",
+            "effect_detail" => [
+              %{"translation" => %{"language" => "en", "text" => "STATION_CLOSURE"}}
+            ],
+            "header_text" => [],
+            "id" => "113791",
+            "informed_entity" => [%{}],
+            "last_modified_timestamp" => 1_494_947_991,
+            "last_push_notification_timestamp" => 1_494_947_991,
+            "service_effect_text" => [],
+            "severity" => 3,
+            "short_header_text" => [],
+            "timeframe_text" => []
+          }
+        ]
+      }
+
+      assert [%Alert{description: nil}] = parse_json(map)
+    end
+
+    test "descriptions have the header removed from the beginning" do
+      map = %{
+        "timestamp" => "1496832813",
+        "alerts" => [
+          %{
+            "active_period" => [],
+            "alert_lifecycle" => "NEW",
+            "cause" => "UNKNOWN_CAUSE",
+            "created_timestamp" => 1_494_947_991,
+            "description_text" => [
+              %{
+                "translation" => %{"language" => "en", "text" => "Salem closed. more description"}
+              }
+            ],
+            "banner_text" => [],
+            "duration_certainty" => "KNOWN",
+            "effect" => "NO_SERVICE",
+            "effect_detail" => [
+              %{"translation" => %{"language" => "en", "text" => "STATION_CLOSURE"}}
+            ],
+            "header_text" => [%{"translation" => %{"language" => "en", "text" => "Salem closed"}}],
+            "id" => "113791",
+            "informed_entity" => [%{}],
+            "last_modified_timestamp" => 1_494_947_991,
+            "last_push_notification_timestamp" => 1_494_947_991,
+            "service_effect_text" => [],
+            "severity" => 3,
+            "short_header_text" => [],
+            "timeframe_text" => []
+          }
+        ]
+      }
+
+      assert [%Alert{description: "more description"}] = parse_json(map)
+    end
+
+    test "closed alerts are parsed" do
+      data = %{
+        "alerts" => [
+          %{
+            "alert_lifecycle" => "NEW",
+            "cause" => "UNKNOWN_CAUSE",
+            "cause_detail" => [
+              %{"translation" => %{"language" => "en", "text" => "UNKNOWN_CAUSE"}}
+            ],
+            "closed_timestamp" => 1_758_058_202,
+            "created_timestamp" => 1_758_053_585,
+            "description_text" => %{
+              "translation" => [
+                %{"text" => "Affected direction: Outbound", "language" => "en"}
+              ]
+            },
+            "duration_certainty" => "KNOWN",
+            "effect" => "OTHER_EFFECT",
+            "effect_detail" => [
+              %{"translation" => %{"language" => "en", "text" => "DELAY"}}
+            ],
+            "header_text" => %{
+              "translation" => [
+                %{
+                  "text" =>
+                    "Providence Line Train 851 (3:20 pm from South Station) is operating 5-15 minutes behind schedule between Mansfield and Providence.",
+                  "language" => "en"
+                }
+              ]
+            },
+            "id" => "666572",
+            "informed_entity" => [
+              %{
+                "agency_id" => "1",
+                "route_type" => 2,
+                "route_id" => "CR-Providence",
+                "trip" => %{
+                  "route_id" => "CR-Providence",
+                  "trip_id" => "Sept8Read-768225-851",
+                  "direction_id" => 0
+                },
+                "activities" => ~w[BOARD EXIT RIDE]
+              }
+            ],
+            "last_modified_timestamp" => 1_758_058_202,
+            "last_push_notification_timestamp" => 1_758_053_585,
+            "service_effect_text" => %{
+              "translation" => [
+                %{"text" => "Providence/Stoughton Line delay", "language" => "en"}
+              ]
+            },
+            "severity" => 0,
+            "severity_level" => "WARNING",
+            "short_header_text" => %{
+              "translation" => [
+                %{
+                  "text" =>
+                    "Providence Line Train 851 (3:20 pm from South Station) is operating 5-15 minutes behind schedule between Mansfield and Providence.",
+                  "language" => "en"
+                }
+              ]
+            }
+          }
+        ]
+      }
+
+      closed_timestamp = iso_date("2025-09-16T17:30:02-04:00")
+
+      unix_epoch = iso_date("1970-01-01 00:00:00Z")
+
+      assert [
+               %Alert{
+                 active_period: [{^unix_epoch, ^unix_epoch}],
+                 closed_timestamp: ^closed_timestamp
+               }
+             ] =
+               parse_json(data)
+    end
+
+    test "alerts without informed entities don't parse" do
+      data = %{
+        "alerts" => [
+          %{
+            "active_period" => [],
+            "alert_lifecycle" => "NEW",
+            "cause" => "UNKNOWN_CAUSE",
+            "created_timestamp" => 1_494_947_991,
+            "description_text" => [],
+            "banner_text" => [],
+            "duration_certainty" => "KNOWN",
+            "effect" => "NO_SERVICE",
+            "effect_detail" => [
+              %{"translation" => %{"language" => "en", "text" => "STATION_CLOSURE"}}
+            ],
+            "header_text" => [%{"translation" => %{"language" => "en", "text" => "Salem closed"}}],
+            "id" => "113791",
+            "last_modified_timestamp" => 1_494_947_991,
+            "last_push_notification_timestamp" => 1_494_947_991,
+            "service_effect_text" => [],
+            "severity" => 3,
+            "short_header_text" => [],
+            "timeframe_text" => []
+          }
+        ]
+      }
+
+      # don't crash: it can either return an alert or not
+      assert parse_json(data) == []
+    end
+
+    test "alerts can be parsed from the 'entity' top-level key" do
+      map = %{
+        "timestamp" => "1496832813",
+        "entity" => [
+          %{
+            "id" => "113791",
+            "alert" => %{
+              "active_period" => [],
+              "alert_lifecycle" => "NEW",
+              "cause" => "UNKNOWN_CAUSE",
+              "created_timestamp" => 1_494_947_991,
+              "description_text" => [
+                %{
+                  "translation" => %{
+                    "language" => "en",
+                    "text" => "Salem closed. more description"
+                  }
+                }
+              ],
+              "banner_text" => [],
+              "duration_certainty" => "KNOWN",
+              "effect" => "NO_SERVICE",
+              "effect_detail" => [
+                %{"translation" => %{"language" => "en", "text" => "STATION_CLOSURE"}}
+              ],
+              "header_text" => [
+                %{"translation" => %{"language" => "en", "text" => "Salem closed"}}
+              ],
+              "informed_entity" => [%{}],
+              "last_modified_timestamp" => 1_494_947_991,
+              "last_push_notification_timestamp" => 1_494_947_991,
+              "service_effect_text" => [],
+              "severity" => 3,
+              "short_header_text" => [],
+              "timeframe_text" => []
+            }
+          }
+        ]
+      }
+
+      refute parse_json(map) == []
+    end
+
+    test "activities are optional" do
+      map = %{
+        "alerts" => [
+          %{
+            "id" => "1",
+            "active_period" => [],
+            "cause" => "UNKNOWN_CAUSE",
+            "created_timestamp" => 1_494_947_991,
+            "effect_detail" => [
+              %{"translation" => %{"language" => "en", "text" => "STATION_CLOSURE"}}
+            ],
+            "informed_entity" => [
+              %{"route_type" => 2}
+            ],
+            "last_modified_timestamp" => 1_494_947_991
+          }
+        ]
+      }
+
+      assert [%Model.Alert{informed_entity: informed_entities}] = parse_json(map)
+      assert is_list(informed_entities)
+      assert length(informed_entities) == 1
+
+      [informed_entity] = informed_entities
+
+      refute Map.has_key?(informed_entity, "activities")
+    end
+
+    test "activities can be a [activity]" do
+      map = %{
+        "alerts" => [
+          %{
+            "id" => "1",
+            "active_period" => [],
+            "cause" => "UNKNOWN_CAUSE",
+            "created_timestamp" => 1_494_947_991,
+            "effect_detail" => [
+              %{"translation" => %{"language" => "en", "text" => "STATION_CLOSURE"}}
+            ],
+            "informed_entity" => [
+              %{
+                "activities" => [
+                  "BOARD",
+                  "EXIT"
+                ]
+              }
+            ],
+            "last_modified_timestamp" => 1_494_947_991
+          }
+        ]
+      }
+
+      assert [%Model.Alert{informed_entity: informed_entities}] = parse_json(map)
+      assert is_list(informed_entities)
+      assert length(informed_entities) == 1
+      assert [%{activities: activities}] = informed_entities
+      assert is_list(activities)
+      assert length(activities) == 2
+      assert "BOARD" in activities
+      assert "EXIT" in activities
+    end
+  end
+
+  describe "lifecycle/1" do
+    test "consolidates UPCOMING-ONGOING versions into ONGOING_UPCOMING" do
+      assert lifecycle("UPCOMING-ONGOING") == "ONGOING_UPCOMING"
+      assert lifecycle("UPCOMING ONGOING") == "ONGOING_UPCOMING"
+      assert lifecycle("ONGOING UPCOMING") == "ONGOING_UPCOMING"
+      assert lifecycle("ONGOING_UPCOMING") == "ONGOING_UPCOMING"
+    end
+
+    test "handles the other normal cases" do
+      assert lifecycle("NEW") == "NEW"
+      assert lifecycle("UPCOMING") == "UPCOMING"
+      assert lifecycle("ONGOING") == "ONGOING"
+    end
+
+    test "other values are UNKNOWN" do
+      assert lifecycle("whatever") == "UNKNOWN"
+    end
+  end
+
+  defp iso_date(iso_date_string) do
+    # make sure the DateTime is in the America/New_York timezone, not just
+    # GMT-4
+    iso_date_string
+    |> Timex.parse!("{ISO:Extended}")
+    |> Timex.to_datetime("America/New_York")
+  end
+end
