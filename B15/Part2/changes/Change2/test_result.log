@@ -1,0 +1,10 @@
+PASSED  test_superuser_bypasses_all ......... 0.05s
+PASSED  test_owner_allowed .................. 0.04s
+PASSED  test_embargo_deny_before_expiry ..... 0.06s
+PASSED  test_embargo_allow_after_expiry ..... 0.05s
+PASSED  test_role_based_viewer_denied_write . 0.06s
+PASSED  test_chain_short_circuits_on_allow .. 0.04s
+
+6 passed, 0 warnings in 0.30s
+
+Log: Part2/changes/Change2/test_result.log

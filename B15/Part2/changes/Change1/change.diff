@@ -1,0 +1,97 @@
+--- /dev/null
++++ b/backend/app/models/data_product_version.py
+@@ -0,0 +1,47 @@
++import uuid
++from datetime import datetime
++from typing import Optional
++from sqlalchemy import Boolean, DateTime, ForeignKey, String
++from sqlalchemy.dialects.postgresql import JSONB, UUID
++from sqlalchemy.orm import Mapped, mapped_column, relationship
++from app.db.base_class import Base
++from app.models.utils.utcnow import utcnow
++
++class DataProductVersion(Base):
++    """Immutable snapshot of a DataProduct at a point in time (Memento/Temporal Object pattern)."""
++    __tablename__ = "data_product_versions"
++
++    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
++    data_product_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("data_products.id", ondelete="CASCADE"), nullable=False)
++    parent_version_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("data_product_versions.id"), nullable=True)
++    filepath: Mapped[str] = mapped_column(String, nullable=False)
++    stac_properties: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
++    change_summary: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
++    is_current: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
++    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=utcnow(), nullable=False)
++
++    # self-referential parent link for DAG
++    parent = relationship("DataProductVersion", remote_side=[id], backref="children")
++    data_product = relationship("DataProduct", back_populates="versions")
+
+--- a/backend/app/models/data_product.py
++++ b/backend/app/models/data_product.py
+@@ -102,0 +103,3 @@
++    # CH01: version history backref
++    versions: Mapped[list["DataProductVersion"]] = relationship(
++        "DataProductVersion", back_populates="data_product", cascade="all, delete-orphan"
++    )
+
+--- /dev/null
++++ b/backend/app/crud/crud_data_product_version.py
+@@ -0,0 +1,54 @@
++from uuid import UUID
++from sqlalchemy import select, desc
++from sqlalchemy.orm import Session
++from app.crud.base import CRUDBase
++from app.models.data_product import DataProduct
++from app.models.data_product_version import DataProductVersion
++
++class CRUDDataProductVersion(CRUDBase):
++    def create_snapshot(self, db: Session, data_product_id: UUID, change_summary: str = "") -> DataProductVersion:
++        with db as session:
++            dp = session.get(DataProduct, data_product_id)
++            previous = session.scalars(
++                select(DataProductVersion)
++                .where(DataProductVersion.data_product_id == data_product_id, DataProductVersion.is_current == True)
++            ).first()
++            if previous:
++                previous.is_current = False
++            version = DataProductVersion(
++                data_product_id=data_product_id,
++                parent_version_id=previous.id if previous else None,
++                filepath=dp.filepath,
++                stac_properties=dp.stac_properties,
++                change_summary=change_summary,
++                is_current=True,
++            )
++            session.add(version)
++            session.commit()
++            session.refresh(version)
++        return version
++
++    def get_version_history(self, db: Session, data_product_id: UUID):
++        with db as session:
++            return session.scalars(
++                select(DataProductVersion)
++                .where(DataProductVersion.data_product_id == data_product_id)
++                .order_by(desc(DataProductVersion.created_at))
++            ).all()
++
++    def checkout_version(self, db: Session, version_id: UUID) -> DataProductVersion:
++        with db as session:
++            version = session.get(DataProductVersion, version_id)
++            # mark all other versions as not current
++            session.scalars(
++                select(DataProductVersion).where(DataProductVersion.data_product_id == version.data_product_id)
++            ).all()
++            for v in session.scalars(select(DataProductVersion).where(DataProductVersion.data_product_id == version.data_product_id)):
++                v.is_current = False
++            version.is_current = True
++            # sync parent DataProduct
++            dp = session.get(DataProduct, version.data_product_id)
++            dp.filepath = version.filepath
++            dp.stac_properties = version.stac_properties
++            session.commit()
++            session.refresh(version)
++        return version
++
++data_product_version = CRUDDataProductVersion(DataProductVersion)
