@@ -1,0 +1,18 @@
+# two_level_cache / java
+# working folder: Part3/code/pattern_two_level_cache/java
+# runtime: OpenJDK 17.0.19 (javac 17.0.19)
+$ javac -d build *.java
+
+
+$ java -cp build RedisSingleCacheTest ../../../test-cases/two_level_cache.txt
+PASS first_fetch_calls_fetcher
+PASS second_fetch_hits_memory
+PASS memory_expiry_falls_back_to_redis
+PASS delete_clears_both_levels
+PASS get_on_empty_cache_is_none
+PASS get_does_not_call_fetcher
+PASS other_process_reads_redis
+passed 7/7
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 89.0, 92.3, 88.5, 86.3, 102.2 -> median 89.0

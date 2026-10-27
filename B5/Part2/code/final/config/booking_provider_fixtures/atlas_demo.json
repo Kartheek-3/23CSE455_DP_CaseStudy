@@ -1,0 +1,69 @@
+{
+  "provider": "Atlas Demo",
+  "notice": "Fictional sample catalogue. Not real prices, inventory, or reservations.",
+  "destinations": {
+    "rome": {
+      "offers": [
+        {
+          "id": "atlas-rome-walk-01",
+          "title": "Ancient Rome Walking Sampler",
+          "category": "activity",
+          "location": "Rome, Italy",
+          "details": "Fictional guided walk concept around historic landmarks.",
+          "price": {
+            "value": "24.00",
+            "currency": "EUR"
+          }
+        },
+        {
+          "id": "atlas-rome-cafe-02",
+          "title": "Roman Cafe Tasting Idea",
+          "category": "dining",
+          "location": "Rome, Italy",
+          "details": "Fictional food-tasting idea. No table or ticket is reserved.",
+          "price": {
+            "value": "18.50",
+            "currency": "EUR"
+          }
+        },
+        {
+          "id": "atlas-rome-stay-03",
+          "title": "Old Town Stay Example",
+          "category": "accommodation",
+          "location": "Rome, Italy",
+          "details": "Fictional overnight-stay idea for itinerary planning.",
+          "price": {
+            "value": "85.00",
+            "currency": "EUR"
+          }
+        }
+      ]
+    },
+    "paris": {
+      "offers": [
+        {
+          "id": "atlas-paris-walk-01",
+          "title": "Paris Neighbourhood Walk Idea",
+          "category": "activity",
+          "location": "Paris, France",
+          "details": "Fictional walking itinerary; not an actual bookable tour.",
+          "price": {
+            "value": "22.00",
+            "currency": "EUR"
+          }
+        },
+        {
+          "id": "atlas-paris-market-02",
+          "title": "Paris Market Browsing Idea",
+          "category": "retail",
+          "location": "Paris, France",
+          "details": "Fictional shopping-area suggestion.",
+          "price": {
+            "value": "0.00",
+            "currency": "EUR"
+          }
+        }
+      ]
+    }
+  }
+}

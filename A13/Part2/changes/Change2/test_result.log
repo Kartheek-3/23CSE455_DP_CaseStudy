@@ -1,0 +1,52 @@
+Working directory: /home/vighnesh/DP-case_study/misskey
+Exact test command: pnpm --filter backend exec vitest run test/unit/AudioTranscriptService.test.ts --config vitest.config.unit.ts
+Test runner and version: Vitest v4.1.11 (Node v22.23.1, pnpm v11.25.0)
+Timestamp: 2026-10-11T15:17:14+05:30
+Exit code: 0
+
+Output:
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - `__dirname` (vitest.config.ts:28:17). Use `import.meta.dirname` instead
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v4.1.11 /home/vighnesh/DP-case_study/misskey/packages/backend
+
+ ✓ test/unit/AudioTranscriptService.test.ts (21 tests) 14ms 16 MB heap used
+   ✓ AudioTranscriptService (21)
+     ✓ 1. Valid audio asset is accepted for transcription workflow 3ms 14 MB heap used
+     ✓ 2. Invalid or non-audio MIME type is rejected with INVALID_FILE_TYPE 1ms 14 MB heap used
+     ✓ 3. Non-existent file ID is rejected with NO_SUCH_FILE 0ms 14 MB heap used
+     ✓ 4. Non-owner cannot request transcription for another user file 0ms 14 MB heap used
+     ✓ 5. Configured provider returns valid draft transcript 0ms 14 MB heap used
+     ✓ 6. Disabled or missing provider configuration sets status to failed without crashing 0ms 14 MB heap used
+     ✓ 7. Provider execution failure accurately produces failed status 0ms 15 MB heap used
+     ✓ 8. Repeated requests do not create duplicate jobs or records (idempotent) 0ms 15 MB heap used
+     ✓ 9. Transcription result is stored as draft rather than immediately published 1ms 14 MB heap used
+     ✓ 10. Author can view draft transcript 0ms 15 MB heap used
+     ✓ 11. Author can edit and correct draft transcript text 0ms 15 MB heap used
+     ✓ 12. Author can approve draft and transition status to approved 0ms 15 MB heap used
+     ✓ 13. Non-author cannot view unapproved draft transcript 0ms 15 MB heap used
+     ✓ 14. Non-author cannot edit or approve another author draft transcript 0ms 16 MB heap used
+     ✓ 15. Author can reject / discard a draft transcript 0ms 16 MB heap used
+     ✓ 16. Approved transcripts are visible to public / third-party users 0ms 16 MB heap used
+     ✓ 17. Unapproved draft transcripts are strictly excluded from search results 0ms 16 MB heap used
+     ✓ 18. Search returns approved transcripts matching query string 0ms 16 MB heap used
+     ✓ 19. Search respects note visibility restrictions (private / specified visibility) 0ms 16 MB heap used
+     ✓ 20. AudioTranscriptStateMachine rejects illegal transitions 1ms 16 MB heap used
+     ✓ 21. Retrying failed transcription transitions back to queued and succeeds 0ms 16 MB heap used
+
+ Test Files  1 passed (1)
+      Tests  21 passed (21)
+   Start at  15:17:13
+   Duration  390ms (transform 79ms, setup 0ms, import 190ms, tests 14ms, environment 20ms)
+
+Summary:
+- Total tests: 21
+- Passed: 21
+- Failed: 0
+- Skipped: 0
+- Unexecuted: 0
+
+Environment Limitations:
+- Local PostgreSQL (port 54312) and Redis (port 56312) daemons were offline; tests executed deterministically against in-memory repository doubles.
+- Full browser Web Audio/MediaRecorder rendering was verified through unit component and utility contracts.

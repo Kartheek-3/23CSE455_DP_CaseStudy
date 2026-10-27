@@ -1,0 +1,113 @@
+=== CHANGE 1 (CH01) IMPLEMENTATION AND EXECUTION OUTPUT ===
+Date: 2026-10-11
+Model: Antigravity Agent (Google DeepMind)
+Workspace: /home/vighnesh/DP-case_study/misskey
+Baseline SHA: 5f501341d49d2bc3fa7e817ce7548a82174326eb
+Implementation SHA: 608b45de20dce0a78459025320bfdeb0c4e47a78
+
+--------------------------------------------------------------------------------
+1. IMPLEMENTATION SUMMARY
+--------------------------------------------------------------------------------
+Implemented native events with structured attendance RSVP and automated reminder notifications:
+- Domain Entities: MiEvent (packages/backend/src/models/Event.ts), MiEventRsvp (packages/backend/src/models/EventRsvp.ts)
+- Migration: packages/backend/migration/1785000000000-events.js (TypeORM migration creating event and event_rsvp tables, foreign keys, and unique constraint on (eventId, userId))
+- Domain Service & Value Object: EventService with EventReminderSchedule in packages/backend/src/core/EventService.ts
+- REST API Endpoints:
+  - packages/backend/src/server/api/endpoints/events/create.ts
+  - packages/backend/src/server/api/endpoints/events/show.ts
+  - packages/backend/src/server/api/endpoints/events/update.ts
+  - packages/backend/src/server/api/endpoints/events/cancel.ts
+  - packages/backend/src/server/api/endpoints/events/rsvp.ts
+  - packages/backend/src/server/api/endpoints/events/rsvps.ts
+- Architectural Registrations:
+  - packages/backend/src/server/api/endpoint-list.ts
+  - packages/backend/src/models/Notification.ts (added eventReminder, eventRsvp, eventUpdated, eventCancelled types)
+  - packages/backend/src/di-symbols.ts (added eventsRepository, eventRsvpsRepository)
+  - packages/backend/src/core/CoreModule.ts (registered EventService and provider)
+  - packages/backend/src/models/RepositoryModule.ts
+  - packages/backend/src/models/_.ts
+  - packages/backend/src/postgres.ts
+- Frontend Card Component: packages/frontend/src/components/MkEventCard.vue
+- Focused Unit Tests: packages/backend/test/unit/EventService.test.ts (21 automated test cases)
+
+--------------------------------------------------------------------------------
+2. FOCUSED AUTOMATED TEST EXECUTION
+--------------------------------------------------------------------------------
+Working Directory: /home/vighnesh/DP-case_study/misskey
+Command: pnpm --filter backend exec vitest run test/unit/EventService.test.ts --config vitest.config.unit.ts
+Runner: Vitest v2.1.9
+Node.js: v22.23.1
+pnpm: v11.25.0
+
+Test Output:
+ RUN  v2.1.9 /home/vighnesh/DP-case_study/misskey/packages/backend
+
+ ✓ test/unit/EventService.test.ts (21 tests) 1650ms
+   ✓ EventService Unit Tests (21)
+     ✓ 1. Successfully create an event using valid inputs
+     ✓ 2. Reject invalid or missing required fields (e.g. empty title)
+     ✓ 3. Reject an invalid time range (endsAt <= startsAt) or invalid IANA timezone
+     ✓ 4. Handle optional location and meeting URLs correctly (validate valid URL, reject malformed)
+     ✓ 5. Permit the event owner to edit their own event
+     ✓ 6. Reject unauthorised edits or cancellation attempts by non-owners
+     ✓ 7. Verify that cancellation changes the effective event state (isCancelled = true) and prevents RSVP updates
+     ✓ 8. Verify that rescheduling updates the stored event and reminder schedule
+     ✓ 9. Create a valid RSVP for each of the three supported states (going, interested, not_going)
+     ✓ 10. Change a user's RSVP and verify that the previous state is replaced
+     ✓ 11. Verify that duplicate requests do not create duplicate attendance records (idempotent RSVP)
+     ✓ 12. Verify appropriate attendance counts or summaries
+     ✓ 13. Verify that the appropriate reminder is scheduled before the event (15 minutes default lead time)
+     ✓ 14. Verify that a past event does not receive a new reminder schedule (isEligible = false)
+     ✓ 15. Verify that a cancelled event does not generate its reminder
+     ✓ 16. Verify that rescheduling does not leave an effective duplicate reminder (updates timestamp)
+     ✓ 17. Verify that 'not_going' participants are excluded from reminders
+     ✓ 18. Verify retry or repeated processing does not cause duplicate reminder notifications
+     ✓ 19. Verify that applicable RSVP changes produce the intended notification to event creator
+     ✓ 20. Verify that relevant event updates and cancellations produce the correct notification to attendees
+     ✓ 21. Verify that notifications are not duplicated when an idempotent operation is repeated
+
+ Test Files  1 passed (1)
+      Tests  21 passed (21)
+   Start at  13:30:15
+   Duration  2.05s (transform 142ms, setup 0ms, collect 321ms, tests 1.65s, environment 0ms, prepare 75ms)
+
+Exit Code: 0
+Status: PASSED
+
+--------------------------------------------------------------------------------
+3. LICENSE COMPLIANCE CHECK
+--------------------------------------------------------------------------------
+Command: node scripts/check-spdx.mjs
+Working Directory: /home/vighnesh/DP-case_study/misskey
+Output:
+SPDX: OK
+Exit Code: 0
+
+--------------------------------------------------------------------------------
+4. GIT COMMIT RECORD
+--------------------------------------------------------------------------------
+Command: git commit -m "feat: add native events with RSVP and reminders"
+Working Directory: /home/vighnesh/DP-case_study/misskey
+Output:
+[develop 608b45de2] feat: add native events with RSVP and reminders
+ 18 files changed, 1424 insertions(+)
+ create mode 100644 packages/backend/migration/1785000000000-events.js
+ create mode 100644 packages/backend/src/core/EventService.ts
+ create mode 100644 packages/backend/src/models/Event.ts
+ create mode 100644 packages/backend/src/models/EventRsvp.ts
+ create mode 100644 packages/backend/src/server/api/endpoints/events/cancel.ts
+ create mode 100644 packages/backend/src/server/api/endpoints/events/create.ts
+ create mode 100644 packages/backend/src/server/api/endpoints/events/rsvp.ts
+ create mode 100644 packages/backend/src/server/api/endpoints/events/rsvps.ts
+ create mode 100644 packages/backend/src/server/api/endpoints/events/show.ts
+ create mode 100644 packages/backend/src/server/api/endpoints/events/update.ts
+ create mode 100644 packages/backend/test/unit/EventService.test.ts
+ create mode 100644 packages/frontend/src/components/MkEventCard.vue
+
+Commit SHA: 608b45de20dce0a78459025320bfdeb0c4e47a78
+Preceding Commit: 5f501341d49d2bc3fa7e817ce7548a82174326eb
+
+--------------------------------------------------------------------------------
+5. TOOL ENVIRONMENT LIMITATION NOTE
+--------------------------------------------------------------------------------
+As documented during preflight, external shared database daemon (PostgreSQL on port 54312) and Redis daemon (port 56312) were not running locally. The automated test suite used fast, deterministic in-memory test doubles within Vitest to thoroughly verify all 21 acceptance criteria and state transitions without skipping assertions. Live network federation was explicitly excluded by specification.

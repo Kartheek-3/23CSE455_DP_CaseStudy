@@ -1,0 +1,86 @@
+{
+  "root": "B4/Part3",
+  "rule": "nonblank noncomment physical LOC; CC upper bound = 1 + decision tokens per file",
+  "files": [
+    {
+      "path": "B4/Part3/filter_specification/cpp/property_filter.cpp",
+      "source_loc": 62,
+      "file_cc_upper_bound": 4
+    },
+    {
+      "path": "B4/Part3/filter_specification/cpp/test_property_filter.cpp",
+      "source_loc": 22,
+      "file_cc_upper_bound": 3
+    },
+    {
+      "path": "B4/Part3/filter_specification/java/PropertyFilter.java",
+      "source_loc": 33,
+      "file_cc_upper_bound": 4
+    },
+    {
+      "path": "B4/Part3/filter_specification/java/PropertyFilterTest.java",
+      "source_loc": 27,
+      "file_cc_upper_bound": 3
+    },
+    {
+      "path": "B4/Part3/filter_specification/javascript/property_filter.js",
+      "source_loc": 26,
+      "file_cc_upper_bound": 4
+    },
+    {
+      "path": "B4/Part3/filter_specification/javascript/test_property_filter.mjs",
+      "source_loc": 20,
+      "file_cc_upper_bound": 3
+    },
+    {
+      "path": "B4/Part3/filter_specification/python/property_filter.py",
+      "source_loc": 44,
+      "file_cc_upper_bound": 5
+    },
+    {
+      "path": "B4/Part3/filter_specification/python/test_property_filter.py",
+      "source_loc": 28,
+      "file_cc_upper_bound": 4
+    },
+    {
+      "path": "B4/Part3/strategy/cpp/pricing.cpp",
+      "source_loc": 42,
+      "file_cc_upper_bound": 11
+    },
+    {
+      "path": "B4/Part3/strategy/cpp/test_pricing.cpp",
+      "source_loc": 19,
+      "file_cc_upper_bound": 3
+    },
+    {
+      "path": "B4/Part3/strategy/java/Pricing.java",
+      "source_loc": 38,
+      "file_cc_upper_bound": 9
+    },
+    {
+      "path": "B4/Part3/strategy/java/PricingTest.java",
+      "source_loc": 21,
+      "file_cc_upper_bound": 3
+    },
+    {
+      "path": "B4/Part3/strategy/javascript/pricing.js",
+      "source_loc": 33,
+      "file_cc_upper_bound": 9
+    },
+    {
+      "path": "B4/Part3/strategy/javascript/test_pricing.mjs",
+      "source_loc": 18,
+      "file_cc_upper_bound": 3
+    },
+    {
+      "path": "B4/Part3/strategy/python/pricing.py",
+      "source_loc": 35,
+      "file_cc_upper_bound": 5
+    },
+    {
+      "path": "B4/Part3/strategy/python/test_pricing.py",
+      "source_loc": 23,
+      "file_cc_upper_bound": 4
+    }
+  ]
+}

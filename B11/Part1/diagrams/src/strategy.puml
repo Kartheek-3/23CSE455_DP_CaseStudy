@@ -1,0 +1,13 @@
+@startuml strategy
+title Strategy - Password Encoding (baseline) + Overdue Fine (CH01)
+skinparam shadowing false
+interface PasswordEncoder <<Strategy>> {
+  +encode()
+  +matches()
+}
+class "anonymous BCryptPasswordEncoder\n(stubbed)" as Stub <<ConcreteStrategy>>
+class AuthManagerBuilder <<Context>>
+PasswordEncoder <|.. Stub
+AuthManagerBuilder o--> PasswordEncoder : passwordEncoder(...)
+note bottom of Stub : config/SecurityConfiguration.java:57-77
+@enduml

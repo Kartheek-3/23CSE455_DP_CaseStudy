@@ -1,0 +1,5 @@
+[Model: Claude Opus 4.8 | 2026-10-10 | Part 3 Adapter | owner: Lokesh]
+All 4 languages implemented and run; output identical (username/password/enabled/authorities).
+Measured on submission machine (median ms): C++ 4.4 | Python 17.8 | JavaScript 44.6 | Java 45.7.
+Source LOC: Java 38, Python 39, JS 22, C++ 38. Max function CC: 1-4 (see data/cross_language.csv).
+Verified: outputs diffed identical across the four languages.

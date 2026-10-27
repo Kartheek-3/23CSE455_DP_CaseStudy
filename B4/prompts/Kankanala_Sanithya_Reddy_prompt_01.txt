@@ -1,0 +1,3 @@
+Role: dynamic-pricing evolution lead.
+Design CH01 so that base and dynamic rent calculations are interchangeable without changing the client. Rules: peak months 4, 5, and 12 add 20%; occupancy at least 0.80 adds 10%; leases of at least 12 months subtract 5%; round to two decimals. Map Strategy roles and add boundary tests.
+

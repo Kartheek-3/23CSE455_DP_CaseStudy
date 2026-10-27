@@ -1,0 +1,2 @@
+Role: advanced-filtering evolution lead.
+Add composable property-filtering rules for availability, city, rent range, amenities, and furnished state, plus request-facing address, maximum-rent, and status rules for the public Laravel application. A new rule must not require editing existing rules. Support AND composition, integrate it with PropertyController, and add a shared five-rule fixture whose result is property id 1.

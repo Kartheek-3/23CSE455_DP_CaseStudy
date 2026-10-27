@@ -1,0 +1,1 @@
+Implement equivalent Strategy and Observer snippets in four languages using the shared currency and notification fixture. The code was subsequently checked manually and executed where the runtime was available.

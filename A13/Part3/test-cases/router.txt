@@ -1,0 +1,8 @@
+# case|commands: login on|off; nav <path>[?query][#hash]|expected (one result per nav, then changes=<number of change events>)
+home|nav /|home~changes=1
+param_route|nav /notes/42|note-detail id=42~changes=1
+query_and_hash|nav /notes/42?tab=a#top|note-detail id=42 query=tab=a hash=top~changes=1
+login_required_logged_out|nav /settings|notfound popup~changes=1
+login_required_logged_in|login on;nav /settings|settings~changes=1
+unmatched_has_no_change_event|nav /nope|notfound~changes=0
+two_navigations|nav /;nav /search|home~search~changes=2

@@ -1,0 +1,110 @@
+@startuml
+' B12 Part 1 - Entity / class model
+' Derived from the four TypeORM entities and service->repository dependencies.
+' Baseline commit: 940daeeab52d5a0b101ce0e76813bcfac88e01a1
+title B12 Part 1 - Class Model (entities and repository dependencies)
+
+skinparam classAttributeIconSize 0
+
+class User {
+  +id : number
+  +email : string
+  +password : string
+  +fullName : string
+  +role : UserRole
+  +phoneNumber : string
+  +defaultVehicleNumber : string
+  +resetPasswordCode : string
+  +resetPasswordExpires : Date
+  +reservations : Reservation[]
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+class ParkingArea {
+  +id : number
+  +name : string
+  +location : string
+  +pricePerHour : number
+  +deletedAt : Date
+  +slots : Slot[]
+}
+
+class Slot {
+  +id : number
+  +slotNumber : string
+  +section : string
+  +type : SlotType
+  +status : SlotStatus
+  +floor : number
+  +pricePerHour : number
+  +deletedAt : Date
+  +parkingArea : ParkingArea
+  +reservations : Reservation[]
+}
+
+enum SlotType {
+  STANDARD
+  EV
+}
+
+enum SlotStatus {
+  AVAILABLE
+  OCCUPIED
+}
+
+class Reservation {
+  +id : number
+  +startTime : Date
+  +endTime : Date
+  +expiresAt : Date
+  +status : ReservationStatus
+  +vehicleNumber : string
+  +phoneNumber : string
+  +totalPrice : number
+  +vehicleType : VehicleType
+  +user : User
+  +slot : Slot
+}
+
+enum ReservationStatus {
+  ACTIVE
+  CANCELLED
+  COMPLETED
+  EXPIRED
+}
+
+enum VehicleType {
+  TWO_WHEELER
+  FOUR_WHEELER
+}
+
+User "1" --> "*" Reservation : user.reservations
+ParkingArea "1" --> "*" Slot : parkingArea.slots
+Slot "1" --> "*" Reservation : slot.reservations
+
+class UsersService
+class ParkingService
+class SlotsService
+class ReservationsService
+class MailService
+
+UsersService --> User : Repository<User>
+ParkingService --> ParkingArea : Repository<ParkingArea>
+SlotsService --> Slot : Repository<Slot>
+SlotsService --> ParkingArea
+SlotsService --> Reservation
+ReservationsService --> Reservation : Repository<Reservation>
+ReservationsService --> Slot
+ReservationsService --> MailService
+SlotsService --> MailService
+
+note bottom of Reservation
+  Repository pattern instances (C2) are the
+  injected Repository<T> objects in each service.
+end note
+
+@enduml

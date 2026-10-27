@@ -1,0 +1,8 @@
+# Generated build and cache output
+build/
+__pycache__/
+*.pyc
+*.class
+*.o
+*.exe
+node_modules/

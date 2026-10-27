@@ -1,0 +1,8 @@
+PATTERN/SUITE   : Observer_python
+RUNTIME/COMPILER: Python 3.13.7
+WORKDIR         : C:\Users\eswar\OneDrive\Documents\Visual Studio Code\23CSE455_DP_Submission\B12\Part3\Observer\python
+RUN COMMAND     : python test_observer.py
+PROGRAM OUTPUT  : OBSERVER_PY PASS 8/8
+TIME INCLUDES   : whole process wall time (runtime startup + program execution), after 1 unmeasured warm-up
+TIMING SAMPLES  : 5 measured runs (ms): 65.1788, 67.1589, 69.8846, 55.3688, 62.3324
+MEDIAN_MS       : 65.179

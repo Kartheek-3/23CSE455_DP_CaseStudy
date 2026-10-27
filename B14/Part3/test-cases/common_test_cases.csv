@@ -1,0 +1,9 @@
+pattern_name,test_id,input_1,input_2,expected_result,description
+Strategy,S01,claude,hello,"chunks=[claude:,hello]; joined=claude:hello",Claude provider selected and response chunks preserved
+Strategy,S02,openai,hello,"chunks=[openai:,hello]; joined=openai:hello",OpenAI provider selected and response chunks preserved
+Strategy,S03,gemini,summary,"chunks=[gemini:,summary]; joined=gemini:summary",Gemini provider selected and response chunks preserved
+Strategy,S04,unknown,hello,"ERROR: unsupported provider: unknown",Unsupported provider is rejected
+Observer,O01,signed_in,session-1,"observer-A receives signed_in:session-1",Subscribed observer receives sign-in event
+Observer,O02,signed_out,none,"observer-A receives signed_out:none",Subscribed observer receives sign-out event
+Observer,O03,unsubscribe,session-2,"observer-A receives no event after unsubscribe",Unsubscribed observer receives no later event
+Observer,O04,two_observers,signed_in:session-3,"observer-A and observer-B receive signed_in:session-3",All active observers receive the same event

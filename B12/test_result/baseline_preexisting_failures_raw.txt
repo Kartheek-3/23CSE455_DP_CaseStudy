@@ -1,0 +1,132 @@
+FAIL src/auth/auth.controller.spec.ts (64.669 s)
+  ● AuthController › should be defined
+
+    Nest can't resolve dependencies of the AuthController (?). Please make sure that the argument AuthService at index [0] is available in the RootTestModule module.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If AuthService is a provider, is it part of the current RootTestModule?
+    - If AuthService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing AuthService */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+    [0m [90m  6 |[39m
+     [90m  7 |[39m   beforeEach([36masync[39m () [33m=>[39m {
+    [31m[1m>[22m[39m[90m  8 |[39m     [36mconst[39m module[33m:[39m [33mTestingModule[39m [33m=[39m [36mawait[39m [33mTest[39m[33m.[39mcreateTestingModule({
+     [90m    |[39m                                   [31m[1m^[22m[39m
+     [90m  9 |[39m       controllers[33m:[39m [[33mAuthController[39m][33m,[39m
+     [90m 10 |[39m     })[33m.[39mcompile()[33m;[39m
+     [90m 11 |[39m[0m
+
+      at TestingInjector.lookupComponentInParentModules (../../part2_run/smart-parking-backend/node_modules/@nestjs/core/injector/injector.js:290:19)
+      at TestingInjector.resolveComponentWrapper (../../part2_run/smart-parking-backend/node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (../../part2_run/smart-parking-backend/node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (../../part2_run/smart-parking-backend/node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (../../part2_run/smart-parking-backend/node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadController (../../part2_run/smart-parking-backend/node_modules/@nestjs/core/injector/injector.js:94:9)
+      at ../../part2_run/smart-parking-backend/node_modules/@nestjs/core/injector/instance-loader.js:68:13
+          at async Promise.all (index 0)
+      at TestingInstanceLoader.createInstancesOfControllers (../../part2_run/smart-parking-backend/node_modules/@nestjs/core/injector/instance-loader.js:67:9)
+      at ../../part2_run/smart-parking-backend/node_modules/@nestjs/core/injector/instance-loader.js:42:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (../../part2_run/smart-parking-backend/node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../part2_run/smart-parking-backend/node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../part2_run/smart-parking-backend/node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (../../part2_run/smart-parking-backend/node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (../../part2_run/smart-parking-backend/node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (auth/auth.controller.spec.ts:8:35)
+
+FAIL src/auth/auth.service.spec.ts
+  ● AuthService › should be defined
+
+    Nest can't resolve dependencies of the AuthService (?, JwtService, MailService). Please make sure that the argument UsersService at index [0] is available in the RootTestModule module.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If UsersService is a provider, is it part of the current RootTestModule?
+    - If UsersService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing UsersService */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+    [0m [90m  6 |[39m
+     [90m  7 |[39m   beforeEach([36masync[39m () [33m=>[39m {
+    [31m[1m>[22m[39m[90m  8 |[39m     [36mconst[39m module[33m:[39m [33mTestingModule[39m [33m=[39m [36mawait[39m [33mTest[39m[33m.[39mcreateTestingModule({
+     [90m    |[39m                                   [31m[1m^[22m[39m
+     [90m  9 |[39m       providers[33m:[39m [[33mAuthService[39m][33m,[39m
+     [90m 10 |[39m     })[33m.[39mcompile()[33m;[39m
+     [90m 11 |[39m[0m
+
+      at TestingInjector.lookupComponentInParentModules (../../part2_run/smart-parking-backend/node_modules/@nestjs/core/injector/injector.js:290:19)
+      at TestingInjector.resolveComponentWrapper (../../part2_run/smart-parking-backend/node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (../../part2_run/smart-parking-backend/node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (../../part2_run/smart-parking-backend/node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (../../part2_run/smart-parking-backend/node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (../../part2_run/smart-parking-backend/node_modules/@nestjs/core/injector/injector.js:103:9)
+      at ../../part2_run/smart-parking-backend/node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (../../part2_run/smart-parking-backend/node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at ../../part2_run/smart-parking-backend/node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (../../part2_run/smart-parking-backend/node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../part2_run/smart-parking-backend/node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../part2_run/smart-parking-backend/node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (../../part2_run/smart-parking-backend/node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (../../part2_run/smart-parking-backend/node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (auth/auth.service.spec.ts:8:35)
+
+FAIL src/mail/mail.service.spec.ts
+  ● MailService › should be defined
+
+    Nest can't resolve dependencies of the MailService (?). Please make sure that the argument MailerService at index [0] is available in the RootTestModule module.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If MailerService is a provider, is it part of the current RootTestModule?
+    - If MailerService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing MailerService */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+    [0m [90m  6 |[39m
+     [90m  7 |[39m   beforeEach([36masync[39m () [33m=>[39m {
+    [31m[1m>[22m[39m[90m  8 |[39m     [36mconst[39m module[33m:[39m [33mTestingModule[39m [33m=[39m [36mawait[39m [33mTest[39m[33m.[39mcreateTestingModule({
+     [90m    |[39m                                   [31m[1m^[22m[39m
+     [90m  9 |[39m       providers[33m:[39m [[33mMailService[39m][33m,[39m
+     [90m 10 |[39m     })[33m.[39mcompile()[33m;[39m
+     [90m 11 |[39m[0m
+
+      at TestingInjector.lookupComponentInParentModules (../../part2_run/smart-parking-backend/node_modules/@nestjs/core/injector/injector.js:290:19)
+      at TestingInjector.resolveComponentWrapper (../../part2_run/smart-parking-backend/node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (../../part2_run/smart-parking-backend/node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (../../part2_run/smart-parking-backend/node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (../../part2_run/smart-parking-backend/node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (../../part2_run/smart-parking-backend/node_modules/@nestjs/core/injector/injector.js:103:9)
+      at ../../part2_run/smart-parking-backend/node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (../../part2_run/smart-parking-backend/node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at ../../part2_run/smart-parking-backend/node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (../../part2_run/smart-parking-backend/node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../part2_run/smart-parking-backend/node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../part2_run/smart-parking-backend/node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (../../part2_run/smart-parking-backend/node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (../../part2_run/smart-parking-backend/node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (mail/mail.service.spec.ts:8:35)
+
+
+Test Suites: 3 failed, 1 passed, 4 total
+Tests:       3 failed, 1 passed, 4 total
+Snapshots:   0 total
+Time:        71.137 s
+Ran all test suites.

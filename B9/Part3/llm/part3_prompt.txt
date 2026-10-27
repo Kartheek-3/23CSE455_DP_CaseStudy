@@ -1,0 +1,3 @@
+Documentation note: This is a task-specific prompt summary, not a verbatim transcript of a separate model call. The project was produced in response to the user's complete case-study request; the associated output file is a concise response extract.
+
+Implement one small, equivalent currency-conversion Strategy and transaction-notification Observer example in Java, Python, JavaScript, and C++. Preserve USD 10.00 -> EUR 9.20, EUR passthrough, and two observer notifications. Provide runnable code only.

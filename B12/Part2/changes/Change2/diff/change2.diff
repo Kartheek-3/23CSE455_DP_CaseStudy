@@ -1,0 +1,367 @@
+﻿diff --git a/src/app.module.ts b/src/app.module.ts
+index 53c715f..ae0f741 100644
+--- a/src/app.module.ts
++++ b/src/app.module.ts
+@@ -1,4 +1,4 @@
+-import { Module } from '@nestjs/common';
++∩╗┐import { Module } from '@nestjs/common';
+ import { TypeOrmModule } from '@nestjs/typeorm';
+ import { ConfigModule } from '@nestjs/config';
+ import { User } from './users/user.entity';
+@@ -8,6 +8,7 @@ import { SlotsModule } from './slots/slots.module';
+ import { ReservationsModule } from './reservations/reservations.module';
+ import { AuthModule } from './auth/auth.module';
+ import { MailModule } from './mail/mail.module';
++import { ChargingModule } from './charging/charging.module';
+ import { SeedService } from './seed/seed.service';
+ 
+ @Module({
+@@ -37,6 +38,7 @@ import { SeedService } from './seed/seed.service';
+     ReservationsModule,
+     AuthModule,
+     MailModule,
++    ChargingModule,
+   ],
+   providers: [SeedService],
+ })
+diff --git a/src/charging/charging-session.ts b/src/charging/charging-session.ts
+new file mode 100644
+index 0000000..1a1d7ab
+--- /dev/null
++++ b/src/charging/charging-session.ts
+@@ -0,0 +1,44 @@
++import { ChargingState } from './charging-state';
++import { IdleState } from './charging-states';
++
++export class ChargingSession {
++  private state: ChargingState;
++  readonly slotId: number;
++  energyDeliveredKwh = 0;
++  readonly history: string[] = [];
++
++  constructor(slotId: number) {
++    this.slotId = slotId;
++    this.state = new IdleState();
++    this.history.push(this.state.name);
++  }
++
++  get status(): string {
++    return this.state.name;
++  }
++
++  setState(state: ChargingState): void {
++    this.state = state;
++    this.history.push(state.name);
++  }
++
++  addEnergy(kwh: number): void {
++    this.energyDeliveredKwh += kwh;
++  }
++
++  plugIn(): void {
++    this.state.plugIn(this);
++  }
++
++  start(): void {
++    this.state.start(this);
++  }
++
++  complete(): void {
++    this.state.complete(this);
++  }
++
++  unplug(): void {
++    this.state.unplug(this);
++  }
++}
+diff --git a/src/charging/charging-state.ts b/src/charging/charging-state.ts
+new file mode 100644
+index 0000000..5a33342
+--- /dev/null
++++ b/src/charging/charging-state.ts
+@@ -0,0 +1,9 @@
++import { ChargingSession } from './charging-session';
++
++export interface ChargingState {
++  readonly name: string;
++  plugIn(session: ChargingSession): void;
++  start(session: ChargingSession): void;
++  complete(session: ChargingSession): void;
++  unplug(session: ChargingSession): void;
++}
+diff --git a/src/charging/charging-states.ts b/src/charging/charging-states.ts
+new file mode 100644
+index 0000000..67a4bc8
+--- /dev/null
++++ b/src/charging/charging-states.ts
+@@ -0,0 +1,83 @@
++import { BadRequestException } from '@nestjs/common';
++import { ChargingState } from './charging-state';
++import { ChargingSession } from './charging-session';
++
++export class IdleState implements ChargingState {
++  readonly name = 'idle';
++
++  plugIn(session: ChargingSession): void {
++    session.setState(new PluggedInState());
++  }
++
++  start(): void {
++    throw new BadRequestException('Cannot start charging: vehicle not plugged in');
++  }
++
++  complete(): void {
++    throw new BadRequestException('Cannot complete: charging has not started');
++  }
++
++  unplug(): void {
++    throw new BadRequestException('Cannot unplug: vehicle not plugged in');
++  }
++}
++
++export class PluggedInState implements ChargingState {
++  readonly name = 'plugged-in';
++
++  plugIn(): void {
++    throw new BadRequestException('Vehicle is already plugged in');
++  }
++
++  start(session: ChargingSession): void {
++    session.setState(new ChargingActiveState());
++  }
++
++  complete(): void {
++    throw new BadRequestException('Cannot complete: charging has not started');
++  }
++
++  unplug(session: ChargingSession): void {
++    session.setState(new IdleState());
++  }
++}
++
++export class ChargingActiveState implements ChargingState {
++  readonly name = 'charging';
++
++  plugIn(): void {
++    throw new BadRequestException('Vehicle is already plugged in');
++  }
++
++  start(): void {
++    throw new BadRequestException('Charging session is already active');
++  }
++
++  complete(session: ChargingSession): void {
++    session.setState(new CompletedState());
++  }
++
++  unplug(session: ChargingSession): void {
++    session.setState(new IdleState());
++  }
++}
++
++export class CompletedState implements ChargingState {
++  readonly name = 'completed';
++
++  plugIn(): void {
++    throw new BadRequestException('Unplug the vehicle before starting a new session');
++  }
++
++  start(): void {
++    throw new BadRequestException('Unplug the vehicle before starting a new session');
++  }
++
++  complete(): void {
++    throw new BadRequestException('Charging session is already completed');
++  }
++
++  unplug(session: ChargingSession): void {
++    session.setState(new IdleState());
++  }
++}
+diff --git a/src/charging/charging.controller.ts b/src/charging/charging.controller.ts
+new file mode 100644
+index 0000000..4290723
+--- /dev/null
++++ b/src/charging/charging.controller.ts
+@@ -0,0 +1,22 @@
++import { Controller, Get, Param, Post } from '@nestjs/common';
++import { ChargingService, ChargingAction } from './charging.service';
++
++@Controller('charging')
++export class ChargingController {
++  constructor(private readonly chargingService: ChargingService) {}
++
++  @Post(':slotId')
++  open(@Param('slotId') slotId: string) {
++    return this.chargingService.open(+slotId);
++  }
++
++  @Get(':slotId')
++  status(@Param('slotId') slotId: string) {
++    return this.chargingService.get(+slotId);
++  }
++
++  @Post(':slotId/:action')
++  act(@Param('slotId') slotId: string, @Param('action') action: ChargingAction) {
++    return this.chargingService.apply(+slotId, action);
++  }
++}
+diff --git a/src/charging/charging.module.ts b/src/charging/charging.module.ts
+new file mode 100644
+index 0000000..83b7164
+--- /dev/null
++++ b/src/charging/charging.module.ts
+@@ -0,0 +1,9 @@
++import { Module } from '@nestjs/common';
++import { ChargingController } from './charging.controller';
++import { ChargingService } from './charging.service';
++
++@Module({
++  controllers: [ChargingController],
++  providers: [ChargingService],
++})
++export class ChargingModule {}
+diff --git a/src/charging/charging.service.ts b/src/charging/charging.service.ts
+new file mode 100644
+index 0000000..821c35a
+--- /dev/null
++++ b/src/charging/charging.service.ts
+@@ -0,0 +1,48 @@
++import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
++import { ChargingSession } from './charging-session';
++
++export type ChargingAction = 'plug-in' | 'start' | 'complete' | 'unplug';
++
++@Injectable()
++export class ChargingService {
++  private readonly sessions = new Map<number, ChargingSession>();
++
++  open(slotId: number): ChargingSession {
++    const existing = this.sessions.get(slotId);
++    if (existing) {
++      return existing;
++    }
++    const session = new ChargingSession(slotId);
++    this.sessions.set(slotId, session);
++    return session;
++  }
++
++  get(slotId: number): ChargingSession {
++    const session = this.sessions.get(slotId);
++    if (!session) {
++      throw new NotFoundException(`No charging session for slot ${slotId}`);
++    }
++    return session;
++  }
++
++  apply(slotId: number, action: ChargingAction): ChargingSession {
++    const session = this.get(slotId);
++    switch (action) {
++      case 'plug-in':
++        session.plugIn();
++        break;
++      case 'start':
++        session.start();
++        break;
++      case 'complete':
++        session.complete();
++        break;
++      case 'unplug':
++        session.unplug();
++        break;
++      default:
++        throw new BadRequestException(`Unknown charging action: ${action}`);
++    }
++    return session;
++  }
++}
+diff --git a/src/charging/charging.spec.ts b/src/charging/charging.spec.ts
+new file mode 100644
+index 0000000..fa35e47
+--- /dev/null
++++ b/src/charging/charging.spec.ts
+@@ -0,0 +1,84 @@
++import { BadRequestException, NotFoundException } from '@nestjs/common';
++import { ChargingSession } from './charging-session';
++import { ChargingService } from './charging.service';
++
++describe('ChargingSession (State)', () => {
++  it('walks the idle -> plugged-in -> charging -> completed -> idle lifecycle', () => {
++    const session = new ChargingSession(7);
++    expect(session.status).toBe('idle');
++
++    session.plugIn();
++    expect(session.status).toBe('plugged-in');
++
++    session.start();
++    expect(session.status).toBe('charging');
++
++    session.addEnergy(12.5);
++    session.complete();
++    expect(session.status).toBe('completed');
++    expect(session.energyDeliveredKwh).toBe(12.5);
++
++    session.unplug();
++    expect(session.status).toBe('idle');
++
++    expect(session.history).toEqual([
++      'idle',
++      'plugged-in',
++      'charging',
++      'completed',
++      'idle',
++    ]);
++  });
++
++  it('rejects starting a session that is not plugged in', () => {
++    const session = new ChargingSession(1);
++    expect(() => session.start()).toThrow(BadRequestException);
++  });
++
++  it('allows unplugging while charging and returns to idle', () => {
++    const session = new ChargingSession(1);
++    session.plugIn();
++    session.start();
++    session.unplug();
++    expect(session.status).toBe('idle');
++  });
++
++  it('rejects completing a session that never started', () => {
++    const session = new ChargingSession(1);
++    session.plugIn();
++    expect(() => session.complete()).toThrow(BadRequestException);
++  });
++});
++
++describe('ChargingService', () => {
++  let service: ChargingService;
++
++  beforeEach(() => {
++    service = new ChargingService();
++  });
++
++  it('opens a session once per slot', () => {
++    const first = service.open(3);
++    const again = service.open(3);
++    expect(again).toBe(first);
++    expect(service.get(3).status).toBe('idle');
++  });
++
++  it('applies actions through the state machine', () => {
++    service.open(3);
++    expect(service.apply(3, 'plug-in').status).toBe('plugged-in');
++    expect(service.apply(3, 'start').status).toBe('charging');
++    expect(service.apply(3, 'complete').status).toBe('completed');
++  });
++
++  it('rejects an unknown action', () => {
++    service.open(3);
++    expect(() => service.apply(3, 'explode' as never)).toThrow(
++      BadRequestException,
++    );
++  });
++
++  it('throws when the slot has no session', () => {
++    expect(() => service.get(99)).toThrow(NotFoundException);
++  });
++});

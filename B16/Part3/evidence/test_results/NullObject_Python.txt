@@ -1,0 +1,11 @@
+$ (cd Part3/null-object-listener/python) python3 -m unittest -v test_nullobject
+test_invalid_input_is_rejected_with_expected_error (test_nullobject.NullObjectTest.test_invalid_input_is_rejected_with_expected_error) ... ok
+test_report_matches_expected_output (test_nullobject.NullObjectTest.test_report_matches_expected_output) ... ok
+test_runner_without_listener_uses_the_null_object (test_nullobject.NullObjectTest.test_runner_without_listener_uses_the_null_object) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK
+[exit 0]
+result: 3/3 passed

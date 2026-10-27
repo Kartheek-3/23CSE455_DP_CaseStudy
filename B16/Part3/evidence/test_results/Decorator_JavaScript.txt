@@ -1,0 +1,14 @@
+$ (cd Part3/decorator-timeout-invocation/javascript) node --test test/decorator.test.js
+✔ report matches expected-output.txt (0.58075ms)
+✔ decorators stack in any order (0.347667ms)
+✔ invalid input is rejected with expected-error.txt (0.309584ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 101.943166
+[exit 0]
+result: 3/3 passed

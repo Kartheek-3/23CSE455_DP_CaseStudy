@@ -1,0 +1,11 @@
+Target source files:
+- src/flight/entities/flight.entity.ts
+- src/flight/flight.service.ts
+- src/flight/flight.resolver.ts
+- src/flight/flight.module.ts
+- src/booking/booking.service.ts
+- src/flight/guards/roles.restrict.guard.ts
+- src/flight/enums/flight-status.enum.ts
+Context: Baseline commit ae2c24869377ce2f7a29022cd237d808338156ea
+Existing cancellation in flight.service.ts physically invoked flightRepo.remove().
+Existing mutation removeFlight in flight.resolver.ts delegated to cancelFlight.

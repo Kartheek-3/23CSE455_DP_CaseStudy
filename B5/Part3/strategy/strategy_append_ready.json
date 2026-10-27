@@ -1,0 +1,54 @@
+[
+  {
+    "pattern_name": "Strategy",
+    "instance_name": "Cancellation Policy Evaluation",
+    "language": "Java",
+    "snippet_path": "Part3/strategy/java/Main.java",
+    "source_loc": 52,
+    "max_function_cc": 12,
+    "runtime_compiler": "openjdk version \"21.0.12.1\" 2026-08-18; javac 21.0.12.1",
+    "test_command": "cd Part3/strategy/java && javac Main.java TestMain.java && java TestMain",
+    "test_result": "15/15 passed; failures=0; errors=0; exit_code=0",
+    "median_process_ms": 91.907135,
+    "language_notes": "S3-N01 GoF Strategy; Context=QuoteEvaluator; protocol=FeeStrategy; ConcreteStrategies=FlexiblePolicy,ModeratePolicy,StrictPolicy; client=test runner; implements FeeStrategy; Map lookup Fixed fixtures and process-level timings; no real cancellation."
+  },
+  {
+    "pattern_name": "Strategy",
+    "instance_name": "Cancellation Policy Evaluation",
+    "language": "Python",
+    "snippet_path": "Part3/strategy/python/main.py",
+    "source_loc": 54,
+    "max_function_cc": 8,
+    "runtime_compiler": "Python 3.13.5",
+    "test_command": "cd Part3/strategy/python && python3 test_main.py",
+    "test_result": "15/15 passed; failures=0; errors=0; exit_code=0",
+    "median_process_ms": 839.468689,
+    "language_notes": "S3-N01 GoF Strategy; Context=QuoteEvaluator; protocol=FeeStrategy (ABC); ConcreteStrategies=FlexiblePolicy,ModeratePolicy,StrictPolicy; client=test runner; ABC implementations; dictionary lookup Fixed fixtures and process-level timings; no real cancellation."
+  },
+  {
+    "pattern_name": "Strategy",
+    "instance_name": "Cancellation Policy Evaluation",
+    "language": "JavaScript",
+    "snippet_path": "Part3/strategy/javascript/main.js",
+    "source_loc": 42,
+    "max_function_cc": 8,
+    "runtime_compiler": "Node.js v22.16.0",
+    "test_command": "cd Part3/strategy/javascript && node test_main.js",
+    "test_result": "15/15 passed; failures=0; errors=0; exit_code=0",
+    "median_process_ms": 30.425864,
+    "language_notes": "S3-N01 GoF Strategy; Context=QuoteEvaluator; protocol=feeRate duck-typed interface; ConcreteStrategies=FlexiblePolicy,ModeratePolicy,StrictPolicy; client=test runner; objects implement feeRate; frozen policy map Fixed fixtures and process-level timings; no real cancellation."
+  },
+  {
+    "pattern_name": "Strategy",
+    "instance_name": "Cancellation Policy Evaluation",
+    "language": "C++",
+    "snippet_path": "Part3/strategy/cpp/main.cpp",
+    "source_loc": 74,
+    "max_function_cc": 15,
+    "runtime_compiler": "g++ (Debian 14.2.0-19) 14.2.0; C++17 -O2",
+    "test_command": "cd Part3/strategy/cpp && g++ -std=c++17 -O2 -Wall -Wextra -pedantic main.cpp test_main.cpp -o strategy_tests && ./strategy_tests",
+    "test_result": "15/15 passed; failures=0; errors=0; exit_code=0",
+    "median_process_ms": 2.582103,
+    "language_notes": "S3-N01 GoF Strategy; Context=QuoteEvaluator; protocol=FeeStrategy abstract base class; ConcreteStrategies=FlexiblePolicy,ModeratePolicy,StrictPolicy; client=test runner; polymorphic virtual method; owned strategy instances; LOC includes main.hpp. Fixed fixtures and process-level timings; no real cancellation."
+  }
+]

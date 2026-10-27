@@ -1,0 +1,8 @@
+# case|commands: req <endpoint> <token|-> [body]|expected (<status> <text>)
+public_endpoint|req ping -|200 pong
+authenticated_endpoint|req notes/create t-alice hello world|200 created hello world by alice
+unknown_endpoint|req nope -|404 no such endpoint
+missing_credential|req i -|401 credential required
+bad_token|req i t-zed|401 credential required
+rate_limit_per_actor|req i t-alice;req i t-alice;req i t-alice;req i t-bob|200 alice~200 alice~429 rate limited~200 bob
+anonymous_is_limited_too|req ping -;req ping -;req ping -|200 pong~200 pong~429 rate limited

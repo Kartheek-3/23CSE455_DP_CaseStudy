@@ -1,0 +1,119 @@
+{
+  "machine": "Windows-11-10.0.26200-SP0",
+  "python": "3.12.10",
+  "node": "v24.15.0",
+  "measurements": [
+    {
+      "pattern": "llm_provider_streaming",
+      "language": "python",
+      "command": [
+        "C:\\Users\\LOQ\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "C:\\Users\\LOQ\\23CSE455_Part3_Work\\B14\\Part3\\llm_provider_streaming\\python\\implementation.py",
+        "C:\\Users\\LOQ\\23CSE455_Part3_Work\\B14\\Part3\\llm_provider_streaming\\benchmark_input.json"
+      ],
+      "input_file": "llm_provider_streaming\\benchmark_input.json",
+      "boundary": "whole process, including startup and JSON input reading; excludes compilation",
+      "warmup_count": 1,
+      "measured_ms": [
+        100.019,
+        96.87,
+        99.022,
+        96.445,
+        96.401
+      ],
+      "median_process_ms": 96.87,
+      "output": {
+        "chunks": [
+          "Hello",
+          " world"
+        ],
+        "text": "Hello world"
+      }
+    },
+    {
+      "pattern": "llm_provider_streaming",
+      "language": "javascript",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.EXE",
+        "C:\\Users\\LOQ\\23CSE455_Part3_Work\\B14\\Part3\\llm_provider_streaming\\javascript\\implementation.mjs",
+        "C:\\Users\\LOQ\\23CSE455_Part3_Work\\B14\\Part3\\llm_provider_streaming\\benchmark_input.json"
+      ],
+      "input_file": "llm_provider_streaming\\benchmark_input.json",
+      "boundary": "whole process, including startup and JSON input reading; excludes compilation",
+      "warmup_count": 1,
+      "measured_ms": [
+        57.065,
+        57.485,
+        56.82,
+        61.42,
+        63.495
+      ],
+      "median_process_ms": 57.485,
+      "output": {
+        "chunks": [
+          "Hello",
+          " world"
+        ],
+        "text": "Hello world"
+      }
+    },
+    {
+      "pattern": "auth_state_observer",
+      "language": "python",
+      "command": [
+        "C:\\Users\\LOQ\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "C:\\Users\\LOQ\\23CSE455_Part3_Work\\B14\\Part3\\auth_state_observer\\python\\implementation.py",
+        "C:\\Users\\LOQ\\23CSE455_Part3_Work\\B14\\Part3\\auth_state_observer\\benchmark_input.json"
+      ],
+      "input_file": "auth_state_observer\\benchmark_input.json",
+      "boundary": "whole process, including startup and JSON input reading; excludes compilation",
+      "warmup_count": 1,
+      "measured_ms": [
+        101.517,
+        101.075,
+        99.47,
+        100.344,
+        98.058
+      ],
+      "median_process_ms": 100.344,
+      "output": {
+        "observed_users": [
+          "u1",
+          "u1",
+          null
+        ],
+        "final_user_id": null,
+        "notification_count": 3
+      }
+    },
+    {
+      "pattern": "auth_state_observer",
+      "language": "javascript",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.EXE",
+        "C:\\Users\\LOQ\\23CSE455_Part3_Work\\B14\\Part3\\auth_state_observer\\javascript\\implementation.mjs",
+        "C:\\Users\\LOQ\\23CSE455_Part3_Work\\B14\\Part3\\auth_state_observer\\benchmark_input.json"
+      ],
+      "input_file": "auth_state_observer\\benchmark_input.json",
+      "boundary": "whole process, including startup and JSON input reading; excludes compilation",
+      "warmup_count": 1,
+      "measured_ms": [
+        64.911,
+        56.098,
+        57.96,
+        63.151,
+        54.187
+      ],
+      "median_process_ms": 57.96,
+      "output": {
+        "observed_users": [
+          "u1",
+          "u1",
+          null
+        ],
+        "final_user_id": null,
+        "notification_count": 3
+      }
+    }
+  ]
+}

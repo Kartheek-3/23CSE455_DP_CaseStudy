@@ -1,0 +1,32 @@
+Pattern: Observer
+Instance: Home Assistant WebSocket Entity Subscriptions
+Language: JavaScript
+Compiler/Runtime: Node.js v22.16.0 (V8 12.4.254.20)
+Warmup + 5 Runs Raw Output:
+--- Run 1 ---
+RESULT: 5/5 passed
+TIME_MS: 0.709
+
+
+--- Run 2 ---
+RESULT: 5/5 passed
+TIME_MS: 1.345
+
+
+--- Run 3 ---
+RESULT: 5/5 passed
+TIME_MS: 0.191
+
+
+--- Run 4 ---
+RESULT: 5/5 passed
+TIME_MS: 0.567
+
+
+--- Run 5 ---
+RESULT: 5/5 passed
+TIME_MS: 0.329
+
+
+Measured Milliseconds: [0.709, 1.345, 0.191, 0.567, 0.329]
+Computed Median Milliseconds: 0.567

@@ -1,0 +1,8 @@
+PATTERN/SUITE   : DependencyInjection_python
+RUNTIME/COMPILER: Python 3.13.7
+WORKDIR         : C:\Users\eswar\OneDrive\Documents\Visual Studio Code\23CSE455_DP_Submission\B12\Part3\DependencyInjection\python
+RUN COMMAND     : python test_dependency_injection.py
+PROGRAM OUTPUT  : DEPENDENCY_INJECTION_PY PASS 6/6
+TIME INCLUDES   : whole process wall time (runtime startup + program execution), after 1 unmeasured warm-up
+TIMING SAMPLES  : 5 measured runs (ms): 52.5263, 49.5345, 40.4585, 45.4045, 42.1471
+MEDIAN_MS       : 45.405

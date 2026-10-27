@@ -1,0 +1,19 @@
+# strategy / cpp
+# working folder: Part3/code/pattern_strategy/cpp
+# runtime: g++ 16.1.1 20260625, -std=c++17
+$ mkdir -p build
+
+
+$ g++ -std=c++17 -Wall -Wextra -o build/test log_manager.test.cpp
+
+
+$ build/test ../../../test-cases/strategy.txt
+PASS default_backend
+PASS switch_to_pretty
+PASS switch_to_json
+PASS runtime_swap
+PASS null_backend_rejected
+passed 5/5
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 3.2, 3.3, 3.3, 3.7, 3.5 -> median 3.3

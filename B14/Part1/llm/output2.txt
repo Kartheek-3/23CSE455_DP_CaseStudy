@@ -1,0 +1,135 @@
+# Part 1: Step-by-Step Guide
+
+Do these in order. Each step produces something you'll need for the report or CSVs.
+
+## Step 1: Set up your team folder
+1. Clone the course repo: `git clone https://github.com/aswathymohan-amrita/23CSE455_DP_CaseStudy`
+2. Create your team folder at the root (e.g., `A1/`) with this structure:
+```
+A1/
+  README.md
+  A1_Report.tex
+  code/
+  test_result/
+  Part1/
+```
+3. Keep this repo separate from the app repo you're about to clone.
+
+## Step 2: Clone and pin the application
+```bash
+git clone https://github.com/thepracticalengineer/nextjs-blog-cms.git
+cd nextjs-blog-cms
+git rev-parse HEAD        # copy this commit hash
+```
+Write down in a notes file:
+- Repo URL, commit hash, today's date, license (check the `LICENSE` file)
+- Copy the source into `A1/code/` (without `node_modules` or `.git`)
+
+## Step 3: Record the environment
+```bash
+node -v
+npm -v
+```
+Open `package.json` and note versions of: Next.js, React, database library (Prisma/Mongoose/etc.), auth library, and any other major dependency. Also note which database it uses (check `.env.example` or the README).
+
+## Step 4: Run the app
+1. `npm install`
+2. Copy `.env.example` to `.env` and fill in values the README asks for
+3. `npm run dev`
+4. Open `localhost:3000` and click around: view posts, log in, create/edit a post
+5. Run tests if any exist (`npm test`)
+6. Take screenshots into `test_result/` and write down what worked and what failed. Be honest about failures.
+
+## Step 5: Define scope
+List the folders you will read and those you skip:
+- **Inspect:** `app/` or `pages/`, `components/`, `lib/`, `models/`, API routes, `middleware`, auth code
+- **Exclude:** `node_modules`, `.next`, images, lockfiles, pure CSS (state reasons)
+
+## Step 6: Map the app to your 8 areas
+Make a small table. For each area, find the files that implement it, or write "not present."
+
+| Area | Present? | Files |
+|---|---|---|
+| Article management | | |
+| Author management | | |
+| Categories | | |
+| Comments | | |
+| Content moderation | | |
+| Recommendations | | |
+| Subscriptions | | |
+| Authentication | | |
+
+Missing areas are expected, since the later evolution changes add recommendations, moderation, and subscriptions. Just record them honestly.
+
+## Step 7: Draw the architecture diagram
+Make one diagram (draw.io, Mermaid, or PlantUML) showing: Browser → Next.js pages/components → API routes → data layer → database, plus auth and middleware. Then write one paragraph tracing a single request, such as "admin creates a post," through those boxes. Save the source file and a PNG in `Part1/`.
+
+## Step 8: Hunt for pattern candidates
+Open the files one by one and keep a candidate list. Look for:
+- **Shared DB client** in `lib/` → possible Singleton
+- **`middleware.ts` or auth guards** → Chain of Responsibility / Proxy-like
+- **Helper modules wrapping a library** → Facade or Adapter
+- **React Context providers** → Observer-like / Provider idiom
+- **Functions that build objects by type** → Factory
+- **Swappable algorithms (validation, slug generation)** → Strategy
+- **Layered folders (routes → services → models)** → layered architecture / MVC
+- **Higher-order components, layouts** → Decorator-like / Composite
+
+For each candidate, write the file name and line numbers right away.
+
+## Step 9: Verify each candidate
+For every candidate ask:
+1. What problem does the pattern solve here?
+2. Can I name every participant role and map it to a real class or function?
+3. Do the participants interact the way the pattern defines?
+
+Then label it **Confirmed**, **Rejected**, or **Uncertain**, with a one-line reason. Don't confirm anything just because a file is named `singleton.js`. Fewer verified patterns beat many weak ones.
+
+## Step 10: Write one record per confirmed instance
+For each, fill in:
+- Instance name (meaningful, e.g., "MongoDB Connection Cache")
+- Pattern name and category (GoF, GRASP, architecture, framework idiom)
+- Origin: application, framework, or dependency
+- Participant table: role → actual symbol → file path:line range
+- Evidence: 5 to 15 lines of code showing the relationships
+- UML diagram (source + image)
+- Verification note
+
+## Step 11: Calculate totals
+From your records, count:
+- Confirmed pattern **types** (distinct names)
+- Confirmed pattern **instances** (two concrete classes in one collaboration = 1)
+- Concrete participant classes
+- Unique participant symbols (shared ones counted once)
+- Rejected and uncertain candidates (separately)
+
+## Step 12: Create the CSVs
+**`Part1/patterns.csv`** columns:
+`source_version, pattern_name, pattern_type, instance_name, participant_roles, source_locations, intent_and_evidence`
+
+**`Part1/pattern_counts.csv`** columns:
+`source_version, summary, pattern_name, count`
+Rows: one `per_pattern` row per pattern, plus one `total_pattern_types` row and one `total_pattern_instances` row.
+
+Use `source_version` = "Original code". UTF-8, quote cells with commas, paths relative to your team folder.
+
+## Step 13: Log LLM use (only if you use one)
+If you ask an LLM for help:
+1. Save your exact prompt in `Part1/Part1_prompt.txt`
+2. Save the code you gave it and its raw answer
+3. Check its claims against the source and mark each Correct / Partial / Incorrect / Cannot confirm
+4. Add a row to `Part1/llm.csv`: `part, model_and_date, prompt_file, input_file, output_file, evaluation, verification_file`
+
+Never fabricate an LLM record.
+
+## Step 14: Write the README and report
+- **README.md:** app URL, commit, license, versions, run commands, inspected modules, limitations
+- **Report (`A1_Report.tex`):** fill sections 1, 2 and 5, and the relevant parts of 6, keeping the template headings and removing the grey placeholders
+- Add student names, roll numbers, batch
+
+## Step 15: Submit
+Push your team folder to the course repo, then take GitHub screenshots for section 7 of the report. Deadline: **09/10/2026**.
+
+---
+
+**Where I can help next:** if you paste the contents of the key files (DB connection, auth, middleware, API routes) from the repo, I can help you spot real candidates, map participants with line numbers, and draft the CSV rows and LaTeX sections. Which step do you want to start with?

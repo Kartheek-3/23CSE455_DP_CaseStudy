@@ -1,0 +1,58 @@
+@startuml D10
+!pragma layout smetana
+title D10 Decorator: timeout invocations
+
+interface "InvocationInterceptor.Invocation<T>" as Invocation <<Component>> {
+  +proceed() : T
+  +skip()
+}
+class "MethodInvocation<T>" as MethodInvocation <<ConcreteComponent>>
+class "ConstructorInvocation<T>" as ConstructorInvocation <<ConcreteComponent>>
+class "SameThreadTimeoutInvocation<T>" as SameThread <<ConcreteDecorator>> {
+  -delegate : Invocation<T>
+  -timeout : TimeoutDuration
+  +proceed() : T
+}
+class "SeparateThreadTimeoutInvocation<T>" as SeparateThread <<ConcreteDecorator>> {
+  -delegate : Invocation<T>
+  -timeout : TimeoutDuration
+  +proceed() : T
+}
+class "InvocationInterceptorChain.ValidatingInvocation<T>" as Validating <<ConcreteDecorator>> {
+  -delegate : Invocation<T>
+  +proceed() : T
+}
+class TimeoutInvocationFactory <<Creator>> {
+  +create(ThreadMode, TimeoutInvocationParameters) : Invocation<T>
+}
+class TimeoutExtension <<Client>> {
+  -decorate(Invocation, ...) : Invocation<T>
+}
+
+MethodInvocation ..|> Invocation
+ConstructorInvocation ..|> Invocation
+SameThread ..|> Invocation
+SeparateThread ..|> Invocation
+Validating ..|> Invocation
+SameThread o--> Invocation : delegate
+SeparateThread o--> Invocation : delegate
+Validating o--> Invocation : delegate
+TimeoutInvocationFactory ..> SameThread : creates
+TimeoutInvocationFactory ..> SeparateThread : creates
+TimeoutExtension ..> TimeoutInvocationFactory : decorate()
+
+note bottom of Validating
+  No shared abstract decorator class:
+  each decorator holds its own delegate.
+end note
+' aligned-with-record
+legend right
+  <b>Counted participants</b> (record in the dataset)
+  Component: Invocation
+  ConcreteDecorator: SameThreadTimeoutInvocation
+  ConcreteDecorator: SeparateThreadTimeoutInvocation
+  ConcreteDecorator: ValidatingInvocation
+  Client: TimeoutExtension#decorate
+  Grey classes: real, shown for context, not counted
+endlegend
+@enduml

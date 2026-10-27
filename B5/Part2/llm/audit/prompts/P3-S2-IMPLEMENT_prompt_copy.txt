@@ -1,0 +1,529 @@
+Now implement Scenario 2 — Multiple Booking Providers.
+
+Start ONLY from the completed Scenario 1 AFTER source:
+
+scenario1_personalized_itinerary
+
+Do not start from the original DaPlanStan baseline.
+
+Create a separate working copy for the new source version:
+
+scenario2_multiple_booking_providers
+
+Keep the Scenario 1 source snapshot completely unchanged.
+
+The feature design is already frozen:
+
+- Two fictional/local providers:
+  - Atlas Demo
+  - Beacon Demo
+- No live booking-provider APIs
+- No payment processing
+- No real reservation creation
+- No fabricated confirmation references
+- No Expense creation
+- No cancellation-policy functionality
+- Selected offers are saved only as TripItem status `idea`
+- Existing Scenario 1 generation must continue working
+
+Do not redesign the feature unless an actual source incompatibility requires a small correction. If that happens, explain the correction.
+
+1. First re-inspect the Scenario 1 AFTER source before editing.
+
+Verify the current implementations and line ranges for:
+
+- config/routes.rb
+- app/views/trips/_trip_panel.html.erb
+- app/models/trip_item.rb
+- app/models/concerns/geocodable.rb
+- app/jobs/geocode_trip_items_job.rb
+- app/controllers/trip_items_controller.rb
+- app/services/itinerary_suggestion_generator.rb
+- InboxItem and InboxItemsController
+- TripMailbox
+- ParseInboxItemJob
+- db/structure.sql
+- existing tests
+
+Record the BEFORE line ranges that Scenario 2 will affect.
+
+2. Implement the two provider fixtures.
+
+Create:
+
+config/booking_provider_fixtures/atlas_demo.json
+config/booking_provider_fixtures/beacon_demo.json
+
+The formats must genuinely differ.
+
+For example:
+
+Atlas may use:
+- offers
+- id
+- title
+- category
+- location
+- nested price
+
+Beacon may use:
+- results
+- code
+- label
+- type
+- address
+- separate amount and currency
+
+Use only clearly fictional/sample data.
+
+Include at least two destinations such as:
+
+- Rome
+- Paris
+
+and several stable offer IDs per provider.
+
+Do not imply real availability or current prices.
+
+3. Implement the provider normalization layer.
+
+Create:
+
+app/services/booking_providers/atlas_adapter.rb
+app/services/booking_providers/beacon_adapter.rb
+
+Each adapter must expose the same public calling contract:
+
+offers_for(destination_code:)
+
+Each must:
+
+- load only its own local fixture
+- validate the fixture structure
+- normalize its different raw format
+- return the same normalized offer structure
+- reject malformed entries
+- reject unsupported TripItem kinds
+- validate amounts/currency if present
+- avoid mutable global state
+
+Normalized fields should include:
+
+provider_code
+provider_name
+offer_id
+name
+kind
+address
+description
+sample_amount
+currency
+
+Do not include:
+
+confirmation_ref
+booking status
+Expense information
+real reservation IDs
+
+4. Implement the provider registry.
+
+Create:
+
+app/services/booking_providers/registry.rb
+
+Provide a strict whitelist for:
+
+atlas_demo
+beacon_demo
+
+The registry should expose appropriate lookup methods such as:
+
+.find(code)
+.available
+
+Do not use constantize on arbitrary user input.
+
+Unknown provider codes must produce a controlled application error.
+
+Do not create an unnecessary abstract superclass or complex factory hierarchy.
+
+5. Implement BookingOptionsController.
+
+Create:
+
+app/controllers/booking_options_controller.rb
+
+The controller should provide:
+
+index
+create
+
+Both actions must be scoped to the current authenticated user's trip.
+
+Use the existing trip/member authorization mechanisms from the application.
+
+For V1, require:
+
+current_member_for(@trip)&.owner?
+
+INDEX:
+
+- validate selected provider
+- validate selected destination
+- obtain normalized offers from the selected provider
+- render them for comparison
+- handle provider/fixture failures cleanly
+- persist nothing
+
+CREATE:
+
+The browser may submit only:
+
+- provider_code
+- destination_code
+- offer_id
+
+Do NOT trust client-submitted:
+
+- name
+- amount
+- currency
+- kind
+- description
+- status
+- confirmation reference
+- address
+
+On POST:
+
+- resolve the provider again through the registry
+- retrieve the offer again on the server
+- find the matching offer ID
+- ensure it belongs to that provider and destination
+- reject cross-provider IDs
+- reject unknown offers
+- create exactly one TripItem when valid
+
+Persist:
+
+name:
+include provider identity so identical names from different demo providers do not collide accidentally
+
+kind:
+validated normalized kind
+
+status:
+idea
+
+address:
+normalized address
+
+notes:
+include provider display name, offer ID, description and an explicit message that this is a demonstration offer and not a booking
+
+amount/currency:
+sample estimate if valid
+
+starts_at / ends_at:
+nil
+
+confirmation_ref:
+nil
+
+inbox_item_id:
+nil
+
+added_by:
+current_user
+
+Do not create an Expense.
+
+Do not create an InboxItem.
+
+6. Prevent duplicate demo ideas.
+
+Before saving, detect an existing idea representing the same:
+
+provider + offer ID
+
+within the same trip.
+
+Do not rely only on the plain offer name if another safe application-level identifier can be encoded/recovered from the controlled notes or generated name.
+
+Do not add a database migration solely for this coursework feature.
+
+Document that concurrent duplicate requests are still a limitation without a database uniqueness constraint.
+
+7. Reuse the safe geocoding behavior introduced in Scenario 1.
+
+When creating the TripItem:
+
+- use the instance-level `defer_geocoding` mechanism
+- save the record
+- enqueue the existing GeocodeTripItemsJob afterward
+
+Do not globally call:
+
+skip_callback
+set_callback
+
+Do not alter the existing Geocodable callback unless required by an actual defect.
+
+8. Add the routes.
+
+Modify config/routes.rb.
+
+Inside the existing trip scope add nested booking option routes equivalent to:
+
+resources :booking_options, only: [:index, :create]
+
+Do not remove or change:
+
+- JSON import routes
+- personalized generation routes
+- ordinary TripItem routes
+- inbox routes
+
+9. Create the UI.
+
+Create:
+
+app/views/booking_options/index.html.erb
+
+The page must provide:
+
+- provider selector
+- destination selector
+- Browse/Search action
+- normalized offer cards
+- provider display name
+- activity/stay name
+- location
+- sample amount
+- Add as idea action
+
+Clearly display:
+
+“Demonstration offers only. Adding an offer to your itinerary does not make a reservation or process a payment.”
+
+Do not show fake confirmation numbers.
+
+10. Add the trip entry point.
+
+Modify:
+
+app/views/trips/_trip_panel.html.erb
+
+Add an owner-only action such as:
+
+Browse sample offers
+
+Keep the existing:
+
+- Generate
+- Import
+- other trip actions
+
+unchanged.
+
+11. Preserve the genuine confirmation-email workflow.
+
+Do NOT modify unless required by a verified defect:
+
+- TripMailbox
+- ParseInboxItemJob
+- InboxItem
+- InboxItemsController
+- Expense
+
+The provider comparison feature represents prospective itinerary ideas.
+
+The existing inbox pipeline represents genuine booking confirmations.
+
+Do not merge these two concepts.
+
+12. Add tests.
+
+Create:
+
+test/services/booking_providers_test.rb
+
+Test at minimum:
+
+- Atlas normalization
+- Beacon normalization
+- normalized output shape
+- different raw schemas
+- provider whitelist
+- unknown provider
+- unsupported destination
+- malformed fixture
+- invalid kind
+- invalid amount/currency
+- provider isolation
+- no shared mutable state
+
+Create:
+
+test/controllers/booking_options_controller_test.rb
+
+Test at minimum:
+
+- owner can access
+- non-owner denied
+- unrelated user denied
+- provider selection
+- destination selection
+- valid offer saved as TripItem idea
+- current user recorded
+- no Expense
+- no InboxItem
+- no confirmation_ref
+- invalid provider rejected
+- unknown offer rejected
+- cross-provider offer rejected
+- tampered client fields ignored
+- duplicate selection prevented
+- geocoding job queued
+
+13. Add regression coverage for Scenario 1 and existing application behavior.
+
+Verify or preserve tests for:
+
+- personalized itinerary generation
+- generated preview and confirmation
+- JSON import
+- manual TripItem creation
+- instance-scoped geocoding deferral
+- confirmation-email parsing/linking
+- P09 Turbo/geocoding workflow
+
+Do not call a regression passed unless its test actually ran.
+
+14. Do not make live external requests in automated tests.
+
+Provider tests must use the local fixtures.
+
+Stub or isolate:
+
+- Anthropic
+- Geocoder
+- external network calls
+
+as necessary.
+
+15. Attempt actual test execution.
+
+First inspect the environment.
+
+Run the most appropriate Rails tests if dependencies permit.
+
+Record exactly:
+
+- command
+- Ruby version
+- exit code
+- tests executed
+- passes
+- failures
+- errors
+- skips
+
+If Rails still cannot boot because of the existing Ruby/dependency mismatch, preserve the exact error.
+
+Do NOT describe written-but-unexecuted Rails tests as passed.
+
+You may additionally run:
+
+- Ruby syntax checks
+- isolated service checks that do not require Rails
+
+but label them separately from Rails integration testing.
+
+16. Perform source-level safety checks.
+
+Verify after implementation that:
+
+- Scenario 1 generator files remain intact
+- original JSON import remains intact
+- callback deferral remains instance-scoped
+- no database migration was introduced
+- no payment logic was introduced
+- no real reservation is represented
+- confirmation_ref remains nil for demo offers
+- no Expense is created
+- provider fixtures are clearly demo data
+
+17. Prepare a BEFORE → AFTER source diff.
+
+Compare:
+
+scenario1_personalized_itinerary
+
+against:
+
+scenario2_multiple_booking_providers
+
+Record every:
+
+- modified original file
+- newly created file
+- deleted file, if any
+
+No unrelated cleanup/refactoring should be included.
+
+18. Create:
+
+SCENARIO2_CHANGE_RECORD.md
+
+Include:
+
+- source version
+- Scenario 1 input snapshot
+- requirement
+- acceptance criteria
+- BEFORE flow
+- AFTER flow
+- changed files and AFTER line ranges
+- provider architecture
+- test commands/results
+- limitations
+- runtime blockers
+- regression status
+
+19. Do NOT perform final pattern classification yet.
+
+Do not decide yet whether the implementation confirms:
+
+- Adapter
+- Strategy
+- Controller
+- Factory
+
+Do not change current pattern counts.
+
+At the end, identify only the pattern candidates that should be inspected in the next verification step.
+
+20. Do not begin cancellation-policy work.
+
+At the end give me:
+
+1. Implementation summary.
+2. Exact modified files.
+3. Exact new files.
+4. Final provider collaboration flow.
+5. Atlas and Beacon normalization behavior.
+6. Authorization and tamper-resistance behavior.
+7. Persistence behavior.
+8. Geocoding reuse.
+9. Test files written.
+10. Actual test/syntax results.
+11. Regression status.
+12. Differences from the design, if any.
+13. Remaining limitations.
+14. Pattern candidates for AFTER verification only.
+15. A downloadable complete Scenario 2 AFTER source ZIP.
+16. A downloadable Scenario 1 → Scenario 2 source patch.
+
+Do not start Scenario 3.

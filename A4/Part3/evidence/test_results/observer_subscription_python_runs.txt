@@ -1,0 +1,32 @@
+Pattern: Observer
+Instance: Home Assistant WebSocket Entity Subscriptions
+Language: Python
+Compiler/Runtime: Python 3.11.9
+Warmup + 5 Runs Raw Output:
+--- Run 1 ---
+RESULT: 5/5 passed
+TIME_MS: 0.023
+
+
+--- Run 2 ---
+RESULT: 5/5 passed
+TIME_MS: 0.029
+
+
+--- Run 3 ---
+RESULT: 5/5 passed
+TIME_MS: 0.017
+
+
+--- Run 4 ---
+RESULT: 5/5 passed
+TIME_MS: 0.039
+
+
+--- Run 5 ---
+RESULT: 5/5 passed
+TIME_MS: 0.024
+
+
+Measured Milliseconds: [0.023, 0.029, 0.017, 0.039, 0.024]
+Computed Median Milliseconds: 0.024

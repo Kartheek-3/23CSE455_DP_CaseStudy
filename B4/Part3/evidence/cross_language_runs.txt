@@ -1,0 +1,64 @@
+Strategy|Java
+Strategy Java: 6/6 passed
+Strategy Java: 6/6 passed
+Strategy Java: 6/6 passed
+Strategy Java: 6/6 passed
+Strategy Java: 6/6 passed
+times_ms=64 64 62 63 64
+median_ms=64
+Strategy|Python
+Strategy Python: 6/6 passed
+Strategy Python: 6/6 passed
+Strategy Python: 6/6 passed
+Strategy Python: 6/6 passed
+Strategy Python: 6/6 passed
+times_ms=43 44 43 42 44
+median_ms=43
+Strategy|JavaScript
+Strategy JavaScript: 6/6 passed
+Strategy JavaScript: 6/6 passed
+Strategy JavaScript: 6/6 passed
+Strategy JavaScript: 6/6 passed
+Strategy JavaScript: 6/6 passed
+times_ms=35 37 39 35 36
+median_ms=36
+Strategy|C++
+Strategy C++: 6/6 passed
+Strategy C++: 6/6 passed
+Strategy C++: 6/6 passed
+Strategy C++: 6/6 passed
+Strategy C++: 6/6 passed
+times_ms=10 9 11 11 11
+median_ms=11
+Specification|Java
+Specification Java: 5/5 passed
+Specification Java: 5/5 passed
+Specification Java: 5/5 passed
+Specification Java: 5/5 passed
+Specification Java: 5/5 passed
+times_ms=68 67 70 69 68
+median_ms=68
+Specification|Python
+Specification Python: 5/5 passed
+Specification Python: 5/5 passed
+Specification Python: 5/5 passed
+Specification Python: 5/5 passed
+Specification Python: 5/5 passed
+times_ms=46 46 45 47 44
+median_ms=46
+Specification|JavaScript
+Specification JavaScript: 5/5 passed
+Specification JavaScript: 5/5 passed
+Specification JavaScript: 5/5 passed
+Specification JavaScript: 5/5 passed
+Specification JavaScript: 5/5 passed
+times_ms=36 39 35 37 40
+median_ms=37
+Specification|C++
+Specification C++: 5/5 passed
+Specification C++: 5/5 passed
+Specification C++: 5/5 passed
+Specification C++: 5/5 passed
+Specification C++: 5/5 passed
+times_ms=9 11 12 11 9
+median_ms=11

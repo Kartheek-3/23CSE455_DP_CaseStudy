@@ -1,0 +1,166 @@
+Context: Sarathi is an open-source Node.js/Express/TypeScript ride-sharing backend (github.com/AkhilMM2000/sarathi-backend, commit c8766f4) using MongoDB/Mongoose, tsyringe DI, Socket.IO, Redis, Stripe and the Google Distance Matrix API. Source lines are numbered on the left.
+
+Change request CH01 - new driver status: an admin must be able to SUSPEND an approved driver (reason required) and later REINSTATE them. A suspended driver must not receive ride requests or accept bookings. Today the status is only pending/approved/rejected and the admin can move a driver from any status to any status.
+
+Answer in this order, concisely:
+1. Code smells or defects in the current code that make this change risky (cite file:line).
+2. The design pattern(s) you would introduce, with every participant role mapped to a class name.
+3. Effect on the patterns already in this code: preserved / modified / extended / replaced / removed, with a reason.
+4. The key TypeScript changes (only the new/changed parts).
+
+--- src/domain/models/Driver.ts (lines 3-37) ---
+   3 export interface Driver {
+   4     _id?: Types.ObjectId | string;
+   5     name: string;
+   6     email: string;
+   7     mobile: string;
+   8     password: string;
+   9     profileImage: string;
+  10     location:
+  11     | {
+  12         
+  13         latitude: number;
+  14         longitude: number;
+  15       }
+  16     | {
+  17         type: "Point";
+  18         coordinates: [number, number];
+  19       };
+  20     place:string;
+  21     aadhaarNumber: string;
+  22     licenseNumber: string;
+  23     aadhaarImage: string;
+  24     licenseImage: string;
+  25     status: "pending" | "approved" | "rejected";
+  26     isBlock: boolean; 
+  27     role:"driver";
+  28     onlineStatus: 'online' | 'offline';
+  29     lastSeen: Date;
+  30     activePayment?: boolean;
+  31     stripeAccountId?: string;
+  32     reason?: string; 
+  33      averageRating: number;
+  34      totalRatings: number;
+  35     totalRatingPoints: number;
+  36     createdAt?: Date;
+  37   }
+
+--- src/domain/repositories/IDriverepository.ts (lines 4-12) ---
+   4 export interface IDriverRepository {
+   5   create(driver: Driver): Promise<Driver>;
+   6   findByEmail(email: string): Promise<Driver | null>;
+   7   getDrivers(page: number, limit: number): Promise<PaginatedResult<Driver>>;
+   8   findDriverById(driverId: string): Promise<Driver | null>; 
+   9   updateStatus(driverId: string, status: "pending" | "approved" | "rejected", reason?: string):Promise<Driver | null>; 
+  10   blockOrUnblockDriver(driverId: string, isBlocked: boolean): Promise<void>;
+  11   update(userId: string, data: Partial<Driver>): Promise<Driver | null>;
+  12   findActiveDrivers(page: number, limit: number, placeKey?: string, lat?: number, lng?: number): Promise<PaginatedResult<Driver>>;
+
+--- src/infrastructure/database/MongodriverRepository.ts (lines 89-102) ---
+  89   async updateStatus(
+  90     driverId: string,
+  91     status: "pending" | "approved" | "rejected",
+  92     reason?: string
+  93   ): Promise<Driver | null> {
+  94     const updateData: Partial<Driver> = { status };
+  95     if (status === "rejected" && reason) {
+  96       updateData.reason = reason;
+  97     } else {
+  98       updateData.reason = undefined;
+  99     }
+ 100     
+ 101     return super.update(driverId, updateData);
+ 102   }
+
+--- src/infrastructure/database/MongodriverRepository.ts (lines 255-271) ---
+ 255     const result = await DriverModel.aggregate([
+ 256       {
+ 257         $geoNear: {
+ 258           near: {
+ 259             type: 'Point',
+ 260             coordinates: [location.longitude, location.latitude],
+ 261           },
+ 262           distanceField: 'distance',
+ 263           maxDistance: radiusInMeters,
+ 264           spherical: true,
+ 265           query: {
+ 266             _id: { $nin: excludedObjectIds },
+ 267             isBlock: false,
+ 268             status: 'approved',
+ 269             activePayment: true,
+ 270           },
+ 271         },
+
+--- src/application/use_cases/Admin/AdminChangeDriverStatus.ts (lines 10-37) ---
+  10 @injectable()
+  11 export class AdminChangeDriverStatus implements IAdminChangeDriverStatusUseCase  {
+  12   constructor(
+  13     @inject(TOKENS.IDRIVER_REPO) private _driverRepository: IDriverRepository,
+  14     @inject(TOKENS.NOTIFICATION_SERVICE)
+  15     private _notificationService: INotificationService
+  16   ) {}
+  17 
+  18   async execute(
+  19     driverId: string,
+  20     status: "pending" | "approved" | "rejected",
+  21     reason?: string
+  22   ): Promise<AdminDriverResponseDto | null> {
+  23 
+  24     if (!["pending", "approved", "rejected"].includes(status)) {
+  25         throw new AuthError("Invalid status value.", HTTP_STATUS_CODES.BAD_REQUEST);
+  26       }
+  27       
+  28       if (status === "rejected" && !reason) {
+  29         throw new AuthError("Rejection reason is required.", HTTP_STATUS_CODES.UNPROCESSABLE_ENTITY);
+  30       }
+  31       
+  32     await this._notificationService.adminChangeDriverStatusNotification(driverId, { status, reason });
+  33     const updatedDriver = await this._driverRepository.updateStatus(driverId, status, reason);
+  34     
+  35     return updatedDriver ? toAdminDriverResponse(updatedDriver) : null;
+  36   }
+  37 }
+
+--- src/application/use_cases/Driver/AcceptBooking.ts (lines 13-54) ---
+  13 @injectable()
+  14 export class AcceptBooking implements IAcceptBookingUseCase {
+  15   constructor(
+  16     @inject(TOKENS.IBOOKING_REPO) private _bookingRepo: IBookingRepository,
+  17     @inject(TOKENS.NOTIFICATION_SERVICE) private _notificationService: INotificationService
+  18   ) {}
+  19 
+  20   async execute(data: AcceptBookingInput): Promise<Booking> {
+  21     const { bookingId, driverId } = data;
+  22 
+  23     // Atomic update: only updates status to CONFIRMED if status is currently PENDING
+  24     const updatedBooking = await BookingModel.findOneAndUpdate(
+  25       { _id: new Types.ObjectId(bookingId), status: BookingStatus.PENDING },
+  26       { status: BookingStatus.CONFIRMED, driverId: new Types.ObjectId(driverId) },
+  27       { new: true }
+  28     ).populate("driverId", "name profileImage mobile");
+  29 
+  30     // If updatedBooking is null, it was either already accepted or expired
+  31     if (!updatedBooking) {
+  32       throw new AuthError("This booking request is no longer available.", HTTP_STATUS_CODES.BAD_REQUEST);
+  33     }
+  34 
+  35     const driverObj = updatedBooking.driverId as unknown as PopulatedDriver;
+  36 
+  37     // Notify user via Socket.IO
+  38     await this._notificationService.sendBookingConfirmation(updatedBooking.userId.toString(), {
+  39       bookingId: (updatedBooking._id as Types.ObjectId).toString(),
+  40       status: BookingStatus.CONFIRMED,
+  41       driver: driverObj ? {
+  42         _id: driverObj._id.toString(),
+  43         name: driverObj.name,
+  44         mobile: driverObj.mobile,
+  45         profileImage: driverObj.profileImage || "N/A"
+  46       } : undefined
+  47     });
+  48 
+  49     // Notify other online drivers to dismiss their popups
+  50     this._notificationService.bookingAssignedNotification((updatedBooking._id as Types.ObjectId).toString(), driverId);
+  51 
+  52     return updatedBooking.toObject() as Booking;
+  53   }
+  54 }

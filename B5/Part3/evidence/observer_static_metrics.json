@@ -1,0 +1,64 @@
+{
+  "Java": {
+    "production_files": [
+      "observer/java/Main.java"
+    ],
+    "source_loc": 47,
+    "max_function_cc": 5,
+    "functions_cc": {
+      "onDelivered": 1,
+      "received": 1,
+      "register": 2,
+      "unregister": 1,
+      "deliver": 5
+    }
+  },
+  "Python": {
+    "production_files": [
+      "observer/python/main.py"
+    ],
+    "source_loc": 32,
+    "max_function_cc": 5,
+    "functions_cc": {
+      "MailObserver.onDelivered": 1,
+      "MailLogger.__init__": 1,
+      "MailLogger.onDelivered": 1,
+      "MailDeliveryPublisher.__init__": 1,
+      "MailDeliveryPublisher.register": 2,
+      "MailDeliveryPublisher.unregister": 2,
+      "MailDeliveryPublisher.deliver": 5
+    }
+  },
+  "JavaScript": {
+    "production_files": [
+      "observer/javascript/main.js"
+    ],
+    "source_loc": 43,
+    "max_function_cc": 5,
+    "functions_cc": {
+      "constructor": 1,
+      "onDelivered": 1,
+      "constructor#2": 1,
+      "onDelivered#2": 1,
+      "constructor#3": 1,
+      "register": 1,
+      "unregister": 1,
+      "deliver": 5
+    }
+  },
+  "C++": {
+    "production_files": [
+      "observer/cpp/main.hpp",
+      "observer/cpp/main.cpp"
+    ],
+    "source_loc": 60,
+    "max_function_cc": 4,
+    "functions_cc": {
+      "MailLogger::onDelivered": 1,
+      "MailLogger::received": 1,
+      "MailDeliveryPublisher::registerObserver": 2,
+      "MailDeliveryPublisher::unregisterObserver": 1,
+      "MailDeliveryPublisher::deliver": 4
+    }
+  }
+}

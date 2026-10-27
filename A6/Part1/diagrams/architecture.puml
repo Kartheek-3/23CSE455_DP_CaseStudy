@@ -1,0 +1,70 @@
+@startuml architecture
+title Sarathi backend (baseline c8766f4) - layered architecture and ride-request flow
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam defaultFontSize 12
+
+actor "Rider app" as Rider
+actor "Driver app" as DriverApp
+
+package "Presentation (Express 4)" {
+  [index.ts\napp.use(routes), errorHandler] as App
+  [BookingRoute / userRoutes / driverRoutes] as Routes
+  [protectRoute -> CheckBlockedUserOrDriver\n(middleware chain)] as MW
+  [BookingController\n(catchAsync handlers, Zod DTOs)] as Ctl
+}
+
+package "Application (use cases)" {
+  [BookDriver / AcceptBooking /\nCancelBooking / UpdateBookingStatus] as UC
+  [CreatePaymentIntent / WalletPayment] as PayUC
+  [FindNearbyDrivers] as Match
+}
+
+package "Domain" {
+  [Booking, Driver, User, Wallet models] as Models
+  interface "IBookingRepository\nIDriverRepository\nIUserRepository\nIWalletRepository" as Repo
+  interface "INotificationService\nIStripeService\nIFareCalculatorService" as Ports
+}
+
+package "Infrastructure" {
+  [tsyringe container\n(composition root)] as DI
+  [Mongo*Repository\n(BaseRepository + Mongoose)] as MongoRepo
+  [SocketNotificationService] as Notif
+  [PaymentService (Stripe)] as Stripe
+  [GoogleDistanceService] as Geo
+  [FareCalculatorService] as Fare
+  [Socket.IO server (getIO)] as IO
+  [CronScheduler\n(expires PENDING bookings)] as Cron
+}
+
+database "MongoDB Atlas" as Mongo
+database "Upstash Redis\n(socket registry)" as Redis
+cloud "Google Distance Matrix" as GAPI
+cloud "Stripe" as SAPI
+
+Rider --> App : HTTPS POST /api/bookings/...
+App --> Routes
+Routes --> MW
+MW --> Ctl
+Ctl --> UC
+Ctl --> PayUC
+Ctl --> Match
+UC ..> Repo
+UC ..> Ports
+PayUC ..> Ports
+Match ..> Geo
+DI ..> UC : injects
+MongoRepo ..|> Repo
+Notif ..|> Ports
+Stripe ..|> Ports
+Fare ..|> Ports
+MongoRepo --> Mongo
+Notif --> Redis
+Notif --> IO
+IO --> DriverApp : booking:new / cancel:booking
+IO --> Rider : booking:confirmation
+Geo --> GAPI
+Stripe --> SAPI
+Cron --> Mongo
+Cron ..> Ports
+@enduml

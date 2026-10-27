@@ -1,0 +1,5 @@
+[Model: Claude Opus 4.8 | 2026-10-10 | Part 3 Strategy | owner: Rakshann]
+All 4 languages implemented and run; output identical (regular/advocate fines for 0,3,7,10 days).
+Measured on submission machine (median ms): C++ 4.6 | Python 14.3 | JavaScript 44.5 | Java 39.1.
+Source LOC: Java 36, Python 34, JS 25, C++ 33. Max function CC: 2-3.
+Verified: outputs diffed identical across the four languages.

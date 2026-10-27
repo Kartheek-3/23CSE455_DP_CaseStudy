@@ -1,0 +1,45 @@
+WALLET CASE-STUDY WORKING PROMPTS
+Study: Design Pattern Identification and Evolution in a Quarkus-Based Digital Wallet
+
+HOW TO USE THIS FILE
+The entries below are reusable instructions for examining this project's artifacts. They are not a transcript of earlier model conversations and do not demonstrate that a check was run. When using one, provide the relevant project files and retain the resulting evidence separately. Report only what can be substantiated by those files; label assumptions, missing information, and unperformed checks plainly.
+
+REVIEW A — UNDERSTAND THE WALLET DESIGN
+Build a concise technical picture of the wallet application from the supplied baseline and evolved sources. Trace how a user-facing request reaches wallet operations, how transfers and transaction state are handled, and where persistence, currency, notifications, beneficiaries, and security fit in. For each area, distinguish working source behavior from a requirement, diagram, or design intention. Name the files and classes that support the explanation. Call out areas that are not implemented or cannot be confirmed; do not fill gaps with assumptions about what Quarkus usually provides.
+
+REVIEW B — FIND PATTERNS WITH EVIDENCE
+Examine the Java code in the Part1 and Part2 application trees and prepare a defensible catalog of its design patterns and related design mechanisms. Include relevant patterns beyond the classic Gang of Four set, but identify whether each item is a GoF pattern, architectural pattern, framework mechanism, concurrency technique, or domain modeling practice.
+
+For each candidate, record its name, location in the current source, the concrete implementation evidence, and the reasoning that connects the code to the name. Add a confidence level and note reasonable alternative interpretations. Use current line numbers only after checking the file. A name such as `Repository` or `Strategy` is not evidence by itself; omit or qualify weak candidates instead of forcing a classification.
+
+REVIEW C — RECONCILE INVENTORY FILES
+Cross-check `data/patterns.csv`, `data/pattern_counts.csv`, and `data/patterns_evolution.csv` with the application code and report. Verify that instance totals and distinct category totals are not confused, that paths resolve, and that repeated entries are intentional. List each mismatch with the affected row and the code or report passage that exposes it. Preserve original observations when they are part of the research record; suggest corrections separately rather than silently rewriting evidence.
+
+REVIEW D — TRACE THE DIAGRAMS
+Compare each supplied PlantUML model with the relevant source version. Check class membership, dependencies, message flow, and labels against actual declarations and calls. Separate conceptual components from implemented ones. Identify unsupported or outdated elements and cite the source that would justify a correction. Keep the editable `.puml` as the authority for diagram content and state whether a rendered image was actually available and inspected.
+
+REVIEW E — FOLLOW EACH CHANGE THROUGH THE SYSTEM
+Trace the evolution work in Part2 from its requirement and patch through the integrated code and tests. Treat these as three separate changes: support for multiple currencies, transaction-limit rules, and a fraud-screening step. For each, explain what changed, what design responsibilities moved or were added, what tests cover the behavior, and what edge cases remain.
+
+Use only test results present in actual logs. Distinguish fixed or demonstration exchange-rate data from a live rate service. Compare intermediate and final stages only when the supplied patches or snapshots make that comparison possible. Disclose skipped checks, changed tests, and unverified claims; do not describe the application as production-ready without evidence.
+
+REVIEW F — EXAMINE THE MULTI-LANGUAGE EXAMPLES
+Compare the Repository and Strategy demonstrations under Part3 across Java, Python, JavaScript, and C++. Explain how each language represents the abstraction and its interchangeable implementations, using the source rather than language stereotypes. Check fixture results against the recorded evidence. Include runtime/compiler information, LOC, complexity, run counts, and median timings only when the project records them, and explain each metric's method and units.
+
+Make clear when a test or compiler was unavailable. Note whether timing includes process startup. These small examples illustrate design choices; do not treat them as production systems or turn their timings into a general language-performance ranking without a suitable methodology.
+
+REVIEW G — CHECK THE MODEL-ASSISTED ANALYSIS RECORD
+Inspect `data/llm.csv` and the prompt/output artifacts in the three parts. Determine which items are reusable prompt descriptions, which are saved response summaries, and which—if any—are original interaction records. Do not relabel a refined prompt as a verbatim prompt or a summary as a raw model response.
+
+Where predicted and human-reviewed labels are both recorded, calculate agreement from the actual rows and investigate disagreements against source evidence. Preserve the original prediction. Identify disagreements as classification mistakes, taxonomy differences, or unresolved ambiguity only when the evidence allows. Mark absent model/version/date/reviewer metadata as missing instead of guessing.
+
+REVIEW H — VALIDATE THE RESEARCH DATA FILES
+Inspect every CSV in `B9/data` and the Excel workbook. Check columns, row totals, labels, formulas, workbook sheets, and agreement between spreadsheet content and CSV records. Report which checks were actually run and their outcomes. If a calculation engine or cached formula result is unavailable, say so. A well-formed workbook is not proof that the application behavior or reported metrics are correct.
+
+REVIEW I — ASSESS THE REPORT AGAINST THE BRIEF
+Read `B9_Report.tex` and, where possible, the compiled PDF alongside the source, tests, diagrams, evidence notes, and datasets. Assess whether a reader can find the application and architecture, pattern inventory and code mapping, UML and code evidence, all three evolution scenarios, before/after and refactoring discussion, four-language examples, model-assisted analysis and human verification, metrics, and the Excel/CSV data.
+
+For each deliverable, state one of: verified in the supplied artifacts; included but requiring validation; absent; or impossible to determine from this package. Check report claims against their cited artifacts rather than judging completeness by page count or file presence. Flag placeholders, unsupported statements, and missing team or submission information without inventing replacements.
+
+REVIEW J — WRITE A TRUSTWORTHY HANDOFF
+Summarize the project's readiness for a teammate who has not inspected the files. Separate confirmed facts from unchecked claims and open work. Prioritize the remaining actions and name the evidence needed to close each one. Avoid repeating completed work, overstating test coverage, or calling the submission finished until the relevant report, source, evidence, and deliverables have been checked.

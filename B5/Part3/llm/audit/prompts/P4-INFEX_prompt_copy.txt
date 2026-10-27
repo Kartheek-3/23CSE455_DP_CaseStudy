@@ -1,0 +1,517 @@
+Now continue the cross-language implementation phase.
+
+Strategy S3-N01, Observer P08 and Controller P03 are complete and frozen.
+
+Implement ONLY the fourth selected pattern:
+
+P01 — Information Expert (GRASP)
+Parsed Email to Trip Record Linking
+
+Do not modify completed Strategy, Observer or Controller materials.
+
+Do not implement Adapter yet.
+
+Use the frozen Information Expert specification exactly as previously defined.
+
+1. Extend the existing Part3 structure.
+
+Preserve all current:
+
+Part3/common_specs/
+Part3/strategy/
+Part3/observer/
+Part3/controller/
+existing evidence files
+existing append-ready records
+
+Create:
+
+Part3/common_specs/information_expert_cases.tsv
+Part3/common_specs/information_expert_expected.tsv
+
+Freeze the exact I01–I08 cases before implementation.
+
+2. Simplified problem.
+
+An InboxItem contains parsed booking information:
+
+- inbox ID
+- trip ID
+- provider name
+- incoming confirmation reference
+
+The trip may already contain one TripItem.
+
+InboxItem owns the information required to decide whether that parsed booking should:
+
+- link to an existing item
+or
+- create a new confirmed item
+
+The matching/linking responsibility must remain on InboxItem.
+
+Do not move all of the matching logic into the controller/test runner.
+
+3. Preserve these GRASP roles in all four languages.
+
+Information Expert:
+InboxItem
+
+Information held by Expert:
+- parsed provider name
+- incoming confirmation reference
+- trip ID
+- inbox ID
+
+Domain entity:
+TripItem
+
+Collection/domain context:
+Trip
+
+Caller:
+InboxReviewController or equivalent small request handler
+
+The caller may invoke the operation but must not contain the complete linking algorithm.
+
+4. Frozen input fields.
+
+Use:
+
+case_id
+inbox_id
+trip_id
+provider_name
+incoming_reference
+existing_item_id
+existing_trip_id
+existing_item_name
+existing_reference
+existing_inbox_id
+
+Use literal:
+
+~
+
+to represent missing values.
+
+Each case is independent.
+
+At most one candidate existing TripItem is needed for this simplified fixture set.
+
+5. Frozen business rules.
+
+Implement exactly:
+
+1. Existing items may match only if they belong to the same trip.
+2. Provider/item names are compared case-insensitively.
+3. A matching existing TripItem is reused.
+4. If its confirmation reference is missing, fill it from the incoming reference.
+5. If its confirmation reference is already nonblank, preserve the existing value.
+6. If its inbox link is missing, fill it with the current InboxItem ID.
+7. If its inbox link already exists, preserve the existing value.
+8. If there is no valid match, create a new confirmed TripItem.
+9. Reject a missing or blank provider name.
+10. Never attach an item belonging to a different trip.
+
+Do not overwrite existing nonblank values.
+
+6. New item behavior.
+
+If a new TripItem must be created:
+
+item ID must be:
+
+item-<case_id>
+
+Example:
+
+I02 → item-I02
+
+Set:
+
+trip_id = current InboxItem trip
+name = normalized provider name
+status = confirmed
+confirmation_ref = incoming reference, or missing if incoming reference is ~
+inbox_id = current InboxItem ID
+
+No Expense, database or email behavior is included in this simplified example.
+
+7. Name normalization.
+
+Trim leading/trailing whitespace.
+
+For matching:
+
+compare names case-insensitively.
+
+Preserve a sensible normalized display name in output.
+
+Do not perform locale-dependent matching beyond the frozen ASCII fixture data.
+
+8. Output format.
+
+Success must be exactly:
+
+case_id
+LINKED|CREATED
+item_id
+item_name
+confirmation_ref
+inbox_id
+
+Use literal ~ in output for missing optional values.
+
+Failure:
+
+case_id
+ERROR
+error_code
+
+Use:
+
+MISSING_PROVIDER
+
+for blank/missing provider-name errors.
+
+9. Freeze exact I01–I08 cases.
+
+I01:
+Matching same-trip item
+existing reference missing
+existing inbox link missing
+incoming reference present
+→ LINKED
+→ fill missing reference
+→ fill inbox ID
+
+I02:
+No existing item
+→ CREATED
+→ new confirmed TripItem
+→ ID item-I02
+
+I03:
+Matching same-trip item already has confirmation reference
+→ LINKED
+→ preserve original reference
+→ do not overwrite it with incoming reference
+
+I04:
+Same provider name exists but existing item belongs to another trip
+→ do not link it
+→ CREATED in current trip
+
+I05:
+Provider name missing or blank
+→ ERROR MISSING_PROVIDER
+
+I06:
+Provider name and existing item name differ only by case
+→ LINKED
+
+I07:
+Matching same-trip item already linked to another InboxItem
+→ LINKED
+→ preserve existing inbox link
+
+I08:
+Incoming confirmation reference missing
+→ link/create according to matching rule
+→ reference remains missing when no existing reference exists
+
+Use deterministic IDs and values across all four languages.
+
+10. Implement Java under:
+
+Part3/information_expert/java/
+
+Keep clearly identifiable:
+
+InboxItem
+TripItem
+Trip
+InboxReviewController or equivalent caller
+
+InboxItem must contain the linking method, such as:
+
+linkOrCreateTripItem(...)
+
+or an equivalent clear name.
+
+Do not place the whole algorithm in TestMain.
+
+Use dependency-free Java.
+
+11. Implement Python under:
+
+Part3/information_expert/python/
+
+Preserve InboxItem as the object owning the decision.
+
+Use standard library only.
+
+Avoid a design where InboxItem is merely passive data and an unrelated utility performs all matching.
+
+12. Implement JavaScript under:
+
+Part3/information_expert/javascript/
+
+Use Node.js only.
+
+Preserve the same responsibility assignment.
+
+InboxItem must inspect the Trip context and perform the matching/linking decision.
+
+13. Implement C++ under:
+
+Part3/information_expert/cpp/
+
+Use standard C++ only.
+
+Preserve identifiable InboxItem, TripItem and Trip roles.
+
+Keep the expert behavior on InboxItem or a directly owned InboxItem method.
+
+14. All four runners must read:
+
+Part3/common_specs/information_expert_cases.tsv
+
+and compare actual output against:
+
+Part3/common_specs/information_expert_expected.tsv
+
+Do not hard-code separate expected outputs inside each implementation.
+
+15. Verify state changes as well as textual output.
+
+For linked cases check:
+
+- existing item reused
+- no extra item created
+- missing fields filled
+- existing nonblank fields preserved
+
+For created cases check:
+
+- one new item created
+- correct trip ID
+- correct item ID
+- status confirmed
+- correct inbox link
+- correct reference behavior
+
+For error cases:
+
+- no item changed
+- no item created
+
+16. Validate Information Expert fidelity.
+
+For every language identify:
+
+Expert:
+InboxItem
+
+Why it is Expert:
+it owns the parsed booking information needed to decide linking.
+
+Caller:
+InboxReviewController / request handler
+
+Collaborators:
+Trip
+TripItem
+
+Explain why this is GRASP Information Expert rather than:
+
+- Controller
+- Adapter
+- Factory
+
+The key evidence is responsibility assignment to the object possessing the relevant information.
+
+17. Compile and execute all four implementations.
+
+Record actual:
+
+Java:
+java version
+javac version
+compile command
+test command
+
+Python:
+python3 version
+test command
+
+JavaScript:
+node version
+test command
+
+C++:
+g++ version
+compile command
+test command
+
+Do not claim execution unless it actually happened.
+
+18. Required results:
+
+8 Java
+8 Python
+8 JavaScript
+8 C++
+
+Expected total:
+
+32/32
+
+If something fails, fix the implementation and rerun.
+
+Do not alter the frozen fixtures merely to make tests pass.
+
+19. Measure production LOC using exactly the same rule used for Strategy, Observer and Controller.
+
+Exclude:
+
+- tests
+- fixtures
+- blank lines
+- comment-only lines
+- generated/compiled files
+
+Record:
+
+source_loc
+
+for each language.
+
+20. Measure maximum function cyclomatic complexity.
+
+Use the same frozen McCabe-style rule used for all previous patterns.
+
+Record:
+
+max_function_cc
+
+for each language.
+
+Do not alter the counting definition.
+
+21. Measure process execution time.
+
+For each language:
+
+- compile first where required
+- one warm-up
+- five measured fresh-process runs
+- each run processes I01–I08
+- record all five raw times
+- calculate median_process_ms
+
+Retain raw measurements.
+
+22. Create evidence inside every language folder:
+
+production source
+test runner
+README.md
+test_result.txt
+timings.csv
+
+README must include:
+
+- source ID P01
+- pattern Information Expert (GRASP)
+- instance Parsed Email to Trip Record Linking
+- role mapping
+- compile/run instructions
+- simplification from DaPlanStan
+- no database, Rails, Anthropic or live email involved
+
+23. Prepare four append-ready faculty records using exactly:
+
+pattern_name
+instance_name
+language
+snippet_path
+source_loc
+max_function_cc
+runtime_compiler
+test_command
+test_result
+median_process_ms
+language_notes
+
+Use:
+
+pattern_name = Information Expert
+
+instance_name = Parsed Email to Trip Record Linking
+
+Save as:
+
+Part3/information_expert/information_expert_append_ready.json
+
+Do not generate final cross_language.csv yet.
+
+24. Create:
+
+Part3/INFORMATION_EXPERT_VERIFICATION_SUMMARY.md
+
+Include:
+
+- fixture validation
+- expert responsibility mapping
+- match/create behavior
+- field-preservation verification
+- compilation
+- tests
+- LOC
+- complexity
+- five timings and medians
+- limitations
+
+25. Package this stage.
+
+Create one cumulative ZIP containing:
+
+- frozen Strategy
+- frozen Observer
+- frozen Controller
+- Information Expert fixtures
+- all four Information Expert implementations
+- append-ready records
+- verification evidence
+
+Do not modify any completed earlier pattern.
+
+Exclude compiled binaries and temporary caches.
+
+Verify ZIP integrity and preservation checksums.
+
+26. Do not modify DaPlanStan.
+
+27. Do not begin Adapter yet.
+
+At the end give me:
+
+1. Exact Information Expert files created.
+2. I01–I08 fixture validation.
+3. Java result.
+4. Python result.
+5. JavaScript result.
+6. C++ result.
+7. GRASP Information Expert role mapping.
+8. Linking/creation state verification.
+9. Runtime/compiler versions.
+10. LOC values.
+11. Maximum function CC values.
+12. Five timing measurements and median for each language.
+13. Four append-ready Information Expert records.
+14. Remaining limitations.
+15. Downloadable Information Expert cross-language ZIP.
+
+Do not begin Adapter yet.

@@ -1,0 +1,8 @@
+Change 1 Implementation:
+1. Created FlightStatus enum (ACTIVE, CANCELLED) with registerEnumType.
+2. Added status column to Flight entity with default FlightStatus.ACTIVE.
+3. Refactored FlightService.cancelFlight to update status to CANCELLED, zero availableSeats, update seats to isAvailable: true, and dispatch async emails to passengers via SendGridService.
+4. Added cancelFlight mutation in FlightResolver guarded with rolesRestrict(Role.ADMIN, Role.CREW), keeping removeFlight as a backward-compatible wrapper.
+5. In BookingService.createBooking, added check for flight.status === FlightStatus.CANCELLED throwing BadRequestException.
+6. Registered Seat and SendGridService in FlightModule.
+7. Added unit tests in flight.service.spec.ts and booking.service.spec.ts. All 14 tests passing.

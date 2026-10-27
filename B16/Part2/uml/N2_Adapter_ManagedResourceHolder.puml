@@ -1,0 +1,38 @@
+@startuml N2
+!pragma layout smetana
+title N2 Adapter: Managed Resource Holder (newly introduced by Change2)
+
+interface AutoCloseable <<Target (JDK)>> {
+  +close()
+}
+interface "ExtensionContext.Store.CloseableResource" as CloseableResource <<Target (deprecated)>> {
+  +close()
+}
+class "ManagedResourceExtension.Holder" as Holder <<Adapter, new in CH02>> #C8F7C5 {
+  -resource : Object
+  -factory : ResourceFactory<Object>
+  +close()
+}
+interface "ResourceFactory<T>" as ResourceFactory <<Adaptee, new in CH02>> #C8F7C5 {
+  +destroy(T)
+}
+class AbstractExtensionContext <<Client>> {
+  -createCloseAction() : CloseAction
+}
+
+Holder ..|> AutoCloseable
+Holder ..|> CloseableResource
+Holder --> ResourceFactory : close() calls factory.destroy(resource)
+AbstractExtensionContext ..> AutoCloseable : close() when the store closes
+AbstractExtensionContext ..> CloseableResource : close() if auto-close of AutoCloseable is disabled
+' aligned-with-record
+legend right
+  <b>Counted participants</b> (record in the dataset)
+  Target: AutoCloseable
+  Target: CloseableResource
+  Adapter: Holder
+  Adaptee: ResourceFactory#destroy
+  Client: AbstractExtensionContext#createCloseAction
+  Grey classes: real, shown for context, not counted
+endlegend
+@enduml

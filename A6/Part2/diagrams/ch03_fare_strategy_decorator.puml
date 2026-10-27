@@ -1,0 +1,62 @@
+@startuml ch03_fare_strategy_decorator
+title CH03 - multiple ride types (Strategy) and dynamic pricing (Decorator)
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+hide empty members
+
+interface FareStrategy <<Strategy / Component>> {
+  +extraKmRate
+  +calculate(request: FareRequest): number
+}
+class OneWayFare <<ConcreteStrategy>> {
+  max(450, km x 10)
+}
+class RoundTripFare <<ConcreteStrategy>> {
+  days x 1000
+}
+class HourlyFare <<ConcreteStrategy>> #LightYellow {
+  max(4, ceil(h)) x 200
+}
+class OutstationFare <<ConcreteStrategy>> #LightYellow {
+  km x 12 + days x 300
+}
+abstract class FareDecorator <<Decorator>> {
+  #inner: FareStrategy
+}
+class PeakHourSurcharge <<ConcreteDecorator>> #LightYellow {
+  x1.25 at 08-11 / 17-21 IST
+}
+class LowSupplySurcharge <<ConcreteDecorator>> #LightYellow {
+  x1.2 when availableDrivers < 3
+}
+OneWayFare ..|> FareStrategy
+RoundTripFare ..|> FareStrategy
+HourlyFare ..|> FareStrategy
+OutstationFare ..|> FareStrategy
+FareDecorator ..|> FareStrategy
+FareDecorator o--> FareStrategy : inner
+PeakHourSurcharge --|> FareDecorator
+LowSupplySurcharge --|> FareDecorator
+
+interface IFareCalculatorService {
+  +calculate(params): number
+  +finalFare(params): number   // new (refactoring)
+}
+class FareCalculatorService <<Context>> {
+  -strategies: Map<BookingType, FareStrategy>
+  +register(type, strategy)
+  +calculate(params)
+  +finalFare(params)
+}
+FareCalculatorService ..|> IFareCalculatorService
+FareCalculatorService o--> FareStrategy : registry
+FareCalculatorService ..> PeakHourSurcharge : wraps
+FareCalculatorService ..> LowSupplySurcharge : wraps
+
+class BookDriver <<Client>>
+class GetEstimatedFare <<Client>>
+class UpdateBookingStatus <<Client>>
+BookDriver --> IFareCalculatorService : calculate(..., availableDrivers)
+GetEstimatedFare --> IFareCalculatorService
+UpdateBookingStatus --> IFareCalculatorService : finalFare()
+@enduml

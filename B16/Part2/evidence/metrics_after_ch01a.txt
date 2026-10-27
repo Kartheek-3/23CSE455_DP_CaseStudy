@@ -1,0 +1,26 @@
+# lizard 1.24.1 on b16-evolution 67d159b (after CH01a)
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       2      1      5      0       3 SummaryGeneratingListener::SummaryGeneratingListener@43-45@junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/SummaryGeneratingListener.java
+       3      1     10      0       3 SummaryGeneratingListener::getSummary@50-52@junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/SummaryGeneratingListener.java
+       3      1     17      0       3 SummaryGeneratingListener::getMutableSummary@54-56@junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/SummaryGeneratingListener.java
+       4      1     23      1       4 SummaryGeneratingListener::testPlanExecutionStarted@59-62@junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/SummaryGeneratingListener.java
+       5      1     34      1       5 SummaryGeneratingListener::testPlanExecutionFinished@65-69@junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/SummaryGeneratingListener.java
+       4      1     27      1       4 SummaryGeneratingListener::dynamicTestRegistered@72-75@junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/SummaryGeneratingListener.java
+       6      1     66      2       6 SummaryGeneratingListener::executionSkipped@78-83@junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/SummaryGeneratingListener.java
+       4      1     27      1       4 SummaryGeneratingListener::executionStarted@86-89@junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/SummaryGeneratingListener.java
+      14      4    112      2      19 SummaryGeneratingListener::executionFinished@92-110@junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/SummaryGeneratingListener.java
+       8      3     45      3       8 SummaryGeneratingListener::count@116-123@junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/SummaryGeneratingListener.java
+1 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+     78       5.3     1.5       36.6        10     junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/SummaryGeneratingListener.java
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+        78       5.3     1.5       36.6       10            0      0.00    0.00

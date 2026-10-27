@@ -1,0 +1,242 @@
+﻿diff --git a/src/app.module.ts b/src/app.module.ts
+index ae0f741..3229e94 100644
+--- a/src/app.module.ts
++++ b/src/app.module.ts
+@@ -1,4 +1,4 @@
+-∩╗┐import { Module } from '@nestjs/common';
++import { Module } from '@nestjs/common';
+ import { TypeOrmModule } from '@nestjs/typeorm';
+ import { ConfigModule } from '@nestjs/config';
+ import { User } from './users/user.entity';
+@@ -9,6 +9,7 @@ import { ReservationsModule } from './reservations/reservations.module';
+ import { AuthModule } from './auth/auth.module';
+ import { MailModule } from './mail/mail.module';
+ import { ChargingModule } from './charging/charging.module';
++import { OccupancyModule } from './occupancy/occupancy.module';
+ import { SeedService } from './seed/seed.service';
+ 
+ @Module({
+@@ -39,6 +40,7 @@ import { SeedService } from './seed/seed.service';
+     AuthModule,
+     MailModule,
+     ChargingModule,
++    OccupancyModule,
+   ],
+   providers: [SeedService],
+ })
+diff --git a/src/occupancy/observers/availability.observer.ts b/src/occupancy/observers/availability.observer.ts
+new file mode 100644
+index 0000000..56764fb
+--- /dev/null
++++ b/src/occupancy/observers/availability.observer.ts
+@@ -0,0 +1,24 @@
++import { Injectable } from '@nestjs/common';
++import { OccupancyEvent, OccupancyObserver } from '../occupancy-observer';
++
++@Injectable()
++export class AvailabilityObserver implements OccupancyObserver {
++  readonly name = 'availability';
++  private readonly occupied = new Set<number>();
++
++  update(event: OccupancyEvent): void {
++    if (event.status === 'occupied') {
++      this.occupied.add(event.slotId);
++    } else {
++      this.occupied.delete(event.slotId);
++    }
++  }
++
++  isOccupied(slotId: number): boolean {
++    return this.occupied.has(slotId);
++  }
++
++  occupiedCount(): number {
++    return this.occupied.size;
++  }
++}
+diff --git a/src/occupancy/observers/logging.observer.ts b/src/occupancy/observers/logging.observer.ts
+new file mode 100644
+index 0000000..542272a
+--- /dev/null
++++ b/src/occupancy/observers/logging.observer.ts
+@@ -0,0 +1,12 @@
++import { Injectable } from '@nestjs/common';
++import { OccupancyEvent, OccupancyObserver } from '../occupancy-observer';
++
++@Injectable()
++export class LoggingObserver implements OccupancyObserver {
++  readonly name = 'logging';
++  readonly entries: OccupancyEvent[] = [];
++
++  update(event: OccupancyEvent): void {
++    this.entries.push(event);
++  }
++}
+diff --git a/src/occupancy/occupancy-monitor.ts b/src/occupancy/occupancy-monitor.ts
+new file mode 100644
+index 0000000..9ae2e7b
+--- /dev/null
++++ b/src/occupancy/occupancy-monitor.ts
+@@ -0,0 +1,31 @@
++import { Injectable } from '@nestjs/common';
++import { OccupancyEvent, OccupancyObserver } from './occupancy-observer';
++
++@Injectable()
++export class OccupancyMonitor {
++  private readonly observers = new Set<OccupancyObserver>();
++
++  attach(observer: OccupancyObserver): void {
++    this.observers.add(observer);
++  }
++
++  detach(observer: OccupancyObserver): void {
++    this.observers.delete(observer);
++  }
++
++  observerCount(): number {
++    return this.observers.size;
++  }
++
++  report(slotId: number, status: string): OccupancyEvent {
++    const event: OccupancyEvent = { slotId, status, at: new Date() };
++    this.notify(event);
++    return event;
++  }
++
++  private notify(event: OccupancyEvent): void {
++    for (const observer of this.observers) {
++      observer.update(event);
++    }
++  }
++}
+diff --git a/src/occupancy/occupancy-observer.ts b/src/occupancy/occupancy-observer.ts
+new file mode 100644
+index 0000000..096cec6
+--- /dev/null
++++ b/src/occupancy/occupancy-observer.ts
+@@ -0,0 +1,10 @@
++export interface OccupancyEvent {
++  slotId: number;
++  status: string;
++  at: Date;
++}
++
++export interface OccupancyObserver {
++  readonly name: string;
++  update(event: OccupancyEvent): void;
++}
+diff --git a/src/occupancy/occupancy.controller.ts b/src/occupancy/occupancy.controller.ts
+new file mode 100644
+index 0000000..a4d0399
+--- /dev/null
++++ b/src/occupancy/occupancy.controller.ts
+@@ -0,0 +1,12 @@
++import { Body, Controller, Param, Post } from '@nestjs/common';
++import { OccupancyMonitor } from './occupancy-monitor';
++
++@Controller('occupancy')
++export class OccupancyController {
++  constructor(private readonly monitor: OccupancyMonitor) {}
++
++  @Post(':slotId/status')
++  report(@Param('slotId') slotId: string, @Body('status') status: string) {
++    return this.monitor.report(+slotId, status);
++  }
++}
+diff --git a/src/occupancy/occupancy.module.ts b/src/occupancy/occupancy.module.ts
+new file mode 100644
+index 0000000..b278494
+--- /dev/null
++++ b/src/occupancy/occupancy.module.ts
+@@ -0,0 +1,27 @@
++import { Module } from '@nestjs/common';
++import { OccupancyController } from './occupancy.controller';
++import { OccupancyMonitor } from './occupancy-monitor';
++import { LoggingObserver } from './observers/logging.observer';
++import { AvailabilityObserver } from './observers/availability.observer';
++
++@Module({
++  controllers: [OccupancyController],
++  providers: [
++    LoggingObserver,
++    AvailabilityObserver,
++    {
++      provide: OccupancyMonitor,
++      useFactory: (
++        logging: LoggingObserver,
++        availability: AvailabilityObserver,
++      ) => {
++        const monitor = new OccupancyMonitor();
++        monitor.attach(logging);
++        monitor.attach(availability);
++        return monitor;
++      },
++      inject: [LoggingObserver, AvailabilityObserver],
++    },
++  ],
++})
++export class OccupancyModule {}
+diff --git a/src/occupancy/occupancy.spec.ts b/src/occupancy/occupancy.spec.ts
+new file mode 100644
+index 0000000..ee35e56
+--- /dev/null
++++ b/src/occupancy/occupancy.spec.ts
+@@ -0,0 +1,58 @@
++import { OccupancyMonitor } from './occupancy-monitor';
++import { OccupancyEvent, OccupancyObserver } from './occupancy-observer';
++import { LoggingObserver } from './observers/logging.observer';
++import { AvailabilityObserver } from './observers/availability.observer';
++
++describe('OccupancyMonitor (Observer)', () => {
++  let monitor: OccupancyMonitor;
++  let logging: LoggingObserver;
++  let availability: AvailabilityObserver;
++
++  beforeEach(() => {
++    monitor = new OccupancyMonitor();
++    logging = new LoggingObserver();
++    availability = new AvailabilityObserver();
++    monitor.attach(logging);
++    monitor.attach(availability);
++  });
++
++  it('tracks attached observers', () => {
++    expect(monitor.observerCount()).toBe(2);
++    monitor.detach(logging);
++    expect(monitor.observerCount()).toBe(1);
++  });
++
++  it('notifies every observer on a status change', () => {
++    monitor.report(5, 'occupied');
++    expect(logging.entries).toHaveLength(1);
++    expect(logging.entries[0].slotId).toBe(5);
++    expect(availability.isOccupied(5)).toBe(true);
++    expect(availability.occupiedCount()).toBe(1);
++  });
++
++  it('frees the slot when it becomes available again', () => {
++    monitor.report(5, 'occupied');
++    monitor.report(5, 'available');
++    expect(availability.isOccupied(5)).toBe(false);
++    expect(availability.occupiedCount()).toBe(0);
++    expect(logging.entries).toHaveLength(2);
++  });
++
++  it('stops notifying a detached observer', () => {
++    monitor.detach(availability);
++    monitor.report(5, 'occupied');
++    expect(availability.occupiedCount()).toBe(0);
++    expect(logging.entries).toHaveLength(1);
++  });
++
++  it('supports a plain mock observer', () => {
++    const seen: OccupancyEvent[] = [];
++    const spy: OccupancyObserver = {
++      name: 'spy',
++      update: (event) => seen.push(event),
++    };
++    monitor.attach(spy);
++    monitor.report(9, 'occupied');
++    expect(seen[0].slotId).toBe(9);
++  });
++});

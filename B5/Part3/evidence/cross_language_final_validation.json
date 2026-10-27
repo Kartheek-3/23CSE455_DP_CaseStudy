@@ -1,0 +1,539 @@
+{
+  "result": "PASS",
+  "faculty_columns": [
+    "pattern_name",
+    "instance_name",
+    "language",
+    "snippet_path",
+    "source_loc",
+    "max_function_cc",
+    "runtime_compiler",
+    "test_command",
+    "test_result",
+    "median_process_ms",
+    "language_notes"
+  ],
+  "exact_columns": true,
+  "csv_rows": 20,
+  "patterns": {
+    "Strategy": 4,
+    "Observer": 4,
+    "Controller": 4,
+    "Information Expert": 4,
+    "Adapter": 4
+  },
+  "languages": {
+    "Java": 5,
+    "Python": 5,
+    "JavaScript": 5,
+    "C++": 5
+  },
+  "unique_pattern_language_keys": 20,
+  "fixture_cases_per_language": {
+    "Strategy": 15,
+    "Observer": 7,
+    "Controller": 8,
+    "Information Expert": 8,
+    "Adapter": 10
+  },
+  "total_numbered_fixture_tests_passed": 192,
+  "total_numbered_fixture_tests_expected": 192,
+  "other_assertions": "Additional Adapter provider-isolation assertions passed separately, not included in the 192 numbered cases.",
+  "verified_recorded_metrics": true,
+  "source_paths_resolve": true,
+  "cxx_header_loc_included": true,
+  "recorded_medians_match_five_measurements": true,
+  "warmup_and_measured_runs_per_row": "1 warmup + 5 measured",
+  "recorded_output_matches_expected_tsv": true,
+  "runtime_versions_corrobated": true,
+  "historical_cumulative_zip_preservation": "All entries byte-identical across four consecutive archive transitions (34 -> 68 -> 104 -> 137 -> 181).",
+  "latest_cumulative_archive_matches_local_files": "181/181",
+  "archived_entries": [
+    [
+      "strategy_S3-N01_cross_language.zip",
+      34
+    ],
+    [
+      "observer_P08_cross_language.zip",
+      68
+    ],
+    [
+      "controller_P03_cross_language.zip",
+      104
+    ],
+    [
+      "information_expert_P01_cross_language.zip",
+      137
+    ],
+    [
+      "adapter_S2-N01_cross_language.zip",
+      181
+    ]
+  ],
+  "fixture_sha256": {
+    "strategy": {
+      "cases": "6397422cb3f9110c9c2b7ae1c1dd044578a15c1979767b30cb61e7b16c032871",
+      "expected": "9ace270b725c7863026ce1057af04c7415ebbd14c1aaecc16c9c89a4cb2d41e1"
+    },
+    "observer": {
+      "cases": "94b91711bd90a40ef91991c8f0a584049651ccdf7f56a873ca6693d705cd1194",
+      "expected": "0fa446f53a67ef75c77c32723c07d4f27877e5cad1e9deea08c44b3fd9c5ebc8"
+    },
+    "controller": {
+      "cases": "89d26a4cf16f1fdc84b1f279c637197d622f7a1f42a279153adccd86481040f2",
+      "expected": "55dc3248a0b492f4ee297bbf23eeffdc9422bae8bdf0a5e507ac165cb72544f5"
+    },
+    "information_expert": {
+      "cases": "c12f408f1d5c3e9e19e35d3e3b5e415a9fc8af0cbef726692033115370257657",
+      "expected": "6274eab668f786007555af1f19babeaef6cc8fcf9575cdaabada99f8d3775584"
+    },
+    "adapter": {
+      "cases": "e5d753ee386c8d304019dc2c78df8a8c3e91f1b21a35915e555bc350afe9d209",
+      "expected": "7157bcd97d2fe9296113d09b271fcb121b430a9c478f8c3bb2762f03ffd73293"
+    }
+  },
+  "verification_matrix": [
+    {
+      "pattern": "Strategy",
+      "language": "Java",
+      "source_id": "S3-N01",
+      "expected_fixture_cases": 15,
+      "fixture_tests_passed": 15,
+      "compile_runtime_verified": true,
+      "loc_recorded": true,
+      "cc_recorded": true,
+      "warmup_count": 1,
+      "measured_runs": 5,
+      "timings": [
+        "77.186116",
+        "91.907135",
+        "104.041751",
+        "118.96241",
+        "87.222314"
+      ],
+      "recorded_median_ms": "91.907135",
+      "append_ready_row": true,
+      "result": "PASS"
+    },
+    {
+      "pattern": "Strategy",
+      "language": "Python",
+      "source_id": "S3-N01",
+      "expected_fixture_cases": 15,
+      "fixture_tests_passed": 15,
+      "compile_runtime_verified": true,
+      "loc_recorded": true,
+      "cc_recorded": true,
+      "warmup_count": 1,
+      "measured_runs": 5,
+      "timings": [
+        "846.949444",
+        "837.542837",
+        "827.757039",
+        "847.218735",
+        "839.468689"
+      ],
+      "recorded_median_ms": "839.468689",
+      "append_ready_row": true,
+      "result": "PASS"
+    },
+    {
+      "pattern": "Strategy",
+      "language": "JavaScript",
+      "source_id": "S3-N01",
+      "expected_fixture_cases": 15,
+      "fixture_tests_passed": 15,
+      "compile_runtime_verified": true,
+      "loc_recorded": true,
+      "cc_recorded": true,
+      "warmup_count": 1,
+      "measured_runs": 5,
+      "timings": [
+        "30.074123",
+        "38.740904",
+        "30.425864",
+        "33.440363",
+        "29.249207"
+      ],
+      "recorded_median_ms": "30.425864",
+      "append_ready_row": true,
+      "result": "PASS"
+    },
+    {
+      "pattern": "Strategy",
+      "language": "C++",
+      "source_id": "S3-N01",
+      "expected_fixture_cases": 15,
+      "fixture_tests_passed": 15,
+      "compile_runtime_verified": true,
+      "loc_recorded": true,
+      "cc_recorded": true,
+      "warmup_count": 1,
+      "measured_runs": 5,
+      "timings": [
+        "2.665064",
+        "2.558798",
+        "2.737605",
+        "2.241367",
+        "2.582103"
+      ],
+      "recorded_median_ms": "2.582103",
+      "append_ready_row": true,
+      "result": "PASS"
+    },
+    {
+      "pattern": "Observer",
+      "language": "Java",
+      "source_id": "P08",
+      "expected_fixture_cases": 7,
+      "fixture_tests_passed": 7,
+      "compile_runtime_verified": true,
+      "loc_recorded": true,
+      "cc_recorded": true,
+      "warmup_count": 1,
+      "measured_runs": 5,
+      "timings": [
+        "126.393189",
+        "104.698624",
+        "103.541662",
+        "116.81476",
+        "109.548044"
+      ],
+      "recorded_median_ms": "109.548044",
+      "append_ready_row": true,
+      "result": "PASS"
+    },
+    {
+      "pattern": "Observer",
+      "language": "Python",
+      "source_id": "P08",
+      "expected_fixture_cases": 7,
+      "fixture_tests_passed": 7,
+      "compile_runtime_verified": true,
+      "loc_recorded": true,
+      "cc_recorded": true,
+      "warmup_count": 1,
+      "measured_runs": 5,
+      "timings": [
+        "1158.487022",
+        "1127.80098",
+        "1101.022482",
+        "1133.244762",
+        "1250.233401"
+      ],
+      "recorded_median_ms": "1133.244762",
+      "append_ready_row": true,
+      "result": "PASS"
+    },
+    {
+      "pattern": "Observer",
+      "language": "JavaScript",
+      "source_id": "P08",
+      "expected_fixture_cases": 7,
+      "fixture_tests_passed": 7,
+      "compile_runtime_verified": true,
+      "loc_recorded": true,
+      "cc_recorded": true,
+      "warmup_count": 1,
+      "measured_runs": 5,
+      "timings": [
+        "36.192922",
+        "46.430877",
+        "44.341686",
+        "43.67267",
+        "37.15543"
+      ],
+      "recorded_median_ms": "43.67267",
+      "append_ready_row": true,
+      "result": "PASS"
+    },
+    {
+      "pattern": "Observer",
+      "language": "C++",
+      "source_id": "P08",
+      "expected_fixture_cases": 7,
+      "fixture_tests_passed": 7,
+      "compile_runtime_verified": true,
+      "loc_recorded": true,
+      "cc_recorded": true,
+      "warmup_count": 1,
+      "measured_runs": 5,
+      "timings": [
+        "2.167666",
+        "2.148941",
+        "2.421307",
+        "2.325304",
+        "2.394832"
+      ],
+      "recorded_median_ms": "2.325304",
+      "append_ready_row": true,
+      "result": "PASS"
+    },
+    {
+      "pattern": "Controller",
+      "language": "Java",
+      "source_id": "P03",
+      "expected_fixture_cases": 8,
+      "fixture_tests_passed": 8,
+      "compile_runtime_verified": true,
+      "loc_recorded": true,
+      "cc_recorded": true,
+      "warmup_count": 1,
+      "measured_runs": 5,
+      "timings": [
+        "127.033536",
+        "160.614228",
+        "159.472871",
+        "462.170697",
+        "100.443311"
+      ],
+      "recorded_median_ms": "159.472871",
+      "append_ready_row": true,
+      "result": "PASS"
+    },
+    {
+      "pattern": "Controller",
+      "language": "Python",
+      "source_id": "P03",
+      "expected_fixture_cases": 8,
+      "fixture_tests_passed": 8,
+      "compile_runtime_verified": true,
+      "loc_recorded": true,
+      "cc_recorded": true,
+      "warmup_count": 1,
+      "measured_runs": 5,
+      "timings": [
+        "832.153117",
+        "818.330142",
+        "810.70092",
+        "806.477262",
+        "825.163746"
+      ],
+      "recorded_median_ms": "818.330142",
+      "append_ready_row": true,
+      "result": "PASS"
+    },
+    {
+      "pattern": "Controller",
+      "language": "JavaScript",
+      "source_id": "P03",
+      "expected_fixture_cases": 8,
+      "fixture_tests_passed": 8,
+      "compile_runtime_verified": true,
+      "loc_recorded": true,
+      "cc_recorded": true,
+      "warmup_count": 1,
+      "measured_runs": 5,
+      "timings": [
+        "30.699406",
+        "41.517425",
+        "39.39214",
+        "37.862085",
+        "35.211936"
+      ],
+      "recorded_median_ms": "37.862085",
+      "append_ready_row": true,
+      "result": "PASS"
+    },
+    {
+      "pattern": "Controller",
+      "language": "C++",
+      "source_id": "P03",
+      "expected_fixture_cases": 8,
+      "fixture_tests_passed": 8,
+      "compile_runtime_verified": true,
+      "loc_recorded": true,
+      "cc_recorded": true,
+      "warmup_count": 1,
+      "measured_runs": 5,
+      "timings": [
+        "2.463929",
+        "2.565644",
+        "2.788841",
+        "3.346171",
+        "2.067579"
+      ],
+      "recorded_median_ms": "2.565644",
+      "append_ready_row": true,
+      "result": "PASS"
+    },
+    {
+      "pattern": "Information Expert",
+      "language": "Java",
+      "source_id": "P01",
+      "expected_fixture_cases": 8,
+      "fixture_tests_passed": 8,
+      "compile_runtime_verified": true,
+      "loc_recorded": true,
+      "cc_recorded": true,
+      "warmup_count": 1,
+      "measured_runs": 5,
+      "timings": [
+        "75.601558",
+        "64.794227",
+        "78.34",
+        "78.456998",
+        "56.485319"
+      ],
+      "recorded_median_ms": "75.601558",
+      "append_ready_row": true,
+      "result": "PASS"
+    },
+    {
+      "pattern": "Information Expert",
+      "language": "Python",
+      "source_id": "P01",
+      "expected_fixture_cases": 8,
+      "fixture_tests_passed": 8,
+      "compile_runtime_verified": true,
+      "loc_recorded": true,
+      "cc_recorded": true,
+      "warmup_count": 1,
+      "measured_runs": 5,
+      "timings": [
+        "847.285213",
+        "798.343934",
+        "814.46829",
+        "819.621766",
+        "839.15126"
+      ],
+      "recorded_median_ms": "819.621766",
+      "append_ready_row": true,
+      "result": "PASS"
+    },
+    {
+      "pattern": "Information Expert",
+      "language": "JavaScript",
+      "source_id": "P01",
+      "expected_fixture_cases": 8,
+      "fixture_tests_passed": 8,
+      "compile_runtime_verified": true,
+      "loc_recorded": true,
+      "cc_recorded": true,
+      "warmup_count": 1,
+      "measured_runs": 5,
+      "timings": [
+        "52.60629",
+        "33.741442",
+        "37.011172",
+        "36.435657",
+        "33.054916"
+      ],
+      "recorded_median_ms": "36.435657",
+      "append_ready_row": true,
+      "result": "PASS"
+    },
+    {
+      "pattern": "Information Expert",
+      "language": "C++",
+      "source_id": "P01",
+      "expected_fixture_cases": 8,
+      "fixture_tests_passed": 8,
+      "compile_runtime_verified": true,
+      "loc_recorded": true,
+      "cc_recorded": true,
+      "warmup_count": 1,
+      "measured_runs": 5,
+      "timings": [
+        "4.390529",
+        "4.827389",
+        "4.058398",
+        "2.721256",
+        "4.929857"
+      ],
+      "recorded_median_ms": "4.390529",
+      "append_ready_row": true,
+      "result": "PASS"
+    },
+    {
+      "pattern": "Adapter",
+      "language": "Java",
+      "source_id": "S2-N01",
+      "expected_fixture_cases": 10,
+      "fixture_tests_passed": 10,
+      "compile_runtime_verified": true,
+      "loc_recorded": true,
+      "cc_recorded": true,
+      "warmup_count": 1,
+      "measured_runs": 5,
+      "timings": [
+        "70.546628",
+        "76.930458",
+        "66.132195",
+        "71.667737",
+        "93.365098"
+      ],
+      "recorded_median_ms": "71.667737",
+      "append_ready_row": true,
+      "result": "PASS"
+    },
+    {
+      "pattern": "Adapter",
+      "language": "Python",
+      "source_id": "S2-N01",
+      "expected_fixture_cases": 10,
+      "fixture_tests_passed": 10,
+      "compile_runtime_verified": true,
+      "loc_recorded": true,
+      "cc_recorded": true,
+      "warmup_count": 1,
+      "measured_runs": 5,
+      "timings": [
+        "865.773878",
+        "866.613322",
+        "835.153723",
+        "852.239836",
+        "846.508451"
+      ],
+      "recorded_median_ms": "852.239836",
+      "append_ready_row": true,
+      "result": "PASS"
+    },
+    {
+      "pattern": "Adapter",
+      "language": "JavaScript",
+      "source_id": "S2-N01",
+      "expected_fixture_cases": 10,
+      "fixture_tests_passed": 10,
+      "compile_runtime_verified": true,
+      "loc_recorded": true,
+      "cc_recorded": true,
+      "warmup_count": 1,
+      "measured_runs": 5,
+      "timings": [
+        "35.454478",
+        "38.800172",
+        "35.245684",
+        "33.097147",
+        "34.353892"
+      ],
+      "recorded_median_ms": "35.245684",
+      "append_ready_row": true,
+      "result": "PASS"
+    },
+    {
+      "pattern": "Adapter",
+      "language": "C++",
+      "source_id": "S2-N01",
+      "expected_fixture_cases": 10,
+      "fixture_tests_passed": 10,
+      "compile_runtime_verified": true,
+      "loc_recorded": true,
+      "cc_recorded": true,
+      "warmup_count": 1,
+      "measured_runs": 5,
+      "timings": [
+        "2.522362",
+        "2.697677",
+        "2.705641",
+        "3.606257",
+        "3.63108"
+      ],
+      "recorded_median_ms": "2.705641",
+      "append_ready_row": true,
+      "result": "PASS"
+    }
+  ],
+  "final_archive_integrity": "PASS; checked after packaging",
+  "preservation_scope_note": "Verification is limited to supplied archived cumulative Part3 files and recorded hashes; no original external repo guarantees are inferred."
+}

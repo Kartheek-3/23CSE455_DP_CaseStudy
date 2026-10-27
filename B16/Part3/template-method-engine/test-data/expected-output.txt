@@ -1,0 +1,18 @@
+== simple ==
+simple: start (3 tests)
+  run add -> PASS
+  run div -> FAIL
+  run sub -> PASS
+simple: done 2 passed, 1 failed
+== lifecycle ==
+lifecycle: start (3 tests)
+  beforeEach add
+  run add -> PASS
+  afterEach add
+  beforeEach div
+  run div -> FAIL
+  afterEach div
+  beforeEach sub
+  run sub -> PASS
+  afterEach sub
+lifecycle: done 2 passed, 1 failed

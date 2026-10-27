@@ -1,0 +1,6 @@
+# case|commands: track <event>; page <name>; identify <user>; set|expected (results joined by ~)
+absent_real_is_noop|track login|noop
+forwards_after_set|set;track login|real:track login
+before_and_after_set|track a;set;track b|noop~real:track b
+all_methods_forwarded|set;page home;identify bob|real:page home~real:identify bob
+second_set_rejected|set;set|ERR:Analytics instance already exists.

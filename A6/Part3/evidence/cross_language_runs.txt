@@ -1,0 +1,186 @@
+# Part 3 runs, 2026-10-11T21:01:30+0530
+# timing rule: see tools/run_part3.py docstring
+
+=== Strategy / Java (Part3/strategy_ride_fare/java)
+command: cd Part3/strategy_ride_fare/java && javac -d <build> RideFare.java RideFareTest.java && java -cp <build> RideFareTest
+measured runs (ms, warm-up excluded): [102.7, 101.1, 103.3, 102.0, 109.9]
+median: 102.7 ms
+lizard: NLOC=57 functions=10 max CCN=3
+--- test output (last run) ---
+PASS S1
+PASS S2
+PASS S3
+PASS S4
+PASS S5
+PASS S6
+PASS S7
+PASS S8
+RESULT 8/8 passed
+
+=== Strategy / Python (Part3/strategy_ride_fare/python)
+command: cd Part3/strategy_ride_fare/python && python test_ride_fare.py
+measured runs (ms, warm-up excluded): [62.2, 65.4, 59.7, 59.7, 59.8]
+median: 59.8 ms
+lizard: NLOC=51 functions=8 max CCN=3
+--- test output (last run) ---
+PASS S1
+PASS S2
+PASS S3
+PASS S4
+PASS S5
+PASS S6
+PASS S7
+PASS S8
+RESULT 8/8 passed
+
+=== Strategy / JavaScript (Part3/strategy_ride_fare/javascript)
+command: cd Part3/strategy_ride_fare/javascript && node test_ride_fare.js
+measured runs (ms, warm-up excluded): [59.2, 50.3, 46.1, 49.4, 42.8]
+median: 49.4 ms
+lizard: NLOC=47 functions=8 max CCN=3
+--- test output (last run) ---
+PASS S1
+PASS S2
+PASS S3
+PASS S4
+PASS S5
+PASS S6
+PASS S7
+PASS S8
+RESULT 8/8 passed
+
+=== Strategy / C++ (Part3/strategy_ride_fare/cpp)
+command: cd Part3/strategy_ride_fare/cpp && g++ -std=c++20 -O2 -Wall -Wextra test_ride_fare.cpp -o test_bin && ./test_bin
+measured runs (ms, warm-up excluded): [2.1, 2.4, 2.2, 1.9, 2.0]
+median: 2.1 ms
+lizard: NLOC=69 functions=8 max CCN=3
+--- test output (last run) ---
+PASS S1
+PASS S2
+PASS S3
+PASS S4
+PASS S5
+PASS S6
+PASS S7
+PASS S8
+RESULT 8/8 passed
+
+=== State / Java (Part3/state_trip_lifecycle/java)
+command: cd Part3/state_trip_lifecycle/java && javac -d <build> TripLifecycle.java TripLifecycleTest.java && java -cp <build> TripLifecycleTest
+measured runs (ms, warm-up excluded): [95.8, 98.3, 101.6, 94.8, 100.1]
+median: 98.3 ms
+lizard: NLOC=58 functions=21 max CCN=6
+--- test output (last run) ---
+PASS T1
+PASS T2
+PASS T3
+PASS T4
+PASS T5
+PASS T6
+PASS T7
+PASS T8
+RESULT 8/8 passed
+
+=== State / Python (Part3/state_trip_lifecycle/python)
+command: cd Part3/state_trip_lifecycle/python && python test_trip_lifecycle.py
+measured runs (ms, warm-up excluded): [30.9, 31.2, 31.0, 41.5, 29.1]
+median: 31.0 ms
+lizard: NLOC=52 functions=17 max CCN=2
+--- test output (last run) ---
+PASS T1
+PASS T2
+PASS T3
+PASS T4
+PASS T5
+PASS T6
+PASS T7
+PASS T8
+RESULT 8/8 passed
+
+=== State / JavaScript (Part3/state_trip_lifecycle/javascript)
+command: cd Part3/state_trip_lifecycle/javascript && node test_trip_lifecycle.js
+measured runs (ms, warm-up excluded): [42.8, 49.7, 44.6, 45.5, 45.3]
+median: 45.3 ms
+lizard: NLOC=41 functions=16 max CCN=2
+--- test output (last run) ---
+PASS T1
+PASS T2
+PASS T3
+PASS T4
+PASS T5
+PASS T6
+PASS T7
+PASS T8
+RESULT 8/8 passed
+
+=== State / C++ (Part3/state_trip_lifecycle/cpp)
+command: cd Part3/state_trip_lifecycle/cpp && g++ -std=c++20 -O2 -Wall -Wextra test_trip_lifecycle.cpp -o test_bin && ./test_bin
+measured runs (ms, warm-up excluded): [1.9, 2.4, 1.8, 1.9, 2.0]
+median: 1.9 ms
+lizard: NLOC=57 functions=21 max CCN=6
+--- test output (last run) ---
+PASS T1
+PASS T2
+PASS T3
+PASS T4
+PASS T5
+PASS T6
+PASS T7
+PASS T8
+RESULT 8/8 passed
+
+=== Observer / Java (Part3/observer_ride_notification/java)
+command: cd Part3/observer_ride_notification/java && javac -d <build> RideNotification.java RideNotificationTest.java && java -cp <build> RideNotificationTest
+measured runs (ms, warm-up excluded): [116.9, 116.1, 106.9, 110.8, 110.7]
+median: 110.8 ms
+lizard: NLOC=33 functions=7 max CCN=3
+--- test output (last run) ---
+PASS O1
+PASS O2
+PASS O3
+PASS O4
+PASS O5
+PASS O6
+RESULT 6/6 passed
+
+=== Observer / Python (Part3/observer_ride_notification/python)
+command: cd Part3/observer_ride_notification/python && python test_ride_notification.py
+measured runs (ms, warm-up excluded): [63.5, 64.9, 62.3, 61.6, 71.4]
+median: 63.5 ms
+lizard: NLOC=31 functions=6 max CCN=3
+--- test output (last run) ---
+PASS O1
+PASS O2
+PASS O3
+PASS O4
+PASS O5
+PASS O6
+RESULT 6/6 passed
+
+=== Observer / JavaScript (Part3/observer_ride_notification/javascript)
+command: cd Part3/observer_ride_notification/javascript && node test_ride_notification.js
+measured runs (ms, warm-up excluded): [46.0, 56.1, 43.8, 52.4, 46.3]
+median: 46.3 ms
+lizard: NLOC=24 functions=6 max CCN=2
+--- test output (last run) ---
+PASS O1
+PASS O2
+PASS O3
+PASS O4
+PASS O5
+PASS O6
+RESULT 6/6 passed
+
+=== Observer / C++ (Part3/observer_ride_notification/cpp)
+command: cd Part3/observer_ride_notification/cpp && g++ -std=c++20 -O2 -Wall -Wextra test_ride_notification.cpp -o test_bin && ./test_bin
+measured runs (ms, warm-up excluded): [2.3, 2.5, 2.7, 2.1, 2.0]
+median: 2.3 ms
+lizard: NLOC=40 functions=5 max CCN=3
+--- test output (last run) ---
+PASS O1
+PASS O2
+PASS O3
+PASS O4
+PASS O5
+PASS O6
+RESULT 6/6 passed

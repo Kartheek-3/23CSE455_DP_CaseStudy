@@ -1,0 +1,8 @@
+﻿PATTERN/SUITE   : Strategy_python
+RUNTIME/COMPILER: Python 3.13.7
+WORKDIR         : C:\Users\eswar\OneDrive\Documents\Visual Studio Code\23CSE455_DP_CaseStudy\B12\Part3\Strategy\python
+RUN COMMAND     : python test_strategy.py
+PROGRAM OUTPUT  : STRATEGY_PY PASS 5/5
+TIME INCLUDES   : whole process wall time (runtime startup + program execution), after 1 unmeasured warm-up
+TIMING SAMPLES  : 5 measured runs (ms): 117.2025, 95.2606, 111.5175, 112.1215, 191.3492
+MEDIAN_MS       : 112.122

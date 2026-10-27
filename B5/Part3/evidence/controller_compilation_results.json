@@ -1,0 +1,16 @@
+[
+  {
+    "language": "Java",
+    "command": "javac Main.java TestMain.java",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "language": "C++",
+    "command": "g++ -std=c++17 -O2 -Wall -Wextra -pedantic main.cpp test_main.cpp -o controller_tests",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  }
+]

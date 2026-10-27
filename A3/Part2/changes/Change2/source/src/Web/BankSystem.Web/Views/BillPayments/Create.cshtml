@@ -1,0 +1,11 @@
+@model BankSystem.Web.Controllers.BillPaymentsController.BillPaymentInput
+@{ ViewData["Title"] = "Pay a bill"; }
+<h2>Pay a bill</h2>
+<form method="post" asp-action="Create">
+    <div asp-validation-summary="All"></div>
+    <label asp-for="AccountId">Your source account ID</label><input asp-for="AccountId" />
+    <label asp-for="Biller"></label><select asp-for="Biller"><option value="electricity">Electricity</option><option value="water">Water</option></select>
+    <label asp-for="Invoice"></label><input asp-for="Invoice" />
+    <label asp-for="Amount"></label><input asp-for="Amount" />
+    <button type="submit">Pay bill</button>
+</form>

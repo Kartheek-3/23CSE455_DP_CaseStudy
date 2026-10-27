@@ -1,0 +1,7 @@
+PASS: all 170 baseline files match upstream archive bytes.
+PASS: all four original demonstration hashes match the pre-change snapshot.
+PASS: only these four application source files differ:
+canteenapp/delivery_assignment.py
+canteenapp/templates/adminassignorder.html
+canteenapp/test_delivery_assignment.py
+canteenapp/views.py

@@ -1,0 +1,92 @@
+You are tasked with conducting a deep, source-code-grounded repository archaeology and design pattern analysis of the NestJS Airline Reservation System codebase (DP_Case_study) for Team A9 Part 1 Case Study submission.
+
+CRITICAL INSTRUCTIONS & CONSTRAINTS:
+1. SOURCE OF TRUTH: The actual TypeScript application source code in src/ is the ultimate source of truth. Existing analysis documents (DP_REPOSITORY_ANALYSIS.md, DP_DEPENDENCY_MAP.md, DP_PATTERN_EVIDENCE.md) serve as working hypotheses only and must be verified against source code.
+2. NO SOURCE MODIFICATION: Do NOT alter, refactor, fix bugs, or introduce new design patterns in the baseline application source code under src/. Do NOT change dependencies or package.json.
+3. QUALITY OVER QUANTITY: Do NOT optimize for the number of patterns. Rigorously evaluate candidates and reject false positives. Differentiate between:
+   - CONFIRMED DESIGN PATTERN (Custom application-level GoF or micro-architectural pattern)
+   - CONFIRMED SOFTWARE/ARCHITECTURAL PATTERN (Application-level or enterprise infrastructure pattern)
+   - FRAMEWORK MECHANISM (Provided out-of-the-box by NestJS, TypeORM, Passport, BullMQ)
+   - PATTERN-LIKE STRUCTURE (Exhibits pattern characteristics but has implementation flaws or lacks formal compliance)
+   - REJECTED / INSUFFICIENT EVIDENCE (Unsupported claims, naming coincidences, or absent features)
+4. BASELINE REPRODUCIBILITY: Determine and record the exact Git commit SHA, environment versions (Node.js, npm, TypeScript, NestJS, TypeORM), build execution outputs, and test suite results.
+5. FEATURE & WORKFLOW TRACING: Trace all major application capabilities (Flight management, Booking creation/cancellation, Seat validation/loaders, User/Auth session & OAuth, BullMQ email notifications, Cron auto-deletion) and explicitly record non-implemented subsystems (e.g. Payment = NOT FOUND / NOT IMPLEMENTED).
+6. EVIDENCE EXTRACTION: For every confirmed pattern, extract exact file paths, verified line ranges, participant role mappings, and concrete architectural evidence explaining why it qualifies as a genuine pattern collaboration.
+7. SUBMISSION ARTIFACT GENERATION: Produce the required Part 1 deliverables under A9/Part1/:
+   - patterns.csv (source_version, pattern_name, pattern_type, instance_name, participant_roles, source_locations, intent_and_evidence)
+   - Pattern_count.csv (source_version, summary, pattern_name, count)
+   - pattern_architecture/ (pattern_architecture.mmd, pattern_architecture.png)
+   - Part1_prompt.txt (this prompt)
+   - llm.csv (auditable LLM interaction logs)
+   
+ADDITIONAL EVIDENCE AND DATASET RULES:
+
+8. PATTERN RECORD GRANULARITY:
+   One row in patterns.csv represents ONE confirmed pattern collaboration in ONE source version.
+   Do not create one row per class, one row per participant, or one row per textbook role.
+   Include all applicable participants belonging to that single collaboration and map their actual source-code roles.
+   If multiple classes/functions participate in one collaboration, they belong in the same pattern record where appropriate.
+
+9. SOURCE VERSION INTEGRITY:
+   Use the actual reproducible baseline commit SHA as source_version wherever possible.
+   Do not invent a commit SHA or use an arbitrary label if a real commit is available.
+   Do not modify, reset, stash, checkout, amend, or commit repository history while performing this analysis.
+
+10. EVIDENCE VERIFICATION:
+   Every source location, line range, participant and pattern claim must be verified against the current baseline source.
+   Existing markdown analysis may guide the investigation but must never be treated as evidence by itself.
+
+11. COUNTERARGUMENT:
+   For every confirmed pattern, provide a short explanation of the strongest reason it might NOT qualify as that pattern, and explain why the available source evidence is sufficient to confirm it.
+
+12. FRAMEWORK VS APPLICATION:
+   Clearly separate application-level pattern collaborations from mechanisms supplied by NestJS, TypeORM, Passport, BullMQ, GraphQL, DataLoader or other libraries.
+   Do not label framework functionality as a confirmed GoF/application pattern merely because the framework internally implements a known pattern.
+
+13. MISSING/UNAVAILABLE EVIDENCE:
+   Never estimate or fabricate:
+   - test results
+   - build results
+   - execution times
+   - line ranges
+   - commit SHAs
+   - LLM records
+   - verification results
+
+   If something could not be established, mark it as unavailable/not executed/not found and explain why.
+
+14. LLM RECORD:
+   Follow the faculty-provided llm.csv schema exactly:
+   part, model_and_date, prompt_file, input_file, output_file, evaluation, verification_file
+
+   Do not invent values for fields that were not actually recorded.
+
+15. FEATURE STATUS:
+   For each major feature, distinguish:
+   IMPLEMENTED
+   PARTIALLY IMPLEMENTED
+   REFERENCED BUT NOT IMPLEMENTED
+   NOT FOUND
+
+   Do not assume a feature is implemented merely because a filename, entity, DTO, import or configuration entry exists.
+
+16. BASELINE PRESERVATION:
+   This task is analysis only.
+   Do not modify the application's baseline source code, dependencies, database schema, package.json or configuration.
+   Do not fix bugs discovered during archaeology.
+   Record such issues as baseline observations for possible consideration in Part 2.
+
+17. PART 2 / PART 3 BOUNDARY:
+   Do not implement or refactor anything for Part 2 or Part 3.
+   Do not introduce new Strategy, Factory, State, Observer, Adapter or other patterns into the baseline merely to demonstrate them.
+
+18. FINAL SELF-AUDIT:
+   Before producing the final Part 1 artifacts, cross-check:
+   - every patterns.csv row against actual source code
+   - every participant against an actual source symbol
+   - every source location against the current file
+   - every count against patterns.csv
+   - every diagram element against a confirmed pattern participant
+   - every LLM record against an actual interaction
+
+   If a discrepancy exists, correct the artifact or explicitly report the discrepancy.

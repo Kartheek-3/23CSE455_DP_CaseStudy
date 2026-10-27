@@ -1,0 +1,59 @@
+## Compile Java Strategy
+$ javac -d /tmp/b14_cc_build/java_strategy /tmp/auditb14/23CSE455_DP_CaseStudy/B14/Part3/strategy/java/Strategy.java /tmp/auditb14/23CSE455_DP_CaseStudy/B14/Part3/strategy/java/StrategyTest.java
+exit=0
+
+
+## Compile Java Observer
+$ javac -d /tmp/b14_cc_build/java_observer /tmp/auditb14/23CSE455_DP_CaseStudy/B14/Part3/observer/java/AuthObserver.java /tmp/auditb14/23CSE455_DP_CaseStudy/B14/Part3/observer/java/ObserverTest.java
+exit=0
+
+
+## Compile C++ Strategy
+$ g++ -std=c++17 -O2 -Wall -Wextra -pedantic /tmp/auditb14/23CSE455_DP_CaseStudy/B14/Part3/strategy/cpp/test_strategy.cpp -o /tmp/b14_cc_build/test_strategy
+exit=0
+
+
+## Compile C++ Observer
+$ g++ -std=c++17 -O2 -Wall -Wextra -pedantic /tmp/auditb14/23CSE455_DP_CaseStudy/B14/Part3/observer/cpp/test_observer.cpp -o /tmp/b14_cc_build/test_observer
+exit=0
+
+
+## Test Strategy Java
+$ java -cp /tmp/b14_cc_build/java_strategy StrategyTest
+exit=0
+PASS S01 Claude chunks
+PASS S02 OpenAI chunks
+PASS S03 Gemini chunks
+PASS S04 unsupported provider
+RESULT 4/4
+
+
+## Test Observer Java
+$ java -cp /tmp/b14_cc_build/java_observer ObserverTest
+exit=0
+PASS O01 sign-in delivered
+PASS O02 sign-out delivered
+PASS O03 unsubscribe stops notifications
+PASS O04 multiple observers notified
+RESULT 4/4
+
+
+## Test Strategy C++
+$ /tmp/b14_cc_build/test_strategy
+exit=0
+PASS S01 Claude chunks
+PASS S02 OpenAI chunks
+PASS S03 Gemini chunks
+PASS S04 unsupported provider
+RESULT 4/4
+
+
+## Test Observer C++
+$ /tmp/b14_cc_build/test_observer
+exit=0
+PASS O01 sign-in delivered
+PASS O02 sign-out delivered
+PASS O03 unsubscribe stops notifications
+PASS O04 multiple observers notified
+RESULT 4/4
+

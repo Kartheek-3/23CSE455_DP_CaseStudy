@@ -1,0 +1,28 @@
+@startuml C4
+!pragma layout smetana
+title C4 Strategy: LoggingListener log sink
+
+class LoggingListener <<Context>> {
+  -logger : BiConsumer<Throwable, Supplier<String>>
+  {static} +forJavaUtilLogging(Level) : LoggingListener
+  {static} +forBiConsumer(BiConsumer) : LoggingListener
+}
+interface "BiConsumer<Throwable, Supplier<String>>" as BiConsumer <<Strategy>> {
+  +accept(Throwable, Supplier<String>)
+}
+class "lambda in forJavaUtilLogging(Level)" as JulLambda <<ConcreteStrategy, not counted>> #E6E6E6
+class "caller's lambda passed to forBiConsumer()" as UserLambda <<ConcreteStrategy>>
+
+JulLambda ..|> BiConsumer
+UserLambda ..|> BiConsumer
+LoggingListener o--> BiConsumer : logger
+' aligned-with-record
+legend right
+  <b>Counted participants</b> (record in the dataset)
+  Strategy: BiConsumer
+  ConcreteStrategy factory: LoggingListener#forJavaUtilLogging
+  ConcreteStrategy factory: LoggingListener#forBiConsumer
+  Context: LoggingListener
+  Grey classes: real, shown for context, not counted
+endlegend
+@enduml

@@ -1,0 +1,9 @@
+{
+  "name": "composite-test-tree",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/main.js ../test-data/tree.txt slow",
+    "test": "node --test test/composite.test.js"
+  }
+}

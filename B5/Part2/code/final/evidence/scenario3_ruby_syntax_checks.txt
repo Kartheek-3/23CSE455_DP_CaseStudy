@@ -1,0 +1,17 @@
+Command: ruby -c for Scenario 3 Ruby production, test and isolated files
+/mnt/data/Scenario3_Work/scenario3_cancellation_policies/app/controllers/cancellation_quotes_controller.rb
+Syntax OK
+/mnt/data/Scenario3_Work/scenario3_cancellation_policies/app/services/cancellation_policies/flexible.rb
+Syntax OK
+/mnt/data/Scenario3_Work/scenario3_cancellation_policies/app/services/cancellation_policies/moderate.rb
+Syntax OK
+/mnt/data/Scenario3_Work/scenario3_cancellation_policies/app/services/cancellation_policies/quote_evaluator.rb
+Syntax OK
+/mnt/data/Scenario3_Work/scenario3_cancellation_policies/app/services/cancellation_policies/strict.rb
+Syntax OK
+/mnt/data/Scenario3_Work/scenario3_cancellation_policies/test/services/cancellation_policies_test.rb
+Syntax OK
+/mnt/data/Scenario3_Work/scenario3_cancellation_policies/test/controllers/cancellation_quotes_controller_test.rb
+Syntax OK
+/mnt/data/Scenario3_Work/scenario3_cancellation_policies/evidence/isolated_cancellation_policy_checks.rb
+Syntax OK

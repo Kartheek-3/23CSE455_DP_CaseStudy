@@ -1,0 +1,10 @@
+Multi-Warehouse Baseline Evidence
+
+Requirement: The case study requires consideration of multiple warehouses.
+Baseline finding: Multiple-warehouse support already exists in the baseline WTMS application.
+The warehouses table is present in the baseline schema, and database initialization was verified with four warehouse records.
+Inventory-related data also references warehouses, providing database-level support for warehouse-specific inventory.
+Verification: database wtms; PostgreSQL 18.6; SELECT COUNT(*) FROM warehouses; result: 4.
+Design evolution decision: no artificial schema or application change was introduced because multiple warehouses are already supported by the baseline application.
+Therefore, multiple-warehouse support is documented as a baseline capability rather than counted as a newly introduced design change.
+Evidence: sql/schema.sql; relevant entities include warehouses, zones, inventory, and stock_movements.

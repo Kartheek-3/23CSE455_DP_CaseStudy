@@ -1,0 +1,22 @@
+{
+  "strategy": {
+    "base_rent": 1000.0,
+    "cases": [
+      {"name": "base", "strategy": "base", "month": 12, "occupancy": 0.85, "lease_months": 12, "expected": 1000.0},
+      {"name": "peak", "strategy": "dynamic", "month": 4, "occupancy": 0.50, "lease_months": 6, "expected": 1200.0},
+      {"name": "occupancy", "strategy": "dynamic", "month": 1, "occupancy": 0.80, "lease_months": 6, "expected": 1100.0},
+      {"name": "combined", "strategy": "dynamic", "month": 12, "occupancy": 0.85, "lease_months": 12, "expected": 1250.0},
+      {"name": "long_stay", "strategy": "dynamic", "month": 1, "occupancy": 0.50, "lease_months": 12, "expected": 950.0}
+    ]
+  },
+  "specification": {
+    "properties": [
+      {"id": 1, "city": "Kochi", "rent": 22000, "available": true, "amenities": ["parking", "gym"], "furnished": true},
+      {"id": 2, "city": "Kochi", "rent": 15000, "available": true, "amenities": ["wifi"], "furnished": false},
+      {"id": 3, "city": "Bengaluru", "rent": 32000, "available": true, "amenities": ["parking"], "furnished": true},
+      {"id": 4, "city": "Kochi", "rent": 24000, "available": false, "amenities": ["parking"], "furnished": true}
+    ],
+    "composite_expected_ids": [1]
+  }
+}
+

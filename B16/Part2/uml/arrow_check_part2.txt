@@ -1,0 +1,5 @@
+final class FilterPolicy implements PostDiscoveryFilter {
+public class ClassSummaryListener implements TestExecutionListener {
+public class ManagedResourceExtension implements ParameterResolver {
+	private record Holder(Object resource, ResourceFactory<Object> factory)
+			implements AutoCloseable, Store.CloseableResource {

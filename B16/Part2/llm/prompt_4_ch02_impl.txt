@@ -1,0 +1,9 @@
+CH02 implementation was done by Claude Code (Claude Opus 5.5, CLI, on my machine) on 2026-10-10,
+not in the claude.ai chat. There was no separate written prompt: I approved continuing with "yeah".
+
+Plan I approved (from Claude Code, based on Part2/llm/output_1_design.md section CH02 after my verification):
+- CH02: @ManagedResource(Factory.class) + ResourceFactory<T> + ManagedResourceExtension in
+  junit-jupiter-api (extension.support). Existing extension points only (ParameterResolver, @ExtendWith
+  meta-annotation, ExtensionContext.Store); no existing JUnit file edited; no refactoring (stated openly).
+- Fix the design sketch that did not compile (D1-19). Lifetime follows the requesting method.
+- Tests for each acceptance criterion, a demo with a real resource, before/after jupiter-tests counts.

@@ -1,0 +1,14 @@
+# Test events for the Observer demo, one per line:
+#   started  <test id>
+#   finished <test id> SUCCESSFUL|FAILED|ABORTED
+#   skipped  <test id> reason=<text>
+started  CalcTests#add
+finished CalcTests#add SUCCESSFUL
+started  CalcTests#sub
+finished CalcTests#sub FAILED
+skipped  CalcTests#div reason=disabled
+started  CalcTests#mul
+finished CalcTests#mul ABORTED
+skipped  StringTests#trim reason=not on this OS
+started  StringTests#concat
+finished StringTests#concat SUCCESSFUL

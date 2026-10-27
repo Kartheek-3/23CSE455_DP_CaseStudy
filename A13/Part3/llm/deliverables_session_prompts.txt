@@ -1,0 +1,122 @@
+Prompts D3 and D5 of the Part 3 deliverables session (Claude Sonnet 5.5, 2026-10-11; times UTC). D3 produced Part3/llm/A13_slide.pdf; D5 produced Part3/A13_Part3_Report.pdf.
+
+===== PROMPT D3 (2026-10-11T06:33:22.163Z) =====
+# Finalize Assignment Submission — Team A13
+
+Prepare the final assignment folder for submission using the verified Part 3 review package.
+
+**Team ID:** A13  
+**Project topic:** Design Pattern Analysis in a Next.js-Based Video Streaming Application  
+**Source folder:** `TEAM_TEMPLATE/`
+
+## 1. Rename and update the submission folder
+
+- Rename `TEAM_TEMPLATE/` to `A13/`, or use the exact folder naming convention specified in the assignment.
+- Update the root README heading from `# Team <TEAM_ID>` to `# Team A13`.
+- Search for remaining `<TEAM_ID>` placeholders and replace them with `A13` where appropriate.
+- Preserve the existing project topic exactly as provided.
+- Do not modify the substantive project findings or existing author information.
+
+## 2. Resolve required submission documents
+
+Inspect the assignment instructions and the existing project structure before generating anything.
+
+- Determine the expected filename and contents for the team report.
+- Inspect `<TEAM_ID>_Report.tex` and determine whether it can be compiled into the required PDF.
+- Check whether the slides are mandatory and whether `A13_slide.pdf` should be generated from `Part3/llm/slide_outline.md`.
+- Do not invent missing results or fabricate content to fill placeholders.
+- If a required document cannot be completed from existing evidence, explain what is missing.
+
+## 3. Preserve the verified Part 3 work
+
+Keep all verified corrections, evidence, recovered prompt/output extracts, checklist updates, and CSV records.
+
+Confirm that:
+- The four task labels remain consistent across the checklist and `data/llm.csv`.
+- Row 5 remains `cannot confirm` unless additional evidence justifies a different evaluation.
+- Private transcripts, unsanitized originals, and file-history data remain outside the submission folder.
+- All references point to files that actually exist.
+
+## 4. Final validation
+
+- Inspect the final directory tree.
+- Validate Markdown, CSV formatting, and referenced evidence paths.
+- Run relevant tests if changes affect executable code.
+- Inspect the complete diff and confirm unrelated files were not changed.
+- Check for remaining `<TEAM_ID>`, `TEAM_TEMPLATE`, and `A1` placeholders, distinguishing genuine errors from historical references that should remain unchanged.
+- Ensure the final submission uses Team A13 consistently.
+
+## Final response
+
+Provide the final directory name, files created or renamed, placeholders resolved, validation results, and any remaining submission blockers.
+
+===== PROMPT D5 (2026-10-11T06:47:34.665Z) =====
+Review and finalize Part 3 of the Team A13 Design Pattern Case Study project according to the official assignment instructions and report template.
+
+**Project details**
+
+- Team ID: A13
+- Project topic: Design Pattern Analysis in a Vue.js-Based Social Media Application
+- Submission folder: `TEAM_TEMPLATE/`
+- Official assignment instructions and report template are available in the project files or conversation attachments. Locate and read them before making changes.
+
+### 1. Follow the official requirements
+
+Use the official assignment instructions and report template as the source of truth. Check the required deliverables, folder structure, datasets, LLM records, verification evidence, reports, and naming conventions.
+
+The report template asks for LLM claims to be evaluated as Correct, Partially correct, Incorrect, or Cannot confirm, with supporting evidence, reviewer, and correction where applicable. The instructions require the corresponding information in `llm.csv`.
+
+### 2. Audit the current Part 3 work
+
+Inspect the existing implementations, tests, raw measurements, CSV files, README files, prompts, model outputs, and evidence. Reuse previous audit findings where relevant, but verify them against the available artifacts.
+
+- Confirm that test commands and documented results agree with the actual logs.
+- Check CSV headers, row counts, paths, and references.
+- Check that the four-language implementations and comparison evidence meet the assignment requirements.
+- Verify that LLM evaluations have appropriate supporting evidence and accurately state uncertainty and limitations.
+- Identify missing deliverables, including any required Part 3 report PDF, overall report PDF and LaTeX source, or slide PDF. Do not assume an outline substitutes for a required PDF.
+- Check whether the folder needs to be named `A13/` rather than `TEAM_TEMPLATE/`, using the official repository structure.
+- Preserve the original source, prompts, model outputs, test logs, and existing authorship information.
+
+### 3. Verify project-topic consistency
+
+The assigned project topic is **Design Pattern Analysis in a Vue.js-Based Social Media Application**.
+
+Inspect the report, README files, metadata, prompts, outputs, and other relevant submission files for references to the project topic.
+
+- Identify any references to the earlier topic, **Design Pattern Analysis in a Next.js-Based Video Streaming Application**.
+- Determine whether each reference is stale metadata, historical evidence, or an accurate description of the actual application being analyzed.
+- Correct stale project-topic metadata where the evidence supports the correction.
+- Do not blindly replace framework or application references in historical prompts, model outputs, source code, or evidence. Preserve historical records and document genuine inconsistencies rather than rewriting evidence.
+- If the actual source application conflicts with the assigned topic, report the mismatch and explain what needs clarification. Do not silently change the scope of the analysis.
+
+### 4. Make only necessary corrections
+
+Fix clear, evidence-supported errors and missing required files where feasible. Do not fabricate experiments, measurements, model outputs, reviewer approvals, or human actions. Do not rewrite valid content merely for stylistic preference.
+
+### 5. Protect the submission
+
+- Do not commit, push, publish, or upload anything.
+- Do not delete or overwrite original evidence or private backups.
+- Do not modify files outside the intended submission folder unless necessary and explicitly explained.
+- Do not create a ZIP unless the official instructions require one.
+- Preserve the existing name and authorship information.
+- Before any destructive operation or folder rename, verify the target and report the intended change.
+
+### 6. Final verification and report
+
+After making corrections, rerun the relevant checks and inspect the final directory.
+
+Provide a concise report containing:
+
+1. Official requirements checked.
+2. Files changed or added, with reasons.
+3. Tests and checks rerun, with actual results.
+4. Project-topic inconsistencies found and how they were handled.
+5. Remaining blockers, clearly separated into mandatory submission requirements and optional supporting documentation.
+6. Whether Part 3 is ready for submission.
+7. Remaining actions required before submission, if any.
+
+Do not claim the submission is fully ready if a required report, PDF, evidence file, or other mandatory deliverable is missing. Clearly document unresolved items and distinguish verified facts from assumptions.
+
+Do not commit or push changes. Stop after the audit, corrections, and final verification report.

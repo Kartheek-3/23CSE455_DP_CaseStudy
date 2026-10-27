@@ -1,0 +1,8 @@
+﻿PATTERN/SUITE   : Strategy_javascript
+RUNTIME/COMPILER: Node.js v24.18.0
+WORKDIR         : C:\Users\eswar\OneDrive\Documents\Visual Studio Code\23CSE455_DP_CaseStudy\B12\Part3\Strategy\javascript
+RUN COMMAND     : node test_strategy.js
+PROGRAM OUTPUT  : STRATEGY_JS PASS 5/5
+TIME INCLUDES   : whole process wall time (runtime startup + program execution), after 1 unmeasured warm-up
+TIMING SAMPLES  : 5 measured runs (ms): 80.8659, 76.4615, 75.2085, 81.9898, 81.586
+MEDIAN_MS       : 80.866

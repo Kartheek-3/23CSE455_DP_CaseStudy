@@ -1,0 +1,9 @@
+For each confirmed pattern instance below, write one PlantUML class diagram
+(one @startuml ... @enduml block each). Use the real class/interface names from
+JUnit 6.1.3, show each class's pattern role as a stereotype (e.g. <<Component>>,
+<<ConcreteStrategy>>), use the correct arrow types (implements, extends, holds,
+calls), and include only the participants listed. Title each diagram with the
+instance id and name. Use "!pragma layout smetana" in each block.
+
+[paste the 4 tables from Part1/notes.md here: Area A, B, C, D]
+# NOTE (B16): the tables were not pasted - the placeholder line above was sent as-is, so the model used its own instance ids. Mapping to our ids is in Part1/uml/README.md.

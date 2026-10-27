@@ -1,0 +1,7 @@
+$ (cd Part3/null-object-listener/java) java -cp out nullobject.NullObjectTest
+PASS report matches expected-output.txt
+PASS a runner without listener uses the null object
+PASS invalid input is rejected with expected-error.txt
+3 passed, 0 failed
+[exit 0]
+result: 3/3 passed

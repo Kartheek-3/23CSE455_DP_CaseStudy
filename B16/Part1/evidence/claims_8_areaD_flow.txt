@@ -1,0 +1,21 @@
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/extension/MutableExtensionRegistry.java|81|createRegistryWithDefaultExtensions
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/extension/MutableExtensionRegistry.java|86|new TempDirectory(configuration)
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/ClassBasedTestDescriptor.java|186|prepare
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/ClassBasedTestDescriptor.java|247|BeforeAllCallback
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/TestMethodTestDescriptor.java|113|public JupiterEngineExecutionContext prepare
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/TestMethodTestDescriptor.java|146|execute
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/TestMethodTestDescriptor.java|211|invokeTestMethod
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/TestMethodTestDescriptor.java|278|nodeFinished
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/CallbackSupport.java|33|getExtensions(type)
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/CallbackSupport.java|48|forEachInReverseOrder
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/execution/ParameterResolutionUtils.java|127|resolveParameter
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/extension/TempDirectory.java|156|supportsParameter
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/extension/TempDirectory.java|157|isAnnotated(TempDir.class)
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/extension/TempDirectory.java|165|resolveParameter
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/extension/TempDirectory.java|226|computeIfAbsent
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/extension/TempDirectory.java|289|close()
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/JupiterTestDescriptor.java|250|close()
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/AbstractExtensionContext.java|127|close()
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/store/NamespacedHierarchicalStore.java|135|close()
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/NodeTestTask.java|119|cleanUp();
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/NodeTestTask.java|121|reportCompletion();

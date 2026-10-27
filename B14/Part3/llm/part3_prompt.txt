@@ -1,0 +1,17 @@
+PROMPT 1 — SOURCE-BASED PATTERN SELECTION
+Using the supplied B14 Part1/patterns.csv and Part2 implementation/evidence records, select exactly two confirmed patterns for Part 3. Prefer Strategy and Observer, unless the source evidence contradicts them. Explain their participant mapping, original source paths, and how each Part 2 change affects (or does not affect) the selected collaboration. Do not invent source facts. Note any mismatch between Part2 records and the checked-in source snapshot.
+
+PROMPT 2 — IMPLEMENTATION
+Implement the selected Strategy and Observer examples in Java and C++ only. Preserve the same problem, inputs, expected outputs, and pattern intent across both languages. Do not implement Python or JavaScript in this working phase. Keep production code separate from tests and provide build/run instructions. These are demonstrations, not ports of the original Next.js app.
+
+PROMPT 3 — COMMON TESTS
+Create a language-independent test specification, then implement identical cases in Java and C++. Include normal, invalid, unsubscribe, and multiple-observer cases. Save actual outputs and never claim unrun tests passed.
+
+PROMPT 4 — MEASUREMENT
+Measure production LOC using the stated rule, maximum function cyclomatic complexity using a declared tool or clearly labelled manual method, compiler/runtime versions, actual test results, and median process time. Compile first, do one warm-up, then five measured runs on the same machine. Save all raw timing values and state exactly what timing includes.
+
+PROMPT 5 — CSV AND REPORT
+Create cross_language.csv with the official column names, one row per pattern per language. Include measured data only, source paths, language notes, and limitations. Do not treat two languages as satisfying a four-language requirement.
+
+PROMPT 6 — AI VERIFICATION
+Record actual prompts, inputs, raw outputs, displayed model/date, human evaluation, and source/test evidence. Never fabricate an AI interaction or verification record. Leave llm.csv empty except for headers until actual records are available.

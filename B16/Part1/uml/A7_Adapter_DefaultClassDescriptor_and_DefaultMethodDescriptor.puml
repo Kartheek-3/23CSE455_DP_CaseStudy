@@ -1,0 +1,40 @@
+@startuml A7
+!pragma layout smetana
+title A7 Adapter: DefaultClassDescriptor and DefaultMethodDescriptor
+
+interface ClassDescriptor <<Target>>
+interface MethodDescriptor <<Target>>
+abstract class "AbstractAnnotatedDescriptorWrapper<E>" as Wrapper <<Adapter>> {
+  -testDescriptor : TestDescriptor
+  +getDisplayName()
+  +getTestDescriptor()
+}
+class DefaultClassDescriptor <<Adapter>>
+class DefaultMethodDescriptor <<Adapter>>
+abstract class ClassBasedTestDescriptor <<Adaptee>>
+abstract class MethodBasedTestDescriptor <<Adaptee>>
+interface ClassOrderer <<Client>>
+interface MethodOrderer <<Client>>
+
+DefaultClassDescriptor --|> Wrapper
+DefaultMethodDescriptor --|> Wrapper
+DefaultClassDescriptor ..|> ClassDescriptor
+DefaultMethodDescriptor ..|> MethodDescriptor
+DefaultClassDescriptor o--> ClassBasedTestDescriptor : wraps (via testDescriptor)
+DefaultMethodDescriptor o--> MethodBasedTestDescriptor : wraps (via testDescriptor)
+ClassOrderer ..> ClassDescriptor : orderClasses()
+MethodOrderer ..> MethodDescriptor : orderMethods()
+' aligned-with-record
+legend right
+  <b>Counted participants</b> (record in the dataset)
+  Target: ClassDescriptor
+  Target: MethodDescriptor
+  Adapter (base): AbstractAnnotatedDescriptorWrapper
+  Adapter: DefaultClassDescriptor
+  Adapter: DefaultMethodDescriptor
+  Adaptee: ClassBasedTestDescriptor
+  Adaptee: MethodBasedTestDescriptor
+  Client: ClassOrderingVisitor (not drawn)
+  Grey classes: real, shown for context, not counted
+endlegend
+@enduml

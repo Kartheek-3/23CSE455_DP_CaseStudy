@@ -1,0 +1,15 @@
+Mutation (a): Holder implements only AutoCloseable (no CloseableResource fallback)
+1
+7 tests completed, 1 failed
+> Task :jupiter-tests:test FAILED
+ManagedResourceTests > resourceIsDestroyedEvenWhenClosingStoredAutoCloseablesIsDisabled() FAILED
+BUILD FAILED in 5s
+
+Mutation (b): wrong lifetime - resource kept in the root store (whole run) instead of the requesting context
+1
+7 tests completed, 3 failed
+> Task :jupiter-tests:test FAILED
+ManagedResourceTests > resourceIsDestroyedEvenWhenClosingStoredAutoCloseablesIsDisabled() FAILED
+ManagedResourceTests > oneResourcePerTestSharedWithBeforeEachAndDestroyedAfterAfterEach() FAILED
+ManagedResourceTests > failingDestroyFailsTheTestThatOwnedTheResource() FAILED
+BUILD FAILED in 5s

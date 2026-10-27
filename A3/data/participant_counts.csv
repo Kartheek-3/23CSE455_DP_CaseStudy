@@ -1,0 +1,5 @@
+source_version,pattern_types,pattern_instances,concrete_participant_classes,unique_source_participant_symbols,rejected_candidates,uncertain_candidates
+original,3,6,6,22,3,1
+after_change1,4,7,8,27,3,1
+after_change2,4,8,9,31,3,1
+after_change3,5,9,12,36,3,1

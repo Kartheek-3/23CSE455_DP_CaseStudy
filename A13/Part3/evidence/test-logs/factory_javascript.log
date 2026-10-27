@@ -1,0 +1,14 @@
+# factory / javascript
+# working folder: Part3/code/pattern_factory/javascript
+# runtime: Node.js v24.15.0
+$ node loggingFactory.test.js ../../../test-cases/factory.txt
+PASS default_is_pretty
+PASS explicit_pretty
+PASS json
+PASS unknown_format
+PASS format_is_case_sensitive
+PASS empty_string_rejected
+passed 6/6
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 46.7, 47.3, 51.8, 52.2, 42.3 -> median 47.3

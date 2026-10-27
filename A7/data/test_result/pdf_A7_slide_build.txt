@@ -1,0 +1,15 @@
+Final slide rebuild receipt
+Date: 2026-10-11
+Source: A7_slide.tex
+Output: Part3/llm/A7_slide.pdf
+Compiler: XeLaTeX (TeX Live system installation), two passes
+Commands (run from a temporary build directory containing A7_slide.tex):
+  xelatex -interaction=nonstopmode -halt-on-error A7_slide.tex
+  xelatex -interaction=nonstopmode -halt-on-error A7_slide.tex
+First pass exit code: 0
+Second pass exit code: 0
+PDF page count: 13
+Visual inspection: Rendered all 13 pages to a contact sheet and inspected it; no clipping or overlap observed.
+Warning resolution: The prior Tectonic build reported a nullfont missing-character warning for character "5" on the title page. This XeLaTeX rebuild does not report a nullfont or missing-character warning.
+Remaining non-blocking warnings: hyperref reports that line breaks/spaces in the multi-line author field are removed from PDF metadata; rerunfilecheck reports auxiliary-file changes on the first pass. A second pass completed successfully.
+Environment limitation: The original Windows Tectonic executable is not present in this Linux workspace, so the rebuilt PDF was produced with the available XeLaTeX compiler rather than that original binary.

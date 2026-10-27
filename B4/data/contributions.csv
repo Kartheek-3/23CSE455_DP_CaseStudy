@@ -1,0 +1,5 @@
+member,roll_number,batch,allocation_percent,primary_contribution,evidence_paths,prompt_records,human_signoff
+Earlapally Sahith Siddarth,AM.SC.U4CSE23217,2,25,"Public baseline selection architecture and pattern discovery","Part1/code; Part1/diagrams; data/patterns.csv",2,Pending
+Bussa Surya,AM.SC.U4CSE23213,2,25,"Digital contract State dataset audit and final integration","Part2/code/app/Domain/Contracts; Part2/code/app/Models/DigitalContract.php; data; HUMAN_VERIFICATION.md",2,Pending
+Eati Manoj,AM.SC.U4CSE23317,2,25,"Advanced Specification filtering and cross-language comparison","Part2/code/app/Domain/Search; Part3/filter_specification",2,Pending
+Kankanala Sanithya Reddy,AM.SC.U4CSE23327,2,25,"Dynamic pricing Strategy tests and metrics","Part2/code/app/Domain/Pricing; Part3/strategy; Part3/evidence/cross_language_runs.txt",2,Pending

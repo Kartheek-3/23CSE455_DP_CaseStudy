@@ -1,0 +1,54 @@
+[
+  {
+    "pattern_name": "Controller",
+    "instance_name": "Trip Creation Coordination",
+    "language": "Java",
+    "snippet_path": "Part3/controller/java/Main.java",
+    "source_loc": 66,
+    "max_function_cc": 9,
+    "runtime_compiler": "openjdk version \"21.0.12.1\" 2026-08-18; javac 21.0.12.1",
+    "test_command": "cd Part3/controller/java && java TestMain",
+    "test_result": "8/8 passed; 0 failures; 0 errors; 0 skipped; exit 0",
+    "median_process_ms": 159.472871,
+    "language_notes": "TripCreationController coordinates Account, Trip, TripMember, TripStore and CoverTaskQueue. Java LocalDate with strict ISO resolver validates Gregorian dates. No database or external cover API; in-memory atomic validation and side-effect assertions. Compile: javac Main.java TestMain.java"
+  },
+  {
+    "pattern_name": "Controller",
+    "instance_name": "Trip Creation Coordination",
+    "language": "Python",
+    "snippet_path": "Part3/controller/python/main.py",
+    "source_loc": 59,
+    "max_function_cc": 10,
+    "runtime_compiler": "Python 3.13.5",
+    "test_command": "cd Part3/controller/python && python3 test_main.py",
+    "test_result": "8/8 passed; 0 failures; 0 errors; 0 skipped; exit 0",
+    "median_process_ms": 818.330142,
+    "language_notes": "TripCreationController delegates to Account, Trip, TripMember, TripStore and CoverTaskQueue. Python date.fromisoformat validates Gregorian dates. No database or external cover API; in-memory atomic validation and side-effect assertions. Compile: None (interpreted)"
+  },
+  {
+    "pattern_name": "Controller",
+    "instance_name": "Trip Creation Coordination",
+    "language": "JavaScript",
+    "snippet_path": "Part3/controller/javascript/main.js",
+    "source_loc": 55,
+    "max_function_cc": 9,
+    "runtime_compiler": "Node.js v22.16.0",
+    "test_command": "cd Part3/controller/javascript && node test_main.js",
+    "test_result": "8/8 passed; 0 failures; 0 errors; 0 skipped; exit 0",
+    "median_process_ms": 37.862085,
+    "language_notes": "TripCreationController orchestrates Account, Trip, TripMember, TripStore and CoverTaskQueue. Strict Gregorian validation avoids JavaScript Date normalization. No database or external cover API; in-memory atomic validation and side-effect assertions. Compile: None (interpreted)"
+  },
+  {
+    "pattern_name": "Controller",
+    "instance_name": "Trip Creation Coordination",
+    "language": "C++",
+    "snippet_path": "Part3/controller/cpp/main.cpp",
+    "source_loc": 90,
+    "max_function_cc": 13,
+    "runtime_compiler": "g++ (Debian 14.2.0-19) 14.2.0, C++17",
+    "test_command": "cd Part3/controller/cpp && ./controller_tests",
+    "test_result": "8/8 passed; 0 failures; 0 errors; 0 skipped; exit 0",
+    "median_process_ms": 2.565644,
+    "language_notes": "TripCreationController holds references to Account, TripStore and CoverTaskQueue; Trip and TripMember are separate domain structs; strict Gregorian date validation is implemented without external libraries. No database or external cover API; in-memory atomic validation and side-effect assertions. Compile: g++ -std=c++17 -O2 -Wall -Wextra -pedantic main.cpp test_main.cpp -o controller_tests"
+  }
+]

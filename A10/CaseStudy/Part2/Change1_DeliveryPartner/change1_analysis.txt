@@ -1,0 +1,51 @@
+﻿CHANGE 1 - NEW DELIVERY PARTNER
+
+Requirement:
+Support multiple delivery partners and allow a shipment to be associated
+with a delivery partner.
+
+Baseline:
+The baseline transportation model contains vehicles, drivers, routes and
+shipments. A shipment references an order, vehicle, driver and route.
+No delivery-partner entity or shipment delivery-partner reference exists.
+
+Baseline source evidence:
+- app/models/transportation.py - ShipmentBase
+- app/repositories/shipment_repositories.py - TransportationRepository
+- sql/schema.sql:204-219 - shipments table
+
+Evolution:
+A new delivery_partners entity is introduced. The shipments table is extended
+with delivery_partner_id as a foreign key to delivery_partners.
+
+Database changes:
+1. Create delivery_partners table.
+2. Add delivery_partner_id to shipments.
+3. Add an index on shipments.delivery_partner_id.
+
+Design impact:
+The existing TransportationRepository remains the repository responsible for
+transportation operations, but it must be extended with delivery-partner
+operations and shipment-partner assignment support.
+
+Pattern evolution:
+Repository Pattern is preserved and extended. No replacement of the existing
+repository architecture is required for this change.
+
+Change status:
+Implemented and verified.
+
+Implementation:
+- Added DeliveryPartner models in app/models/transportation.py.
+- Extended ShipmentBase and ShipmentUpdate with delivery_partner_id.
+- Extended TransportationRepository with delivery-partner creation and listing.
+- Extended shipment creation and retrieval to include delivery_partner_id.
+- Added POST /api/v1/transportation/delivery-partners.
+- Added GET /api/v1/transportation/delivery-partners.
+
+Verification:
+- Delivery partner creation returned HTTP 201 Created.
+- Delivery partner listing returned HTTP 200 OK.
+- Shipment creation with delivery_partner_id = 1 returned HTTP 201 Created.
+- The created shipment was assigned shipment_id = 4.
+- The response confirmed delivery_partner_id = 1.

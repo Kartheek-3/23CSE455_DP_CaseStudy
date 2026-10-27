@@ -1,0 +1,4 @@
+Current-session supplied context: data/llm/user_request.txt; tools/faculty_template.tex; attached faculty instructions.
+Source baseline: data/source_manifest.json and data/baseline_sha256.json.
+Relevant source and evidence: Part2/code/, Part2/changes/, Part2/tests/.
+This is a manifest of the source inspected in this session, not a claim that an entire directory was pasted into a separate model prompt.

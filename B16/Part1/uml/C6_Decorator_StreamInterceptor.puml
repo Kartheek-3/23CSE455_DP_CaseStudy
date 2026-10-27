@@ -1,0 +1,38 @@
+@startuml C6
+!pragma layout smetana
+title C6 Decorator: StreamInterceptor
+
+class "java.io.PrintStream" as PrintStream <<Component>> {
+  +write(int)
+  +write(byte[], int, int)
+}
+class StreamInterceptor <<Decorator>> {
+  -originalStream : PrintStream
+  {static} ~registerStdout(int)
+  ~capture()
+  ~consume() : String
+  +write(int)
+  +write(byte[], int, int)
+}
+class StreamInterceptingTestExecutionListener <<Installer>> {
+  -stdoutInterceptor : Optional<StreamInterceptor>
+  -stderrInterceptor : Optional<StreamInterceptor>
+}
+
+StreamInterceptor --|> PrintStream
+StreamInterceptor o--> PrintStream : originalStream (System.out / System.err)
+StreamInterceptingTestExecutionListener o--> StreamInterceptor : stdout / stderr
+
+note right of StreamInterceptor
+  write() copies bytes into a per-thread
+  buffer, then calls super.write()
+end note
+' aligned-with-record
+legend right
+  <b>Counted participants</b> (record in the dataset)
+  Component: PrintStream
+  ConcreteDecorator: StreamInterceptor
+  Installer / client: StreamInterceptingTestExecutionListener
+  Grey classes: real, shown for context, not counted
+endlegend
+@enduml

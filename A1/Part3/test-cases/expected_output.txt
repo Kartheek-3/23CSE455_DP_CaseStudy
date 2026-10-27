@@ -1,0 +1,8 @@
+Observer:
+Admin notified: Order O101 is Shipped
+Restaurant notified: Order O101 is Shipped
+Delivery Partner notified: Order O101 is Shipped
+
+Strategy:
+Assigned to: Partner A
+Assigned to: Partner C

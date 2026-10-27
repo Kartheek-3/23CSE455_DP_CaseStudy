@@ -1,0 +1,353 @@
+[
+  {
+    "name": "Adapter",
+    "category": "Structural (GoF)",
+    "instance": "Notification transport",
+    "participants": [
+      [
+        "Target",
+        "src/Common/BankSystem.Common/EmailSender/Interface/IEmailSender.cs",
+        "IEmailSender"
+      ],
+      [
+        "Adapter",
+        "src/Common/BankSystem.Common/EmailSender/Implementation/EmailSender.cs",
+        "EmailSender"
+      ],
+      [
+        "Client",
+        "src/Services/BankSystem/BankSystem.Services/MoneyTransfer/MoneyTransferService.cs",
+        "MoneyTransferService"
+      ],
+      [
+        "Client",
+        "src/Web/BankSystem.Web/Pages/Account/Register.cshtml.cs",
+        "RegisterModel"
+      ],
+      [
+        "Client",
+        "src/Web/BankSystem.Web/Pages/Account/SendEmailVerification.cshtml.cs",
+        "SendEmailVerificationModel"
+      ]
+    ],
+    "concrete": [
+      "EmailSender"
+    ],
+    "evidence": "Application IEmailSender accepts receiver/subject/body. EmailSender builds SendGrid message objects, delegates to SendGridClient and converts Accepted/exception to a boolean. SendGridClient and MailHelper are dependency adaptees, not new application classes.",
+    "stage": 0
+  },
+  {
+    "name": "Builder",
+    "category": "Creational (GoF)",
+    "instance": "Security header policy",
+    "participants": [
+      [
+        "ConcreteBuilder",
+        "src/Web/BankSystem.Web/Infrastructure/Middleware/SecurityHeadersBuilder.cs",
+        "SecurityHeadersBuilder"
+      ],
+      [
+        "Product",
+        "src/Web/BankSystem.Web/Infrastructure/Middleware/SecurityHeadersPolicy.cs",
+        "SecurityHeadersPolicy"
+      ],
+      [
+        "Director",
+        "src/Web/BankSystem.Web/Startup.cs",
+        "Startup"
+      ],
+      [
+        "Consumer",
+        "src/Web/BankSystem.Web/Infrastructure/Middleware/SecurityHeadersMiddleware.cs",
+        "SecurityHeadersMiddleware"
+      ]
+    ],
+    "concrete": [
+      "SecurityHeadersBuilder"
+    ],
+    "evidence": "Startup assembles security settings through chained builder calls. Builder accumulates additions/removals in a SecurityHeadersPolicy; middleware consumes that product. No abstract Builder interface is declared.",
+    "stage": 0
+  },
+  {
+    "name": "Service Layer",
+    "category": "Architectural",
+    "instance": "Account administration",
+    "participants": [
+      [
+        "Service contract",
+        "src/Services/BankSystem/BankSystem.Services/BankAccount/IBankAccountService.cs",
+        "IBankAccountService"
+      ],
+      [
+        "Service implementation",
+        "src/Services/BankSystem/BankSystem.Services/BankAccount/BankAccountService.cs",
+        "BankAccountService"
+      ],
+      [
+        "Scoped client",
+        "src/Web/BankSystem.Web/Controllers/BankAccountsController.cs",
+        "BankAccountsController"
+      ],
+      [
+        "Base",
+        "src/Services/BankSystem/BankSystem.Services/BaseService.cs",
+        "BaseService"
+      ],
+      [
+        "Persistence",
+        "src/Data/BankSystem/BankSystem.Data/BankSystemDbContext.cs",
+        "BankSystemDbContext"
+      ]
+    ],
+    "concrete": [
+      "BankAccountService"
+    ],
+    "evidence": "BankAccountsController delegates domain operations to IBankAccountService; BankAccountService coordinates validation or data access through the shared context. Counted as one named service collaboration, not one instance per method. EF Core internals and dependency-injection registration are not additional GoF instances.",
+    "stage": 0
+  },
+  {
+    "name": "Service Layer",
+    "category": "Architectural",
+    "instance": "Card administration",
+    "participants": [
+      [
+        "Service contract",
+        "src/Services/BankSystem/BankSystem.Services/Card/ICardService.cs",
+        "ICardService"
+      ],
+      [
+        "Service implementation",
+        "src/Services/BankSystem/BankSystem.Services/Card/CardService.cs",
+        "CardService"
+      ],
+      [
+        "Scoped client",
+        "src/Web/BankSystem.Web/Areas/Cards/Controllers/CardsController.cs",
+        "CardsController"
+      ],
+      [
+        "Base",
+        "src/Services/BankSystem/BankSystem.Services/BaseService.cs",
+        "BaseService"
+      ],
+      [
+        "Persistence",
+        "src/Data/BankSystem/BankSystem.Data/BankSystemDbContext.cs",
+        "BankSystemDbContext"
+      ]
+    ],
+    "concrete": [
+      "CardService"
+    ],
+    "evidence": "CardsController delegates domain operations to ICardService; CardService coordinates validation or data access through the shared context. Counted as one named service collaboration, not one instance per method. EF Core internals and dependency-injection registration are not additional GoF instances.",
+    "stage": 0
+  },
+  {
+    "name": "Service Layer",
+    "category": "Architectural",
+    "instance": "User profile lookup",
+    "participants": [
+      [
+        "Service contract",
+        "src/Services/BankSystem/BankSystem.Services/User/IUserService.cs",
+        "IUserService"
+      ],
+      [
+        "Service implementation",
+        "src/Services/BankSystem/BankSystem.Services/User/UserService.cs",
+        "UserService"
+      ],
+      [
+        "Scoped client",
+        "src/Web/BankSystem.Web/Areas/MoneyTransfers/Controllers/GlobalController.cs",
+        "GlobalController"
+      ],
+      [
+        "Base",
+        "src/Services/BankSystem/BankSystem.Services/BaseService.cs",
+        "BaseService"
+      ],
+      [
+        "Persistence",
+        "src/Data/BankSystem/BankSystem.Data/BankSystemDbContext.cs",
+        "BankSystemDbContext"
+      ]
+    ],
+    "concrete": [
+      "UserService"
+    ],
+    "evidence": "GlobalController delegates domain operations to IUserService; UserService coordinates validation or data access through the shared context. Counted as one named service collaboration, not one instance per method. EF Core internals and dependency-injection registration are not additional GoF instances.",
+    "stage": 0
+  },
+  {
+    "name": "Service Layer",
+    "category": "Architectural",
+    "instance": "Transfer posting",
+    "participants": [
+      [
+        "Service contract",
+        "src/Services/BankSystem/BankSystem.Services/MoneyTransfer/IMoneyTransferService.cs",
+        "IMoneyTransferService"
+      ],
+      [
+        "Service implementation",
+        "src/Services/BankSystem/BankSystem.Services/MoneyTransfer/MoneyTransferService.cs",
+        "MoneyTransferService"
+      ],
+      [
+        "Scoped client",
+        "src/Web/BankSystem.Web/Areas/MoneyTransfers/Controllers/InternalController.cs",
+        "InternalController"
+      ],
+      [
+        "Base",
+        "src/Services/BankSystem/BankSystem.Services/BaseService.cs",
+        "BaseService"
+      ],
+      [
+        "Persistence",
+        "src/Data/BankSystem/BankSystem.Data/BankSystemDbContext.cs",
+        "BankSystemDbContext"
+      ]
+    ],
+    "concrete": [
+      "MoneyTransferService"
+    ],
+    "evidence": "InternalController delegates domain operations to IMoneyTransferService; MoneyTransferService coordinates validation or data access through the shared context. Counted as one named service collaboration, not one instance per method. EF Core internals and dependency-injection registration are not additional GoF instances.",
+    "stage": 0
+  },
+  {
+    "name": "Strategy",
+    "category": "Behavioral (GoF)",
+    "instance": "Second-factor login",
+    "participants": [
+      [
+        "Strategy",
+        "src/Web/BankSystem.Web/Infrastructure/Authentication/SecondFactorStrategies.cs",
+        "ISecondFactorStrategy"
+      ],
+      [
+        "ConcreteStrategy",
+        "src/Web/BankSystem.Web/Infrastructure/Authentication/SecondFactorStrategies.cs",
+        "AuthenticatorSecondFactor"
+      ],
+      [
+        "ConcreteStrategy",
+        "src/Web/BankSystem.Web/Infrastructure/Authentication/SecondFactorStrategies.cs",
+        "RecoverySecondFactor"
+      ],
+      [
+        "Context",
+        "src/Web/BankSystem.Web/Infrastructure/Authentication/SecondFactorStrategies.cs",
+        "SecondFactorContext"
+      ],
+      [
+        "Client",
+        "src/Web/BankSystem.Web/Pages/Account/LoginWith2fa.cshtml.cs",
+        "LoginWith2faModel"
+      ]
+    ],
+    "concrete": [
+      "AuthenticatorSecondFactor",
+      "RecoverySecondFactor"
+    ],
+    "evidence": "The existing login page selects an interchangeable strategy after pending two-factor user lookup. Context delegates; concrete strategies call authenticator or recovery-code Identity APIs. No new password store or token algorithm is invented.",
+    "stage": 1
+  },
+  {
+    "name": "Service Layer",
+    "category": "Architectural",
+    "instance": "Atomic internal payment",
+    "participants": [
+      [
+        "Service contract",
+        "src/Services/BankSystem/BankSystem.Services/MoneyTransfer/IInternalTransferService.cs",
+        "IInternalTransferService"
+      ],
+      [
+        "Service implementation",
+        "src/Services/BankSystem/BankSystem.Services/MoneyTransfer/InternalTransferService.cs",
+        "InternalTransferService"
+      ],
+      [
+        "Request",
+        "src/Services/BankSystem/BankSystem.Services/MoneyTransfer/InternalTransferRequest.cs",
+        "InternalTransferRequest"
+      ],
+      [
+        "Client",
+        "src/Web/BankSystem.Web/Areas/MoneyTransfers/Controllers/InternalController.cs",
+        "InternalController"
+      ],
+      [
+        "Client",
+        "src/Web/BankSystem.Web/Controllers/BillPaymentsController.cs",
+        "BillPaymentsController"
+      ],
+      [
+        "Persistence",
+        "src/Data/BankSystem/BankSystem.Data/BankSystemDbContext.cs",
+        "BankSystemDbContext"
+      ],
+      [
+        "Notifier",
+        "src/Common/BankSystem.Common/EmailSender/Interface/IEmailSender.cs",
+        "IEmailSender"
+      ]
+    ],
+    "concrete": [
+      "InternalTransferService"
+    ],
+    "evidence": "Existing internal transfers and new bill payments share ExecuteAsync. It verifies ownership, loads both accounts, updates both balances and writes opposite signed entries in a serializable database transaction, then sends notifications.",
+    "stage": 2
+  },
+  {
+    "name": "Chain of Responsibility",
+    "category": "Behavioral (GoF)",
+    "instance": "Transfer risk checks",
+    "participants": [
+      [
+        "Handler contract",
+        "src/Services/BankSystem/BankSystem.Services/Fraud/TransferRules.cs",
+        "ITransferRule"
+      ],
+      [
+        "Base handler",
+        "src/Services/BankSystem/BankSystem.Services/Fraud/TransferRules.cs",
+        "TransferRule"
+      ],
+      [
+        "ConcreteHandler",
+        "src/Services/BankSystem/BankSystem.Services/Fraud/TransferRules.cs",
+        "PositiveAmountRule"
+      ],
+      [
+        "ConcreteHandler",
+        "src/Services/BankSystem/BankSystem.Services/Fraud/TransferRules.cs",
+        "SufficientFundsRule"
+      ],
+      [
+        "ConcreteHandler",
+        "src/Services/BankSystem/BankSystem.Services/Fraud/TransferRules.cs",
+        "HighValueRule"
+      ],
+      [
+        "Client",
+        "src/Services/BankSystem/BankSystem.Services/MoneyTransfer/InternalTransferService.cs",
+        "InternalTransferService"
+      ],
+      [
+        "Composition root",
+        "src/Web/BankSystem.Web/Startup.cs",
+        "Startup"
+      ]
+    ],
+    "concrete": [
+      "PositiveAmountRule",
+      "SufficientFundsRule",
+      "HighValueRule"
+    ],
+    "evidence": "Each handler accepts or rejects and only forwards successful requests to its successor. HighValueRule adds a configurable upper bound. The chain protects the internal/bill flow only; it is not a global AML or card-payment engine.",
+    "stage": 3
+  }
+]

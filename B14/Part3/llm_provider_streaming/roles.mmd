@@ -1,0 +1,21 @@
+classDiagram
+    class StreamingContext {
+        +run(input)
+    }
+    class StreamingStrategy {
+        <<implicit contract>>
+        +stream(events) chunks
+    }
+    class ClaudeStrategy {
+        +stream_claude(events)
+    }
+    class OpenAIStrategy {
+        +stream_openai(events)
+    }
+    class GeminiStrategy {
+        +stream_gemini(events)
+    }
+    StreamingContext ..> StreamingStrategy : selects by provider
+    ClaudeStrategy ..|> StreamingStrategy : same contract
+    OpenAIStrategy ..|> StreamingStrategy : same contract
+    GeminiStrategy ..|> StreamingStrategy : same contract

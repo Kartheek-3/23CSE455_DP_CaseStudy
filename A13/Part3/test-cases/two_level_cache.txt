@@ -1,0 +1,8 @@
+# case|commands: fetch; get; delete; tick <ms>; newproc (memory lifetime 100 ms; value v<n> on n-th fetcher call)|expected (<value>@<level that answered>, or none)
+first_fetch_calls_fetcher|fetch|v1@fetcher
+second_fetch_hits_memory|fetch;fetch|v1@fetcher~v1@L1
+memory_expiry_falls_back_to_redis|fetch;tick 150;fetch;fetch|v1@fetcher~v1@L2~v1@L1
+delete_clears_both_levels|fetch;delete;fetch|v1@fetcher~v2@fetcher
+get_on_empty_cache_is_none|get|none
+get_does_not_call_fetcher|get;fetch;get|none~v1@fetcher~v1@L1
+other_process_reads_redis|fetch;newproc;fetch|v1@fetcher~v1@L2

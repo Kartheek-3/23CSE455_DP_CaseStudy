@@ -1,0 +1,116 @@
+# Line references in Part2/llm/output_1_design.md. Format: path|line|text expected on that line
+# --- CH01
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/TestExecutionListener.java|76|public interface TestExecutionListener
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/TestExecutionListener.java|86|default void testPlanExecutionStarted
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/SummaryGeneratingListener.java|36|public class SummaryGeneratingListener
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/SummaryGeneratingListener.java|73|if (testIdentifier.isContainer())
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/SummaryGeneratingListener.java|85|concat(Stream.of(testIdentifier)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/SummaryGeneratingListener.java|88|concat(Stream.of(testIdentifier)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/SummaryGeneratingListener.java|100|if (testIdentifier.isContainer())
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/SummaryGeneratingListener.java|115|if (testIdentifier.isContainer())
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/SummaryGeneratingListener.java|124|if (testIdentifier.isContainer())
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/SummaryGeneratingListener.java|133|if (testIdentifier.isContainer())
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/MutableTestExecutionSummary.java|38|class MutableTestExecutionSummary
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/MutableTestExecutionSummary.java|48|AtomicLong containersFound
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/MutableTestExecutionSummary.java|60|AtomicLong testsFailed
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/MutableTestExecutionSummary.java|65|long timeStarted
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/UniqueIdTrackingListener.java|104|junit.platform.listeners.uid.tracking.enabled
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/UniqueIdTrackingListener.java|147|this.enabled =
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/UniqueIdTrackingListener.java|183|public void testPlanExecutionFinished
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/UniqueIdTrackingListener.java|190|logger.error
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/UniqueIdTrackingListener.java|201|logger.error
+junit-platform-launcher/src/main/java/module-info.java|35|exports org.junit.platform.launcher.core;
+junit-platform-launcher/src/main/java/module-info.java|36|exports org.junit.platform.launcher.listeners;
+junit-platform-launcher/src/main/java/module-info.java|46|provides org.junit.platform.launcher.TestExecutionListener
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/LauncherFactory.java|195|registerTestExecutionListeners
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/LauncherFactory.java|206|DEACTIVATE_LISTENERS_PATTERN_PROPERTY_NAME
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/LauncherConstants.java|142|junit.platform.execution.listeners.deactivate
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineExecutionOrchestrator.java|104|testPlanExecutionStarted(testPlan)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineExecutionOrchestrator.java|113|testPlanExecutionFinished(testPlan)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineExecutionOrchestrator.java|120|private void dryRun
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/ExecutionListenerAdapter.java|46|public void executionStarted
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/CompositeTestExecutionListener.java|71|IterationOrder.REVERSED
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/CompositeTestExecutionListener.java|78|IterationOrder.ORIGINAL
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/CompositeTestExecutionListener.java|85|IterationOrder.REVERSED
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/CompositeTestExecutionListener.java|104|void notifyEach
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/CompositeTestExecutionListener.java|111|rethrowIfUnrecoverable
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/TestPlan.java|310|getOutputDirectoryCreator()
+junit-platform-engine/src/main/java/org/junit/platform/engine/OutputDirectoryCreator.java|33|Path getRootDirectory()
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/NodeTestTask.java|119|cleanUp();
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/NodeTestTask.java|121|reportCompletion();
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/NodeTestTask.java|158|executionStarted(testDescriptor)
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/NodeTestTask.java|224|executionFinished(testDescriptor
+junit-platform-engine/src/main/java/org/junit/platform/engine/ConfigurationParameters.java|120|Optional<T> get(String key, Function
+junit-platform-engine/src/main/java/org/junit/platform/engine/ConfigurationParameters.java|129|throw new JUnitException
+junit-platform-engine/src/main/java/org/junit/platform/engine/TestDescriptor.java|345|default void accept(Visitor visitor)
+junit-platform-engine/src/main/java/org/junit/platform/engine/TestDescriptor.java|408|CONTAINER_AND_TEST
+# --- CH02
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/BeforeAllCallback.java|64|public interface BeforeAllCallback
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/AfterAllCallback.java|64|public interface AfterAllCallback
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/BeforeEachCallback.java|67|public interface BeforeEachCallback
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/AfterEachCallback.java|67|public interface AfterEachCallback
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/ParameterResolver.java|69|public interface ParameterResolver
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/execution/ParameterResolutionUtils.java|156|validateResolvedType
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/execution/ParameterResolutionUtils.java|178|throw new ParameterResolutionException
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/ExtensionContext.java|526|interface Store
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/ExtensionContext.java|768|computeIfAbsent(K key
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/ExtensionContext.java|839|computeIfAbsent(K key
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/store/NamespacedHierarchicalStore.java|135|public void close()
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/store/NamespacedHierarchicalStore.java|143|REVERSE_INSERT_ORDER
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/store/NamespacedHierarchicalStore.java|157|throw throwAsUncheckedException
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/store/NamespacedHierarchicalStore.java|465|getStoredValue(CompositeKey
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/store/NamespacedHierarchicalStore.java|471|this.parentStore.getStoredValue
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/AbstractExtensionContext.java|103|createCloseAction()
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/AbstractExtensionContext.java|106|isClosingStoredAutoCloseablesEnabled
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/Constants.java|118|CLOSING_STORED_AUTO_CLOSEABLE_ENABLED_PROPERTY_NAME
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/Constants.java|154|junit.jupiter.conditions.deactivate
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/io/TempDir.java|98|public @interface TempDir
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/extension/TempDirectory.java|72|class TempDirectory implements
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/extension/TempDirectory.java|208|assertSupportedType
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/extension/TempDirectory.java|255|class CloseablePath implements Store.CloseableResource, AutoCloseable
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/extension/TempDirectory.java|325|implements Store.CloseableResource, AutoCloseable
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/AutoClose.java|82|public @interface AutoClose
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/extension/AutoCloseExtension.java|44|class AutoCloseExtension implements
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/extension/MutableExtensionRegistry.java|54|DEFAULT_STATELESS_EXTENSIONS
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/extension/MutableExtensionRegistry.java|86|new TempDirectory(configuration)
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/support/TypeBasedParameterResolver.java|33|public abstract class TypeBasedParameterResolver
+junit-jupiter-api/src/main/java/module-info.java|29|exports org.junit.jupiter.api.extension.support;
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/ExtensionUtils.java|187|registerExtensionsFromExecutableParameters
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/ClassBasedTestDescriptor.java|247|invokeBeforeAllCallbacks
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/ClassBasedTestDescriptor.java|251|invokeBeforeAllMethods
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/TestMethodTestDescriptor.java|170|public void cleanUp
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/TestMethodTestDescriptor.java|172|invokeTestInstancePreDestroyCallbacks
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/TestMethodTestDescriptor.java|174|super.cleanUp(context)
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/JupiterTestDescriptor.java|250|context.close()
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/execution/JupiterEngineExecutionContext.java|47|public void close()
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/execution/JupiterEngineExecutionContext.java|54|Failed to close extension context
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/hierarchical/ThrowableCollector.java|101|addSuppressed
+# --- CH03
+junit-platform-engine/src/main/java/org/junit/platform/engine/Filter.java|41|public interface Filter
+junit-platform-engine/src/main/java/org/junit/platform/engine/Filter.java|78|composeFilters
+junit-platform-engine/src/main/java/org/junit/platform/engine/FilterResult.java|28|public class FilterResult
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/PostDiscoveryFilter.java|35|public interface PostDiscoveryFilter
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/TagFilter.java|68|includeTags
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/TagFilter.java|125|excludeTags
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/MethodFilter.java|46|includeMethodNamePatterns
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/IncludeMethodFilter.java|38|public FilterResult apply
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/ExcludeMethodFilter.java|38|public FilterResult apply
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/EngineFilter.java|55|includeEngines
+junit-platform-engine/src/main/java/org/junit/platform/engine/discovery/ClassNameFilter.java|56|includeClassNamePatterns
+junit-platform-engine/src/main/java/org/junit/platform/engine/discovery/ClassNameFilter.java|73|excludeClassNamePatterns
+junit-platform-engine/src/main/java/org/junit/platform/engine/discovery/PackageNameFilter.java|45|includePackageNames
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/LauncherDiscoveryRequestBuilder.java|193|filters(Filter<?>... filters)
+junit-platform-engine/src/main/java/org/junit/platform/engine/CompositeFilter.java|59|public FilterResult apply
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/LauncherFactory.java|141|collectPostDiscoveryFilters(config)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/LauncherFactory.java|178|collectPostDiscoveryFilters(LauncherConfig config)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java|115|launcherDiscoveryStarted
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java|156|discoverSafely
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java|180|new ArrayList<>(postDiscoveryFilters)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java|181|request.getPostDiscoveryFilters()
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java|189|discoverEngineRoot
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java|225|applyPostDiscoveryFilters
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java|246|logTestDescriptorExclusionReasons
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java|265|private void prune
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java|269|isExcluded
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/LauncherDiscoveryListener.java|57|launcherDiscoveryStarted
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/ExecutionCondition.java|58|public interface ExecutionCondition

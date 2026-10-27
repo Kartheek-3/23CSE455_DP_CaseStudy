@@ -1,0 +1,114 @@
+=== CHANGE 3 (CH03) IMPLEMENTATION AND EXECUTION OUTPUT ===
+Date: 2026-10-11
+Model: Antigravity Agent (Google DeepMind)
+Workspace: /home/vighnesh/DP-case_study/misskey
+Baseline SHA: 5f501341d49d2bc3fa7e817ce7548a82174326eb
+Preceding SHA: 9a4398a103e392a0ea634eaf521470985985145d
+Implementation SHA: 39e3c987488d59045cc3ed5cfe532f6f32c0936d
+
+--------------------------------------------------------------------------------
+1. IMPLEMENTATION SUMMARY
+--------------------------------------------------------------------------------
+Implemented context-aware link safety and spam protection:
+- Domain Entity: MiFlaggedLink (packages/backend/src/models/FlaggedLink.ts)
+  - Fields: id, url, canonicalUrl, domain, riskCategory, reason, threatType, source, userId, noteId, resolved, createdAt, updatedAt
+- Migration: packages/backend/migration/1787000000000-flagged-links.js (TypeORM migration creating flagged_link table, indexes on canonicalUrl, domain, riskCategory, userId, noteId, resolved)
+- Reputation Strategy Hierarchy: LinkReputationProvider, LocalListReputationProvider, MockReputationProvider, DisabledReputationProvider in packages/backend/src/core/security/LinkReputationProvider.ts
+- Core Security Service: LinkSafetyService in packages/backend/src/core/security/LinkSafetyService.ts
+  - WHATWG URL normalization (hostname lowercase, trailing dot strip, default ports 80/443 strip, userinfo detection)
+  - SSRF guard validating IP addresses and destination hosts against non-unicast ranges via ipaddr.js
+  - Homograph and confusable domain detection mapping Cyrillic/Greek lookalikes against protected domains
+  - Sliding-window promotional spam frequency analysis (identical URL and domain burst signals)
+  - Abuse report correlation with reporter deduplication to prevent coordinated report manipulation
+  - In-memory reputation cache with differential TTL policies (risks: 1h, benign: 6h, transient unknown: 2m-5m)
+  - Administrative review and dynamic domain rule updating
+- REST API Endpoints:
+  - packages/backend/src/server/api/endpoints/links/check.ts (draft URL check endpoint)
+  - packages/backend/src/server/api/endpoints/admin/links/flagged.ts (admin flagged links review)
+  - packages/backend/src/server/api/endpoints/admin/links/rules/update.ts (admin domain block/allowlist update)
+- Registrations:
+  - packages/backend/src/server/api/endpoint-list.ts (registered links/check, admin/links/flagged, admin/links/rules/update)
+  - packages/backend/src/di-symbols.ts (added flaggedLinksRepository)
+  - packages/backend/src/core/CoreModule.ts (registered LinkSafetyService and provider alias)
+  - packages/backend/src/models/RepositoryModule.ts (registered $flaggedLinksRepository)
+  - packages/backend/src/models/_.ts (exported MiFlaggedLink and FlaggedLinksRepository)
+  - packages/backend/src/postgres.ts (registered MiFlaggedLink in dataSource entities)
+- Frontend Components:
+  - packages/frontend/src/components/global/MkUrl.vue (reader risk warning badge and os.confirm navigation prompt for suspicious/credentialed links)
+  - packages/frontend/src/components/MkPostForm.vue (debounced note text link safety watcher displaying non-blocking MkInfo advisory banner)
+- Focused Unit Tests: packages/backend/test/unit/LinkSafetyService.test.ts (29 automated test cases covering normalization, SSRF, homographs, reputation strategies, caching, spam repetition, abuse deduplication, and admin review)
+
+--------------------------------------------------------------------------------
+2. FOCUSED AUTOMATED TEST EXECUTION
+--------------------------------------------------------------------------------
+Working Directory: /home/vighnesh/DP-case_study/misskey
+Command: pnpm --filter backend exec vitest run test/unit/LinkSafetyService.test.ts --config vitest.config.unit.ts
+Runner: Vitest v4.1.11
+Node.js: v22.23.1
+pnpm: v11.25.0
+
+Test Output:
+ RUN  v4.1.11 /home/vighnesh/DP-case_study/misskey/packages/backend
+
+ ✓ test/unit/LinkSafetyService.test.ts (29 tests) 26ms 23 MB heap used
+   ✓ LinkSafetyService (CH03) (29)
+     ✓ 13.1 URL syntax and normalisation (6)
+       ✓ normalises benign HTTP and HTTPS URLs
+       ✓ normalises hostname to lowercase and strips trailing dot
+       ✓ strips default ports 80 (http) and 443 (https) while preserving non-default ports
+       ✓ detects embedded userinfo in URLs
+       ✓ rejects unsupported or dangerous schemes
+       ✓ handles internationalised and Punycode hostnames
+     ✓ 13.2 SSRF and destination safety safeguards (7)
+       ✓ prohibits IPv4 loopback destinations
+       ✓ prohibits RFC1918 private IPv4 networks
+       ✓ prohibits link-local, carrier-grade NAT, and multicast destinations
+       ✓ prohibits IPv6 loopback and IPv4-mapped IPv6 loopback
+       ✓ prohibits localhost and local hostnames
+       ✓ allows valid public unicast IP addresses
+       ✓ marks SSRF attempt as malicious when checked via checkUrl
+     ✓ 13.3 Homograph / confusable domain detection (3)
+       ✓ flags Cyrillic homoglyph lookalikes imitating protected domains
+       ✓ flags lookalikes imitating paypal.com
+       ✓ does not flag genuine protected domain
+     ✓ 13.4 Reputation provider strategy and caching (7)
+       ✓ LocalListReputationProvider returns benign for allowlisted domain
+       ✓ LocalListReputationProvider returns malicious for blocklisted domain
+       ✓ LocalListReputationProvider returns suspicious for known URL shortener
+       ✓ MockReputationProvider returns deterministic verdicts
+       ✓ handles provider failure gracefully without falsely labelling safe or malicious
+       ✓ DisabledReputationProvider returns unknown
+       ✓ caches positive verdict and avoids duplicate lookups
+     ✓ 13.5 Spam and repeated promotional-pattern analysis (3)
+       ✓ flags repeated identical URL posting within 5 minutes
+       ✓ flags high-frequency link bursts to the same domain within 10 minutes
+       ✓ deduplicates abuse reports to prevent coordinated manipulation
+     ✓ 13.6 Post text scanning and admin review (3)
+       ✓ extracts and checks multiple URLs from post text
+       ✓ persists flagged link audit records and allows admin review and resolution
+       ✓ admin can dynamically update domain rules
+
+ Test Files  1 passed (1)
+      Tests  29 passed (29)
+   Start at  15:57:07
+   Duration  543ms
+Exit Code: 0
+
+--------------------------------------------------------------------------------
+3. REGRESSION TEST EXECUTION (CH01, CH02, CH03)
+--------------------------------------------------------------------------------
+Command: pnpm --filter backend exec vitest run test/unit/EventService.test.ts test/unit/AudioTranscriptService.test.ts test/unit/LinkSafetyService.test.ts --config vitest.config.unit.ts
+
+Results:
+ ✓ test/unit/LinkSafetyService.test.ts (29 tests)
+ ✓ test/unit/EventService.test.ts (21 tests)
+ ✓ test/unit/AudioTranscriptService.test.ts (21 tests)
+
+ Test Files  3 passed (3)
+      Tests  71 passed (71)
+   Duration  2.40s
+Exit Code: 0
+
+SPDX Header Check: OK (2486 files passed)
+Working Tree: Clean
+Commit SHA: 39e3c987488d59045cc3ed5cfe532f6f32c0936d

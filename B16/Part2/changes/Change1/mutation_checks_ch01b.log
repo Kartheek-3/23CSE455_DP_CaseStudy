@@ -1,0 +1,15 @@
+Mutation (a): ClassSummaryListener line removed from META-INF/services
+ClassSummaryListenerTests > writesOneRowPerClassAndTotalsMatchSummaryGeneratingListener() FAILED
+ClassSummaryListenerTests > unwritableOutputFileIsLoggedAndDoesNotAffectTheRun(LogRecordListener) FAILED
+ClassSummaryListenerTests > listsTheSlowestTestsInDescendingOrder() FAILED
+ClassSummaryListenerTests > invalidSlowestValueIsLoggedAndTheDefaultIsUsed(LogRecordListener) FAILED
+5 tests completed, 4 failed
+> Task :platform-tests:test FAILED
+BUILD FAILED in 5s
+
+Mutation (b): executionSkipped no longer counts skipped tests
+1
+5 tests completed, 1 failed
+ClassSummaryListenerTests > writesOneRowPerClassAndTotalsMatchSummaryGeneratingListener() FAILED
+> Task :platform-tests:test FAILED
+BUILD FAILED in 5s

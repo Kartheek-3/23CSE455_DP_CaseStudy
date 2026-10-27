@@ -1,0 +1,328 @@
+From 2b2dd6246dd50f4a53a991e5429b22da1b1a5c4f Mon Sep 17 00:00:00 2001
+From: Team B4 <team-b4@local.invalid>
+Date: Sun, 11 Oct 2026 00:52:15 +0530
+Subject: [PATCH] CH02 add composable property filtering specifications
+
+---
+ .../Search/AddressContainsSpecification.php   | 18 +++++++++++
+ app/Domain/Search/AmenitySpecification.php    | 15 +++++++++
+ app/Domain/Search/AndSpecification.php        | 22 +++++++++++++
+ app/Domain/Search/AvailableSpecification.php  | 11 +++++++
+ app/Domain/Search/CitySpecification.php       | 15 +++++++++
+ app/Domain/Search/FurnishedSpecification.php  | 15 +++++++++
+ .../Search/MaxMonthlyRentSpecification.php    | 16 ++++++++++
+ app/Domain/Search/PropertyFilterService.php   | 18 +++++++++++
+ app/Domain/Search/PropertySpecification.php   |  9 ++++++
+ app/Domain/Search/RentRangeSpecification.php  | 21 ++++++++++++
+ app/Domain/Search/StatusSpecification.php     | 15 +++++++++
+ app/Http/Controllers/PropertyController.php   | 32 +++++++++++++++++--
+ 12 files changed, 204 insertions(+), 3 deletions(-)
+ create mode 100644 app/Domain/Search/AddressContainsSpecification.php
+ create mode 100644 app/Domain/Search/AmenitySpecification.php
+ create mode 100644 app/Domain/Search/AndSpecification.php
+ create mode 100644 app/Domain/Search/AvailableSpecification.php
+ create mode 100644 app/Domain/Search/CitySpecification.php
+ create mode 100644 app/Domain/Search/FurnishedSpecification.php
+ create mode 100644 app/Domain/Search/MaxMonthlyRentSpecification.php
+ create mode 100644 app/Domain/Search/PropertyFilterService.php
+ create mode 100644 app/Domain/Search/PropertySpecification.php
+ create mode 100644 app/Domain/Search/RentRangeSpecification.php
+ create mode 100644 app/Domain/Search/StatusSpecification.php
+
+diff --git a/app/Domain/Search/AddressContainsSpecification.php b/app/Domain/Search/AddressContainsSpecification.php
+new file mode 100644
+index 0000000..a64d6b1
+--- /dev/null
++++ b/app/Domain/Search/AddressContainsSpecification.php
+@@ -0,0 +1,18 @@
++<?php
++
++namespace App\Domain\Search;
++
++final readonly class AddressContainsSpecification implements PropertySpecification
++{
++    public function __construct(private string $fragment)
++    {
++    }
++
++    public function isSatisfiedBy(array $property): bool
++    {
++        return str_contains(
++            strtolower((string) ($property['address'] ?? '')),
++            strtolower($this->fragment),
++        );
++    }
++}
+diff --git a/app/Domain/Search/AmenitySpecification.php b/app/Domain/Search/AmenitySpecification.php
+new file mode 100644
+index 0000000..ebd5ef0
+--- /dev/null
++++ b/app/Domain/Search/AmenitySpecification.php
+@@ -0,0 +1,15 @@
++<?php
++
++namespace App\Domain\Search;
++
++final readonly class AmenitySpecification implements PropertySpecification
++{
++    public function __construct(private string $amenity)
++    {
++    }
++
++    public function isSatisfiedBy(array $property): bool
++    {
++        return in_array(strtolower($this->amenity), array_map('strtolower', $property['amenities'] ?? []), true);
++    }
++}
+diff --git a/app/Domain/Search/AndSpecification.php b/app/Domain/Search/AndSpecification.php
+new file mode 100644
+index 0000000..48a5be6
+--- /dev/null
++++ b/app/Domain/Search/AndSpecification.php
+@@ -0,0 +1,22 @@
++<?php
++
++namespace App\Domain\Search;
++
++final readonly class AndSpecification implements PropertySpecification
++{
++    /** @param list<PropertySpecification> $specifications */
++    public function __construct(private array $specifications)
++    {
++    }
++
++    public function isSatisfiedBy(array $property): bool
++    {
++        foreach ($this->specifications as $specification) {
++            if (! $specification->isSatisfiedBy($property)) {
++                return false;
++            }
++        }
++
++        return true;
++    }
++}
+diff --git a/app/Domain/Search/AvailableSpecification.php b/app/Domain/Search/AvailableSpecification.php
+new file mode 100644
+index 0000000..b0da327
+--- /dev/null
++++ b/app/Domain/Search/AvailableSpecification.php
+@@ -0,0 +1,11 @@
++<?php
++
++namespace App\Domain\Search;
++
++final class AvailableSpecification implements PropertySpecification
++{
++    public function isSatisfiedBy(array $property): bool
++    {
++        return ($property['available'] ?? false) === true;
++    }
++}
+diff --git a/app/Domain/Search/CitySpecification.php b/app/Domain/Search/CitySpecification.php
+new file mode 100644
+index 0000000..9cf67f9
+--- /dev/null
++++ b/app/Domain/Search/CitySpecification.php
+@@ -0,0 +1,15 @@
++<?php
++
++namespace App\Domain\Search;
++
++final readonly class CitySpecification implements PropertySpecification
++{
++    public function __construct(private string $city)
++    {
++    }
++
++    public function isSatisfiedBy(array $property): bool
++    {
++        return strtolower((string) ($property['city'] ?? '')) === strtolower($this->city);
++    }
++}
+diff --git a/app/Domain/Search/FurnishedSpecification.php b/app/Domain/Search/FurnishedSpecification.php
+new file mode 100644
+index 0000000..6ed49c5
+--- /dev/null
++++ b/app/Domain/Search/FurnishedSpecification.php
+@@ -0,0 +1,15 @@
++<?php
++
++namespace App\Domain\Search;
++
++final readonly class FurnishedSpecification implements PropertySpecification
++{
++    public function __construct(private bool $required)
++    {
++    }
++
++    public function isSatisfiedBy(array $property): bool
++    {
++        return (bool) ($property['furnished'] ?? false) === $this->required;
++    }
++}
+diff --git a/app/Domain/Search/MaxMonthlyRentSpecification.php b/app/Domain/Search/MaxMonthlyRentSpecification.php
+new file mode 100644
+index 0000000..07a72c6
+--- /dev/null
++++ b/app/Domain/Search/MaxMonthlyRentSpecification.php
+@@ -0,0 +1,16 @@
++<?php
++
++namespace App\Domain\Search;
++
++final readonly class MaxMonthlyRentSpecification implements PropertySpecification
++{
++    public function __construct(private float $maximum)
++    {
++    }
++
++    public function isSatisfiedBy(array $property): bool
++    {
++        return isset($property['monthly_rent'])
++            && (float) $property['monthly_rent'] <= $this->maximum;
++    }
++}
+diff --git a/app/Domain/Search/PropertyFilterService.php b/app/Domain/Search/PropertyFilterService.php
+new file mode 100644
+index 0000000..7982085
+--- /dev/null
++++ b/app/Domain/Search/PropertyFilterService.php
+@@ -0,0 +1,18 @@
++<?php
++
++namespace App\Domain\Search;
++
++final class PropertyFilterService
++{
++    /**
++     * @param list<array<string, mixed>> $properties
++     * @return list<array<string, mixed>>
++     */
++    public function matching(array $properties, PropertySpecification $specification): array
++    {
++        return array_values(array_filter(
++            $properties,
++            fn (array $property): bool => $specification->isSatisfiedBy($property),
++        ));
++    }
++}
+diff --git a/app/Domain/Search/PropertySpecification.php b/app/Domain/Search/PropertySpecification.php
+new file mode 100644
+index 0000000..6c3da62
+--- /dev/null
++++ b/app/Domain/Search/PropertySpecification.php
+@@ -0,0 +1,9 @@
++<?php
++
++namespace App\Domain\Search;
++
++interface PropertySpecification
++{
++    /** @param array<string, mixed> $property */
++    public function isSatisfiedBy(array $property): bool;
++}
+diff --git a/app/Domain/Search/RentRangeSpecification.php b/app/Domain/Search/RentRangeSpecification.php
+new file mode 100644
+index 0000000..aed5467
+--- /dev/null
++++ b/app/Domain/Search/RentRangeSpecification.php
+@@ -0,0 +1,21 @@
++<?php
++
++namespace App\Domain\Search;
++
++use InvalidArgumentException;
++
++final readonly class RentRangeSpecification implements PropertySpecification
++{
++    public function __construct(private float $minimum, private float $maximum)
++    {
++        if ($minimum > $maximum) {
++            throw new InvalidArgumentException('Minimum rent cannot exceed maximum rent.');
++        }
++    }
++
++    public function isSatisfiedBy(array $property): bool
++    {
++        $rent = (float) ($property['monthly_rent'] ?? -1);
++        return $rent >= $this->minimum && $rent <= $this->maximum;
++    }
++}
+diff --git a/app/Domain/Search/StatusSpecification.php b/app/Domain/Search/StatusSpecification.php
+new file mode 100644
+index 0000000..c46c03a
+--- /dev/null
++++ b/app/Domain/Search/StatusSpecification.php
+@@ -0,0 +1,15 @@
++<?php
++
++namespace App\Domain\Search;
++
++final readonly class StatusSpecification implements PropertySpecification
++{
++    public function __construct(private string $status)
++    {
++    }
++
++    public function isSatisfiedBy(array $property): bool
++    {
++        return ($property['status'] ?? null) === $this->status;
++    }
++}
+diff --git a/app/Http/Controllers/PropertyController.php b/app/Http/Controllers/PropertyController.php
+index c37801a..62d3129 100644
+--- a/app/Http/Controllers/PropertyController.php
++++ b/app/Http/Controllers/PropertyController.php
+@@ -2,19 +2,45 @@
+ 
+ namespace App\Http\Controllers;
+ 
++use App\Domain\Search\AddressContainsSpecification;
++use App\Domain\Search\AndSpecification;
++use App\Domain\Search\MaxMonthlyRentSpecification;
++use App\Domain\Search\PropertyFilterService;
++use App\Domain\Search\StatusSpecification;
+ use App\Models\Property;
+ use App\Models\Owner;
+ use App\Models\Tenant;
+ use App\Http\Requests\StorePropertyRequest;
+ use App\Http\Requests\UpdatePropertyRequest;
++use Illuminate\Http\Request;
+ 
+ class PropertyController extends Controller
+ {
+-    public function index()
++    public function index(Request $request, PropertyFilterService $filters)
+     {
+-        $properties = Property::with(['owner', 'tenant'])
++        $query = Property::with(['owner', 'tenant']);
++        $specifications = [];
++
++        if ($request->filled('address')) {
++            $specifications[] = new AddressContainsSpecification($request->string('address')->toString());
++        }
++        if ($request->filled('max_rent')) {
++            $specifications[] = new MaxMonthlyRentSpecification((float) $request->input('max_rent'));
++        }
++        if ($request->filled('status')) {
++            $specifications[] = new StatusSpecification($request->string('status')->toString());
++        }
++
++        if ($specifications !== []) {
++            $candidates = (clone $query)->get()->map->toArray()->all();
++            $matching = $filters->matching($candidates, new AndSpecification($specifications));
++            $query->whereIn('id', array_column($matching, 'id'));
++        }
++
++        $properties = $query
+             ->latest()
+-            ->paginate(10);
++            ->paginate(10)
++            ->withQueryString();
+ 
+         return view('properties.index', compact('properties'));
+     }
+-- 
+2.43.0
+

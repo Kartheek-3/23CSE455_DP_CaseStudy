@@ -1,0 +1,7 @@
+25	100	50	allow
+50	100	50	allow
+51	100	50	reject
+25	20	50	reject
+0	100	50	reject
+-1	100	50	reject
+1	100	0	error

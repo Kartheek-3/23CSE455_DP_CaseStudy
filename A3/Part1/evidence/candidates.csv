@@ -1,0 +1,5 @@
+candidate,status,reason,scope
+Observer,rejected,Email is sent by direct method call; no publish/subscribe collaboration mapped.,Selected notification and transaction source
+Custom Repository / Unit of Work,rejected,EF DbContext is used directly; no application repository or unit-of-work abstraction identified. Dependency internals excluded.,Four service collaborations
+Singleton,rejected,Static mapper caching found in test setup is outside production scope.,TestSetup excluded
+Framework middleware as Chain/Decorator,uncertain,Framework pipeline interpretation is not counted without enumerating dependency participants; independent student risk chain is counted only after CH03.,Security middleware/pipeline

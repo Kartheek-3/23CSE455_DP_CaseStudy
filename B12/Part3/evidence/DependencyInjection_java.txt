@@ -1,0 +1,10 @@
+PATTERN/SUITE   : DependencyInjection_java
+RUNTIME/COMPILER: javac 17.0.18 / openjdk version "17.0.18" 2026-01-20 
+WORKDIR         : C:\Users\eswar\OneDrive\Documents\Visual Studio Code\23CSE455_DP_Submission\B12\Part3\DependencyInjection\java
+BUILD COMMAND   : javac NotificationService.java DependencyInjectionTest.java
+BUILD OUTPUT    : 
+RUN COMMAND     : java DependencyInjectionTest
+PROGRAM OUTPUT  : DEPENDENCY_INJECTION_JAVA PASS 6/6
+TIME INCLUDES   : whole process wall time (runtime startup + program execution), after 1 unmeasured warm-up
+TIMING SAMPLES  : 5 measured runs (ms): 141.0764, 156.6379, 154.9636, 125.2753, 127.9921
+MEDIAN_MS       : 141.076

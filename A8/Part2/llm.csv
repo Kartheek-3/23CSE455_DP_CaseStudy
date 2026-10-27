@@ -1,0 +1,4 @@
+part,model_and_date,prompt_file,input_file,output_file,evaluation,verification_file
+evolution,Gemini 1.5 Pro - 2026-10-06,Part2/llm/change1_prompt.txt,Part2/llm/change1_input.txt,Part2/llm/change1_output.txt,correct,Part2/changes/Change1/test_result.txt
+evolution,Gemini 1.5 Pro - 2026-10-06,Part2/llm/change2_prompt.txt,Part2/llm/change2_input.txt,,Literal AI output was not recoverable because the agent session crashed before the output file was written. The implementation was independently verified through source inspection and application tests.,Part2/changes/Change2/test_result.txt
+evolution,Gemini 1.5 Pro - 2026-10-06,Part2/llm/change3_prompt.txt,Part2/llm/change3_input.txt,Part2/llm/change3_output.txt,The prompt/input/output evidence is reconstructed/representative and not a literal historical transcript. Code is correct.,Part2/changes/Change3/test_result.txt

@@ -1,0 +1,79 @@
+@startuml
+' B12 Part 1 - Module / component view
+' Derived only from smart-parking-backend/src wiring in app.module.ts and feature modules.
+' Baseline commit: 940daeeab52d5a0b101ce0e76813bcfac88e01a1
+title B12 Part 1 - Module / Component View (baseline 940daee)
+
+skinparam componentStyle rectangle
+
+package "AppModule (app.module.ts:13-42)" {
+
+  component "ConfigModule (@Global)" as Config
+  component "TypeOrmModule (postgres, synchronize:true)" as TypeOrm
+  component "SeedService" as Seed
+
+  package "AuthModule (auth/auth.module.ts:9-23)" {
+    component "AuthController" as AuthCtrl
+    component "AuthService" as AuthSvc
+    component "JwtStrategy (PassportStrategy)" as Jwt
+    component "JwtAuthGuard" as JwtGuard
+    component "RolesGuard (CanActivate)" as RolesGuard
+    component "Roles() decorator" as RolesDec
+  }
+
+  package "UsersModule (users/users.module.ts:7-11)" {
+    component "UsersService" as UsersSvc
+  }
+
+  package "ParkingModule (parking/parking.module.ts:7-11)" {
+    component "ParkingController" as ParkCtrl
+    component "ParkingService" as ParkSvc
+  }
+
+  package "SlotsModule (slots/slots.module.ts:9-13)" {
+    component "SlotsController" as SlotsCtrl
+    component "SlotsService" as SlotsSvc
+  }
+
+  package "ReservationsModule (reservations/reservations.module.ts:8-13)" {
+    component "ReservationsController" as ResCtrl
+    component "ReservationsService" as ResSvc
+  }
+
+  package "MailModule @Global (mail/mail.module.ts:8-39)" {
+    component "MailService" as MailSvc
+  }
+}
+
+database "PostgreSQL" as PG
+
+AuthCtrl --> AuthSvc
+AuthSvc --> UsersSvc
+AuthSvc --> MailSvc
+
+ParkCtrl --> ParkSvc
+SlotsCtrl --> SlotsSvc
+ResCtrl --> ResSvc
+
+SlotsSvc --> MailSvc
+ResSvc --> MailSvc
+
+JwtGuard --> Jwt
+RolesGuard --> RolesDec
+SlotsCtrl ..> JwtGuard
+SlotsCtrl ..> RolesGuard
+ParkCtrl ..> JwtGuard
+ParkCtrl ..> RolesGuard
+ResCtrl ..> JwtGuard
+ResCtrl ..> RolesGuard
+AuthCtrl ..> JwtGuard
+
+TypeOrm --> PG
+Seed --> TypeOrm : Repository<User>
+
+note right of UsersSvc
+  All services persist through injected
+  TypeORM Repository<T> (Repository pattern, C2).
+end note
+
+@enduml

@@ -1,0 +1,20 @@
+[Model: Claude Opus 4.8 | Date: 2026-10-10 | Pattern: Template Method | Owner: Sai Tharun]
+
+VERDICT: Confirmed (Template Method realised through a framework base class).
+
+Role mapping (verified against source):
+- AbstractClass   = WebSecurityConfigurerAdapter               [framework]
+- ConcreteClass   = SecurityConfiguration   config/SecurityConfiguration.java:23
+- PrimitiveOp 1   = configure(AuthenticationManagerBuilder)    lines 29-33
+- PrimitiveOp 2   = configure(HttpSecurity)                    lines 35-54
+
+Evidence:
+The framework fixes the overall security-bootstrap algorithm inside
+WebSecurityConfigurerAdapter and calls back into the two overridden configure(...)
+hooks at the defined points. SecurityConfiguration supplies only the variable steps
+(authentication source + HTTP rules) - it never invokes these methods itself; the
+template (framework) does. That inversion (fixed skeleton in the base class,
+variable steps overridden in the subclass) is exactly Template Method.
+
+Note: this is the framework-idiom form of Template Method, worth stating explicitly
+rather than claiming a hand-written GoF implementation.

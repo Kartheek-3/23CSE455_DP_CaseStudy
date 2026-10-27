@@ -1,0 +1,37 @@
+classDiagram
+direction TB
+class ApplicationMailbox {
+  <<application>>
+}
+class TripMailbox {
+  <<application>>
+  +process()
+}
+class Trip {
+  <<application>>
+}
+class ApprovedSender {
+  <<application>>
+}
+class InboxItem {
+  <<application>>
+}
+class ParseInboxItemJob {
+  <<application>>
+  +perform()
+}
+class TripMailer {
+  <<application>>
+  +pending_sender_notification()
+}
+class ActionMailboxBase["ActionMailbox::Base"] {
+  <<framework>>
+}
+
+ActionMailboxBase <|-- ApplicationMailbox
+ApplicationMailbox ..> TripMailbox : routes inbound messages
+TripMailbox ..> Trip : finds by inbound email
+TripMailbox ..> ApprovedSender : checks approval
+TripMailbox ..> InboxItem : creates incoming record
+TripMailbox ..> ParseInboxItemJob : enqueues if approved
+TripMailbox ..> TripMailer : notifies if unapproved

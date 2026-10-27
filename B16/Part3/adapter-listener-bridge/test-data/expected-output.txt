@@ -1,0 +1,8 @@
+started  container junit-jupiter
+started  container CalcTests (in junit-jupiter)
+started  test add (in CalcTests)
+finished test add (in CalcTests): SUCCESSFUL
+started  test div (in CalcTests)
+finished test div (in CalcTests): FAILED
+finished container CalcTests (in junit-jupiter): SUCCESSFUL
+finished container junit-jupiter: SUCCESSFUL

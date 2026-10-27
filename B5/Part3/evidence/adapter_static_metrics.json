@@ -1,0 +1,88 @@
+{
+  "Java": {
+    "production_files": [
+      "adapter/java/Main.java"
+    ],
+    "source_loc": 120,
+    "max_function_cc": 12,
+    "functions_cc": {
+      "fields": 1,
+      "read": 6,
+      "cents": 3,
+      "currency": 3,
+      "present": 1,
+      "offersFor": 12,
+      "offersFor#2": 11,
+      "find": 3,
+      "getOffer": 7,
+      "AdapterError.AdapterError": 1,
+      "NormalizedOffer.NormalizedOffer": 1,
+      "AtlasAdapter.AtlasAdapter": 1,
+      "BeaconAdapter.BeaconAdapter": 1
+    },
+    "methodology": "Frozen Strategy measure_complexity.py McCabe-style decisions; adapted function extraction only"
+  },
+  "Python": {
+    "production_files": [
+      "adapter/python/main.py"
+    ],
+    "source_loc": 93,
+    "max_function_cc": 7,
+    "functions_cc": {
+      "AdapterError.__init__": 1,
+      "NormalizedOffer.fields": 1,
+      "read_tsv": 4,
+      "cents": 2,
+      "OfferProvider.offers_for": 1,
+      "AtlasAdapter.__init__": 1,
+      "AtlasAdapter.offers_for": 7,
+      "BeaconAdapter.__init__": 1,
+      "BeaconAdapter.offers_for": 6,
+      "ProviderRegistry.find": 3,
+      "BookingOfferClient.get_offer": 5
+    },
+    "methodology": "Frozen Strategy measure_complexity.py McCabe-style decisions; adapted function extraction only"
+  },
+  "JavaScript": {
+    "production_files": [
+      "adapter/javascript/main.js"
+    ],
+    "source_loc": 67,
+    "max_function_cc": 8,
+    "functions_cc": {
+      "constructor": 1,
+      "fields": 1,
+      "loadRows": 4,
+      "parseCents": 3,
+      "constructor#2": 1,
+      "offersFor": 8,
+      "constructor#3": 1,
+      "offersFor#2": 7,
+      "getOffer": 4
+    },
+    "methodology": "Frozen Strategy measure_complexity.py McCabe-style decisions; adapted function extraction only"
+  },
+  "C++": {
+    "production_files": [
+      "adapter/cpp/main.hpp",
+      "adapter/cpp/main.cpp"
+    ],
+    "source_loc": 141,
+    "max_function_cc": 12,
+    "functions_cc": {
+      "NormalizedOffer::fields": 1,
+      "split": 4,
+      "readRaw": 6,
+      "cents": 5,
+      "validCurrency": 3,
+      "present": 1,
+      "AtlasAdapter::offersFor": 12,
+      "BeaconAdapter::offersFor": 11,
+      "ProviderRegistry::find": 3,
+      "BookingOfferClient::getOffer": 7,
+      "AtlasAdapter.AtlasAdapter::AtlasAdapter": 1,
+      "BeaconAdapter.BeaconAdapter::BeaconAdapter": 1
+    },
+    "methodology": "Frozen Strategy measure_complexity.py McCabe-style decisions; adapted function extraction only"
+  }
+}

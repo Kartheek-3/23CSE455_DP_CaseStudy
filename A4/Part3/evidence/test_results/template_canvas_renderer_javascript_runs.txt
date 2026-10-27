@@ -1,0 +1,32 @@
+Pattern: Template Method
+Instance: Picture Elements Konva Canvas Base
+Language: JavaScript
+Compiler/Runtime: Node.js v22.16.0 (V8 12.4.254.20)
+Warmup + 5 Runs Raw Output:
+--- Run 1 ---
+RESULT: 5/5 passed
+TIME_MS: 0.221
+
+
+--- Run 2 ---
+RESULT: 5/5 passed
+TIME_MS: 0.431
+
+
+--- Run 3 ---
+RESULT: 5/5 passed
+TIME_MS: 0.173
+
+
+--- Run 4 ---
+RESULT: 5/5 passed
+TIME_MS: 0.361
+
+
+--- Run 5 ---
+RESULT: 5/5 passed
+TIME_MS: 0.160
+
+
+Measured Milliseconds: [0.221, 0.431, 0.173, 0.361, 0.16]
+Computed Median Milliseconds: 0.221

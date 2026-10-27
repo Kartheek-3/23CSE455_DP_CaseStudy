@@ -1,0 +1,19 @@
+# proxy / cpp
+# working folder: Part3/code/pattern_proxy/cpp
+# runtime: g++ 16.1.1 20260625, -std=c++17
+$ mkdir -p build
+
+
+$ g++ -std=c++17 -Wall -Wextra -o build/test analytics_proxy.test.cpp
+
+
+$ build/test ../../../test-cases/proxy.txt
+PASS absent_real_is_noop
+PASS forwards_after_set
+PASS before_and_after_set
+PASS all_methods_forwarded
+PASS second_set_rejected
+passed 5/5
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 3.6, 3.5, 3.6, 3.5, 3.8 -> median 3.6

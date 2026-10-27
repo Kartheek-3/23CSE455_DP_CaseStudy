@@ -1,0 +1,13 @@
+# strategy / javascript
+# working folder: Part3/code/pattern_strategy/javascript
+# runtime: Node.js v24.15.0
+$ node logManager.test.js ../../../test-cases/strategy.txt
+PASS default_backend
+PASS switch_to_pretty
+PASS switch_to_json
+PASS runtime_swap
+PASS null_backend_rejected
+passed 5/5
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 42.0, 48.1, 45.2, 51.4, 45.8 -> median 45.8

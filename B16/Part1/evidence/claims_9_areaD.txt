@@ -1,0 +1,100 @@
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/io/TempDirFactory.java|49|public interface TempDirFactory extends Closeable
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/io/TempDirFactory.java|64|Path createTempDirectory
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/io/TempDirFactory.java|83|class Standard implements TempDirFactory
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/io/TempDirFactory.java|95|Files.createTempDirectory
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/extension/TempDirectory.java|194|determineTempDirFactory
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/extension/TempDirectory.java|199|ReflectionSupport.newInstance(factory)
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/io/TempDirDeletionStrategy.java|71|TempDirDeletionStrategy
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/io/TempDirDeletionStrategy.java|89|delete
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/io/TempDirDeletionStrategy.java|97|IgnoreFailures
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/io/TempDirDeletionStrategy.java|165|Standard
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/extension/TempDirectory.java|187|determineDeletionStrategy
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/extension/TempDirectory.java|349|delete(
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/ParameterResolver.java|69|public interface ParameterResolver
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/ParameterResolver.java|88|supportsParameter
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/ParameterResolver.java|113|resolveParameter
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/execution/ParameterResolutionUtils.java|132|stream(ParameterResolver.class)
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/execution/ParameterResolutionUtils.java|133|supportsParameter
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/execution/ParameterResolutionUtils.java|137|matchingResolvers.isEmpty()
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/execution/ParameterResolutionUtils.java|143|matchingResolvers.size() > 1
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/execution/ParameterResolutionUtils.java|155|resolver.resolveParameter
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/extension/TempDirectory.java|157|isAnnotated(TempDir.class)
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/ExecutionCondition.java|58|public interface ExecutionCondition
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/ExecutionCondition.java|71|evaluateExecutionCondition
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/extension/DisabledCondition.java|31|class DisabledCondition implements ExecutionCondition
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/execution/ConditionEvaluator.java|52|stream(ExecutionCondition.class)
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/execution/ConditionEvaluator.java|55|isDisabled
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/execution/ConditionEvaluator.java|57|orElse(ENABLED)
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/JupiterTestDescriptor.java|229|conditionEvaluator.evaluate
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/store/NamespacedHierarchicalStore.java|84|public NamespacedHierarchicalStore(
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/store/NamespacedHierarchicalStore.java|734|public interface CloseAction<N>
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/AbstractExtensionContext.java|92|createCloseAction()
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/AbstractExtensionContext.java|109|closeable.close()
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/AbstractExtensionContext.java|113|Store.CloseableResource resource
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/AbstractExtensionContext.java|120|resource.close()
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/ExtensionContext.java|526|interface Store
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/store/NamespacedHierarchicalStore.java|56|class NamespacedHierarchicalStore
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/execution/NamespaceAwareStore.java|31|public class NamespaceAwareStore implements Store
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/execution/NamespaceAwareStore.java|33|NamespacedHierarchicalStore<Namespace> valuesStore
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/execution/NamespaceAwareStore.java|44|this.valuesStore.get(this.namespace, key)
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/execution/NamespaceAwareStore.java|122|catch (NamespacedHierarchicalStoreException e)
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/execution/NamespaceAwareStore.java|123|throw new ExtensionContextException
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/execution/LauncherStoreFacade.java|46|getStoreAdapter
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/execution/LauncherStoreFacade.java|49|new NamespaceAwareStore(valuesStore, convert(namespace))
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/execution/LauncherStoreFacade.java|52|private Namespace convert
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/AbstractExtensionContext.java|220|getStoreAdapter
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/execution/BeforeEachMethodAdapter.java|29|public interface BeforeEachMethodAdapter extends Extension
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/execution/BeforeEachMethodAdapter.java|31|invokeBeforeEachMethod
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/execution/AfterEachMethodAdapter.java|29|AfterEachMethodAdapter extends Extension
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/ClassBasedTestDescriptor.java|529|registerSyntheticExtension
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/ClassBasedTestDescriptor.java|533|synthesizeBeforeEachMethodAdapter
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/ClassBasedTestDescriptor.java|439|invokeBeforeAllMethods
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/TestMethodTestDescriptor.java|187|invokeBeforeEachMethods
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/TestMethodTestDescriptor.java|191|adapter.invokeBeforeEachMethod
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/TestWatcher.java|70|public interface TestWatcher
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/TestWatcher.java|82|testDisabled
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/TestWatcher.java|94|testSuccessful
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/TestWatcher.java|107|testAborted
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/TestWatcher.java|120|testFailed
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/MethodBasedTestDescriptor.java|169|getExtensions(TestWatcher.class)
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/MethodBasedTestDescriptor.java|175|catch (Throwable throwable)
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/MethodBasedTestDescriptor.java|179|Failed to invoke TestWatcher
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/MethodBasedTestDescriptor.java|187|forEachInReverseOrder(watchers, action)
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/TestMethodTestDescriptor.java|284|invokeTestWatchers
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/TestMethodTestDescriptor.java|286|watcher.testSuccessful
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/BeforeEachCallback.java|75|beforeEach
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/CallbackSupport.java|24|class CallbackSupport
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/CallbackSupport.java|36|break;
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/AbstractExtensionContext.java|250|getExecutionMode()
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/AbstractExtensionContext.java|264|protected abstract Node.ExecutionMode getPlatformExecutionMode()
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/ExtensionContext.java|63|getParent()
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/store/NamespacedHierarchicalStore.java|62|parentStore
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/execution/InvocationInterceptorChain.java|52|chainInterceptors
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/execution/InvocationInterceptorChain.java|56|listIterator(interceptors.size())
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/execution/InvocationInterceptorChain.java|59|new InterceptedInvocation<>(result, call, interceptor)
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/execution/InvocationInterceptorChain.java|94|private record InterceptedInvocation
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/execution/InvocationInterceptorChain.java|99|call.apply(interceptor, invocation)
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/execution/InvocationInterceptorChain.java|108|ValidatingInvocation
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/execution/InvocationInterceptorChain.java|136|called invocation multiple times
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/InvocationInterceptor.java|64|public interface InvocationInterceptor
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/InvocationInterceptor.java|231|interface Invocation
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/InvocationInterceptor.java|239|proceed()
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/InvocationInterceptor.java|248|skip()
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/store/NamespacedHierarchicalStore.java|465|getStoredValue(CompositeKey<N> compositeKey)
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/store/NamespacedHierarchicalStore.java|471|this.parentStore.getStoredValue(compositeKey)
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/extension/TimeoutExtension.java|163|decorate(invocation
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/extension/TimeoutExtension.java|178|decorate(Invocation<T> invocation
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/extension/TimeoutExtension.java|187|new TimeoutInvocationFactory
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/extension/SameThreadTimeoutInvocation.java|26|implements Invocation<T>
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/extension/SameThreadTimeoutInvocation.java|28|Invocation<T> delegate
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/extension/SameThreadTimeoutInvocation.java|51|delegate.proceed()
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/extension/SeparateThreadTimeoutInvocation.java|24|SeparateThreadTimeoutInvocation
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/extension/SeparateThreadTimeoutInvocation.java|42|delegate::proceed
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/extension/TimeoutInvocationFactory.java|27|class TimeoutInvocationFactory
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/execution/InterceptingExecutableInvoker.java|97|new MethodInvocation<>(method, optionalTarget, arguments)
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/execution/MethodInvocation.java|25|MethodInvocation
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/execution/MethodInvocation.java|61|MethodReflectionUtils.invoke
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/io/CleanupMode.java|29|enum CleanupMode
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/extension/TempDirectory.java|341|cleanupMode == NEVER
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/extension/AutoCloseExtension.java|44|class AutoCloseExtension
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/extension/TempDirectory.java|255|CloseablePath

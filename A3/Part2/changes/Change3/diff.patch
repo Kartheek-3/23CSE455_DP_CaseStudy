@@ -1,0 +1,84 @@
+--- /dev/null
++++ b/src/Services/BankSystem/BankSystem.Services/Fraud/TransferRules.cs
+@@ -0,0 +1,36 @@
++namespace BankSystem.Services.Fraud
++{
++    using System;
++    public interface ITransferRule
++    {
++        bool Allows(decimal amount, decimal balance);
++    }
++    public abstract class TransferRule : ITransferRule
++    {
++        private readonly ITransferRule next;
++        protected TransferRule(ITransferRule next) { this.next = next; }
++        protected abstract bool Accepts(decimal amount, decimal balance);
++        public bool Allows(decimal amount, decimal balance)
++            => Accepts(amount, balance) && (next == null || next.Allows(amount, balance));
++    }
++    public sealed class PositiveAmountRule : TransferRule
++    {
++        public PositiveAmountRule(ITransferRule next) : base(next) { }
++        protected override bool Accepts(decimal amount, decimal balance) => amount > 0;
++    }
++    public sealed class SufficientFundsRule : TransferRule
++    {
++        public SufficientFundsRule(ITransferRule next) : base(next) { }
++        protected override bool Accepts(decimal amount, decimal balance) => amount <= balance;
++    }
++    public sealed class HighValueRule : TransferRule
++    {
++        private readonly decimal limit;
++        public HighValueRule(decimal limit, ITransferRule next = null) : base(next)
++        {
++            if (limit <= 0) throw new ArgumentOutOfRangeException(nameof(limit));
++            this.limit = limit;
++        }
++        protected override bool Accepts(decimal amount, decimal balance) => amount <= limit;
++    }
++}
+--- a/src/Services/BankSystem/BankSystem.Services/MoneyTransfer/InternalTransferService.cs
++++ b/src/Services/BankSystem/BankSystem.Services/MoneyTransfer/InternalTransferService.cs
+@@ -12,8 +12,10 @@
+     {
+         private readonly BankSystemDbContext context;
+         private readonly IEmailSender emails;
+-        public InternalTransferService(BankSystemDbContext context, IEmailSender emails)
+-        { this.context = context; this.emails = emails; }
++        private readonly BankSystem.Services.Fraud.ITransferRule rules;
++        public InternalTransferService(BankSystemDbContext context, IEmailSender emails,
++            BankSystem.Services.Fraud.ITransferRule rules)
++        { this.context = context; this.emails = emails; this.rules = rules; }
+ 
+         public async Task<bool> ExecuteAsync(InternalTransferRequest request)
+         {
+@@ -31,7 +33,7 @@
+                 var destination = await context.Accounts.Include(a => a.User)
+                     .SingleOrDefaultAsync(a => a.UniqueId == request.DestinationUniqueId);
+                 if (source == null || destination == null || source.Id == destination.Id
+-                    || source.UserId != request.UserId || source.Balance < request.Amount) return false;
++                    || source.UserId != request.UserId || !rules.Allows(request.Amount, source.Balance)) return false;
+ 
+                 var reference = Guid.NewGuid().ToString("N");
+                 var now = DateTime.UtcNow;
+--- a/src/Web/BankSystem.Web/Startup.cs
++++ b/src/Web/BankSystem.Web/Startup.cs
+@@ -1,4 +1,4 @@
+-﻿namespace BankSystem.Web
++namespace BankSystem.Web
+ {
+     using System;
+     using AutoMapper;
+@@ -71,6 +71,12 @@
+                 .AddApplicationServices()
+                 .AddCommonProjectServices()
+                 .AddAuthentication();
++
++            services.AddScoped<BankSystem.Services.Fraud.ITransferRule>(_ =>
++                new BankSystem.Services.Fraud.PositiveAmountRule(
++                    new BankSystem.Services.Fraud.SufficientFundsRule(
++                        new BankSystem.Services.Fraud.HighValueRule(
++                            Configuration.GetValue<decimal>("Fraud:MaxSingleTransfer", 10000m)))));
+ 
+             services.Configure<SecurityStampValidatorOptions>(
+                 options => { options.ValidationInterval = TimeSpan.Zero; });

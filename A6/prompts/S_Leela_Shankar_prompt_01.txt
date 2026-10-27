@@ -1,0 +1,81 @@
+Below are two CSV files from a design-pattern study of a Node.js/Express ride-sharing backend: patterns.csv (one row per pattern instance found in the original code; location/evidence columns left out) and pattern_counts.csv (summary).
+Audit them, concisely:
+1. Do the 'Original code' counts match the rows? List any mismatch.
+2. For each row: are the participant roles complete for that pattern (e.g. Adapter needs Target, Adapter, Adaptee)? Mark OK or name what is missing.
+3. Any row whose pattern name/category looks wrong, or two rows that should be one instance? Explain.
+Use only what is in the files.
+
+--- data/patterns.csv (columns: pattern_name, pattern_type, instance_name, participant_roles) ---
+pattern_name,pattern_type,instance_name,participant_roles
+Layered Architecture,Architectural,Ride Booking Request Flow,PresentationLayer=BookingRoute router + BookingController.bookDriver; ApplicationLayer=BookDriver use case (IBookDriverUseCase); DomainLayer=Booking entity + IBookingRepository/IDriverRepository ports; InfrastructureLayer=MongoBookingRepository/MongoDriverRepository + BookingModel
+Dependency Injection,Architectural (framework idiom - tsyringe IoC container),Use-Case and Service Composition Root,"Injector/Container=tsyringe container; CompositionRoot=container.ts + useCaseContainer.ts + controllerContainer.ts; Tokens=TOKENS/USECASE_TOKENS symbols; Client=BookDriver (constructor @inject of 5 abstractions); Services=MongoBookingRepository, MongoDriverRepository, FareCalculatorService, SocketNotificationService, GoogleDistanceService; Resolver=BookingRoute (container.resolve)"
+Singleton,Creational,Shared Socket.IO Server Instance,"Singleton=module-scoped variable io in socket.ts (no class; module plays the Singleton role); Initializer=initializeSocket(server); GlobalAccessPoint=getIO(); Clients=SocketNotificationService.io getter, NotificationSocket, index.ts"
+Repository,Enterprise (PoEAA) / Domain-Driven Design,Trip Booking Repository,"Repository=IBookingRepository; LayerSupertype=IBaseRepository + BaseRepository<T,U>; ConcreteRepository=MongoBookingRepository; Entity=Booking; PersistenceModel=BookingModel; Clients=BookDriver, CancelBookingInputUseCase, UpdateBookingStatus, AttachPaymentIntentIdToBooking"
+Repository,Enterprise (PoEAA) / Domain-Driven Design,Driver Repository with Geospatial Matching Query,"Repository=IDriverRepository; LayerSupertype=BaseRepository<T,U>; ConcreteRepository=MongoDriverRepository; Entity=Driver; PersistenceModel=DriverModel (2dsphere index); Clients=BookDriver.findNearbyDriversWithinRadius, FindNearbyDrivers.findActiveDrivers, AdminChangeDriverStatus.updateStatus, CreatePaymentIntent.findDriverById"
+Repository,Enterprise (PoEAA) / Domain-Driven Design,Rider Repository,"Repository=IUserRepository; LayerSupertype=BaseRepository<T,U>; ConcreteRepository=MongoUserRepository; Entity=User; PersistenceModel=UserModel (userschema); Clients=FindNearbyDrivers (rider location), CheckBlockedUserOrDriver, AttachPaymentIntentIdToBooking"
+Repository,Enterprise (PoEAA) / Domain-Driven Design,Rider Wallet Ledger Repository,"Repository=IWalletRepository; LayerSupertype=BaseRepository<T,U>; ConcreteRepository=MongoWalletRepository; Entity=Wallet/WalletTransaction; PersistenceModel=WalletModel; Clients=AttachPaymentIntentIdToBooking (debit), WalletPayment.WalletRidePayment (debit), WalletService"
+Repository,Enterprise (PoEAA) / Domain-Driven Design,Driver Review Repository,"Repository=IDriverReviewRepository; LayerSupertype=BaseRepository<T,U>; ConcreteRepository=MongoDriverReviewRepository; Entity=DriverReview; PersistenceModel=ReviewModel; Clients=SubmitDriverReview, GetDriverReviews"
+Data Mapper,Enterprise (PoEAA),Driver Review Persistence Mapping,"Mapper=DriverReviewMapper.toDomain / toPersistence (functions, no class); DomainObject=DriverReview; PersistenceRecord=ReviewDocument; Client=MongoDriverReviewRepository"
+Adapter,Structural,Socket.IO Ride Notification Adapter,"Target=INotificationService; Adapter=SocketNotificationService; Adaptee=Socket.IO Server (getIO) + Upstash Redis socket registry (redis.get driver:socket:<id>); Clients=BookDriver, AcceptBooking, CancelBookingInputUseCase, UpdateBookingStatus, AdminChangeDriverStatus, AttachPaymentIntentIdToBooking, CronScheduler"
+Adapter,Structural,Stripe Ride Payment Adapter,"Target=IStripeService; Adapter=PaymentService; Adaptee=Stripe SDK client (paymentIntents, transfers, balance); Clients=CreatePaymentIntent, AttachPaymentIntentIdToBooking, WalletPayment"
+Adapter,Structural,Stripe Connect Driver Payout Onboarding Adapter,"Target=IStripeAccountService; Adapter=StripeService (Accountservice.ts); Adaptee=module-level Stripe SDK client (accounts, accountLinks); Clients=OnboardDriverUseCase, VerifyDriverPaymentAccount"
+Gateway,Enterprise (PoEAA),Google Distance Matrix Location Gateway,"Gateway=GoogleDistanceService.getDistances (concrete class, no interface); ExternalResource=Google Distance Matrix REST API via axios; Clients=BookDriver (road-distance filter <= 20 km), FindNearbyDrivers (sort by distance), NotificationSocket driver:online catch-up"
+Observer,Behavioral,Ride Event Notification,"Subject=SocketNotificationService over the Socket.IO server (subject role combined, not separately declared); SubscriberRegistry=Redis keys driver:socket:<id>/user:socket:<id>; Subscribe=NotificationSocket driver:online/user:online handlers; Unsubscribe=disconnect handler; Notify=io.to(socketId).emit(event); ConcreteObservers=connected rider/driver Socket.IO clients (outside this repository)"
+Chain of Responsibility,Behavioral,Authenticated Ride Request Pipeline,"Handler=Express middleware signature (req,res,next) (framework, not declared); ConcreteHandlers=protectRoute(roles) closure, CheckBlockedUserOrDriver.handle, catchAsync-wrapped BookingController handler, errorHandler; Client/ChainBuilder=BookingRoute, userRoutes and driverRoutes route definitions + app.use in index.ts"
+Decorator,Structural (function-wrapper form),Async Controller Error Forwarding,"Component=Express RequestHandler interface; Decorator=catchAsync(fn) (higher-order function); ConcreteComponents=BookingController async handlers (bookDriver, cancelBooking, updateStatus...); Client=route definitions that register the wrapped handlers"
+
+--- data/pattern_counts.csv ---
+source_version,summary,pattern_name,count
+Original code,per_pattern,Adapter,3
+Original code,per_pattern,Chain of Responsibility,1
+Original code,per_pattern,Data Mapper,1
+Original code,per_pattern,Decorator,1
+Original code,per_pattern,Dependency Injection,1
+Original code,per_pattern,Gateway,1
+Original code,per_pattern,Layered Architecture,1
+Original code,per_pattern,Observer,1
+Original code,per_pattern,Repository,5
+Original code,per_pattern,Singleton,1
+Original code,total_pattern_types,,10
+Original code,total_pattern_instances,,16
+After CH01,per_pattern,Adapter,3
+After CH01,per_pattern,Chain of Responsibility,1
+After CH01,per_pattern,Data Mapper,1
+After CH01,per_pattern,Decorator,1
+After CH01,per_pattern,Dependency Injection,1
+After CH01,per_pattern,Gateway,1
+After CH01,per_pattern,Layered Architecture,1
+After CH01,per_pattern,Observer,1
+After CH01,per_pattern,Repository,5
+After CH01,per_pattern,Singleton,1
+After CH01,per_pattern,State,1
+After CH01,total_pattern_types,,11
+After CH01,total_pattern_instances,,17
+After CH02,per_pattern,Adapter,3
+After CH02,per_pattern,Chain of Responsibility,1
+After CH02,per_pattern,Data Mapper,1
+After CH02,per_pattern,Decorator,1
+After CH02,per_pattern,Dependency Injection,1
+After CH02,per_pattern,Gateway,1
+After CH02,per_pattern,Layered Architecture,1
+After CH02,per_pattern,Observer,1
+After CH02,per_pattern,Repository,5
+After CH02,per_pattern,Singleton,1
+After CH02,per_pattern,State,2
+After CH02,per_pattern,Strategy,1
+After CH02,total_pattern_types,,12
+After CH02,total_pattern_instances,,19
+After CH03,per_pattern,Adapter,3
+After CH03,per_pattern,Chain of Responsibility,1
+After CH03,per_pattern,Data Mapper,1
+After CH03,per_pattern,Decorator,2
+After CH03,per_pattern,Dependency Injection,1
+After CH03,per_pattern,Gateway,1
+After CH03,per_pattern,Layered Architecture,1
+After CH03,per_pattern,Observer,1
+After CH03,per_pattern,Repository,5
+After CH03,per_pattern,Singleton,1
+After CH03,per_pattern,State,2
+After CH03,per_pattern,Strategy,2
+After CH03,total_pattern_types,,12
+After CH03,total_pattern_instances,,21

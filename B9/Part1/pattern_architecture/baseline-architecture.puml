@@ -1,0 +1,10 @@
+@startuml
+skinparam componentStyle rectangle
+[Application Caller] --> [WalletFacade]
+[WalletFacade] --> [WalletRepository]
+[WalletFacade] --> [TransferCommand]
+[WalletFacade] --> [NotificationPublisher]
+[TransferCommand] --> [Wallet]
+[NotificationPublisher] --> [EmailNotifier]
+[NotificationPublisher] --> [AuditNotifier]
+@enduml

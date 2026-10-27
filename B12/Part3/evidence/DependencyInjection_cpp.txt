@@ -1,0 +1,11 @@
+PATTERN/SUITE   : DependencyInjection_cpp
+RUNTIME/COMPILER: g++.exe (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r1) 16.2.0
+
+WORKDIR         : C:\Users\eswar\OneDrive\Documents\Visual Studio Code\23CSE455_DP_Submission\B12\Part3\DependencyInjection\cpp
+BUILD COMMAND   : & 'C:\Users\eswar\AppData\Local\Microsoft\WinGet\Packages\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\mingw64\bin\g++.exe' -O2 -static dependency_injection_test.cpp -o dependency_injection_test.exe
+BUILD OUTPUT    : 
+RUN COMMAND     : .\dependency_injection_test.exe 
+PROGRAM OUTPUT  : DEPENDENCY_INJECTION_CPP PASS 6/6
+TIME INCLUDES   : whole process wall time (runtime startup + program execution), after 1 unmeasured warm-up
+TIMING SAMPLES  : 5 measured runs (ms): 17.3547, 17.0534, 17.6999, 13.5577, 14.0781
+MEDIAN_MS       : 17.053

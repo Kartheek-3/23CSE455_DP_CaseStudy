@@ -1,0 +1,22 @@
+@startuml
+skinparam componentStyle rectangle
+actor Tenant
+actor Owner
+actor Administrator
+component "HTTP Routes" as Routes
+component "Authentication + Role Middleware" as Middleware
+component "Form Requests" as Requests
+component "Controllers" as Controllers
+component "Eloquent Active Records" as Models
+component "Blade Views + DomPDF" as Views
+database "MySQL / MariaDB" as DB
+Tenant --> Routes
+Owner --> Routes
+Administrator --> Routes
+Routes --> Middleware
+Middleware --> Requests
+Requests --> Controllers
+Controllers --> Models
+Models --> DB
+Controllers --> Views
+@enduml

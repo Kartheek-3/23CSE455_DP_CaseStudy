@@ -1,0 +1,14 @@
+source_version,summary,pattern_name,count
+original,per_pattern,Adapter,1
+original,per_pattern,Template Method,1
+original,per_pattern,Strategy,1
+original,per_pattern,Repository,1
+original,per_pattern,Dependency Injection,1
+original,per_pattern,Copy Constructor,1
+original,per_pattern,Observer,1
+original,total_pattern_types,,7
+original,total_pattern_instances,,7
+original,total_confirmed_types,,5
+original,total_uncertain,,1
+original,total_framework_idiom,,1
+original,total_rejected,,3

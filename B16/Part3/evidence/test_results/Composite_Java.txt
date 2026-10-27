@@ -1,0 +1,7 @@
+$ (cd Part3/composite-test-tree/java) java -cp out composite.CompositeTest
+PASS report for tag 'slow' matches expected-output.txt
+PASS a leaf and a container answer countTests the same way
+PASS invalid input is rejected with expected-error.txt
+3 passed, 0 failed
+[exit 0]
+result: 3/3 passed

@@ -1,0 +1,4 @@
+change_id,baseline_commit,after_commit,scope,source_loc_before,source_loc_after,measurement_tool,test_results_before,test_results_after,notes
+CH01,5f501341d49d2bc3fa7e817ce7548a82174326eb,608b45de20dce0a78459025320bfdeb0c4e47a78,Production Source (Affected Backend & Frontend Files),2704,3648,Python SLOC counter (excluding comments & blanks),N/A (feature not present in baseline),21 passed / 21 total (0 failed),Measured across 18 production files
+CH01,5f501341d49d2bc3fa7e817ce7548a82174326eb,608b45de20dce0a78459025320bfdeb0c4e47a78,Test Files (packages/backend/test/unit/EventService.test.ts),0,475,Python SLOC counter (excluding comments & blanks),N/A,21 passed in 1.65s,Covers all 21 acceptance criteria
+CH01,5f501341d49d2bc3fa7e817ce7548a82174326eb,608b45de20dce0a78459025320bfdeb0c4e47a78,Total Repository Scope (All Modified/Added Files),2901,4797,Physical Line Count (including whitespace and comments),N/A,21 passed,Net line change matches git commit (+1896 lines)

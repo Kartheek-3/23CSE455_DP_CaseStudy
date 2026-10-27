@@ -1,0 +1,51 @@
+﻿@startuml
+title Change 1 - Delivery Partner Evolution
+
+class TransportationAPI {
+    POST /delivery-partners
+    GET /delivery-partners
+    POST /shipments
+}
+
+class TransportationRepository {
+    +create_delivery_partner()
+    +get_all_delivery_partners()
+    +create_shipment()
+    +get_all_shipments()
+}
+
+class DeliveryPartner {
+    delivery_partner_id
+    partner_name
+    contact_person
+    phone
+    email
+    is_active
+    created_at
+    updated_at
+}
+
+class Shipment {
+    shipment_id
+    order_id
+    vehicle_id
+    driver_id
+    route_id
+    delivery_partner_id
+    status
+    scheduled_departure
+    scheduled_arrival
+    actual_departure
+    actual_arrival
+    notes
+}
+
+class Database
+
+TransportationAPI --> TransportationRepository : Depends()
+TransportationRepository --> Database : database operations
+TransportationRepository --> DeliveryPartner : manages
+TransportationRepository --> Shipment : manages
+
+Shipment --> DeliveryPartner : delivery_partner_id
+@enduml

@@ -1,0 +1,8 @@
+PATTERN/SUITE   : DependencyInjection_javascript
+RUNTIME/COMPILER: Node.js v24.18.0
+WORKDIR         : C:\Users\eswar\OneDrive\Documents\Visual Studio Code\23CSE455_DP_Submission\B12\Part3\DependencyInjection\javascript
+RUN COMMAND     : node test_dependency_injection.js
+PROGRAM OUTPUT  : DEPENDENCY_INJECTION_JS PASS 6/6
+TIME INCLUDES   : whole process wall time (runtime startup + program execution), after 1 unmeasured warm-up
+TIMING SAMPLES  : 5 measured runs (ms): 83.9863, 73.925, 81.5914, 79.3795, 80.4937
+MEDIAN_MS       : 80.494

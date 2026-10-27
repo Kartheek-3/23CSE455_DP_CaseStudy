@@ -1,0 +1,37 @@
+flowchart TD
+    B["Browser"]
+    P["proxy.ts<br/>session refresh, MFA check, admin role check"]
+    PUB["Public pages<br/>app/(public): blog, authors, tags"]
+    DASH["Dashboard pages<br/>app/(dashboard), app/(ai-assistant)"]
+    AUTHP["Auth pages<br/>app/(auth): login, register, mfa, reset"]
+    API["API routes<br/>app/api: posts, newsletter, ai-assistant, webhooks"]
+    F["features/<br/>posts, authors, comments, newsletter, users, auth, ai-assistant"]
+    SESS["lib/auth/session<br/>requirePermission"]
+    PERM["lib/permissions<br/>RBAC: can, canAccess, canAny"]
+    SB["lib/supabase<br/>client, server, service, static"]
+    LLM["features/ai-assistant/llmService.ts<br/>Strategy: Claude, OpenAI, Gemini"]
+    MAIL["lib/notifications<br/>Resend email, Slack"]
+    DB[("Supabase<br/>Postgres, Auth, Storage")]
+    AIP["AI providers<br/>Anthropic, OpenAI, Google"]
+    EXT["Resend and Slack"]
+    AP["AuthProvider<br/>Observer of onAuthStateChange"]
+
+    B --> P
+    P --> PUB
+    P --> DASH
+    P --> AUTHP
+    B --> API
+    PUB --> F
+    DASH --> F
+    DASH --> SESS
+    AUTHP --> F
+    API --> F
+    SESS --> PERM
+    F --> SB
+    F --> LLM
+    F --> MAIL
+    SB --> DB
+    LLM --> AIP
+    MAIL --> EXT
+    B --> AP
+    AP -.-> DB

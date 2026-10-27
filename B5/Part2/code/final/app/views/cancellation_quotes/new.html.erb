@@ -1,0 +1,35 @@
+<% content_for :hide_navbar, true %>
+<div class="max-w-md mx-auto px-4 py-8 space-y-5">
+  <%= link_to "← Back to itinerary item", trip_trip_item_path(@trip, @item), class: "text-sm text-primary" %>
+  <div class="bg-base-200 border border-base-content/10 rounded-3xl p-5 space-y-4">
+    <h1 class="text-xl font-bold">Estimate cancellation (demo)</h1>
+    <p class="text-sm font-semibold"><%= @item.name %></p>
+    <dl class="text-sm space-y-1 text-base-content/70">
+      <div><dt class="inline font-medium">Start:</dt> <dd class="inline"><%= @item.starts_at&.strftime("%d %b %Y, %H:%M") || "Not available" %></dd></div>
+      <div><dt class="inline font-medium">Original amount:</dt> <dd class="inline"><%= @item.amount.present? ? number_with_precision(@item.amount, precision: 2) : "Not available" %> <%= @item.currency %></dd></div>
+      <div><dt class="inline font-medium">Booking ref:</dt> <dd class="inline"><%= @item.confirmation_ref.presence || "Not available" %></dd></div>
+    </dl>
+    <div role="note" class="rounded-xl bg-warning/10 border border-warning/30 text-sm p-3">
+      <%= CancellationPolicies::QuoteEvaluator::DISCLAIMER %>
+    </div>
+    <% if @quote_error.present? %>
+      <p role="alert" class="text-error text-sm"><%= @quote_error %></p>
+    <% end %>
+    <% if @quote_error.blank? || @policy_code.present? %>
+      <%= form_with url: trip_trip_item_cancellation_quote_path(@trip, @item), method: :post, class: "space-y-3" do %>
+        <%= label_tag :policy_code, "Demonstration policy", class: "text-sm font-semibold" %>
+        <%= select_tag :policy_code, options_for_select([ ["Flexible", "flexible"], ["Moderate", "moderate"], ["Strict / Non-refundable", "strict"] ], @policy_code), class: "select select-bordered w-full" %>
+        <%= submit_tag "Estimate refund", class: "btn btn-primary w-full" %>
+      <% end %>
+    <% end %>
+    <% if @quote.present? %>
+      <section aria-label="Hypothetical cancellation quote" class="rounded-2xl bg-base-300/30 p-4 space-y-2">
+        <p class="font-semibold"><%= @quote[:policy_name] %> — hypothetical result</p>
+        <p class="text-sm">Original amount: <%= number_with_precision(@quote[:original_amount], precision: 2) %> <%= @quote[:currency] %></p>
+        <p class="text-sm">Cancellation fee: <%= number_with_precision(@quote[:fee_amount], precision: 2) %> <%= @quote[:currency] %></p>
+        <p class="text-sm font-bold">Hypothetical refund: <%= number_with_precision(@quote[:refund_amount], precision: 2) %> <%= @quote[:currency] %></p>
+        <p class="text-xs text-base-content/60"><%= @quote[:explanation] %></p>
+      </section>
+    <% end %>
+  </div>
+</div>

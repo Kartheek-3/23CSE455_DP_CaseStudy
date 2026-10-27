@@ -1,0 +1,364 @@
+Maximum function CCN recomputation
+
+Tool: lizard 1.24.1
+
+
+
+Composite / Java / Part3/composite_condition/java/ConditionComposite.java: max CCN 8
+
+4,1,22,2,4,"StateCondition::StateCondition@14-17@Part3/composite_condition/java/ConditionComposite.java","Part3/composite_condition/java/ConditionComposite.java","StateCondition::StateCondition","StateCondition::StateCondition( String entityId , String expectedState)",14,17
+4,2,38,1,4,"StateCondition::evaluate@20-23@Part3/composite_condition/java/ConditionComposite.java","Part3/composite_condition/java/ConditionComposite.java","StateCondition::evaluate","StateCondition::evaluate( Map<String,Object> stateStore)",20,23
+5,1,31,3,5,"NumericStateCondition::NumericStateCondition@31-35@Part3/composite_condition/java/ConditionComposite.java","Part3/composite_condition/java/ConditionComposite.java","NumericStateCondition::NumericStateCondition","NumericStateCondition::NumericStateCondition( String entityId , String operator , double threshold)",31,35
+18,8,120,1,18,"NumericStateCondition::evaluate@38-55@Part3/composite_condition/java/ConditionComposite.java","Part3/composite_condition/java/ConditionComposite.java","NumericStateCondition::evaluate","NumericStateCondition::evaluate( Map<String,Object> stateStore)",38,55
+4,1,17,1,4,"AndCondition::add@61-64@Part3/composite_condition/java/ConditionComposite.java","Part3/composite_condition/java/ConditionComposite.java","AndCondition::add","AndCondition::add( ConditionComposite child)",61,64
+7,4,48,1,7,"AndCondition::evaluate@67-73@Part3/composite_condition/java/ConditionComposite.java","Part3/composite_condition/java/ConditionComposite.java","AndCondition::evaluate","AndCondition::evaluate( Map<String,Object> stateStore)",67,73
+4,1,17,1,4,"OrCondition::add@79-82@Part3/composite_condition/java/ConditionComposite.java","Part3/composite_condition/java/ConditionComposite.java","OrCondition::add","OrCondition::add( ConditionComposite child)",79,82
+7,4,47,1,7,"OrCondition::evaluate@85-91@Part3/composite_condition/java/ConditionComposite.java","Part3/composite_condition/java/ConditionComposite.java","OrCondition::evaluate","OrCondition::evaluate( Map<String,Object> stateStore)",85,91
+3,1,13,1,3,"NotCondition::NotCondition@97-99@Part3/composite_condition/java/ConditionComposite.java","Part3/composite_condition/java/ConditionComposite.java","NotCondition::NotCondition","NotCondition::NotCondition( ConditionComposite child)",97,99
+3,2,25,1,3,"NotCondition::evaluate@102-104@Part3/composite_condition/java/ConditionComposite.java","Part3/composite_condition/java/ConditionComposite.java","NotCondition::evaluate","NotCondition::evaluate( Map<String,Object> stateStore)",102,104
+
+Composite / Python / Part3/composite_condition/python/condition_composite.py: max CCN 8
+
+2,1,17,2,2,"evaluate@7-8@Part3/composite_condition/python/condition_composite.py","Part3/composite_condition/python/condition_composite.py","evaluate","evaluate( self , state_store : Dict [ str , Any ] )",7,8
+3,1,23,3,3,"__init__@12-14@Part3/composite_condition/python/condition_composite.py","Part3/composite_condition/python/condition_composite.py","__init__","__init__( self , entity_id : str , expected_state : str )",12,14
+3,2,40,2,3,"evaluate@16-18@Part3/composite_condition/python/condition_composite.py","Part3/composite_condition/python/condition_composite.py","evaluate","evaluate( self , state_store : Dict [ str , Any ] )",16,18
+4,1,32,4,4,"__init__@22-25@Part3/composite_condition/python/condition_composite.py","Part3/composite_condition/python/condition_composite.py","__init__","__init__( self , entity_id : str , operator : str , threshold : float )",22,25
+19,8,124,2,20,"evaluate@27-46@Part3/composite_condition/python/condition_composite.py","Part3/composite_condition/python/condition_composite.py","evaluate","evaluate( self , state_store : Dict [ str , Any ] )",27,46
+2,2,35,2,2,"__init__@50-51@Part3/composite_condition/python/condition_composite.py","Part3/composite_condition/python/condition_composite.py","__init__","__init__( self , children : Optional [ List [ ConditionComposite ] ] = None )",50,51
+3,1,21,2,3,"add@53-55@Part3/composite_condition/python/condition_composite.py","Part3/composite_condition/python/condition_composite.py","add","add( self , child : ConditionComposite )",53,55
+4,3,40,2,4,"evaluate@57-60@Part3/composite_condition/python/condition_composite.py","Part3/composite_condition/python/condition_composite.py","evaluate","evaluate( self , state_store : Dict [ str , Any ] )",57,60
+2,2,35,2,2,"__init__@64-65@Part3/composite_condition/python/condition_composite.py","Part3/composite_condition/python/condition_composite.py","__init__","__init__( self , children : Optional [ List [ ConditionComposite ] ] = None )",64,65
+3,1,21,2,3,"add@67-69@Part3/composite_condition/python/condition_composite.py","Part3/composite_condition/python/condition_composite.py","add","add( self , child : ConditionComposite )",67,69
+4,3,40,2,4,"evaluate@71-74@Part3/composite_condition/python/condition_composite.py","Part3/composite_condition/python/condition_composite.py","evaluate","evaluate( self , state_store : Dict [ str , Any ] )",71,74
+2,1,19,2,2,"__init__@78-79@Part3/composite_condition/python/condition_composite.py","Part3/composite_condition/python/condition_composite.py","__init__","__init__( self , child : Optional [ ConditionComposite ] = None )",78,79
+4,2,35,2,4,"evaluate@81-84@Part3/composite_condition/python/condition_composite.py","Part3/composite_condition/python/condition_composite.py","evaluate","evaluate( self , state_store : Dict [ str , Any ] )",81,84
+
+Composite / JavaScript / Part3/composite_condition/javascript/conditionComposite.js: max CCN 3
+
+3,1,12,1,3,"evaluate@2-4@Part3/composite_condition/javascript/conditionComposite.js","Part3/composite_condition/javascript/conditionComposite.js","evaluate","evaluate ( stateStore )",2,4
+5,1,23,2,5,"constructor@8-12@Part3/composite_condition/javascript/conditionComposite.js","Part3/composite_condition/javascript/conditionComposite.js","constructor","constructor ( entityId , expectedState )",8,12
+4,3,33,1,4,"evaluate@14-17@Part3/composite_condition/javascript/conditionComposite.js","Part3/composite_condition/javascript/conditionComposite.js","evaluate","evaluate ( stateStore )",14,17
+6,1,31,3,6,"constructor@21-26@Part3/composite_condition/javascript/conditionComposite.js","Part3/composite_condition/javascript/conditionComposite.js","constructor","constructor ( entityId , operator , threshold )",21,26
+
+Composite / C++ / Part3/composite_condition/cpp/condition_composite.cpp;Part3/composite_condition/cpp/condition_composite.hpp: max CCN 8
+
+2,1,36,2,2,"StateCondition::StateCondition@4-5@Part3/composite_condition/cpp/condition_composite.cpp","Part3/composite_condition/cpp/condition_composite.cpp","StateCondition::StateCondition","StateCondition::StateCondition( std :: string entityId , std :: string expectedState)",4,5
+5,2,53,1,5,"StateCondition::evaluate@7-11@Part3/composite_condition/cpp/condition_composite.cpp","Part3/composite_condition/cpp/condition_composite.cpp","StateCondition::evaluate","StateCondition::evaluate( const std :: map<std::string,std::string> & stateStore) const",7,11
+2,1,44,3,2,"NumericStateCondition::NumericStateCondition@13-14@Part3/composite_condition/cpp/condition_composite.cpp","Part3/composite_condition/cpp/condition_composite.cpp","NumericStateCondition::NumericStateCondition","NumericStateCondition::NumericStateCondition( std :: string entityId , std :: string op , double threshold)",13,14
+16,8,141,1,17,"NumericStateCondition::evaluate@16-32@Part3/composite_condition/cpp/condition_composite.cpp","Part3/composite_condition/cpp/condition_composite.cpp","NumericStateCondition::evaluate","NumericStateCondition::evaluate( const std :: map<std::string,std::string> & stateStore) const",16,32
+4,2,34,1,4,"AndCondition::add@34-37@Part3/composite_condition/cpp/condition_composite.cpp","Part3/composite_condition/cpp/condition_composite.cpp","AndCondition::add","AndCondition::add( std :: shared_ptr<ConditionComposite> child)",34,37
+7,4,61,1,7,"AndCondition::evaluate@39-45@Part3/composite_condition/cpp/condition_composite.cpp","Part3/composite_condition/cpp/condition_composite.cpp","AndCondition::evaluate","AndCondition::evaluate( const std :: map<std::string,std::string> & stateStore) const",39,45
+4,2,34,1,4,"OrCondition::add@47-50@Part3/composite_condition/cpp/condition_composite.cpp","Part3/composite_condition/cpp/condition_composite.cpp","OrCondition::add","OrCondition::add( std :: shared_ptr<ConditionComposite> child)",47,50
+7,4,60,1,7,"OrCondition::evaluate@52-58@Part3/composite_condition/cpp/condition_composite.cpp","Part3/composite_condition/cpp/condition_composite.cpp","OrCondition::evaluate","OrCondition::evaluate( const std :: map<std::string,std::string> & stateStore) const",52,58
+2,1,24,1,2,"NotCondition::NotCondition@60-61@Part3/composite_condition/cpp/condition_composite.cpp","Part3/composite_condition/cpp/condition_composite.cpp","NotCondition::NotCondition","NotCondition::NotCondition( std :: shared_ptr<ConditionComposite> child)",60,61
+4,2,40,1,4,"NotCondition::evaluate@63-66@Part3/composite_condition/cpp/condition_composite.cpp","Part3/composite_condition/cpp/condition_composite.cpp","NotCondition::evaluate","NotCondition::evaluate( const std :: map<std::string,std::string> & stateStore) const",63,66
+
+Observer / Java / Part3/observer_subscription/java/EntitySubscriptionObserver.java: max CCN 3
+
+5,2,53,3,5,"EntityRecord::EntityRecord@13-17@Part3/observer_subscription/java/EntitySubscriptionObserver.java","Part3/observer_subscription/java/EntitySubscriptionObserver.java","EntityRecord::EntityRecord","EntityRecord::EntityRecord( String entityId , String state , Map<String,String> attributes)",13,17
+1,1,8,0,1,"EntityRecord::getEntityId@19-19@Part3/observer_subscription/java/EntitySubscriptionObserver.java","Part3/observer_subscription/java/EntitySubscriptionObserver.java","EntityRecord::getEntityId","EntityRecord::getEntityId()",19,19
+1,1,8,0,1,"EntityRecord::getState@20-20@Part3/observer_subscription/java/EntitySubscriptionObserver.java","Part3/observer_subscription/java/EntitySubscriptionObserver.java","EntityRecord::getState","EntityRecord::getState()",20,20
+1,1,8,0,1,"EntityRecord::getAttributes@21-21@Part3/observer_subscription/java/EntitySubscriptionObserver.java","Part3/observer_subscription/java/EntitySubscriptionObserver.java","EntityRecord::getAttributes","EntityRecord::getAttributes()",21,21
+5,3,30,1,5,"EntityHub::subscribe@28-32@Part3/observer_subscription/java/EntitySubscriptionObserver.java","Part3/observer_subscription/java/EntitySubscriptionObserver.java","EntityHub::subscribe","EntityHub::subscribe( EntitySubscriptionObserver observer)",28,32
+3,1,14,1,3,"EntityHub::unsubscribe@34-36@Part3/observer_subscription/java/EntitySubscriptionObserver.java","Part3/observer_subscription/java/EntitySubscriptionObserver.java","EntityHub::unsubscribe","EntityHub::unsubscribe( EntitySubscriptionObserver observer)",34,36
+5,1,49,3,5,"EntityHub::updateEntity@38-42@Part3/observer_subscription/java/EntitySubscriptionObserver.java","Part3/observer_subscription/java/EntitySubscriptionObserver.java","EntityHub::updateEntity","EntityHub::updateEntity( String entityId , String state , Map<String,String> attributes)",38,42
+5,2,38,3,5,"EntityHub::notifyObservers@44-48@Part3/observer_subscription/java/EntitySubscriptionObserver.java","Part3/observer_subscription/java/EntitySubscriptionObserver.java","EntityHub::notifyObservers","EntityHub::notifyObservers( String entityId , String state , Map<String,String> attributes)",44,48
+3,1,15,1,3,"EntityHub::getEntity@50-52@Part3/observer_subscription/java/EntitySubscriptionObserver.java","Part3/observer_subscription/java/EntitySubscriptionObserver.java","EntityHub::getEntity","EntityHub::getEntity( String entityId)",50,52
+3,1,12,0,3,"EntityHub::getObserverCount@54-56@Part3/observer_subscription/java/EntitySubscriptionObserver.java","Part3/observer_subscription/java/EntitySubscriptionObserver.java","EntityHub::getObserverCount","EntityHub::getObserverCount()",54,56
+
+Observer / Python / Part3/observer_subscription/python/entity_observer.py: max CCN 2
+
+4,1,25,4,4,"on_entity_update@7-10@Part3/observer_subscription/python/entity_observer.py","Part3/observer_subscription/python/entity_observer.py","on_entity_update","on_entity_update( self , entity_id : str , state : str , attributes : Dict [ str , Any ] )",7,10
+6,2,50,4,6,"__init__@14-19@Part3/observer_subscription/python/entity_observer.py","Part3/observer_subscription/python/entity_observer.py","__init__","__init__( self , entity_id : str , state : str , attributes : Optional [ Dict [ str , Any ] ] = None )",14,19
+3,1,29,1,3,"__init__@23-25@Part3/observer_subscription/python/entity_observer.py","Part3/observer_subscription/python/entity_observer.py","__init__","__init__( self )",23,25
+3,2,27,2,3,"subscribe@27-29@Part3/observer_subscription/python/entity_observer.py","Part3/observer_subscription/python/entity_observer.py","subscribe","subscribe( self , observer : EntitySubscriptionObserver )",27,29
+3,2,26,2,3,"unsubscribe@31-33@Part3/observer_subscription/python/entity_observer.py","Part3/observer_subscription/python/entity_observer.py","unsubscribe","unsubscribe( self , observer : EntitySubscriptionObserver )",31,33
+6,1,59,4,6,"update_entity@35-40@Part3/observer_subscription/python/entity_observer.py","Part3/observer_subscription/python/entity_observer.py","update_entity","update_entity( self , entity_id : str , state : str , attributes : Optional [ Dict [ str , Any ] ] = None )",35,40
+5,2,44,4,5,"_notify_observers@42-46@Part3/observer_subscription/python/entity_observer.py","Part3/observer_subscription/python/entity_observer.py","_notify_observers","_notify_observers( self , entity_id : str , state : str , attributes : Dict [ str , Any ] )",42,46
+2,1,23,2,2,"get_entity@48-49@Part3/observer_subscription/python/entity_observer.py","Part3/observer_subscription/python/entity_observer.py","get_entity","get_entity( self , entity_id : str )",48,49
+2,1,14,1,2,"observer_count@52-53@Part3/observer_subscription/python/entity_observer.py","Part3/observer_subscription/python/entity_observer.py","observer_count","observer_count( self )",52,53
+
+Observer / JavaScript / Part3/observer_subscription/javascript/entityObserver.js: max CCN 3
+
+3,1,16,3,3,"onEntityUpdate@2-4@Part3/observer_subscription/javascript/entityObserver.js","Part3/observer_subscription/javascript/entityObserver.js","onEntityUpdate","onEntityUpdate ( entityId , state , attributes )",2,4
+5,1,33,3,5,"constructor@8-12@Part3/observer_subscription/javascript/entityObserver.js","Part3/observer_subscription/javascript/entityObserver.js","constructor","constructor ( entityId , state , attributes )",8,12
+4,1,20,0,4,"constructor@16-19@Part3/observer_subscription/javascript/entityObserver.js","Part3/observer_subscription/javascript/entityObserver.js","constructor","constructor ( )",16,19
+5,3,30,1,5,"subscribe@21-25@Part3/observer_subscription/javascript/entityObserver.js","Part3/observer_subscription/javascript/entityObserver.js","subscribe","subscribe ( observer )",21,25
+6,2,37,1,6,"unsubscribe@27-32@Part3/observer_subscription/javascript/entityObserver.js","Part3/observer_subscription/javascript/entityObserver.js","unsubscribe","unsubscribe ( observer )",27,32
+5,1,49,3,5,"updateEntity@34-38@Part3/observer_subscription/javascript/entityObserver.js","Part3/observer_subscription/javascript/entityObserver.js","updateEntity","updateEntity ( entityId , state , attributes )",34,38
+5,2,34,3,5,"notifyObservers@40-44@Part3/observer_subscription/javascript/entityObserver.js","Part3/observer_subscription/javascript/entityObserver.js","notifyObservers","notifyObservers ( entityId , state , attributes )",40,44
+3,2,17,1,3,"getEntity@46-48@Part3/observer_subscription/javascript/entityObserver.js","Part3/observer_subscription/javascript/entityObserver.js","getEntity","getEntity ( entityId )",46,48
+3,1,11,0,3,"get observerCount@50-52@Part3/observer_subscription/javascript/entityObserver.js","Part3/observer_subscription/javascript/entityObserver.js","get observerCount","get observerCount ( )",50,52
+
+Observer / C++ / Part3/observer_subscription/cpp/entity_observer.cpp;Part3/observer_subscription/cpp/entity_observer.hpp: max CCN 3
+
+2,1,60,3,2,"EntityRecord::EntityRecord@3-4@Part3/observer_subscription/cpp/entity_observer.cpp","Part3/observer_subscription/cpp/entity_observer.cpp","EntityRecord::EntityRecord","EntityRecord::EntityRecord( std :: string entityId , std :: string state , std :: map<std::string,std::string> attributes)",3,4
+1,1,11,0,1,"EntityRecord::getEntityId@6-6@Part3/observer_subscription/cpp/entity_observer.cpp","Part3/observer_subscription/cpp/entity_observer.cpp","EntityRecord::getEntityId","EntityRecord::getEntityId() const",6,6
+1,1,11,0,1,"EntityRecord::getState@7-7@Part3/observer_subscription/cpp/entity_observer.cpp","Part3/observer_subscription/cpp/entity_observer.cpp","EntityRecord::getState","EntityRecord::getState() const",7,7
+1,1,11,0,1,"EntityRecord::getAttributes@8-8@Part3/observer_subscription/cpp/entity_observer.cpp","Part3/observer_subscription/cpp/entity_observer.cpp","EntityRecord::getAttributes","EntityRecord::getAttributes() const",8,8
+5,3,48,1,5,"EntityHub::subscribe@10-14@Part3/observer_subscription/cpp/entity_observer.cpp","Part3/observer_subscription/cpp/entity_observer.cpp","EntityHub::subscribe","EntityHub::subscribe( EntitySubscriptionObserver * observer)",10,14
+6,2,51,1,6,"EntityHub::unsubscribe@16-21@Part3/observer_subscription/cpp/entity_observer.cpp","Part3/observer_subscription/cpp/entity_observer.cpp","EntityHub::unsubscribe","EntityHub::unsubscribe( EntitySubscriptionObserver * observer)",16,21
+14,3,89,3,14,"EntityHub::updateEntity@23-36@Part3/observer_subscription/cpp/entity_observer.cpp","Part3/observer_subscription/cpp/entity_observer.cpp","EntityHub::updateEntity","EntityHub::updateEntity( const std :: string & entityId , const std :: string & state , const std :: map<std::string,std::string> & attributes)",23,36
+7,2,47,1,7,"EntityHub::getEntity@38-44@Part3/observer_subscription/cpp/entity_observer.cpp","Part3/observer_subscription/cpp/entity_observer.cpp","EntityHub::getEntity","EntityHub::getEntity( const std :: string & entityId) const",38,44
+3,1,15,0,3,"EntityHub::getObserverCount@46-48@Part3/observer_subscription/cpp/entity_observer.cpp","Part3/observer_subscription/cpp/entity_observer.cpp","EntityHub::getObserverCount","EntityHub::getObserverCount() const",46,48
+
+Memento / Java / Part3/memento_history/java/HearthHistoryMemento.java: max CCN 5
+
+5,2,51,3,5,"DashboardConfig::DashboardConfig@11-15@Part3/memento_history/java/HearthHistoryMemento.java","Part3/memento_history/java/HearthHistoryMemento.java","DashboardConfig::DashboardConfig","HearthHistoryMemento::DashboardConfig::DashboardConfig( String title , String theme , List<String> widgets)",11,15
+1,1,8,0,1,"DashboardConfig::getTitle@17-17@Part3/memento_history/java/HearthHistoryMemento.java","Part3/memento_history/java/HearthHistoryMemento.java","DashboardConfig::getTitle","HearthHistoryMemento::DashboardConfig::getTitle()",17,17
+1,1,8,0,1,"DashboardConfig::getTheme@18-18@Part3/memento_history/java/HearthHistoryMemento.java","Part3/memento_history/java/HearthHistoryMemento.java","DashboardConfig::getTheme","HearthHistoryMemento::DashboardConfig::getTheme()",18,18
+1,1,13,0,1,"DashboardConfig::getWidgets@19-19@Part3/memento_history/java/HearthHistoryMemento.java","Part3/memento_history/java/HearthHistoryMemento.java","DashboardConfig::getWidgets","HearthHistoryMemento::DashboardConfig::getWidgets()",19,19
+8,5,70,1,8,"DashboardConfig::equals@22-29@Part3/memento_history/java/HearthHistoryMemento.java","Part3/memento_history/java/HearthHistoryMemento.java","DashboardConfig::equals","HearthHistoryMemento::DashboardConfig::equals( Object o)",22,29
+3,1,17,0,3,"DashboardConfig::hashCode@32-34@Part3/memento_history/java/HearthHistoryMemento.java","Part3/memento_history/java/HearthHistoryMemento.java","DashboardConfig::hashCode","HearthHistoryMemento::DashboardConfig::hashCode()",32,34
+3,2,19,1,3,"HistoryManager::HistoryManager@43-45@Part3/memento_history/java/HearthHistoryMemento.java","Part3/memento_history/java/HearthHistoryMemento.java","HistoryManager::HistoryManager","HearthHistoryMemento::HistoryManager::HistoryManager( int capacity)",43,45
+15,5,104,1,16,"HistoryManager::push@47-62@Part3/memento_history/java/HearthHistoryMemento.java","Part3/memento_history/java/HearthHistoryMemento.java","HistoryManager::push","HearthHistoryMemento::HistoryManager::push( T snapshot)",47,62
+5,2,32,1,5,"HistoryManager::undo@64-68@Part3/memento_history/java/HearthHistoryMemento.java","Part3/memento_history/java/HearthHistoryMemento.java","HistoryManager::undo","HearthHistoryMemento::HistoryManager::undo( T current)",64,68
+5,2,32,1,5,"HistoryManager::redo@70-74@Part3/memento_history/java/HearthHistoryMemento.java","Part3/memento_history/java/HearthHistoryMemento.java","HistoryManager::redo","HearthHistoryMemento::HistoryManager::redo( T current)",70,74
+3,1,13,1,3,"HistoryManager::enterEditMode@76-78@Part3/memento_history/java/HearthHistoryMemento.java","Part3/memento_history/java/HearthHistoryMemento.java","HistoryManager::enterEditMode","HearthHistoryMemento::HistoryManager::enterEditMode( T current)",76,78
+8,2,30,1,8,"HistoryManager::cancelEdit@80-87@Part3/memento_history/java/HearthHistoryMemento.java","Part3/memento_history/java/HearthHistoryMemento.java","HistoryManager::cancelEdit","HearthHistoryMemento::HistoryManager::cancelEdit( T current)",80,87
+3,1,11,0,3,"HistoryManager::saveEdit@89-91@Part3/memento_history/java/HearthHistoryMemento.java","Part3/memento_history/java/HearthHistoryMemento.java","HistoryManager::saveEdit","HearthHistoryMemento::HistoryManager::saveEdit()",89,91
+5,1,21,0,5,"HistoryManager::clear@93-97@Part3/memento_history/java/HearthHistoryMemento.java","Part3/memento_history/java/HearthHistoryMemento.java","HistoryManager::clear","HearthHistoryMemento::HistoryManager::clear()",93,97
+1,1,13,0,1,"HistoryManager::canUndo@99-99@Part3/memento_history/java/HearthHistoryMemento.java","Part3/memento_history/java/HearthHistoryMemento.java","HistoryManager::canUndo","HearthHistoryMemento::HistoryManager::canUndo()",99,99
+1,1,13,0,1,"HistoryManager::canRedo@100-100@Part3/memento_history/java/HearthHistoryMemento.java","Part3/memento_history/java/HearthHistoryMemento.java","HistoryManager::canRedo","HearthHistoryMemento::HistoryManager::canRedo()",100,100
+1,1,12,0,1,"HistoryManager::getUndoCount@101-101@Part3/memento_history/java/HearthHistoryMemento.java","Part3/memento_history/java/HearthHistoryMemento.java","HistoryManager::getUndoCount","HearthHistoryMemento::HistoryManager::getUndoCount()",101,101
+1,1,12,0,1,"HistoryManager::getRedoCount@102-102@Part3/memento_history/java/HearthHistoryMemento.java","Part3/memento_history/java/HearthHistoryMemento.java","HistoryManager::getRedoCount","HearthHistoryMemento::HistoryManager::getRedoCount()",102,102
+
+Memento / Python / Part3/memento_history/python/hearth_history_memento.py: max CCN 4
+
+4,2,48,4,4,"__init__@7-10@Part3/memento_history/python/hearth_history_memento.py","Part3/memento_history/python/hearth_history_memento.py","__init__","__init__( self , title : str , theme : str , widgets : Optional [ List [ str ] ] = None )",7,10
+8,4,48,2,8,"__eq__@12-19@Part3/memento_history/python/hearth_history_memento.py","Part3/memento_history/python/hearth_history_memento.py","__eq__","__eq__( self , other : Any )",12,19
+5,2,54,2,5,"__init__@23-27@Part3/memento_history/python/hearth_history_memento.py","Part3/memento_history/python/hearth_history_memento.py","__init__","__init__( self , capacity : int = 50 )",23,27
+7,3,52,2,7,"push@29-35@Part3/memento_history/python/hearth_history_memento.py","Part3/memento_history/python/hearth_history_memento.py","push","push( self , snapshot : T )",29,35
+5,2,35,2,5,"undo@37-41@Part3/memento_history/python/hearth_history_memento.py","Part3/memento_history/python/hearth_history_memento.py","undo","undo( self , current : T )",37,41
+5,2,35,2,5,"redo@43-47@Part3/memento_history/python/hearth_history_memento.py","Part3/memento_history/python/hearth_history_memento.py","redo","redo( self , current : T )",43,47
+2,1,16,2,2,"enter_edit_mode@49-50@Part3/memento_history/python/hearth_history_memento.py","Part3/memento_history/python/hearth_history_memento.py","enter_edit_mode","enter_edit_mode( self , current : T )",49,50
+6,2,33,2,6,"cancel_edit@52-57@Part3/memento_history/python/hearth_history_memento.py","Part3/memento_history/python/hearth_history_memento.py","cancel_edit","cancel_edit( self , current : T )",52,57
+2,1,12,1,2,"save_edit@59-60@Part3/memento_history/python/hearth_history_memento.py","Part3/memento_history/python/hearth_history_memento.py","save_edit","save_edit( self )",59,60
+4,1,26,1,4,"clear@62-65@Part3/memento_history/python/hearth_history_memento.py","Part3/memento_history/python/hearth_history_memento.py","clear","clear( self )",62,65
+2,1,16,1,2,"can_undo@68-69@Part3/memento_history/python/hearth_history_memento.py","Part3/memento_history/python/hearth_history_memento.py","can_undo","can_undo( self )",68,69
+2,1,16,1,2,"can_redo@72-73@Part3/memento_history/python/hearth_history_memento.py","Part3/memento_history/python/hearth_history_memento.py","can_redo","can_redo( self )",72,73
+2,1,14,1,2,"undo_count@76-77@Part3/memento_history/python/hearth_history_memento.py","Part3/memento_history/python/hearth_history_memento.py","undo_count","undo_count( self )",76,77
+2,1,14,1,2,"redo_count@80-81@Part3/memento_history/python/hearth_history_memento.py","Part3/memento_history/python/hearth_history_memento.py","redo_count","redo_count( self )",80,81
+
+Memento / JavaScript / Part3/memento_history/javascript/hearthHistoryMemento.js: max CCN 6
+
+5,1,33,3,5,"constructor@2-6@Part3/memento_history/javascript/hearthHistoryMemento.js","Part3/memento_history/javascript/hearthHistoryMemento.js","constructor","constructor ( title , theme , widgets )",2,6
+1,1,9,0,1,"(anonymous)@12-12@Part3/memento_history/javascript/hearthHistoryMemento.js","Part3/memento_history/javascript/hearthHistoryMemento.js","(anonymous)","(anonymous)",12,12
+6,6,73,1,6,"equals@8-13@Part3/memento_history/javascript/hearthHistoryMemento.js","Part3/memento_history/javascript/hearthHistoryMemento.js","equals","equals ( other )",8,13
+6,2,39,1,6,"constructor@17-22@Part3/memento_history/javascript/hearthHistoryMemento.js","Part3/memento_history/javascript/hearthHistoryMemento.js","constructor","constructor ( capacity )",17,22
+8,4,55,1,8,"push@24-31@Part3/memento_history/javascript/hearthHistoryMemento.js","Part3/memento_history/javascript/hearthHistoryMemento.js","push","push ( snapshot )",24,31
+5,2,36,1,5,"undo@33-37@Part3/memento_history/javascript/hearthHistoryMemento.js","Part3/memento_history/javascript/hearthHistoryMemento.js","undo","undo ( current )",33,37
+5,2,36,1,5,"redo@39-43@Part3/memento_history/javascript/hearthHistoryMemento.js","Part3/memento_history/javascript/hearthHistoryMemento.js","redo","redo ( current )",39,43
+3,1,11,1,3,"enterEditMode@45-47@Part3/memento_history/javascript/hearthHistoryMemento.js","Part3/memento_history/javascript/hearthHistoryMemento.js","enterEditMode","enterEditMode ( current )",45,47
+8,2,34,1,8,"cancelEdit@49-56@Part3/memento_history/javascript/hearthHistoryMemento.js","Part3/memento_history/javascript/hearthHistoryMemento.js","cancelEdit","cancelEdit ( current )",49,56
+3,1,10,0,3,"saveEdit@58-60@Part3/memento_history/javascript/hearthHistoryMemento.js","Part3/memento_history/javascript/hearthHistoryMemento.js","saveEdit","saveEdit ( )",58,60
+5,1,24,0,5,"clear@62-66@Part3/memento_history/javascript/hearthHistoryMemento.js","Part3/memento_history/javascript/hearthHistoryMemento.js","clear","clear ( )",62,66
+3,1,13,0,3,"get canUndo@68-70@Part3/memento_history/javascript/hearthHistoryMemento.js","Part3/memento_history/javascript/hearthHistoryMemento.js","get canUndo","get canUndo ( )",68,70
+3,1,13,0,3,"get canRedo@72-74@Part3/memento_history/javascript/hearthHistoryMemento.js","Part3/memento_history/javascript/hearthHistoryMemento.js","get canRedo","get canRedo ( )",72,74
+3,1,11,0,3,"get undoCount@76-78@Part3/memento_history/javascript/hearthHistoryMemento.js","Part3/memento_history/javascript/hearthHistoryMemento.js","get undoCount","get undoCount ( )",76,78
+3,1,11,0,3,"get redoCount@80-82@Part3/memento_history/javascript/hearthHistoryMemento.js","Part3/memento_history/javascript/hearthHistoryMemento.js","get redoCount","get redoCount ( )",80,82
+
+Memento / C++ / Part3/memento_history/cpp/hearth_history_memento.cpp;Part3/memento_history/cpp/hearth_history_memento.hpp: max CCN 3
+
+2,1,56,3,2,"DashboardConfig::DashboardConfig@3-4@Part3/memento_history/cpp/hearth_history_memento.cpp","Part3/memento_history/cpp/hearth_history_memento.cpp","DashboardConfig::DashboardConfig","DashboardConfig::DashboardConfig( std :: string title , std :: string theme , std :: vector<std::string> widgets)",3,4
+1,1,11,0,1,"DashboardConfig::getTitle@6-6@Part3/memento_history/cpp/hearth_history_memento.cpp","Part3/memento_history/cpp/hearth_history_memento.cpp","DashboardConfig::getTitle","DashboardConfig::getTitle() const",6,6
+1,1,11,0,1,"DashboardConfig::getTheme@7-7@Part3/memento_history/cpp/hearth_history_memento.cpp","Part3/memento_history/cpp/hearth_history_memento.cpp","DashboardConfig::getTheme","DashboardConfig::getTheme() const",7,7
+1,1,11,0,1,"DashboardConfig::getWidgets@8-8@Part3/memento_history/cpp/hearth_history_memento.cpp","Part3/memento_history/cpp/hearth_history_memento.cpp","DashboardConfig::getWidgets","DashboardConfig::getWidgets() const",8,8
+3,3,32,1,3,"DashboardConfig::operator ==@10-12@Part3/memento_history/cpp/hearth_history_memento.cpp","Part3/memento_history/cpp/hearth_history_memento.cpp","DashboardConfig::operator ==","DashboardConfig::operator ==( const DashboardConfig & other) const",10,12
+3,1,22,1,3,"DashboardConfig::operator !=@14-16@Part3/memento_history/cpp/hearth_history_memento.cpp","Part3/memento_history/cpp/hearth_history_memento.cpp","DashboardConfig::operator !=","DashboardConfig::operator !=( const DashboardConfig & other) const",14,16
+2,1,25,1,2,"HistoryManager::HistoryManager@34-35@Part3/memento_history/cpp/hearth_history_memento.hpp","Part3/memento_history/cpp/hearth_history_memento.hpp","HistoryManager::HistoryManager","HistoryManager::HistoryManager( size_t capacity = 50)",34,35
+7,2,40,1,7,"HistoryManager::push@37-43@Part3/memento_history/cpp/hearth_history_memento.hpp","Part3/memento_history/cpp/hearth_history_memento.hpp","HistoryManager::push","HistoryManager::push( const T & snapshot)",37,43
+7,2,45,1,7,"HistoryManager::undo@45-51@Part3/memento_history/cpp/hearth_history_memento.hpp","Part3/memento_history/cpp/hearth_history_memento.hpp","HistoryManager::undo","HistoryManager::undo( const T & current)",45,51
+7,2,45,1,7,"HistoryManager::redo@53-59@Part3/memento_history/cpp/hearth_history_memento.hpp","Part3/memento_history/cpp/hearth_history_memento.hpp","HistoryManager::redo","HistoryManager::redo( const T & current)",53,59
+4,1,17,1,4,"HistoryManager::enterEditMode@61-64@Part3/memento_history/cpp/hearth_history_memento.hpp","Part3/memento_history/cpp/hearth_history_memento.hpp","HistoryManager::enterEditMode","HistoryManager::enterEditMode( const T & current)",61,64
+7,2,25,1,7,"HistoryManager::cancelEdit@66-72@Part3/memento_history/cpp/hearth_history_memento.hpp","Part3/memento_history/cpp/hearth_history_memento.hpp","HistoryManager::cancelEdit","HistoryManager::cancelEdit( const T & current)",66,72
+3,1,9,0,3,"HistoryManager::saveEdit@74-76@Part3/memento_history/cpp/hearth_history_memento.hpp","Part3/memento_history/cpp/hearth_history_memento.hpp","HistoryManager::saveEdit","HistoryManager::saveEdit()",74,76
+5,1,21,0,5,"HistoryManager::clear@78-82@Part3/memento_history/cpp/hearth_history_memento.hpp","Part3/memento_history/cpp/hearth_history_memento.hpp","HistoryManager::clear","HistoryManager::clear()",78,82
+1,1,14,0,1,"HistoryManager::canUndo@84-84@Part3/memento_history/cpp/hearth_history_memento.hpp","Part3/memento_history/cpp/hearth_history_memento.hpp","HistoryManager::canUndo","HistoryManager::canUndo() const",84,84
+1,1,14,0,1,"HistoryManager::canRedo@85-85@Part3/memento_history/cpp/hearth_history_memento.hpp","Part3/memento_history/cpp/hearth_history_memento.hpp","HistoryManager::canRedo","HistoryManager::canRedo() const",85,85
+1,1,13,0,1,"HistoryManager::getUndoCount@86-86@Part3/memento_history/cpp/hearth_history_memento.hpp","Part3/memento_history/cpp/hearth_history_memento.hpp","HistoryManager::getUndoCount","HistoryManager::getUndoCount() const",86,86
+1,1,13,0,1,"HistoryManager::getRedoCount@87-87@Part3/memento_history/cpp/hearth_history_memento.hpp","Part3/memento_history/cpp/hearth_history_memento.hpp","HistoryManager::getRedoCount","HistoryManager::getRedoCount() const",87,87
+
+Strategy / Java / Part3/strategy_evaluator/java/ConditionStrategy.java: max CCN 7
+
+6,2,80,3,6,"StateStrategy::evaluate@11-16@Part3/strategy_evaluator/java/ConditionStrategy.java","Part3/strategy_evaluator/java/ConditionStrategy.java","StateStrategy::evaluate","StateStrategy::evaluate( Map<String,Object> conditionData , Map<String,Object> stateStore , Map<String,Object> context)",11,16
+16,7,166,3,18,"NumericStrategy::evaluate@21-38@Part3/strategy_evaluator/java/ConditionStrategy.java","Part3/strategy_evaluator/java/ConditionStrategy.java","NumericStrategy::evaluate","NumericStrategy::evaluate( Map<String,Object> conditionData , Map<String,Object> stateStore , Map<String,Object> context)",21,38
+6,2,102,3,6,"ScreenStrategy::evaluate@43-48@Part3/strategy_evaluator/java/ConditionStrategy.java","Part3/strategy_evaluator/java/ConditionStrategy.java","ScreenStrategy::evaluate","ScreenStrategy::evaluate( Map<String,Object> conditionData , Map<String,Object> stateStore , Map<String,Object> context)",43,48
+5,1,35,0,5,"EvaluatorContext::EvaluatorContext@54-58@Part3/strategy_evaluator/java/ConditionStrategy.java","Part3/strategy_evaluator/java/ConditionStrategy.java","EvaluatorContext::EvaluatorContext","EvaluatorContext::EvaluatorContext()",54,58
+3,1,19,2,3,"EvaluatorContext::register@60-62@Part3/strategy_evaluator/java/ConditionStrategy.java","Part3/strategy_evaluator/java/ConditionStrategy.java","EvaluatorContext::register","EvaluatorContext::register( String type , ConditionStrategy strategy)",60,62
+6,2,72,3,6,"EvaluatorContext::evaluate@64-69@Part3/strategy_evaluator/java/ConditionStrategy.java","Part3/strategy_evaluator/java/ConditionStrategy.java","EvaluatorContext::evaluate","EvaluatorContext::evaluate( Map<String,Object> conditionData , Map<String,Object> stateStore , Map<String,Object> context)",64,69
+
+Strategy / Python / Part3/strategy_evaluator/python/condition_strategy.py: max CCN 8
+
+7,1,36,4,7,"evaluate@7-13@Part3/strategy_evaluator/python/condition_strategy.py","Part3/strategy_evaluator/python/condition_strategy.py","evaluate","evaluate( self , condition_data : Dict [ str , Any ] , state_store : Dict [ str , Any ] , context : Dict [ str , Any ] , )",7,13
+10,2,74,4,10,"evaluate@17-26@Part3/strategy_evaluator/python/condition_strategy.py","Part3/strategy_evaluator/python/condition_strategy.py","evaluate","evaluate( self , condition_data : Dict [ str , Any ] , state_store : Dict [ str , Any ] , context : Dict [ str , Any ] , )",17,26
+27,8,152,4,29,"evaluate@30-58@Part3/strategy_evaluator/python/condition_strategy.py","Part3/strategy_evaluator/python/condition_strategy.py","evaluate","evaluate( self , condition_data : Dict [ str , Any ] , state_store : Dict [ str , Any ] , context : Dict [ str , Any ] , )",30,58
+10,1,80,4,10,"evaluate@62-71@Part3/strategy_evaluator/python/condition_strategy.py","Part3/strategy_evaluator/python/condition_strategy.py","evaluate","evaluate( self , condition_data : Dict [ str , Any ] , state_store : Dict [ str , Any ] , context : Dict [ str , Any ] , )",62,71
+5,1,48,1,5,"__init__@81-85@Part3/strategy_evaluator/python/condition_strategy.py","Part3/strategy_evaluator/python/condition_strategy.py","__init__","__init__( self )",81,85
+2,1,23,3,2,"register@87-88@Part3/strategy_evaluator/python/condition_strategy.py","Part3/strategy_evaluator/python/condition_strategy.py","register","register( self , cond_type : str , strategy : StrategyTarget )",87,88
+13,3,88,4,13,"evaluate@90-102@Part3/strategy_evaluator/python/condition_strategy.py","Part3/strategy_evaluator/python/condition_strategy.py","evaluate","evaluate( self , condition_data : Dict [ str , Any ] , state_store : Dict [ str , Any ] , context : Dict [ str , Any ] , )",90,102
+
+Strategy / JavaScript / Part3/strategy_evaluator/javascript/conditionStrategy.js: max CCN 3
+
+3,1,16,3,3,"evaluate@2-4@Part3/strategy_evaluator/javascript/conditionStrategy.js","Part3/strategy_evaluator/javascript/conditionStrategy.js","evaluate","evaluate ( conditionData , stateStore , context )",2,4
+5,3,45,3,5,"evaluate@8-12@Part3/strategy_evaluator/javascript/conditionStrategy.js","Part3/strategy_evaluator/javascript/conditionStrategy.js","evaluate","evaluate ( conditionData , stateStore , context )",8,12
+
+Strategy / C++ / Part3/strategy_evaluator/cpp/condition_strategy.cpp;Part3/strategy_evaluator/cpp/condition_strategy.hpp: max CCN 8
+
+9,2,76,3,9,"StateStrategy::evaluate@3-11@Part3/strategy_evaluator/cpp/condition_strategy.cpp","Part3/strategy_evaluator/cpp/condition_strategy.cpp","StateStrategy::evaluate","StateStrategy::evaluate( const ConditionData & data , const std :: map<std::string,std::string> & stateStore , const std :: map<std::string,int> & context) const",3,11
+20,8,182,3,21,"NumericStrategy::evaluate@13-33@Part3/strategy_evaluator/cpp/condition_strategy.cpp","Part3/strategy_evaluator/cpp/condition_strategy.cpp","NumericStrategy::evaluate","NumericStrategy::evaluate( const ConditionData & data , const std :: map<std::string,std::string> & stateStore , const std :: map<std::string,int> & context) const",13,33
+9,3,84,3,9,"ScreenStrategy::evaluate@35-43@Part3/strategy_evaluator/cpp/condition_strategy.cpp","Part3/strategy_evaluator/cpp/condition_strategy.cpp","ScreenStrategy::evaluate","ScreenStrategy::evaluate( const ConditionData & data , const std :: map<std::string,std::string> & stateStore , const std :: map<std::string,int> & context) const",35,43
+5,1,49,0,5,"EvaluatorContext::EvaluatorContext@45-49@Part3/strategy_evaluator/cpp/condition_strategy.cpp","Part3/strategy_evaluator/cpp/condition_strategy.cpp","EvaluatorContext::EvaluatorContext","EvaluatorContext::EvaluatorContext()",45,49
+5,2,39,2,5,"EvaluatorContext::registerStrategy@51-55@Part3/strategy_evaluator/cpp/condition_strategy.cpp","Part3/strategy_evaluator/cpp/condition_strategy.cpp","EvaluatorContext::registerStrategy","EvaluatorContext::registerStrategy( const std :: string & type , std :: shared_ptr<ConditionStrategy> strategy)",51,55
+9,2,81,3,9,"EvaluatorContext::evaluate@57-65@Part3/strategy_evaluator/cpp/condition_strategy.cpp","Part3/strategy_evaluator/cpp/condition_strategy.cpp","EvaluatorContext::evaluate","EvaluatorContext::evaluate( const ConditionData & data , const std :: map<std::string,std::string> & stateStore , const std :: map<std::string,int> & context) const",57,65
+
+Factory Method / Java / Part3/factory_domain_modal/java/EntityModalFactory.java: max CCN 5
+
+1,1,13,1,1,"LightModalController::LightModalController@12-12@Part3/factory_domain_modal/java/EntityModalFactory.java","Part3/factory_domain_modal/java/EntityModalFactory.java","LightModalController::LightModalController","LightModalController::LightModalController( String entityId)",12,12
+1,1,8,0,1,"LightModalController::getDomain@13-13@Part3/factory_domain_modal/java/EntityModalFactory.java","Part3/factory_domain_modal/java/EntityModalFactory.java","LightModalController::getDomain","LightModalController::getDomain()",13,13
+1,1,8,0,1,"LightModalController::getEntityId@14-14@Part3/factory_domain_modal/java/EntityModalFactory.java","Part3/factory_domain_modal/java/EntityModalFactory.java","LightModalController::getEntityId","LightModalController::getEntityId()",14,14
+1,1,8,0,1,"LightModalController::renderAction@15-15@Part3/factory_domain_modal/java/EntityModalFactory.java","Part3/factory_domain_modal/java/EntityModalFactory.java","LightModalController::renderAction","LightModalController::renderAction()",15,15
+1,1,13,1,1,"SwitchModalController::SwitchModalController@20-20@Part3/factory_domain_modal/java/EntityModalFactory.java","Part3/factory_domain_modal/java/EntityModalFactory.java","SwitchModalController::SwitchModalController","SwitchModalController::SwitchModalController( String entityId)",20,20
+1,1,8,0,1,"SwitchModalController::getDomain@21-21@Part3/factory_domain_modal/java/EntityModalFactory.java","Part3/factory_domain_modal/java/EntityModalFactory.java","SwitchModalController::getDomain","SwitchModalController::getDomain()",21,21
+1,1,8,0,1,"SwitchModalController::getEntityId@22-22@Part3/factory_domain_modal/java/EntityModalFactory.java","Part3/factory_domain_modal/java/EntityModalFactory.java","SwitchModalController::getEntityId","SwitchModalController::getEntityId()",22,22
+1,1,8,0,1,"SwitchModalController::renderAction@23-23@Part3/factory_domain_modal/java/EntityModalFactory.java","Part3/factory_domain_modal/java/EntityModalFactory.java","SwitchModalController::renderAction","SwitchModalController::renderAction()",23,23
+1,1,13,1,1,"SensorModalController::SensorModalController@28-28@Part3/factory_domain_modal/java/EntityModalFactory.java","Part3/factory_domain_modal/java/EntityModalFactory.java","SensorModalController::SensorModalController","SensorModalController::SensorModalController( String entityId)",28,28
+1,1,8,0,1,"SensorModalController::getDomain@29-29@Part3/factory_domain_modal/java/EntityModalFactory.java","Part3/factory_domain_modal/java/EntityModalFactory.java","SensorModalController::getDomain","SensorModalController::getDomain()",29,29
+1,1,8,0,1,"SensorModalController::getEntityId@30-30@Part3/factory_domain_modal/java/EntityModalFactory.java","Part3/factory_domain_modal/java/EntityModalFactory.java","SensorModalController::getEntityId","SensorModalController::getEntityId()",30,30
+1,1,8,0,1,"SensorModalController::renderAction@31-31@Part3/factory_domain_modal/java/EntityModalFactory.java","Part3/factory_domain_modal/java/EntityModalFactory.java","SensorModalController::renderAction","SensorModalController::renderAction()",31,31
+1,1,13,1,1,"ClimateModalController::ClimateModalController@36-36@Part3/factory_domain_modal/java/EntityModalFactory.java","Part3/factory_domain_modal/java/EntityModalFactory.java","ClimateModalController::ClimateModalController","ClimateModalController::ClimateModalController( String entityId)",36,36
+1,1,8,0,1,"ClimateModalController::getDomain@37-37@Part3/factory_domain_modal/java/EntityModalFactory.java","Part3/factory_domain_modal/java/EntityModalFactory.java","ClimateModalController::getDomain","ClimateModalController::getDomain()",37,37
+1,1,8,0,1,"ClimateModalController::getEntityId@38-38@Part3/factory_domain_modal/java/EntityModalFactory.java","Part3/factory_domain_modal/java/EntityModalFactory.java","ClimateModalController::getEntityId","ClimateModalController::getEntityId()",38,38
+1,1,8,0,1,"ClimateModalController::renderAction@39-39@Part3/factory_domain_modal/java/EntityModalFactory.java","Part3/factory_domain_modal/java/EntityModalFactory.java","ClimateModalController::renderAction","ClimateModalController::renderAction()",39,39
+4,1,22,2,4,"GenericModalController::GenericModalController@45-48@Part3/factory_domain_modal/java/EntityModalFactory.java","Part3/factory_domain_modal/java/EntityModalFactory.java","GenericModalController::GenericModalController","GenericModalController::GenericModalController( String entityId , String domain)",45,48
+1,1,8,0,1,"GenericModalController::getDomain@49-49@Part3/factory_domain_modal/java/EntityModalFactory.java","Part3/factory_domain_modal/java/EntityModalFactory.java","GenericModalController::getDomain","GenericModalController::getDomain()",49,49
+1,1,8,0,1,"GenericModalController::getEntityId@50-50@Part3/factory_domain_modal/java/EntityModalFactory.java","Part3/factory_domain_modal/java/EntityModalFactory.java","GenericModalController::getEntityId","GenericModalController::getEntityId()",50,50
+1,1,8,0,1,"GenericModalController::renderAction@51-51@Part3/factory_domain_modal/java/EntityModalFactory.java","Part3/factory_domain_modal/java/EntityModalFactory.java","GenericModalController::renderAction","GenericModalController::renderAction()",51,51
+4,3,39,1,4,"ModalFactory::extractDomain@55-58@Part3/factory_domain_modal/java/EntityModalFactory.java","Part3/factory_domain_modal/java/EntityModalFactory.java","ModalFactory::extractDomain","ModalFactory::extractDomain( String entityId)",55,58
+10,5,72,1,10,"ModalFactory::createModal@60-69@Part3/factory_domain_modal/java/EntityModalFactory.java","Part3/factory_domain_modal/java/EntityModalFactory.java","ModalFactory::createModal","ModalFactory::createModal( String entityId)",60,69
+
+Factory Method / Python / Part3/factory_domain_modal/python/entity_modal_factory.py: max CCN 5
+
+2,1,14,2,2,"__init__@5-6@Part3/factory_domain_modal/python/entity_modal_factory.py","Part3/factory_domain_modal/python/entity_modal_factory.py","__init__","__init__( self , entity_id : str )",5,6
+2,1,8,1,2,"get_domain@9-10@Part3/factory_domain_modal/python/entity_modal_factory.py","Part3/factory_domain_modal/python/entity_modal_factory.py","get_domain","get_domain( self )",9,10
+2,1,8,1,2,"render_action@13-14@Part3/factory_domain_modal/python/entity_modal_factory.py","Part3/factory_domain_modal/python/entity_modal_factory.py","render_action","render_action( self )",13,14
+2,1,9,1,2,"get_domain@18-19@Part3/factory_domain_modal/python/entity_modal_factory.py","Part3/factory_domain_modal/python/entity_modal_factory.py","get_domain","get_domain( self )",18,19
+2,1,9,1,2,"render_action@21-22@Part3/factory_domain_modal/python/entity_modal_factory.py","Part3/factory_domain_modal/python/entity_modal_factory.py","render_action","render_action( self )",21,22
+2,1,9,1,2,"get_domain@26-27@Part3/factory_domain_modal/python/entity_modal_factory.py","Part3/factory_domain_modal/python/entity_modal_factory.py","get_domain","get_domain( self )",26,27
+2,1,9,1,2,"render_action@29-30@Part3/factory_domain_modal/python/entity_modal_factory.py","Part3/factory_domain_modal/python/entity_modal_factory.py","render_action","render_action( self )",29,30
+2,1,9,1,2,"get_domain@34-35@Part3/factory_domain_modal/python/entity_modal_factory.py","Part3/factory_domain_modal/python/entity_modal_factory.py","get_domain","get_domain( self )",34,35
+2,1,9,1,2,"render_action@37-38@Part3/factory_domain_modal/python/entity_modal_factory.py","Part3/factory_domain_modal/python/entity_modal_factory.py","render_action","render_action( self )",37,38
+2,1,9,1,2,"get_domain@42-43@Part3/factory_domain_modal/python/entity_modal_factory.py","Part3/factory_domain_modal/python/entity_modal_factory.py","get_domain","get_domain( self )",42,43
+2,1,9,1,2,"render_action@45-46@Part3/factory_domain_modal/python/entity_modal_factory.py","Part3/factory_domain_modal/python/entity_modal_factory.py","render_action","render_action( self )",45,46
+3,1,26,3,3,"__init__@50-52@Part3/factory_domain_modal/python/entity_modal_factory.py","Part3/factory_domain_modal/python/entity_modal_factory.py","__init__","__init__( self , entity_id : str , domain : str )",50,52
+2,1,11,1,2,"get_domain@54-55@Part3/factory_domain_modal/python/entity_modal_factory.py","Part3/factory_domain_modal/python/entity_modal_factory.py","get_domain","get_domain( self )",54,55
+2,1,9,1,2,"render_action@57-58@Part3/factory_domain_modal/python/entity_modal_factory.py","Part3/factory_domain_modal/python/entity_modal_factory.py","render_action","render_action( self )",57,58
+4,3,32,1,4,"extract_domain@63-66@Part3/factory_domain_modal/python/entity_modal_factory.py","Part3/factory_domain_modal/python/entity_modal_factory.py","extract_domain","extract_domain( entity_id : str )",63,66
+11,5,66,2,11,"create_modal@68-78@Part3/factory_domain_modal/python/entity_modal_factory.py","Part3/factory_domain_modal/python/entity_modal_factory.py","create_modal","create_modal( self , entity_id : str )",68,78
+
+Factory Method / JavaScript / Part3/factory_domain_modal/javascript/entityModalFactory.js: max CCN 5
+
+3,1,11,1,3,"constructor@2-4@Part3/factory_domain_modal/javascript/entityModalFactory.js","Part3/factory_domain_modal/javascript/entityModalFactory.js","constructor","constructor ( entityId )",2,4
+3,1,11,0,3,"getDomain@6-8@Part3/factory_domain_modal/javascript/entityModalFactory.js","Part3/factory_domain_modal/javascript/entityModalFactory.js","getDomain","getDomain ( )",6,8
+3,1,11,0,3,"renderAction@10-12@Part3/factory_domain_modal/javascript/entityModalFactory.js","Part3/factory_domain_modal/javascript/entityModalFactory.js","renderAction","renderAction ( )",10,12
+3,1,7,0,3,"getDomain@16-18@Part3/factory_domain_modal/javascript/entityModalFactory.js","Part3/factory_domain_modal/javascript/entityModalFactory.js","getDomain","getDomain ( )",16,18
+3,1,7,0,3,"renderAction@20-22@Part3/factory_domain_modal/javascript/entityModalFactory.js","Part3/factory_domain_modal/javascript/entityModalFactory.js","renderAction","renderAction ( )",20,22
+3,1,7,0,3,"getDomain@26-28@Part3/factory_domain_modal/javascript/entityModalFactory.js","Part3/factory_domain_modal/javascript/entityModalFactory.js","getDomain","getDomain ( )",26,28
+3,1,7,0,3,"renderAction@30-32@Part3/factory_domain_modal/javascript/entityModalFactory.js","Part3/factory_domain_modal/javascript/entityModalFactory.js","renderAction","renderAction ( )",30,32
+3,1,7,0,3,"getDomain@36-38@Part3/factory_domain_modal/javascript/entityModalFactory.js","Part3/factory_domain_modal/javascript/entityModalFactory.js","getDomain","getDomain ( )",36,38
+3,1,7,0,3,"renderAction@40-42@Part3/factory_domain_modal/javascript/entityModalFactory.js","Part3/factory_domain_modal/javascript/entityModalFactory.js","renderAction","renderAction ( )",40,42
+3,1,7,0,3,"getDomain@46-48@Part3/factory_domain_modal/javascript/entityModalFactory.js","Part3/factory_domain_modal/javascript/entityModalFactory.js","getDomain","getDomain ( )",46,48
+3,1,7,0,3,"renderAction@50-52@Part3/factory_domain_modal/javascript/entityModalFactory.js","Part3/factory_domain_modal/javascript/entityModalFactory.js","renderAction","renderAction ( )",50,52
+4,1,18,2,4,"constructor@56-59@Part3/factory_domain_modal/javascript/entityModalFactory.js","Part3/factory_domain_modal/javascript/entityModalFactory.js","constructor","constructor ( entityId , domain )",56,59
+3,1,9,0,3,"getDomain@61-63@Part3/factory_domain_modal/javascript/entityModalFactory.js","Part3/factory_domain_modal/javascript/entityModalFactory.js","getDomain","getDomain ( )",61,63
+3,1,7,0,3,"renderAction@65-67@Part3/factory_domain_modal/javascript/entityModalFactory.js","Part3/factory_domain_modal/javascript/entityModalFactory.js","renderAction","renderAction ( )",65,67
+4,3,32,1,4,"extractDomain@71-74@Part3/factory_domain_modal/javascript/entityModalFactory.js","Part3/factory_domain_modal/javascript/entityModalFactory.js","extractDomain","extractDomain ( entityId )",71,74
+10,5,72,1,10,"createModal@76-85@Part3/factory_domain_modal/javascript/entityModalFactory.js","Part3/factory_domain_modal/javascript/entityModalFactory.js","createModal","createModal ( entityId )",76,85
+
+Factory Method / C++ / Part3/factory_domain_modal/cpp/entity_modal_factory.cpp;Part3/factory_domain_modal/cpp/entity_modal_factory.hpp: max CCN 5
+
+2,1,21,1,2,"EntityModalController::EntityModalController@3-4@Part3/factory_domain_modal/cpp/entity_modal_factory.cpp","Part3/factory_domain_modal/cpp/entity_modal_factory.cpp","EntityModalController::EntityModalController","EntityModalController::EntityModalController( std :: string entityId)",3,4
+3,1,11,0,3,"EntityModalController::getEntityId@6-8@Part3/factory_domain_modal/cpp/entity_modal_factory.cpp","Part3/factory_domain_modal/cpp/entity_modal_factory.cpp","EntityModalController::getEntityId","EntityModalController::getEntityId() const",6,8
+2,1,21,1,2,"LightModalController::LightModalController@10-11@Part3/factory_domain_modal/cpp/entity_modal_factory.cpp","Part3/factory_domain_modal/cpp/entity_modal_factory.cpp","LightModalController::LightModalController","LightModalController::LightModalController( std :: string entityId)",10,11
+1,1,11,0,1,"LightModalController::getDomain@13-13@Part3/factory_domain_modal/cpp/entity_modal_factory.cpp","Part3/factory_domain_modal/cpp/entity_modal_factory.cpp","LightModalController::getDomain","LightModalController::getDomain() const",13,13
+1,1,11,0,1,"LightModalController::renderAction@14-14@Part3/factory_domain_modal/cpp/entity_modal_factory.cpp","Part3/factory_domain_modal/cpp/entity_modal_factory.cpp","LightModalController::renderAction","LightModalController::renderAction() const",14,14
+2,1,21,1,2,"SwitchModalController::SwitchModalController@16-17@Part3/factory_domain_modal/cpp/entity_modal_factory.cpp","Part3/factory_domain_modal/cpp/entity_modal_factory.cpp","SwitchModalController::SwitchModalController","SwitchModalController::SwitchModalController( std :: string entityId)",16,17
+1,1,11,0,1,"SwitchModalController::getDomain@19-19@Part3/factory_domain_modal/cpp/entity_modal_factory.cpp","Part3/factory_domain_modal/cpp/entity_modal_factory.cpp","SwitchModalController::getDomain","SwitchModalController::getDomain() const",19,19
+1,1,11,0,1,"SwitchModalController::renderAction@20-20@Part3/factory_domain_modal/cpp/entity_modal_factory.cpp","Part3/factory_domain_modal/cpp/entity_modal_factory.cpp","SwitchModalController::renderAction","SwitchModalController::renderAction() const",20,20
+2,1,21,1,2,"SensorModalController::SensorModalController@22-23@Part3/factory_domain_modal/cpp/entity_modal_factory.cpp","Part3/factory_domain_modal/cpp/entity_modal_factory.cpp","SensorModalController::SensorModalController","SensorModalController::SensorModalController( std :: string entityId)",22,23
+1,1,11,0,1,"SensorModalController::getDomain@25-25@Part3/factory_domain_modal/cpp/entity_modal_factory.cpp","Part3/factory_domain_modal/cpp/entity_modal_factory.cpp","SensorModalController::getDomain","SensorModalController::getDomain() const",25,25
+1,1,11,0,1,"SensorModalController::renderAction@26-26@Part3/factory_domain_modal/cpp/entity_modal_factory.cpp","Part3/factory_domain_modal/cpp/entity_modal_factory.cpp","SensorModalController::renderAction","SensorModalController::renderAction() const",26,26
+2,1,21,1,2,"ClimateModalController::ClimateModalController@28-29@Part3/factory_domain_modal/cpp/entity_modal_factory.cpp","Part3/factory_domain_modal/cpp/entity_modal_factory.cpp","ClimateModalController::ClimateModalController","ClimateModalController::ClimateModalController( std :: string entityId)",28,29
+1,1,11,0,1,"ClimateModalController::getDomain@31-31@Part3/factory_domain_modal/cpp/entity_modal_factory.cpp","Part3/factory_domain_modal/cpp/entity_modal_factory.cpp","ClimateModalController::getDomain","ClimateModalController::getDomain() const",31,31
+1,1,11,0,1,"ClimateModalController::renderAction@32-32@Part3/factory_domain_modal/cpp/entity_modal_factory.cpp","Part3/factory_domain_modal/cpp/entity_modal_factory.cpp","ClimateModalController::renderAction","ClimateModalController::renderAction() const",32,32
+2,1,36,2,2,"GenericModalController::GenericModalController@34-35@Part3/factory_domain_modal/cpp/entity_modal_factory.cpp","Part3/factory_domain_modal/cpp/entity_modal_factory.cpp","GenericModalController::GenericModalController","GenericModalController::GenericModalController( std :: string entityId , std :: string domain)",34,35
+1,1,11,0,1,"GenericModalController::getDomain@37-37@Part3/factory_domain_modal/cpp/entity_modal_factory.cpp","Part3/factory_domain_modal/cpp/entity_modal_factory.cpp","GenericModalController::getDomain","GenericModalController::getDomain() const",37,37
+1,1,11,0,1,"GenericModalController::renderAction@38-38@Part3/factory_domain_modal/cpp/entity_modal_factory.cpp","Part3/factory_domain_modal/cpp/entity_modal_factory.cpp","GenericModalController::renderAction","GenericModalController::renderAction() const",38,38
+5,2,46,1,5,"ModalFactory::extractDomain@40-44@Part3/factory_domain_modal/cpp/entity_modal_factory.cpp","Part3/factory_domain_modal/cpp/entity_modal_factory.cpp","ModalFactory::extractDomain","ModalFactory::extractDomain( const std :: string & entityId)",40,44
+8,5,125,1,8,"ModalFactory::createModal@46-53@Part3/factory_domain_modal/cpp/entity_modal_factory.cpp","Part3/factory_domain_modal/cpp/entity_modal_factory.cpp","ModalFactory::createModal","ModalFactory::createModal( const std :: string & entityId) const",46,53
+
+Template Method / Java / Part3/template_canvas_renderer/java/KonvaCanvasTemplate.java: max CCN 2
+
+8,1,57,6,8,"KonvaCanvasTemplate::renderCanvas@17-24@Part3/template_canvas_renderer/java/KonvaCanvasTemplate.java","Part3/template_canvas_renderer/java/KonvaCanvasTemplate.java","KonvaCanvasTemplate::renderCanvas","KonvaCanvasTemplate::renderCanvas( int width , int height , double zoom , double dpi , String bgUri , List<String> elements)",17,24
+4,1,22,2,4,"KonvaCanvasTemplate::initializeStage@27-30@Part3/template_canvas_renderer/java/KonvaCanvasTemplate.java","Part3/template_canvas_renderer/java/KonvaCanvasTemplate.java","KonvaCanvasTemplate::initializeStage","KonvaCanvasTemplate::initializeStage( int width , int height)",27,30
+3,1,18,2,3,"KonvaCanvasTemplate::calculateViewportScale@33-35@Part3/template_canvas_renderer/java/KonvaCanvasTemplate.java","Part3/template_canvas_renderer/java/KonvaCanvasTemplate.java","KonvaCanvasTemplate::calculateViewportScale","KonvaCanvasTemplate::calculateViewportScale( double zoom , double dpi)",33,35
+3,1,13,1,3,"KonvaCanvasTemplate::renderBackground@38-40@Part3/template_canvas_renderer/java/KonvaCanvasTemplate.java","Part3/template_canvas_renderer/java/KonvaCanvasTemplate.java","KonvaCanvasTemplate::renderBackground","KonvaCanvasTemplate::renderBackground( String bgUri)",38,40
+6,2,31,1,6,"KonvaCanvasTemplate::renderElements@43-48@Part3/template_canvas_renderer/java/KonvaCanvasTemplate.java","Part3/template_canvas_renderer/java/KonvaCanvasTemplate.java","KonvaCanvasTemplate::renderElements","KonvaCanvasTemplate::renderElements( List<String> elements)",43,48
+2,1,5,0,3,"KonvaCanvasTemplate::onRenderCompleteHook@54-56@Part3/template_canvas_renderer/java/KonvaCanvasTemplate.java","Part3/template_canvas_renderer/java/KonvaCanvasTemplate.java","KonvaCanvasTemplate::onRenderCompleteHook","KonvaCanvasTemplate::onRenderCompleteHook()",54,56
+1,1,8,0,1,"KonvaCanvasTemplate::getStageWidth@58-58@Part3/template_canvas_renderer/java/KonvaCanvasTemplate.java","Part3/template_canvas_renderer/java/KonvaCanvasTemplate.java","KonvaCanvasTemplate::getStageWidth","KonvaCanvasTemplate::getStageWidth()",58,58
+1,1,8,0,1,"KonvaCanvasTemplate::getStageHeight@59-59@Part3/template_canvas_renderer/java/KonvaCanvasTemplate.java","Part3/template_canvas_renderer/java/KonvaCanvasTemplate.java","KonvaCanvasTemplate::getStageHeight","KonvaCanvasTemplate::getStageHeight()",59,59
+1,1,8,0,1,"KonvaCanvasTemplate::getEffectiveScale@60-60@Part3/template_canvas_renderer/java/KonvaCanvasTemplate.java","Part3/template_canvas_renderer/java/KonvaCanvasTemplate.java","KonvaCanvasTemplate::getEffectiveScale","KonvaCanvasTemplate::getEffectiveScale()",60,60
+1,1,8,0,1,"KonvaCanvasTemplate::getBackgroundImage@61-61@Part3/template_canvas_renderer/java/KonvaCanvasTemplate.java","Part3/template_canvas_renderer/java/KonvaCanvasTemplate.java","KonvaCanvasTemplate::getBackgroundImage","KonvaCanvasTemplate::getBackgroundImage()",61,61
+1,1,13,0,1,"KonvaCanvasTemplate::getRenderedElements@62-62@Part3/template_canvas_renderer/java/KonvaCanvasTemplate.java","Part3/template_canvas_renderer/java/KonvaCanvasTemplate.java","KonvaCanvasTemplate::getRenderedElements","KonvaCanvasTemplate::getRenderedElements()",62,62
+1,1,8,0,1,"KonvaCanvasTemplate::getOverlayType@63-63@Part3/template_canvas_renderer/java/KonvaCanvasTemplate.java","Part3/template_canvas_renderer/java/KonvaCanvasTemplate.java","KonvaCanvasTemplate::getOverlayType","KonvaCanvasTemplate::getOverlayType()",63,63
+1,1,8,0,1,"KonvaCanvasTemplate::isSnapshotRecorded@64-64@Part3/template_canvas_renderer/java/KonvaCanvasTemplate.java","Part3/template_canvas_renderer/java/KonvaCanvasTemplate.java","KonvaCanvasTemplate::isSnapshotRecorded","KonvaCanvasTemplate::isSnapshotRecorded()",64,64
+3,1,11,0,3,"KonvaViewer::renderOverlay@68-70@Part3/template_canvas_renderer/java/KonvaCanvasTemplate.java","Part3/template_canvas_renderer/java/KonvaCanvasTemplate.java","KonvaViewer::renderOverlay","KonvaCanvasTemplate::KonvaViewer::renderOverlay()",68,70
+3,1,11,0,3,"KonvaEditor::renderOverlay@75-77@Part3/template_canvas_renderer/java/KonvaCanvasTemplate.java","Part3/template_canvas_renderer/java/KonvaCanvasTemplate.java","KonvaEditor::renderOverlay","KonvaCanvasTemplate::KonvaEditor::renderOverlay()",75,77
+3,1,11,0,3,"KonvaEditor::onRenderCompleteHook@80-82@Part3/template_canvas_renderer/java/KonvaCanvasTemplate.java","Part3/template_canvas_renderer/java/KonvaCanvasTemplate.java","KonvaEditor::onRenderCompleteHook","KonvaCanvasTemplate::KonvaEditor::onRenderCompleteHook()",80,82
+
+Template Method / Python / Part3/template_canvas_renderer/python/konva_canvas_template.py: max CCN 2
+
+8,1,60,1,8,"__init__@6-13@Part3/template_canvas_renderer/python/konva_canvas_template.py","Part3/template_canvas_renderer/python/konva_canvas_template.py","__init__","__init__( self )",6,13
+15,1,76,7,15,"render_canvas@16-30@Part3/template_canvas_renderer/python/konva_canvas_template.py","Part3/template_canvas_renderer/python/konva_canvas_template.py","render_canvas","render_canvas( self , width : int , height : int , zoom : float , dpi : float , bg_uri : str , elements : Optional [ List [ str ] ] , )",16,30
+3,1,25,3,3,"initialize_stage@33-35@Part3/template_canvas_renderer/python/konva_canvas_template.py","Part3/template_canvas_renderer/python/konva_canvas_template.py","initialize_stage","initialize_stage( self , width : int , height : int )",33,35
+2,1,22,3,2,"calculate_viewport_scale@38-39@Part3/template_canvas_renderer/python/konva_canvas_template.py","Part3/template_canvas_renderer/python/konva_canvas_template.py","calculate_viewport_scale","calculate_viewport_scale( self , zoom : float , dpi : float )",38,39
+2,1,16,2,2,"render_background@42-43@Part3/template_canvas_renderer/python/konva_canvas_template.py","Part3/template_canvas_renderer/python/konva_canvas_template.py","render_background","render_background( self , bg_uri : str )",42,43
+2,2,30,2,2,"render_elements@46-47@Part3/template_canvas_renderer/python/konva_canvas_template.py","Part3/template_canvas_renderer/python/konva_canvas_template.py","render_elements","render_elements( self , elements : Optional [ List [ str ] ] )",46,47
+2,1,8,1,2,"render_overlay@51-52@Part3/template_canvas_renderer/python/konva_canvas_template.py","Part3/template_canvas_renderer/python/konva_canvas_template.py","render_overlay","render_overlay( self )",51,52
+2,1,8,1,2,"on_render_complete_hook@55-56@Part3/template_canvas_renderer/python/konva_canvas_template.py","Part3/template_canvas_renderer/python/konva_canvas_template.py","on_render_complete_hook","on_render_complete_hook( self )",55,56
+2,1,12,1,2,"render_overlay@60-61@Part3/template_canvas_renderer/python/konva_canvas_template.py","Part3/template_canvas_renderer/python/konva_canvas_template.py","render_overlay","render_overlay( self )",60,61
+2,1,12,1,2,"render_overlay@65-66@Part3/template_canvas_renderer/python/konva_canvas_template.py","Part3/template_canvas_renderer/python/konva_canvas_template.py","render_overlay","render_overlay( self )",65,66
+2,1,12,1,2,"on_render_complete_hook@68-69@Part3/template_canvas_renderer/python/konva_canvas_template.py","Part3/template_canvas_renderer/python/konva_canvas_template.py","on_render_complete_hook","on_render_complete_hook( self )",68,69
+
+Template Method / JavaScript / Part3/template_canvas_renderer/javascript/konvaCanvasTemplate.js: max CCN 2
+
+9,1,49,0,9,"constructor@2-10@Part3/template_canvas_renderer/javascript/konvaCanvasTemplate.js","Part3/template_canvas_renderer/javascript/konvaCanvasTemplate.js","constructor","constructor ( )",2,10
+8,1,62,6,8,"renderCanvas@13-20@Part3/template_canvas_renderer/javascript/konvaCanvasTemplate.js","Part3/template_canvas_renderer/javascript/konvaCanvasTemplate.js","renderCanvas","renderCanvas ( width , height , zoom , dpi , bgUri , elements )",13,20
+4,1,19,2,4,"initializeStage@23-26@Part3/template_canvas_renderer/javascript/konvaCanvasTemplate.js","Part3/template_canvas_renderer/javascript/konvaCanvasTemplate.js","initializeStage","initializeStage ( width , height )",23,26
+3,1,15,2,3,"calculateViewportScale@29-31@Part3/template_canvas_renderer/javascript/konvaCanvasTemplate.js","Part3/template_canvas_renderer/javascript/konvaCanvasTemplate.js","calculateViewportScale","calculateViewportScale ( zoom , dpi )",29,31
+3,1,11,1,3,"renderBackground@34-36@Part3/template_canvas_renderer/javascript/konvaCanvasTemplate.js","Part3/template_canvas_renderer/javascript/konvaCanvasTemplate.js","renderBackground","renderBackground ( bgUri )",34,36
+3,2,24,1,3,"renderElements@39-41@Part3/template_canvas_renderer/javascript/konvaCanvasTemplate.js","Part3/template_canvas_renderer/javascript/konvaCanvasTemplate.js","renderElements","renderElements ( elements )",39,41
+3,1,11,0,3,"renderOverlay@44-46@Part3/template_canvas_renderer/javascript/konvaCanvasTemplate.js","Part3/template_canvas_renderer/javascript/konvaCanvasTemplate.js","renderOverlay","renderOverlay ( )",44,46
+2,1,4,0,3,"onRenderCompleteHook@49-51@Part3/template_canvas_renderer/javascript/konvaCanvasTemplate.js","Part3/template_canvas_renderer/javascript/konvaCanvasTemplate.js","onRenderCompleteHook","onRenderCompleteHook ( )",49,51
+3,1,10,0,3,"renderOverlay@55-57@Part3/template_canvas_renderer/javascript/konvaCanvasTemplate.js","Part3/template_canvas_renderer/javascript/konvaCanvasTemplate.js","renderOverlay","renderOverlay ( )",55,57
+3,1,10,0,3,"renderOverlay@61-63@Part3/template_canvas_renderer/javascript/konvaCanvasTemplate.js","Part3/template_canvas_renderer/javascript/konvaCanvasTemplate.js","renderOverlay","renderOverlay ( )",61,63
+3,1,10,0,3,"onRenderCompleteHook@65-67@Part3/template_canvas_renderer/javascript/konvaCanvasTemplate.js","Part3/template_canvas_renderer/javascript/konvaCanvasTemplate.js","onRenderCompleteHook","onRenderCompleteHook ( )",65,67
+
+Template Method / C++ / Part3/template_canvas_renderer/cpp/konva_canvas_template.cpp;Part3/template_canvas_renderer/cpp/konva_canvas_template.hpp: max CCN 1
+
+4,1,24,2,4,"KonvaCanvasTemplate::initializeStage@3-6@Part3/template_canvas_renderer/cpp/konva_canvas_template.cpp","Part3/template_canvas_renderer/cpp/konva_canvas_template.cpp","KonvaCanvasTemplate::initializeStage","KonvaCanvasTemplate::initializeStage( int width , int height)",3,6
+3,1,20,2,3,"KonvaCanvasTemplate::calculateViewportScale@8-10@Part3/template_canvas_renderer/cpp/konva_canvas_template.cpp","Part3/template_canvas_renderer/cpp/konva_canvas_template.cpp","KonvaCanvasTemplate::calculateViewportScale","KonvaCanvasTemplate::calculateViewportScale( double zoom , double dpi)",8,10
+3,1,19,1,3,"KonvaCanvasTemplate::renderBackground@12-14@Part3/template_canvas_renderer/cpp/konva_canvas_template.cpp","Part3/template_canvas_renderer/cpp/konva_canvas_template.cpp","KonvaCanvasTemplate::renderBackground","KonvaCanvasTemplate::renderBackground( const std :: string & bgUri)",12,14
+3,1,24,1,3,"KonvaCanvasTemplate::renderElements@16-18@Part3/template_canvas_renderer/cpp/konva_canvas_template.cpp","Part3/template_canvas_renderer/cpp/konva_canvas_template.cpp","KonvaCanvasTemplate::renderElements","KonvaCanvasTemplate::renderElements( const std :: vector<std::string> & elements)",16,18
+2,1,7,0,3,"KonvaCanvasTemplate::onRenderCompleteHook@20-22@Part3/template_canvas_renderer/cpp/konva_canvas_template.cpp","Part3/template_canvas_renderer/cpp/konva_canvas_template.cpp","KonvaCanvasTemplate::onRenderCompleteHook","KonvaCanvasTemplate::onRenderCompleteHook()",20,22
+15,1,69,6,15,"KonvaCanvasTemplate::renderCanvas@24-38@Part3/template_canvas_renderer/cpp/konva_canvas_template.cpp","Part3/template_canvas_renderer/cpp/konva_canvas_template.cpp","KonvaCanvasTemplate::renderCanvas","KonvaCanvasTemplate::renderCanvas( int width , int height , double zoom , double dpi , const std :: string & bgUri , const std :: vector<std::string> & elements)",24,38
+1,1,11,0,1,"KonvaCanvasTemplate::getStageWidth@40-40@Part3/template_canvas_renderer/cpp/konva_canvas_template.cpp","Part3/template_canvas_renderer/cpp/konva_canvas_template.cpp","KonvaCanvasTemplate::getStageWidth","KonvaCanvasTemplate::getStageWidth() const",40,40
+1,1,11,0,1,"KonvaCanvasTemplate::getStageHeight@41-41@Part3/template_canvas_renderer/cpp/konva_canvas_template.cpp","Part3/template_canvas_renderer/cpp/konva_canvas_template.cpp","KonvaCanvasTemplate::getStageHeight","KonvaCanvasTemplate::getStageHeight() const",41,41
+1,1,11,0,1,"KonvaCanvasTemplate::getEffectiveScale@42-42@Part3/template_canvas_renderer/cpp/konva_canvas_template.cpp","Part3/template_canvas_renderer/cpp/konva_canvas_template.cpp","KonvaCanvasTemplate::getEffectiveScale","KonvaCanvasTemplate::getEffectiveScale() const",42,42
+1,1,11,0,1,"KonvaCanvasTemplate::getBackgroundImage@43-43@Part3/template_canvas_renderer/cpp/konva_canvas_template.cpp","Part3/template_canvas_renderer/cpp/konva_canvas_template.cpp","KonvaCanvasTemplate::getBackgroundImage","KonvaCanvasTemplate::getBackgroundImage() const",43,43
+1,1,11,0,1,"KonvaCanvasTemplate::getRenderedElements@44-44@Part3/template_canvas_renderer/cpp/konva_canvas_template.cpp","Part3/template_canvas_renderer/cpp/konva_canvas_template.cpp","KonvaCanvasTemplate::getRenderedElements","KonvaCanvasTemplate::getRenderedElements() const",44,44
+1,1,11,0,1,"KonvaCanvasTemplate::getOverlayType@45-45@Part3/template_canvas_renderer/cpp/konva_canvas_template.cpp","Part3/template_canvas_renderer/cpp/konva_canvas_template.cpp","KonvaCanvasTemplate::getOverlayType","KonvaCanvasTemplate::getOverlayType() const",45,45
+1,1,11,0,1,"KonvaCanvasTemplate::isSnapshotRecorded@46-46@Part3/template_canvas_renderer/cpp/konva_canvas_template.cpp","Part3/template_canvas_renderer/cpp/konva_canvas_template.cpp","KonvaCanvasTemplate::isSnapshotRecorded","KonvaCanvasTemplate::isSnapshotRecorded() const",46,46
+3,1,13,0,3,"KonvaViewer::renderOverlay@48-50@Part3/template_canvas_renderer/cpp/konva_canvas_template.cpp","Part3/template_canvas_renderer/cpp/konva_canvas_template.cpp","KonvaViewer::renderOverlay","KonvaViewer::renderOverlay()",48,50
+3,1,13,0,3,"KonvaEditor::renderOverlay@52-54@Part3/template_canvas_renderer/cpp/konva_canvas_template.cpp","Part3/template_canvas_renderer/cpp/konva_canvas_template.cpp","KonvaEditor::renderOverlay","KonvaEditor::renderOverlay()",52,54
+3,1,13,0,3,"KonvaEditor::onRenderCompleteHook@56-58@Part3/template_canvas_renderer/cpp/konva_canvas_template.cpp","Part3/template_canvas_renderer/cpp/konva_canvas_template.cpp","KonvaEditor::onRenderCompleteHook","KonvaEditor::onRenderCompleteHook()",56,58

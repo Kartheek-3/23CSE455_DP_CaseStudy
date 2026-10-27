@@ -1,0 +1,29 @@
+@startuml A5
+!pragma layout smetana
+title A5 Template Method: AbstractOrderingVisitor
+
+abstract class AbstractOrderingVisitor <<AbstractClass>> {
+  #orderChildrenTestDescriptors(...)
+  #{abstract} shouldNonMatchingDescriptorsComeBeforeOrderedOnes() : boolean
+}
+class ClassOrderingVisitor <<ConcreteClass>> {
+  #shouldNonMatchingDescriptorsComeBeforeOrderedOnes() : boolean
+}
+class MethodOrderingVisitor <<ConcreteClass>> {
+  #shouldNonMatchingDescriptorsComeBeforeOrderedOnes() : boolean
+}
+
+ClassOrderingVisitor --|> AbstractOrderingVisitor
+MethodOrderingVisitor --|> AbstractOrderingVisitor
+AbstractOrderingVisitor ..> AbstractOrderingVisitor : template calls hook
+' aligned-with-record
+legend right
+  <b>Counted participants</b> (record in the dataset)
+  AbstractClass: AbstractOrderingVisitor
+  TemplateMethod: AbstractOrderingVisitor#orderChildrenTestDescriptors
+  PrimitiveOperation: AbstractOrderingVisitor#shouldNonMatchingDescriptorsComeBeforeOrderedOnes
+  ConcreteClass: ClassOrderingVisitor
+  ConcreteClass: MethodOrderingVisitor
+  Grey classes: real, shown for context, not counted
+endlegend
+@enduml

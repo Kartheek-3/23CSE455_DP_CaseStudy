@@ -1,0 +1,296 @@
+From 8e2af082067bb83aab7e40caf2b7a463fef8b643 Mon Sep 17 00:00:00 2001
+From: Team B4 <team-b4@local.invalid>
+Date: Sun, 11 Oct 2026 00:52:15 +0530
+Subject: [PATCH] CH03 add digital contract state management
+
+---
+ .../Contracts/AbstractContractState.php       | 23 +++++++
+ app/Domain/Contracts/ContractState.php        | 14 +++++
+ app/Domain/Contracts/DigitalContract.php      | 62 +++++++++++++++++++
+ app/Domain/Contracts/DraftState.php           | 16 +++++
+ app/Domain/Contracts/ExpiredState.php         | 11 ++++
+ app/Domain/Contracts/SentState.php            | 21 +++++++
+ app/Domain/Contracts/SignedState.php          | 11 ++++
+ app/Models/DigitalContract.php                | 29 +++++++++
+ ..._000000_create_digital_contracts_table.php | 26 ++++++++
+ 9 files changed, 213 insertions(+)
+ create mode 100644 app/Domain/Contracts/AbstractContractState.php
+ create mode 100644 app/Domain/Contracts/ContractState.php
+ create mode 100644 app/Domain/Contracts/DigitalContract.php
+ create mode 100644 app/Domain/Contracts/DraftState.php
+ create mode 100644 app/Domain/Contracts/ExpiredState.php
+ create mode 100644 app/Domain/Contracts/SentState.php
+ create mode 100644 app/Domain/Contracts/SignedState.php
+ create mode 100644 app/Models/DigitalContract.php
+ create mode 100644 database/migrations/2026_10_11_000000_create_digital_contracts_table.php
+
+diff --git a/app/Domain/Contracts/AbstractContractState.php b/app/Domain/Contracts/AbstractContractState.php
+new file mode 100644
+index 0000000..6ef753a
+--- /dev/null
++++ b/app/Domain/Contracts/AbstractContractState.php
+@@ -0,0 +1,23 @@
++<?php
++
++namespace App\Domain\Contracts;
++
++use DomainException;
++
++abstract class AbstractContractState implements ContractState
++{
++    public function send(DigitalContract $contract): void
++    {
++        throw new DomainException("Cannot send a contract in {$this->name()} state.");
++    }
++
++    public function sign(DigitalContract $contract): void
++    {
++        throw new DomainException("Cannot sign a contract in {$this->name()} state.");
++    }
++
++    public function expire(DigitalContract $contract): void
++    {
++        throw new DomainException("Cannot expire a contract in {$this->name()} state.");
++    }
++}
+diff --git a/app/Domain/Contracts/ContractState.php b/app/Domain/Contracts/ContractState.php
+new file mode 100644
+index 0000000..cb745e5
+--- /dev/null
++++ b/app/Domain/Contracts/ContractState.php
+@@ -0,0 +1,14 @@
++<?php
++
++namespace App\Domain\Contracts;
++
++interface ContractState
++{
++    public function name(): string;
++
++    public function send(DigitalContract $contract): void;
++
++    public function sign(DigitalContract $contract): void;
++
++    public function expire(DigitalContract $contract): void;
++}
+diff --git a/app/Domain/Contracts/DigitalContract.php b/app/Domain/Contracts/DigitalContract.php
+new file mode 100644
+index 0000000..c7a3ed7
+--- /dev/null
++++ b/app/Domain/Contracts/DigitalContract.php
+@@ -0,0 +1,62 @@
++<?php
++
++namespace App\Domain\Contracts;
++
++use InvalidArgumentException;
++
++final class DigitalContract
++{
++    private ContractState $state;
++
++    private ?string $signatureHash = null;
++
++    public function __construct(private readonly string $documentHash)
++    {
++        self::assertSha256($documentHash, 'Document');
++        $this->state = new DraftState();
++    }
++
++    public function state(): string
++    {
++        return $this->state->name();
++    }
++
++    public function documentHash(): string
++    {
++        return $this->documentHash;
++    }
++
++    public function signatureHash(): ?string
++    {
++        return $this->signatureHash;
++    }
++
++    public function send(): void
++    {
++        $this->state->send($this);
++    }
++
++    public function sign(string $signatureHash): void
++    {
++        self::assertSha256($signatureHash, 'Signature');
++        $this->state->sign($this);
++        $this->signatureHash = $signatureHash;
++    }
++
++    public function expire(): void
++    {
++        $this->state->expire($this);
++    }
++
++    public function transitionTo(ContractState $state): void
++    {
++        $this->state = $state;
++    }
++
++    private static function assertSha256(string $value, string $label): void
++    {
++        if (! preg_match('/^[a-f0-9]{64}$/', $value)) {
++            throw new InvalidArgumentException("{$label} hash must be lowercase SHA-256.");
++        }
++    }
++}
+diff --git a/app/Domain/Contracts/DraftState.php b/app/Domain/Contracts/DraftState.php
+new file mode 100644
+index 0000000..9815dbb
+--- /dev/null
++++ b/app/Domain/Contracts/DraftState.php
+@@ -0,0 +1,16 @@
++<?php
++
++namespace App\Domain\Contracts;
++
++final class DraftState extends AbstractContractState
++{
++    public function name(): string
++    {
++        return 'draft';
++    }
++
++    public function send(DigitalContract $contract): void
++    {
++        $contract->transitionTo(new SentState());
++    }
++}
+diff --git a/app/Domain/Contracts/ExpiredState.php b/app/Domain/Contracts/ExpiredState.php
+new file mode 100644
+index 0000000..42ef22e
+--- /dev/null
++++ b/app/Domain/Contracts/ExpiredState.php
+@@ -0,0 +1,11 @@
++<?php
++
++namespace App\Domain\Contracts;
++
++final class ExpiredState extends AbstractContractState
++{
++    public function name(): string
++    {
++        return 'expired';
++    }
++}
+diff --git a/app/Domain/Contracts/SentState.php b/app/Domain/Contracts/SentState.php
+new file mode 100644
+index 0000000..df2a9e5
+--- /dev/null
++++ b/app/Domain/Contracts/SentState.php
+@@ -0,0 +1,21 @@
++<?php
++
++namespace App\Domain\Contracts;
++
++final class SentState extends AbstractContractState
++{
++    public function name(): string
++    {
++        return 'sent';
++    }
++
++    public function sign(DigitalContract $contract): void
++    {
++        $contract->transitionTo(new SignedState());
++    }
++
++    public function expire(DigitalContract $contract): void
++    {
++        $contract->transitionTo(new ExpiredState());
++    }
++}
+diff --git a/app/Domain/Contracts/SignedState.php b/app/Domain/Contracts/SignedState.php
+new file mode 100644
+index 0000000..73f2a0d
+--- /dev/null
++++ b/app/Domain/Contracts/SignedState.php
+@@ -0,0 +1,11 @@
++<?php
++
++namespace App\Domain\Contracts;
++
++final class SignedState extends AbstractContractState
++{
++    public function name(): string
++    {
++        return 'signed';
++    }
++}
+diff --git a/app/Models/DigitalContract.php b/app/Models/DigitalContract.php
+new file mode 100644
+index 0000000..e302f2a
+--- /dev/null
++++ b/app/Models/DigitalContract.php
+@@ -0,0 +1,29 @@
++<?php
++
++namespace App\Models;
++
++use Illuminate\Database\Eloquent\Factories\HasFactory;
++use Illuminate\Database\Eloquent\Model;
++
++class DigitalContract extends Model
++{
++    use HasFactory;
++
++    protected $fillable = [
++        'property_id',
++        'tenant_id',
++        'document_hash',
++        'signature_hash',
++        'status',
++    ];
++
++    public function property()
++    {
++        return $this->belongsTo(Property::class);
++    }
++
++    public function tenant()
++    {
++        return $this->belongsTo(Tenant::class);
++    }
++}
+diff --git a/database/migrations/2026_10_11_000000_create_digital_contracts_table.php b/database/migrations/2026_10_11_000000_create_digital_contracts_table.php
+new file mode 100644
+index 0000000..8870003
+--- /dev/null
++++ b/database/migrations/2026_10_11_000000_create_digital_contracts_table.php
+@@ -0,0 +1,26 @@
++<?php
++
++use Illuminate\Database\Migrations\Migration;
++use Illuminate\Database\Schema\Blueprint;
++use Illuminate\Support\Facades\Schema;
++
++return new class extends Migration
++{
++    public function up(): void
++    {
++        Schema::create('digital_contracts', function (Blueprint $table) {
++            $table->id();
++            $table->foreignId('property_id')->constrained()->cascadeOnDelete();
++            $table->foreignId('tenant_id')->constrained()->cascadeOnDelete();
++            $table->char('document_hash', 64)->unique();
++            $table->char('signature_hash', 64)->nullable();
++            $table->string('status', 20)->default('draft');
++            $table->timestamps();
++        });
++    }
++
++    public function down(): void
++    {
++        Schema::dropIfExists('digital_contracts');
++    }
++};
+-- 
+2.43.0
+

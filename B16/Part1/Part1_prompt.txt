@@ -1,0 +1,150 @@
+All Part 1 prompts, exactly as sent, in the order they were run.
+Each prompt's raw output is the file named in its header (paths relative to the team folder).
+
+=== Part 1 - pattern discovery: prompt 1: map files and flow per area
+=== prompt: Part1/llm/prompt_1_files.txt | output: Part1/llm/output_1_files.md | model: Claude Opus 5.5 (claude.ai, Claude Code on the web) - 2026-10-10
+
+I'm doing a design patterns case study on JUnit 6.1.3, commit f59f60d:
+https://github.com/junit-team/junit-framework/tree/f59f60d2cebdf2224235d81f781b1f310cbc8138
+
+I only study production code (src/main/java) in these four modules:
+junit-platform-engine, junit-platform-launcher, junit-jupiter-api, junit-jupiter-engine.
+
+My case study has four areas:
+A. Test discovery and the test descriptor hierarchy
+B. Test engines and the execution lifecycle
+C. Execution listeners and result reporting
+D. Jupiter extensions and resource management
+
+For each area tell the files that are related to that area with full file path and also how does it interact with the overall structure. Also how does tests flow in this flow.
+
+=== Part 1 - pattern discovery: prompt 2: simple explanation of the Area A flow
+=== prompt: Part1/llm/prompt_2_areaA_flow.txt | output: Part1/llm/output_2_areaA_flow.md | model: Claude Opus 5.5 (claude.ai, Claude Code on the web) - 2026-10-10
+
+Now using the files discovered in A could you explain the flow a bit more easily for that part only Just answer in Chat
+
+=== Part 1 - pattern discovery: prompt 3: patterns in Area A
+=== prompt: Part1/llm/prompt_3_areaA_patterns.txt | output: Part1/llm/output_3_areaA_patterns.md | model: Claude Opus 5.5 (claude.ai, Claude Code on the web) - 2026-10-10
+
+Using the Area A files from your previous answer (JUnit 6.1.3, commit f59f60d), can you check which design patterns are actually used in test discovery and the test descriptor hierarchy?
+
+Focus on TestDescriptor, AbstractTestDescriptor, EngineDescriptor, the Jupiter descriptors, Filter, CompositeFilter, PostDiscoveryFilter, TagFilter, and EngineDiscoveryOrchestrator.
+
+Look into Composite, Strategy, Template Method, Observer, and Adapter. For each pattern you find, explain how it is used, map the roles to the actual classes or methods, and include the file path, line numbers, and a small code snippet as evidence.
+
+Give each pattern a verdict (confirmed, uncertain, or rejected) with a brief reason. Also mention any classes that might look like they use a pattern based on their names but don't actually implement it, and explain why.
+
+=== Part 1 - pattern discovery: prompt 4: simple explanation of the Area B flow
+=== prompt: Part1/llm/prompt_4_areaB_flow.txt | output: Part1/llm/output_4_areaB_flow.md | model: Claude Opus 5.5 (claude.ai, Claude Code on the web) - 2026-10-10
+
+Now do the same for Area B (test engines and execution lifecycle) using the files
+from your first answer. Explain in simple steps what happens when the discovered
+tests are executed: from the launcher, to the engine, down the descriptor tree,
+until each test finishes. Use a small example test class. Just answer in chat.
+
+=== Part 1 - pattern discovery: prompt 4b: follow-up challenging step 7 of prompt 4
+=== prompt: Part1/llm/prompt_4b_correction.txt | output: Part1/llm/output_4b_correction.md | model: Claude Opus 5.5 (claude.ai, Claude Code on the web) - 2026-10-10
+
+In step 7 you said no instance is created for divides(). But NodeTestTask calls prepare() before checkWhetherSkipped(), and TestMethodTestDescriptor.prepare() creates the test instance. Is your step 7 correct?
+
+=== Part 1 - pattern discovery: prompt 5: patterns in Area B
+=== prompt: Part1/llm/prompt_5_areaB_patterns.txt | output: Part1/llm/output_5_areaB_patterns.md | model: Claude Opus 5.5 (claude.ai, Claude Code on the web) - 2026-10-10
+
+Using the Area B files (JUnit 6.1.3, commit `f59f60d`), can you look into which design patterns are actually used in the test engines and execution lifecycle?
+
+Focus on `TestEngine`, `HierarchicalTestEngine`, `JupiterTestEngine`, `Node`, `NodeTestTask`, `HierarchicalTestExecutor`, `HierarchicalTestExecutorService` and its implementations (`SameThread`, `ForkJoinPool`, and `WorkerThreadPool`), `ParallelExecutionConfigurationStrategy`, `EngineExecutionOrchestrator`, `Launcher`, `DelegatingLauncher`, and `InterceptingLauncher`.
+
+Check Composite, Strategy, Template Method, Observer, and Adapter. You can also mention patterns like Decorator or Factory Method if there's strong evidence for them.
+
+For each pattern, explain where and how it's used, map the roles to the actual classes or methods, and include the file path, line numbers, and a small code snippet as evidence. Give each pattern a verdict (confirmed, uncertain, or rejected) with a short explanation.
+
+Also point out any classes that might look like they implement a pattern based on their names but don't actually follow it, and explain why.
+
+Don't repeat patterns already covered in Area A unless the same classes play a different role in Area B.
+
+=== Part 1 - pattern discovery: prompt 6: simple explanation of the Area C flow
+=== prompt: Part1/llm/prompt_6_areaC_flow.txt | output: Part1/llm/output_6_areaC_flow.md | model: Claude Opus 5.5 (claude.ai, Claude Code on the web) - 2026-10-10
+
+Now do the same for Area C (execution listeners and result reporting) using the files
+from your first answer. Explain in simple steps how the result of a test travels from
+the engine to the IDE: who creates the events, how they reach each listener, and how
+reports and summaries are built. Use a small example with one passing and one failing
+test. Just answer in chat.
+
+=== Part 1 - pattern discovery: prompt 7: patterns in Area C
+=== prompt: Part1/llm/prompt_7_areaC_patterns.txt | output: Part1/llm/output_7_areaC_patterns.md | model: Claude Opus 5.5 (claude.ai, Claude Code on the web) - 2026-10-10
+
+Using the Area C files (JUnit 6.1.3, commit f59f60d), check which design patterns are
+actually used in execution listeners and result reporting.
+
+Focus on TestExecutionListener, EngineExecutionListener, CompositeTestExecutionListener,
+CompositeEngineExecutionListener, ListenerRegistry, LauncherListenerRegistry,
+SummaryGeneratingListener, TestExecutionSummary / MutableTestExecutionSummary,
+LoggingListener, UniqueIdTrackingListener, StreamInterceptingTestExecutionListener,
+LauncherSessionListener, FlightRecordingExecutionListener, ReportEntry / TestReporter.
+
+Check Composite, Strategy, Template Method, Observer and Adapter (others only with strong
+evidence). For each pattern: explain how it is used, map the roles to the actual classes
+or methods, give the file path, line numbers and a small code snippet, and a verdict
+(confirmed, uncertain or rejected) with a reason. Also list classes that look like a
+pattern by name but are not, and why.
+
+These were already counted in Areas A and B, so do not count them again unless the same
+classes play a new role: the discovery listeners (LauncherDiscoveryListener), the
+execution events pushed by NodeTestTask to EngineExecutionListener, ExecutionListenerAdapter,
+and the engine-listener wrappers (StackTracePruning / OutcomeDelaying / MemoryCleanup).
+
+=== Part 1 - pattern discovery: prompt 8: simple explanation of the Area D flow
+=== prompt: Part1/llm/prompt_8_areaD_flow.txt | output: Part1/llm/output_8_areaD_flow.md | model: Claude Opus 5.5 (claude.ai, Claude Code on the web) - 2026-10-10
+
+Now do the same for Area D (Jupiter extensions and resource management) using the files
+from your first answer. Explain in simple steps how an extension is registered, when its
+callbacks run during a test, how a parameter like @TempDir gets resolved, and how
+resources are cleaned up at the end. Use a small example test class with one custom
+extension and a @TempDir parameter. Just answer in chat.
+
+=== Part 1 - pattern discovery: prompt 9: patterns in Area D
+=== prompt: Part1/llm/prompt_9_areaD_patterns.txt | output: Part1/llm/output_9_areaD_patterns.md | model: Claude Opus 5.5 (claude.ai, Claude Code on the web) - 2026-10-10
+
+Using the Area D files (JUnit 6.1.3, commit f59f60d), check which design patterns are
+actually used in Jupiter extensions and resource management.
+
+Focus on Extension and the callback interfaces (BeforeEachCallback, AfterEachCallback, ...),
+MutableExtensionRegistry, CallbackSupport, ParameterResolver and ParameterResolutionUtils,
+ExecutionCondition and ConditionEvaluator, TestWatcher, InvocationInterceptor and
+InvocationInterceptorChain, TimeoutExtension with SameThreadTimeoutInvocation /
+SeparateThreadTimeoutInvocation, ExtensionContext and its Store, NamespaceAwareStore,
+NamespacedHierarchicalStore, AbstractExtensionContext, TempDirectory / TempDirFactory /
+CleanupMode, AutoCloseExtension, and BeforeEachMethodAdapter / AfterEachMethodAdapter.
+
+Check Composite, Strategy, Template Method, Observer and Adapter (others such as Decorator
+or Chain of Responsibility only with strong evidence). For each pattern: explain how it is
+used, map the roles to the actual classes or methods, give the file path, line numbers and
+a small code snippet, and a verdict (confirmed, uncertain or rejected) with a reason. Also
+list classes that look like a pattern by name but are not, and why.
+
+These were already counted in Areas A to C, so do not count them again unless the same
+classes play a new role: the JupiterTestDescriptor skeleton methods, the
+DefaultClassDescriptor / DefaultMethodDescriptor wrappers, DefaultTestReporter, the
+no-op listeners (NOOP), and all listener classes.
+
+=== Part 1 - pattern discovery: UML (prompt 10: PlantUML class diagram per confirmed instance)
+=== prompt: Part1/llm/prompt_10_uml.txt | output: Part1/llm/output_10_uml.md | model: Claude Opus 5.5 (claude.ai, Claude Code on the web) - 2026-10-10
+
+For each confirmed pattern instance below, write one PlantUML class diagram
+(one @startuml ... @enduml block each). Use the real class/interface names from
+JUnit 6.1.3, show each class's pattern role as a stereotype (e.g. <<Component>>,
+<<ConcreteStrategy>>), use the correct arrow types (implements, extends, holds,
+calls), and include only the participants listed. Title each diagram with the
+instance id and name. Use "!pragma layout smetana" in each block.
+
+[paste the 4 tables from Part1/notes.md here: Area A, B, C, D]
+# NOTE (B16): the tables were not pasted - the placeholder line above was sent as-is, so the model used its own instance ids. Mapping to our ids is in Part1/uml/README.md.
+
+=== Part 1 - pattern discovery: architecture (prompt 11: PlantUML component diagram of one test run)
+=== prompt: Part1/llm/prompt_11_architecture.txt | output: Part1/llm/output_11_architecture.md | model: Claude Opus 5.5 (claude.ai, Claude Code on the web) - 2026-10-10
+
+Write one PlantUML component diagram of the JUnit 6.1.3 architecture for my report:
+the 4 modules (platform-launcher, platform-engine, jupiter-api, jupiter-engine), their
+main components, and numbered arrows for one test run (request -> discovery -> filter ->
+execution -> events -> listeners). Use "!pragma layout smetana".

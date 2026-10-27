@@ -1,0 +1,33 @@
+@startuml
+interface PricingStrategy
+class BasePricing
+class DynamicPricing
+class PricingService
+PricingStrategy <|.. BasePricing
+PricingStrategy <|.. DynamicPricing
+PricingService --> PricingStrategy
+
+interface PropertySpecification
+class AndSpecification
+class CitySpecification
+class RentRangeSpecification
+class AmenitySpecification
+PropertySpecification <|.. AndSpecification
+PropertySpecification <|.. CitySpecification
+PropertySpecification <|.. RentRangeSpecification
+PropertySpecification <|.. AmenitySpecification
+AndSpecification o--> PropertySpecification
+
+interface ContractState
+class DraftState
+class SentState
+class SignedState
+class ExpiredState
+class DigitalContract
+ContractState <|.. DraftState
+ContractState <|.. SentState
+ContractState <|.. SignedState
+ContractState <|.. ExpiredState
+DigitalContract --> ContractState
+@enduml
+

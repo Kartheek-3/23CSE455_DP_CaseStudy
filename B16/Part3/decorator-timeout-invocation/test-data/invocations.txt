@@ -1,0 +1,5 @@
+# <test> <duration-ms> PASS|FAIL
+add 12 PASS
+div 250 PASS
+sub 30 FAIL
+slowFail 180 FAIL

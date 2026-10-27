@@ -1,0 +1,18 @@
+# One engine, its test classes and their test methods. Two spaces per level.
+#   engine <name>
+#   class  <name>
+#   test   <name> [@tag ...]
+engine junit-jupiter
+  class CalcTests
+    test add
+    test sub @slow
+    test div @slow @flaky
+  class StringTests
+    test concat
+    test upper @flaky
+  class SlowTests
+    test bigSum @slow
+    class SlowTests$Huge
+      test hugeSum @slow
+    test bigProduct @slow
+  class EmptyTests

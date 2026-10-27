@@ -1,0 +1,79 @@
+{
+  "Java": {
+    "production_files": [
+      "controller/java/Main.java"
+    ],
+    "source_loc": 66,
+    "max_function_cc": 9,
+    "functions_cc": {
+      "addMembership": 1,
+      "add": 1,
+      "enqueue": 1,
+      "create": 9,
+      "absent": 3,
+      "error": 1,
+      "Trip#constructor": 1,
+      "TripMember#constructor": 1,
+      "Account#constructor": 1,
+      "TripCreationController#constructor": 1
+    }
+  },
+  "Python": {
+    "production_files": [
+      "controller/python/main.py"
+    ],
+    "source_loc": 59,
+    "max_function_cc": 10,
+    "functions_cc": {
+      "Account.__init__": 1,
+      "Account.add_membership": 1,
+      "TripStore.__init__": 1,
+      "TripStore.add": 1,
+      "CoverTaskQueue.__init__": 1,
+      "CoverTaskQueue.enqueue": 1,
+      "TripCreationController.__init__": 1,
+      "TripCreationController.create": 10
+    }
+  },
+  "JavaScript": {
+    "production_files": [
+      "controller/javascript/main.js"
+    ],
+    "source_loc": 55,
+    "max_function_cc": 9,
+    "functions_cc": {
+      "constructor": 1,
+      "constructor#2": 1,
+      "constructor#3": 1,
+      "addMembership": 1,
+      "constructor#4": 1,
+      "add": 1,
+      "constructor#5": 1,
+      "enqueue": 1,
+      "validGregorian": 9,
+      "constructor#6": 1,
+      "create": 9
+    }
+  },
+  "C++": {
+    "production_files": [
+      "controller/cpp/main.hpp",
+      "controller/cpp/main.cpp"
+    ],
+    "source_loc": 90,
+    "max_function_cc": 13,
+    "functions_cc": {
+      "Account::addMembership": 1,
+      "TripStore::add": 1,
+      "CoverTaskQueue::enqueue": 1,
+      "trim": 2,
+      "absent": 2,
+      "leap": 3,
+      "validGregorian": 13,
+      "error": 1,
+      "TripCreationController::create": 7,
+      "Account::Account#constructor": 1,
+      "TripCreationController::TripCreationController#constructor": 1
+    }
+  }
+}

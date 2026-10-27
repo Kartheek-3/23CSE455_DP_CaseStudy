@@ -1,0 +1,8 @@
+PATTERN/SUITE   : Observer_javascript
+RUNTIME/COMPILER: Node.js v24.18.0
+WORKDIR         : C:\Users\eswar\OneDrive\Documents\Visual Studio Code\23CSE455_DP_Submission\B12\Part3\Observer\javascript
+RUN COMMAND     : node test_observer.js
+PROGRAM OUTPUT  : OBSERVER_JS PASS 8/8
+TIME INCLUDES   : whole process wall time (runtime startup + program execution), after 1 unmeasured warm-up
+TIMING SAMPLES  : 5 measured runs (ms): 80.3264, 73.6222, 72.0894, 75.321, 82.8109
+MEDIAN_MS       : 75.321

@@ -1,0 +1,160 @@
+diff --git a/junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/SummaryGeneratingListener.java b/junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/SummaryGeneratingListener.java
+index 6bd2234..c580ec3 100644
+--- a/junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/SummaryGeneratingListener.java
++++ b/junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/SummaryGeneratingListener.java
+@@ -14,6 +14,7 @@ import static java.util.Objects.requireNonNull;
+ import static java.util.stream.Stream.concat;
+ import static org.apiguardian.api.API.Status.MAINTAINED;
+ 
++import java.util.concurrent.atomic.AtomicLong;
+ import java.util.stream.Stream;
+ 
+ import org.apiguardian.api.API;
+@@ -70,39 +71,21 @@ public class SummaryGeneratingListener implements TestExecutionListener {
+ 	@Override
+ 	public void dynamicTestRegistered(TestIdentifier testIdentifier) {
+ 		var summary = getMutableSummary();
+-		if (testIdentifier.isContainer()) {
+-			summary.containersFound.incrementAndGet();
+-		}
+-		if (testIdentifier.isTest()) {
+-			summary.testsFound.incrementAndGet();
+-		}
++		count(testIdentifier, summary.containersFound, summary.testsFound);
+ 	}
+ 
+ 	@Override
+ 	public void executionSkipped(TestIdentifier testIdentifier, String reason) {
+ 		var testPlan = requireNonNull(this.testPlan);
+-		// @formatter:off
+-		long skippedContainers = concat(Stream.of(testIdentifier), testPlan.getDescendants(testIdentifier).stream())
+-				.filter(TestIdentifier::isContainer)
+-				.count();
+-		long skippedTests = concat(Stream.of(testIdentifier), testPlan.getDescendants(testIdentifier).stream())
+-				.filter(TestIdentifier::isTest)
+-				.count();
+-		// @formatter:on
+ 		var summary = getMutableSummary();
+-		summary.containersSkipped.addAndGet(skippedContainers);
+-		summary.testsSkipped.addAndGet(skippedTests);
++		concat(Stream.of(testIdentifier), testPlan.getDescendants(testIdentifier).stream()) //
++				.forEach(identifier -> count(identifier, summary.containersSkipped, summary.testsSkipped));
+ 	}
+ 
+ 	@Override
+ 	public void executionStarted(TestIdentifier testIdentifier) {
+ 		var summary = getMutableSummary();
+-		if (testIdentifier.isContainer()) {
+-			summary.containersStarted.incrementAndGet();
+-		}
+-		if (testIdentifier.isTest()) {
+-			summary.testsStarted.incrementAndGet();
+-		}
++		count(testIdentifier, summary.containersStarted, summary.testsStarted);
+ 	}
+ 
+ 	@Override
+@@ -111,31 +94,12 @@ public class SummaryGeneratingListener implements TestExecutionListener {
+ 
+ 		switch (testExecutionResult.getStatus()) {
+ 
+-			case SUCCESSFUL -> {
+-				if (testIdentifier.isContainer()) {
+-					summary.containersSucceeded.incrementAndGet();
+-				}
+-				if (testIdentifier.isTest()) {
+-					summary.testsSucceeded.incrementAndGet();
+-				}
+-			}
++			case SUCCESSFUL -> count(testIdentifier, summary.containersSucceeded, summary.testsSucceeded);
+ 
+-			case ABORTED -> {
+-				if (testIdentifier.isContainer()) {
+-					summary.containersAborted.incrementAndGet();
+-				}
+-				if (testIdentifier.isTest()) {
+-					summary.testsAborted.incrementAndGet();
+-				}
+-			}
++			case ABORTED -> count(testIdentifier, summary.containersAborted, summary.testsAborted);
+ 
+ 			case FAILED -> {
+-				if (testIdentifier.isContainer()) {
+-					summary.containersFailed.incrementAndGet();
+-				}
+-				if (testIdentifier.isTest()) {
+-					summary.testsFailed.incrementAndGet();
+-				}
++				count(testIdentifier, summary.containersFailed, summary.testsFailed);
+ 				testExecutionResult.getThrowable().ifPresent(
+ 					throwable -> summary.addFailure(testIdentifier, throwable));
+ 			}
+@@ -145,4 +109,17 @@ public class SummaryGeneratingListener implements TestExecutionListener {
+ 		}
+ 	}
+ 
++	/**
++	 * Count the identifier as a container and/or a test; an identifier of type
++	 * {@code CONTAINER_AND_TEST} is counted as both.
++	 */
++	private static void count(TestIdentifier testIdentifier, AtomicLong containers, AtomicLong tests) {
++		if (testIdentifier.isContainer()) {
++			containers.incrementAndGet();
++		}
++		if (testIdentifier.isTest()) {
++			tests.incrementAndGet();
++		}
++	}
++
+ }
+diff --git a/platform-tests/src/test/java/org/junit/platform/launcher/listeners/SummaryGenerationTests.java b/platform-tests/src/test/java/org/junit/platform/launcher/listeners/SummaryGenerationTests.java
+index 055648b..a55675c 100644
+--- a/platform-tests/src/test/java/org/junit/platform/launcher/listeners/SummaryGenerationTests.java
++++ b/platform-tests/src/test/java/org/junit/platform/launcher/listeners/SummaryGenerationTests.java
+@@ -245,6 +245,46 @@ class SummaryGenerationTests {
+ 		assertThat(listener.getSummary().getFailures()).hasSize(numThreads);
+ 	}
+ 
++	@Test
++	void skippedContainerCountsDescendantsAndContainerAndTestCountsAsBoth() {
++		var container = new TestDescriptorStub(UniqueId.root("container", "c5"), "c5") {
++
++			@Override
++			public Type getType() {
++				return Type.CONTAINER;
++			}
++		};
++		var test = new TestDescriptorStub(container.getUniqueId().append("test", "t5"), "t5");
++		var both = new TestDescriptorStub(container.getUniqueId().append("template", "x5"), "x5") {
++
++			@Override
++			public Type getType() {
++				return Type.CONTAINER_AND_TEST;
++			}
++		};
++		container.addChild(test);
++		container.addChild(both);
++		var containerIdentifier = TestIdentifier.from(container);
++		testPlan.addInternal(containerIdentifier);
++		testPlan.addInternal(TestIdentifier.from(test));
++		testPlan.addInternal(TestIdentifier.from(both));
++
++		listener.testPlanExecutionStarted(testPlan);
++		var summary = listener.getSummary();
++		long containersFound = summary.getContainersFoundCount();
++		long testsFound = summary.getTestsFoundCount();
++
++		listener.executionSkipped(containerIdentifier, "skipped");
++		listener.dynamicTestRegistered(TestIdentifier.from(both));
++
++		assertAll("summary", //
++			() -> assertEquals(2, summary.getContainersSkippedCount(), "containers skipped"), //
++			() -> assertEquals(2, summary.getTestsSkippedCount(), "tests skipped"), //
++			() -> assertEquals(containersFound + 1, summary.getContainersFoundCount(), "containers found"), //
++			() -> assertEquals(testsFound + 1, summary.getTestsFoundCount(), "tests found") //
++		);
++	}
++
+ 	private TestIdentifier createTestIdentifier(String uniqueId) {
+ 		var identifier = TestIdentifier.from(new TestDescriptorStub(UniqueId.root("test", uniqueId), uniqueId));
+ 		testPlan.addInternal(identifier);

@@ -1,0 +1,11 @@
+$ (cd Part3/decorator-timeout-invocation/python) python3 -m unittest -v test_decorator
+test_decorators_stack_in_any_order (test_decorator.DecoratorTest.test_decorators_stack_in_any_order) ... ok
+test_invalid_input_is_rejected_with_expected_error (test_decorator.DecoratorTest.test_invalid_input_is_rejected_with_expected_error) ... ok
+test_report_matches_expected_output (test_decorator.DecoratorTest.test_report_matches_expected_output) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK
+[exit 0]
+result: 3/3 passed

@@ -1,0 +1,619 @@
+# MASTER INSTRUCTION: Misskey Part 2 — Implementation, Focused Testing, Git Commits and Evidence Generation
+
+## 1. Your role and objective
+
+You are the implementation engineer and evidence-generation agent for a Design Patterns case study based on the Misskey social networking application.
+
+You have already received context about the current Misskey codebase, its architecture, source directories, services, API endpoints, repositories, frontend components, design patterns and development environment.
+
+Use that context as your starting point. Consult the actual source code whenever you need to verify a method, class, file path, dependency, design pattern or implementation detail. Do not repeat an unnecessarily broad analysis of the entire repository.
+
+I will provide the feature requirement and its detailed description after this master instruction. You must implement the requirements I provide, not independently select or invent different features.
+
+Your responsibilities are to:
+
+1. Implement each requested change in the actual Misskey repository.
+2. Write and run focused CLI tests for the behaviour introduced or directly affected by that change.
+3. Commit each completed change separately.
+4. Save the actual code diffs, commit references and test results.
+5. Record the effects on design patterns and document the refactoring performed.
+6. Measure before/after source-code metrics using consistent rules.
+7. Generate and maintain the required pattern CSVs, diagrams and other coursework evidence.
+8. Save the exact prompts, supplied context, actual outputs and verification records associated with your work.
+9. Ensure the final `Part2/` directory contains the required deliverables in the structure specified below.
+
+The final result must be a working implementation accompanied by reproducible evidence. A plan, explanation or code snippet without changes to the actual repository does not satisfy the task.
+
+## 2. Initial instructions: prepare the workspace and wait for my requirement
+
+Before implementing any feature:
+
+1. Locate the existing Misskey repository and the team submission directory.
+2. Use the existing team folder `A1` and its `Part2` directory. Do not create the submission folder inside the Misskey source repository unless that is already the intended repository layout.
+3. Inspect `git status`, the current branch and the baseline commit SHA.
+4. Preserve all existing user modifications and uncommitted work. Never reset the repository, discard changes or overwrite unrelated files.
+5. Check for existing Part 2 deliverables. Reuse valid existing work instead of deleting or regenerating it blindly.
+6. Create the required directory structure and save this master instruction to `A1/Part2/Part2_prompt.text`.
+7. Record the initial baseline SHA and the relevant environment information.
+
+Do not implement a feature based on this master instruction alone.
+
+After preparing the workspace, acknowledge that you are ready and wait for my next message containing the actual feature requirement and requirement description.
+
+Do not ask me to repeat the repository architecture context already supplied to you.
+
+## 3. Change sequencing
+
+I will provide the feature requirements separately.
+
+- The first feature requirement is `Change1` / `CH01`.
+- The second feature requirement is `Change2` / `CH02`.
+- The third feature requirement is `Change3` / `CH03`.
+
+Follow the names and identifiers that I provide if I explicitly specify them.
+
+When I provide one feature requirement, implement only that change. Complete its focused tests, commit, measurements and supporting evidence before treating it as finished.
+
+Do not begin the next change until I provide its requirement.
+
+Do not assume that a previously discussed feature proposal is the final specification. My actual requirement and requirement description are authoritative.
+
+Each change must build on the correct preceding source version:
+
+- `baseline`: original Misskey commit.
+- `CH01`: source after Change 1.
+- `CH02`: source after Change 2.
+- `CH03`: source after Change 3.
+
+Record the real Git SHAs associated with these labels.
+
+## 4. Required output directory structure
+
+Create and maintain this structure under the existing `A1/Part2/` directory.
+
+    A1/
+    └── Part2/
+        ├── code/
+        │   ├── README.md
+        │   └── [evolved application source files]
+        │
+        ├── changes/
+        │   ├── Change1/
+        │   │   ├── requirement.md
+        │   │   ├── diff.patch
+        │   │   ├── test_result.log
+        │   │   ├── commit.txt
+        │   │   ├── metrics.csv
+        │   │   └── pattern_effects.md
+        │   │
+        │   ├── Change2/
+        │   │   ├── requirement.md
+        │   │   ├── diff.patch
+        │   │   ├── test_result.log
+        │   │   ├── commit.txt
+        │   │   ├── metrics.csv
+        │   │   └── pattern_effects.md
+        │   │
+        │   └── Change3/
+        │       ├── requirement.md
+        │       ├── diff.patch
+        │       ├── test_result.log
+        │       ├── commit.txt
+        │       ├── metrics.csv
+        │       └── pattern_effects.md
+        │
+        ├── pattern_evalution.csv
+        ├── Pattern_count.csv
+        │
+        ├── diagrams/
+        │   ├── Change1/
+        │   ├── Change2/
+        │   └── Change3/
+        │
+        ├── Part2_prompt.text
+        ├── llm.csv
+        │
+        └── llm/
+            ├── inputs/
+            │   ├── Change1_prompt.txt
+            │   ├── Change1_context.md
+            │   ├── Change2_prompt.txt
+            │   ├── Change2_context.md
+            │   ├── Change3_prompt.txt
+            │   └── Change3_context.md
+            │
+            ├── outputs/
+            │   ├── Change1_output.txt
+            │   ├── Change2_output.txt
+            │   └── Change3_output.txt
+            │
+            └── verification/
+                ├── Change1_verification.md
+                ├── Change2_verification.md
+                └── Change3_verification.md
+
+Create change-specific files when the corresponding requirement is received. Do not fabricate future implementation records or populate results for work that has not happened.
+
+The `metrics.csv` and `pattern_effects.md` files are additional evidence files needed to cover the assignment's before/after metrics, pattern effects and refactoring requirements.
+
+### 4.1 The evolved application source
+
+The `code/` directory must not consist of a README alone.
+
+Include the new and modified production source files needed to represent the evolved application changes, preserving their original relative paths where practical. Include relevant implementation files that a reviewer needs to understand the changes.
+
+The `code/README.md` must identify:
+
+- The original Misskey repository URL.
+- The baseline commit SHA.
+- The commit SHA for each completed change.
+- The relationship between the source files and the corresponding change.
+- How to retrieve the complete evolved source from Git.
+- The commands used to run the focused tests.
+- The environment, tool versions and known limitations.
+
+Do not copy dependency caches, `node_modules`, compiled binaries or unrelated files. Do not leave incomplete source snapshots without explaining how they relate to the actual committed application.
+
+### 4.2 Requirement file
+
+For each change, `requirement.md` must contain:
+
+- The exact feature requirement supplied by me.
+- The requirement description.
+- The problem being addressed.
+- The intended behaviour.
+- Observable acceptance criteria.
+- Relevant source modules identified during implementation.
+- Explicit scope exclusions or assumptions, if any.
+
+Preserve my requirement accurately. Do not silently replace it with a different feature.
+
+### 4.3 Diff file
+
+Generate `diff.patch` from the actual Git history. It must represent the relevant implementation changes, including added files.
+
+For example:
+
+    git diff <PREVIOUS_SHA> <CHANGE_SHA> --binary > diff.patch
+
+Run this command in the Misskey repository and save the result to the matching evidence directory.
+
+Use the correct previous snapshot for each change. Verify that the diff exists and corresponds to the recorded commits.
+
+### 4.4 Commit file
+
+`commit.txt` must record:
+
+- Change identifier and feature name.
+- Baseline or preceding commit SHA.
+- Implementation commit SHA.
+- Actual commit message.
+- Relevant changed source paths.
+- Commit date where available.
+- Any testing limitation associated with the commit.
+
+All commit identifiers must come from Git. Never invent SHA values.
+
+## 5. Implementation rules for Misskey
+
+Follow the architecture and conventions of the existing repository.
+
+Before modifying code:
+
+1. Identify the relevant existing frontend component, API endpoint, core service, repository, model, notification mechanism or queue processor.
+2. Inspect the actual methods and their callers.
+3. Identify the current behaviour and any direct dependencies affected by the feature.
+4. Determine whether database changes or migrations are required.
+5. Identify the API contract, response representation and frontend integration points affected by the change.
+
+Make the smallest maintainable change that satisfies the requirement.
+
+Reuse existing Misskey services, repositories, dependency injection, validation, notification infrastructure, visibility checks and queues wherever appropriate.
+
+Do not create a parallel architecture merely to isolate the new feature from the existing application.
+
+If the implementation requires a migration, follow the repository's migration conventions. Do not rewrite historical migrations.
+
+Respect existing permissions, privacy and visibility rules. Do not weaken authentication, access control or federation safeguards.
+
+Avoid modifying unrelated files, unrelated features or large parts of the application that do not need to change.
+
+Do not add federation support for new functionality unless it is explicitly required by my feature specification.
+
+Do not introduce unnecessary dependencies, external services or complicated abstractions simply to demonstrate a design pattern.
+
+## 6. Testing policy: focused CLI tests only
+
+Testing is mandatory, but the scope must remain focused.
+
+I do not require you to run the entire Misskey test suite, a comprehensive browser automation suite or a large end-to-end environment merely to verify a small feature.
+
+Your objective is to establish that the requested feature works correctly through the smallest appropriate set of meaningful tests.
+
+### 6.1 Before writing tests
+
+Inspect the existing test conventions and package scripts. Use the existing test framework and utilities where appropriate.
+
+Choose the relevant test level:
+
+- Unit test for isolated business rules or algorithms.
+- Service test for interactions among the feature's backend collaborators.
+- API/endpoint test if the API contract, validation or permissions changed.
+- Focused integration test only when it is necessary to verify persistence, job scheduling or another direct dependency.
+
+Do not write redundant tests that verify the same behaviour without additional value.
+
+### 6.2 What the tests must cover
+
+For every feature, test:
+
+1. The primary successful use case.
+2. The essential validation or failure case relevant to the requirement.
+3. Any directly affected permission, privacy, visibility or state-transition rule.
+4. Any critical regression behaviour that the modification could reasonably break.
+
+Choose only the cases relevant to that particular feature. Do not apply every category mechanically if it does not make sense for the requirement.
+
+For example:
+
+- An event change should verify event creation and the relevant RSVP/reminder behaviour.
+- A link-safety change should verify the configured safe and risky URL cases.
+- A personalized-feed change should verify ranking and the visibility restrictions directly relevant to the implementation.
+
+These are examples, not substitutes for the requirements I will provide.
+
+### 6.3 What not to run
+
+Do not automatically run:
+
+- The complete repository test suite.
+- Unrelated package test suites.
+- Full browser-based test automation.
+- GUI tests that are not needed to verify the new backend functionality.
+- Large deployments or external services that can be safely replaced with deterministic test doubles.
+- Expensive performance or load tests for ordinary feature acceptance.
+
+Run a focused type-check or lint command only where practical and relevant to the changed code.
+
+Use the repository's native CLI commands. Do not create a separate toy implementation that passes tests but bypasses the actual Misskey code.
+
+### 6.4 Test correctness and failures
+
+Tests must exercise the actual implementation.
+
+Use deterministic fixtures and mocks for unrelated external dependencies when appropriate. Make test data explicit and reproducible.
+
+If a test fails:
+
+1. Inspect the failure.
+2. Determine whether it is caused by the new implementation, an existing issue or an unavailable environment dependency.
+3. Fix implementation defects where possible.
+4. Rerun the relevant tests.
+5. Record the actual final result.
+
+Do not change an assertion just to force a pass. Do not disable an existing test merely because it detects a regression.
+
+Do not mark a test as passed because the code compiles.
+
+If a required test cannot run, record the exact command, the reason and the status `not_run`. If a test still fails, disclose the failure clearly. Do not claim the feature is fully verified.
+
+### 6.5 Test result log
+
+The corresponding `test_result.log` must preserve:
+
+- The working directory.
+- The exact CLI command.
+- Relevant environment information.
+- Actual output.
+- Exit code.
+- Passed/total test count where available.
+- Failed, skipped or unexecuted checks and their reasons.
+
+The log must be based on real command execution. Never manually manufacture successful output.
+
+## 7. Git commit policy
+
+Create one separate implementation commit per completed feature.
+
+The intended sequence is:
+
+- Change 1: one commit for the first feature.
+- Change 2: one commit for the second feature.
+- Change 3: one commit for the third feature.
+
+Each implementation commit should contain the relevant source changes and necessary feature-specific tests. Keep unrelated user changes out of the commit.
+
+Before committing:
+
+1. Review `git diff`.
+2. Review `git diff --check`.
+3. Verify the changed paths.
+4. Run the focused tests.
+5. Check that no unrelated files have been staged.
+
+Stage files explicitly rather than blindly staging everything in the repository.
+
+Commit locally using a descriptive message. Do not push to a remote repository unless I explicitly request it.
+
+After committing, verify the commit SHA and working tree status.
+
+If an environment limitation prevents a required test from running, document it honestly. Do not represent a blocked or failed verification as a completed successful test run.
+
+## 8. Pattern evolution CSV
+
+The root-level file must be named:
+
+    A1/Part2/pattern_evalution.csv
+
+Use these exact columns:
+
+    source_version,pattern_name,pattern_type,instance_name,participant_roles,source_locations,intent_and_evidence,status_after_change,change_description
+
+This file must represent confirmed pattern collaborations in the approved inspection scope across the baseline and each changed source version.
+
+Use the existing Part 1 pattern inventory as the starting point when it is available. If the baseline inventory does not exist or does not cover the relevant source scope, establish the verified baseline records needed for the evolution analysis and clearly document the inspection scope and limitations.
+
+Do not claim that the entire Misskey repository was exhaustively analysed unless that actually happened.
+
+For each collaboration, record its actual participants, roles, source paths, line ranges, intent and evidence from the implementation.
+
+Use these source-version identifiers:
+
+- `baseline`
+- `CH01`
+- `CH02`
+- `CH03`
+
+Retain the same `instance_name` when the same collaboration continues across versions.
+
+Use the applicable status values defined in the assignment:
+
+- `baseline`
+- `preserved`
+- `modified`
+- `extended`
+- `replaced`
+- `removed`
+- `newly_introduced`
+
+Do not count a class name, annotation, import or AI-generated claim as sufficient proof of a design pattern.
+
+Record the actual classes, interfaces, functions or modules that fulfil the relevant roles. If the implementation combines roles or does not contain a conventional role, explain that instead of inventing classes.
+
+Keep historical rows for removed collaborations with the correct removal status. Do not erase the evolution history after a later change.
+
+Use the source locations and evidence corresponding to each particular source snapshot.
+
+## 9. Pattern count CSV
+
+The root-level filename must be:
+
+    A1/Part2/Pattern_count.csv
+
+Use these exact columns:
+
+    source_version,summary,pattern_name,count
+
+Include:
+
+- `per_pattern`
+- `total_pattern_types`
+- `total_pattern_instances`
+
+Generate the counts from the confirmed pattern records for each source version.
+
+Do not manually guess counts, count the same collaboration multiple times because it contains multiple participants, or include removed instances in the current version's active totals.
+
+Validate the counts against `pattern_evalution.csv` before declaring the files complete.
+
+The case-study documents use slightly different filenames for the evolution and count CSVs in different sections. For this project, retain the Part 2 filenames specified above while following the documented column schemas.
+
+## 10. Pattern effects, refactoring and metrics
+
+For each `ChangeN/`, generate `pattern_effects.md` and `metrics.csv`.
+
+### 10.1 Pattern effects and refactoring
+
+The `pattern_effects.md` file must identify the pattern collaborations affected by the implementation.
+
+For each relevant collaboration, explain:
+
+- Its name and pattern type.
+- The actual participants before and after the change.
+- Whether it was preserved, modified, extended, replaced, removed or newly introduced.
+- The reason for the change.
+- The source evidence supporting that classification.
+- The code smell addressed.
+- The refactoring technique used.
+- The relevant source diff.
+- The focused test evidence supporting behaviour preservation where applicable.
+
+Do not invent a code smell or perform an unrelated refactor merely to complete the report.
+
+Prefer a small, genuine refactoring within the code affected by the feature. If no safe and meaningful refactoring can be identified, explain the limitation rather than fabricating one; flag the missing rubric item clearly.
+
+### 10.2 Before/after metrics
+
+The `metrics.csv` file must record comparable before/after measurements.
+
+At minimum, include:
+
+- Change identifier.
+- Baseline and after-change commit SHAs.
+- Measurement scope.
+- Source LOC before the change.
+- Source LOC after the change.
+- Measurement tool or script.
+- Relevant test results before and after, where measured.
+- Unavailable measurements and their reasons.
+
+Use the same LOC measurement rules for both snapshots. State whether tests, blank lines and comments are excluded.
+
+Measure the actual source versions. Do not estimate LOC or invent before/after test results.
+
+A lower LOC value does not automatically establish a better design. Interpret the measurement in the context of the refactoring, maintainability and verified behaviour.
+
+## 11. Architecture and pattern diagrams
+
+Store diagrams under:
+
+    A1/Part2/diagrams/Change1/
+    A1/Part2/diagrams/Change2/
+    A1/Part2/diagrams/Change3/
+
+Where a diagram is needed, provide:
+
+- An editable PlantUML (`.puml`) or another suitable editable diagram source.
+- A rendered image (`.png` or suitable equivalent).
+
+The diagrams must represent the real implementation, not a proposed architecture that was never built.
+
+Show the relevant classes, interfaces, functions or modules and the relationships needed to explain the changed pattern collaboration.
+
+Update a diagram only when the corresponding change materially affects the architecture or pattern relationships. If no diagram change is warranted, document the reason instead of creating misleading diagrams.
+
+Verify that each rendered image corresponds to its editable source.
+
+## 12. LLM prompt, input, output and verification records
+
+The `llm/` directory stores the actual evidence of the coding agent's work.
+
+For every substantive change interaction, maintain the corresponding files.
+
+### Inputs
+
+`llm/inputs/ChangeN_prompt.txt`
+
+Save the exact requirement prompt that I provided to you for that change.
+
+`llm/inputs/ChangeN_context.md`
+
+Record the actual supplied source context, baseline or preceding commit SHA, relevant source files and any constraints used in the interaction.
+
+Do not invent context that was not supplied or actually inspected.
+
+### Outputs
+
+`llm/outputs/ChangeN_output.txt`
+
+Preserve the actual task output or captured execution report associated with that interaction, including the implementation summary and genuine test outcomes.
+
+Do not fabricate a transcript or claim that an output came from a tool when it did not. Do not include hidden reasoning. If the environment cannot expose or save a complete raw interaction transcript, explicitly record the available output and the limitation.
+
+### Verification
+
+`llm/verification/ChangeN_verification.md`
+
+Record an evidence-based evaluation of the agent's claims.
+
+Include:
+
+- The claim being checked.
+- The relevant source paths and line references.
+- The actual test command and result.
+- The commit SHA.
+- Whether the claim is correct, partially correct, incorrect or cannot be confirmed.
+- Any correction or limitation.
+
+Verification must not simply repeat the agent's own claims without checking them against the source or executed tests.
+
+## 13. The root `llm.csv`
+
+The file must be:
+
+    A1/Part2/llm.csv
+
+Use these exact columns:
+
+    part,model_and_date,prompt_file,input_file,output_file,evaluation,verification_file
+
+Every substantive interaction must map to its corresponding prompt, supplied context, actual output and verification record.
+
+For example, use paths relative to the `A1/` team folder:
+
+    Part2/llm/inputs/Change1_prompt.txt
+    Part2/llm/inputs/Change1_context.md
+    Part2/llm/outputs/Change1_output.txt
+    Part2/llm/verification/Change1_verification.md
+
+Use the actual displayed model and interaction date when available. If the model cannot be established, say so instead of guessing.
+
+Use UTF-8 CSV files, one header row and correctly quoted cells containing commas. Validate all paths before completing a record.
+
+Do not fill this CSV with invented conversations, fake model names, fabricated dates or retrospective outputs that were never produced.
+
+If several substantive prompts are used for a single change, include the corresponding distinct records rather than forcing multiple interactions into a misleading one-to-one mapping.
+
+## 14. Master prompt and individual prompts
+
+`A1/Part2/Part2_prompt.text` must preserve the master instruction supplied in this conversation.
+
+The files under `llm/inputs/` are different: they preserve the individual prompts and contexts used for each change.
+
+Do not replace the master prompt with a brief summary, and do not overwrite an individual prompt when it is revised. Preserve separate records for materially different prompts.
+
+## 15. Part 2 completion workflow
+
+For each requirement I provide, perform these steps in order:
+
+1. Read the requirement and acceptance criteria.
+2. Inspect the relevant current source implementation.
+3. Save the exact prompt and supplied context.
+4. Implement the change in the real Misskey repository.
+5. Add the minimum sufficient focused CLI tests.
+6. Execute the relevant tests and inspect the results.
+7. Fix implementation defects and rerun the relevant checks.
+8. Perform an appropriate, genuine refactoring within the affected code where justified.
+9. Commit the implementation and relevant tests.
+10. Generate the actual diff and record the commit identifiers.
+11. Measure comparable before/after source metrics.
+12. Update the pattern evolution CSV and recalculate pattern counts.
+13. Update diagrams if the architecture or relevant pattern collaboration has changed.
+14. Save the actual task output and verification evidence.
+15. Update `llm.csv`.
+16. Validate the evidence paths and ensure all records refer to real files.
+17. Report the completed work and any limitations.
+
+Finish one change before moving on to the next.
+
+After Change 1 is complete, wait for my Change 2 requirement. After Change 2, wait for my Change 3 requirement. Do not implement all three features prematurely.
+
+## 16. Final validation after Change 3
+
+After all three changes have been implemented, perform a final evidence-integrity check.
+
+Verify that:
+
+- All three changes have their own implementation commits.
+- Every `diff.patch` reproduces the actual source differences between the recorded commits.
+- Every test log records real command execution and results.
+- The `code/` folder contains the necessary evolved source evidence and its README.
+- `pattern_evalution.csv` matches the actual source snapshots.
+- `Pattern_count.csv` is consistent with the confirmed pattern records.
+- The before/after metrics use consistent measurement rules.
+- Refactoring and pattern effects are supported by actual source evidence.
+- Diagrams represent the implemented relationships.
+- Every `llm.csv` path points to an existing, relevant file.
+- No model, test result, commit SHA, metric, interaction or verification claim has been invented.
+- No unrelated user modifications have been discarded or included in the feature commits.
+- No remote push has been performed without authorisation.
+
+Do not run the entire Misskey test suite merely for this final validation. Check the evidence, the focused test results and the consistency of the recorded source versions.
+
+## 17. Final response format
+
+After each individual change, provide a concise implementation report containing:
+
+1. What was implemented.
+2. The important source files changed.
+3. The Git commit SHA.
+4. The exact focused tests executed and their actual results.
+5. The evidence files created or updated.
+6. The design-pattern effects and refactoring performed.
+7. Any unexecuted tests, unresolved failures or limitations.
+
+Do not say a feature is completely verified when a required test has not run or has failed.
+
+Once the evidence for a change is saved, stop and wait for my next requirement. Do not ask me to repeat information already supplied.
+
+**Start now with workspace preparation only. Save this master prompt, establish the baseline, prepare the directory structure and acknowledge readiness. Wait for my first feature requirement before modifying the Misskey application.**

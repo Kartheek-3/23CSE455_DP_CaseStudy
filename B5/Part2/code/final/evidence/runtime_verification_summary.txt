@@ -1,0 +1,9 @@
+Command: bin/rails test
+Exit code: 1
+Ruby: ruby 3.3.8 (2025-04-09 revision b200bad6cd) [x86_64-linux-gnu]
+Required Ruby: ruby-3.4.2
+
+Relevant error:
+Bundler::GemNotFound: Could not find rails-8.1.3 and the locked application dependencies locally.
+Application tests executed: 0 (boot failed before test discovery)
+Rails passes/failures/errors/skips: not available

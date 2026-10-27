@@ -1,0 +1,21 @@
+pattern_name,language,measured_run,elapsed_ms,timing_scope
+Strategy,Java,1,38.550,includes process startup and test harness; excludes compilation
+Strategy,Java,2,37.316,includes process startup and test harness; excludes compilation
+Strategy,Java,3,35.277,includes process startup and test harness; excludes compilation
+Strategy,Java,4,36.116,includes process startup and test harness; excludes compilation
+Strategy,Java,5,34.537,includes process startup and test harness; excludes compilation
+Observer,Java,1,45.192,includes process startup and test harness; excludes compilation
+Observer,Java,2,42.995,includes process startup and test harness; excludes compilation
+Observer,Java,3,45.304,includes process startup and test harness; excludes compilation
+Observer,Java,4,41.456,includes process startup and test harness; excludes compilation
+Observer,Java,5,42.457,includes process startup and test harness; excludes compilation
+Strategy,C++,1,1.500,includes process startup and test harness; excludes compilation
+Strategy,C++,2,1.115,includes process startup and test harness; excludes compilation
+Strategy,C++,3,1.208,includes process startup and test harness; excludes compilation
+Strategy,C++,4,1.110,includes process startup and test harness; excludes compilation
+Strategy,C++,5,1.057,includes process startup and test harness; excludes compilation
+Observer,C++,1,1.048,includes process startup and test harness; excludes compilation
+Observer,C++,2,1.293,includes process startup and test harness; excludes compilation
+Observer,C++,3,1.070,includes process startup and test harness; excludes compilation
+Observer,C++,4,1.161,includes process startup and test harness; excludes compilation
+Observer,C++,5,1.042,includes process startup and test harness; excludes compilation

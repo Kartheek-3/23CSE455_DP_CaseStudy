@@ -1,0 +1,110 @@
+junit-platform-engine/src/main/java/org/junit/platform/engine/TestDescriptor.java|37|public interface TestDescriptor
+junit-platform-engine/src/main/java/org/junit/platform/engine/TestDescriptor.java|106|getParent()
+junit-platform-engine/src/main/java/org/junit/platform/engine/TestDescriptor.java|125|getChildren()
+junit-platform-engine/src/main/java/org/junit/platform/engine/TestDescriptor.java|175|void addChild
+junit-platform-engine/src/main/java/org/junit/platform/engine/TestDescriptor.java|183|void removeChild
+junit-platform-engine/src/main/java/org/junit/platform/engine/TestDescriptor.java|161|getDescendants()
+junit-platform-engine/src/main/java/org/junit/platform/engine/TestDescriptor.java|165|child.getDescendants()
+junit-platform-engine/src/main/java/org/junit/platform/engine/TestDescriptor.java|307|static boolean containsTests
+junit-platform-engine/src/main/java/org/junit/platform/engine/TestDescriptor.java|310|anyMatch(TestDescriptor::containsTests)
+junit-platform-engine/src/main/java/org/junit/platform/engine/TestDescriptor.java|345|default void accept(Visitor visitor)
+junit-platform-engine/src/main/java/org/junit/platform/engine/TestDescriptor.java|348|child.accept(visitor)
+junit-platform-engine/src/main/java/org/junit/platform/engine/TestDescriptor.java|209|orderChildren
+junit-platform-engine/src/main/java/org/junit/platform/engine/TestDescriptor.java|262|isContainer()
+junit-platform-engine/src/main/java/org/junit/platform/engine/TestDescriptor.java|278|isTest()
+junit-platform-engine/src/main/java/org/junit/platform/engine/TestDescriptor.java|324|prune()
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/descriptor/AbstractTestDescriptor.java|42|class AbstractTestDescriptor
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/descriptor/AbstractTestDescriptor.java|69|Set<TestDescriptor> children
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/descriptor/AbstractTestDescriptor.java|155|public void addChild
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/descriptor/AbstractTestDescriptor.java|180|orderChildren
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/descriptor/AbstractTestDescriptor.java|195|findByUniqueId
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/descriptor/AbstractTestDescriptor.java|202|child.findByUniqueId(uniqueId)
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/descriptor/EngineDescriptor.java|49|public Type getType()
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/descriptor/EngineDescriptor.java|50|Type.CONTAINER
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/TestMethodTestDescriptor.java|106|public Type getType()
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/TestMethodTestDescriptor.java|107|Type.TEST
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java|265|private void prune
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java|266|TestDescriptor::prune
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java|275|getRootDescriptor().accept(visitor)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java|56|Collection<PostDiscoveryFilter> postDiscoveryFilters
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java|180|new ArrayList<>(postDiscoveryFilters)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java|181|request.getPostDiscoveryFilters()
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java|227|composeFilters(filters)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java|230|postDiscoveryFilter.apply(descriptor)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java|233|descriptor.removeFromHierarchy()
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java|163|engineFilterer.isExcluded
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java|216|LauncherDiscoveryListener getLauncherDiscoveryListener
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java|221|getCompositeListener()
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java|116|launcherDiscoveryStarted(request)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java|125|launcherDiscoveryFinished(request)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java|194|engineDiscoveryStarted(uniqueEngineId)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java|195|testEngine.discover(request, uniqueEngineId)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java|197|EngineDiscoveryResult.successful()
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java|110|DelegatingLauncherDiscoveryRequest
+junit-platform-engine/src/main/java/org/junit/platform/engine/CompositeFilter.java|29|class CompositeFilter<T> implements Filter<T>
+junit-platform-engine/src/main/java/org/junit/platform/engine/CompositeFilter.java|52|Collection<Filter<T>> filters
+junit-platform-engine/src/main/java/org/junit/platform/engine/CompositeFilter.java|59|public FilterResult apply(T element)
+junit-platform-engine/src/main/java/org/junit/platform/engine/CompositeFilter.java|62|filter.apply(element)
+junit-platform-engine/src/main/java/org/junit/platform/engine/CompositeFilter.java|65|INCLUDED_BY_ALL_FILTERS
+junit-platform-engine/src/main/java/org/junit/platform/engine/Filter.java|39|@FunctionalInterface
+junit-platform-engine/src/main/java/org/junit/platform/engine/Filter.java|41|public interface Filter<T>
+junit-platform-engine/src/main/java/org/junit/platform/engine/Filter.java|78|composeFilters(Collection
+junit-platform-engine/src/main/java/org/junit/platform/engine/Filter.java|100|@Deprecated
+junit-platform-engine/src/main/java/org/junit/platform/engine/Filter.java|101|adaptFilter
+junit-platform-engine/src/main/java/org/junit/platform/engine/Filter.java|108|FilterResult apply(T object)
+junit-platform-engine/src/main/java/org/junit/platform/engine/Filter.java|115|toPredicate()
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/PostDiscoveryFilter.java|35|interface PostDiscoveryFilter extends Filter<TestDescriptor>
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/TagFilter.java|48|public final class TagFilter
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/TagFilter.java|130|includeMatching
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/TagFilter.java|134|return descriptor -> {
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/TagFilter.java|154|return descriptor -> {
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/EngineFilter.java|42|class EngineFilter implements Filter<TestEngine>
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/EngineFilter.java|123|public FilterResult apply(TestEngine testEngine)
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/TestFactoryTestDescriptor.java|98|Type.CONTAINER
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/tagexpression/TagExpressions.java|65|not(
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/discovery/EngineDiscoveryRequestResolution.java|91|request.getDiscoveryListener()
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/discovery/EngineDiscoveryRequestResolution.java|96|selectorProcessed(engineId, selector, resolved())
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/discovery/EngineDiscoveryRequestResolution.java|100|selectorProcessed(engineId, selector, unresolved())
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/ClassOrderer.java|64|interface ClassOrderer
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/JupiterTestDescriptor.java|163|public final ExecutionMode getExecutionMode()
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/JupiterTestDescriptor.java|187|getExplicitChildExecutionMode()
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/JupiterTestDescriptor.java|191|getExplicitExecutionMode()
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/JupiterTestDescriptor.java|85|public final String getLegacyReportingName()
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/JupiterTestDescriptor.java|90|getLegacyReportingBaseName()
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/JupiterTestDescriptor.java|104|getLegacyReportingIndex()
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/JupiterTestDescriptor.java|256|copyIncludingDescendants
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/JupiterTestDescriptor.java|268|protected abstract JupiterTestDescriptor withUniqueId
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/ClassBasedTestDescriptor.java|167|getExplicitExecutionMode()
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/ClassBasedTestDescriptor.java|172|getDefaultChildExecutionMode()
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/ClassBasedTestDescriptor.java|131|getLegacyReportingBaseName
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/MethodBasedTestDescriptor.java|147|getExplicitExecutionMode()
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/MethodBasedTestDescriptor.java|90|getLegacyReportingBaseName
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/DynamicNodeTestDescriptor.java|43|ExecutionMode
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/DynamicContainerTestDescriptor.java|62|ExecutionMode
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/TestTemplateInvocationTestDescriptor.java|76|getLegacyReportingIndex
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/ClassTestDescriptor.java|63|withUniqueId
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/discovery/AbstractOrderingVisitor.java|110|shouldNonMatchingDescriptorsComeBeforeOrderedOnes()
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/discovery/AbstractOrderingVisitor.java|126|protected abstract boolean shouldNonMatchingDescriptorsComeBeforeOrderedOnes()
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/discovery/AbstractOrderingVisitor.java|108|getTestDescriptor
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/discovery/ClassOrderingVisitor.java|72|shouldNonMatchingDescriptorsComeBeforeOrderedOnes
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/discovery/MethodOrderingVisitor.java|77|shouldNonMatchingDescriptorsComeBeforeOrderedOnes
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/LauncherDiscoveryListener.java|42|interface LauncherDiscoveryListener extends EngineDiscoveryListener
+junit-platform-engine/src/main/java/org/junit/platform/engine/EngineDiscoveryListener.java|31|public interface EngineDiscoveryListener
+junit-platform-engine/src/main/java/org/junit/platform/engine/EngineDiscoveryListener.java|51|selectorProcessed
+junit-platform-engine/src/main/java/org/junit/platform/engine/EngineDiscoveryListener.java|64|issueEncountered
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/DefaultLauncher.java|73|registerLauncherDiscoveryListeners
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/DefaultLauncher.java|76|launcherDiscoveryListeners.addAll(listeners)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/discovery/CompositeLauncherDiscoveryListener.java|29|class CompositeLauncherDiscoveryListener implements LauncherDiscoveryListener
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/discovery/CompositeLauncherDiscoveryListener.java|39|listeners.forEach
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/discovery/CompositeLauncherDiscoveryListener.java|44|forEachInReverseOrder
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/DiscoveryIssueCollector.java|25|class DiscoveryIssueCollector implements LauncherDiscoveryListener
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/ClassDescriptor.java|28|interface ClassDescriptor
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/MethodDescriptor.java|29|interface MethodDescriptor
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/discovery/AbstractAnnotatedDescriptorWrapper.java|28|abstract class AbstractAnnotatedDescriptorWrapper
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/discovery/AbstractAnnotatedDescriptorWrapper.java|30|private final TestDescriptor testDescriptor
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/discovery/DefaultClassDescriptor.java|23|implements ClassDescriptor
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/discovery/DiscoveryIssueReporter.java|48|static DiscoveryIssueReporter forwarding
+junit-platform-engine/src/main/java/org/junit/platform/engine/support/discovery/DiscoveryIssueReporter.java|51|engineDiscoveryListener.issueEncountered(engineId, issue)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/DelegatingLauncherDiscoveryRequest.java|27|class DelegatingLauncherDiscoveryRequest implements LauncherDiscoveryRequest
+junit-platform-engine/src/main/java/org/junit/platform/engine/CompositeTestDescriptorVisitor.java|20|class CompositeTestDescriptorVisitor implements TestDescriptor.Visitor
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/TestPlan.java|94|TestIdentifier.from(descriptor)

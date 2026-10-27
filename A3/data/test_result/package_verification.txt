@@ -1,0 +1,1 @@
+PASS: baseline and three snapshot hashes; sequential patch replay; inventory counts; source evidence paths; 20 recorded comparison rows / 92 cases.

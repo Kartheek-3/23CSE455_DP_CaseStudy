@@ -1,0 +1,33 @@
+classDiagram
+    class SupabaseAuth {
+        <<Subject>>
+        dependency supabase.auth
+        onAuthStateChange(callback)
+    }
+    class AuthProvider {
+        <<ConcreteObserver>>
+        lines 9 to 59
+        callback lines 39 to 48
+        unsubscribe line 50
+        session
+        user
+        profile
+        loading
+    }
+    class AuthContext {
+        <<StateHolder>>
+        lines 14 to 19
+    }
+    class useAuth {
+        <<Consumer>>
+        lines 21 to 23
+    }
+    class useSession {
+        <<Consumer>>
+        useSession.ts lines 5 to 8
+    }
+    AuthProvider ..> SupabaseAuth : subscribes line 37 and unsubscribes line 50
+    SupabaseAuth ..> AuthProvider : notifies callback on auth change
+    AuthProvider --> AuthContext : Provider value lines 54 to 58
+    useAuth ..> AuthContext : reads
+    useSession ..> useAuth : wraps

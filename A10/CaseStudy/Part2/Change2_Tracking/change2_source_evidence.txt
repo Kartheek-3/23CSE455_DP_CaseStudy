@@ -1,0 +1,66 @@
+CHANGE 2 - REAL-TIME TRACKING
+SOURCE EVIDENCE
+
+1. Tracking data models
+File:
+app/models/transportation.py
+
+Evidence:
+- Lines 118-130 define ShipmentTrackingBase, ShipmentTrackingCreate,
+  and ShipmentTrackingResponse.
+- ShipmentTrackingBase contains shipment_id, latitude, longitude,
+  location, and status.
+- ShipmentTrackingResponse adds tracking_id and recorded_at.
+
+2. Repository implementation
+File:
+app/repositories/shipment_repositories.py
+
+Evidence:
+- Lines 155-173 define create_tracking_update().
+- The method inserts shipment_id, latitude, longitude, location,
+  and status into shipment_tracking.
+- Lines 175-187 define get_tracking_history().
+- The method retrieves tracking records for a shipment and orders
+  them by recorded_at DESC.
+
+3. API implementation
+File:
+app/api/transportation.py
+
+Evidence:
+- Lines 104-111 define POST /delivery-tracking.
+- The endpoint accepts ShipmentTrackingCreate and calls
+  TransportationRepository.create_tracking_update().
+- Lines 116-123 define GET /shipments/{shipment_id}/tracking.
+- The endpoint calls TransportationRepository.get_tracking_history().
+
+4. Database evolution
+File:
+CaseStudy/Part2/Change2_Tracking/change2_schema.sql
+
+Evidence:
+- Lines 4-14 define the shipment_tracking table.
+- shipment_tracking contains tracking_id, shipment_id, latitude,
+  longitude, location, status, and recorded_at.
+- Lines 16-17 create an index on shipment_tracking.shipment_id.
+- Lines 19-20 create an index on shipment_tracking.recorded_at.
+
+5. Runtime verification
+
+POST /api/v1/transportation/delivery-tracking:
+- HTTP 201 Created.
+- A tracking update was successfully created for shipment_id = 4.
+- The test update used latitude 17.4, longitude 78.48,
+  location "Hyderabad - Route Update", and status "in_transit".
+
+GET /api/v1/transportation/shipments/4/tracking:
+- HTTP 200 OK.
+- Multiple tracking records were returned for shipment_id = 4.
+- Records are returned newest first using recorded_at DESC.
+
+Conclusion:
+The source and runtime evidence demonstrate that the baseline WTMS
+application was extended with a shipment tracking representation,
+repository operations, and API endpoints while preserving the existing
+TransportationRepository architecture.

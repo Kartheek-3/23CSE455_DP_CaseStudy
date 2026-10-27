@@ -1,0 +1,397 @@
+== Tool versions ==
+Darwin arm64
+openjdk version "25.0.4.1" 2026-08-18 LTS
+javac 25.0.4.1
+Python 3.14.2
+v26.11.1
+Apple clang version 21.0.0 (clang-2100.3.34.2)
+
+========== observer-test-listeners/java ==========
+
+$ javac -d out src/observer/*.java test/observer/*.java
+[exit 0]
+
+$ java -cp out observer.ObserverDemo ../test-data/events.txt
+== Summary ==
+total: 6
+SUCCESSFUL: 2
+FAILED: 1
+ABORTED: 1
+SKIPPED: 2
+== Log ==
+1. started CalcTests#add
+2. finished CalcTests#add SUCCESSFUL
+3. started CalcTests#sub
+4. finished CalcTests#sub FAILED
+5. skipped CalcTests#div (disabled)
+6. started CalcTests#mul
+7. finished CalcTests#mul ABORTED
+8. skipped StringTests#trim (not on this OS)
+9. started StringTests#concat
+10. finished StringTests#concat SUCCESSFUL
+== Listener failures (10) ==
+BrokenListener failed on started CalcTests#add: listener is broken
+BrokenListener failed on finished CalcTests#add: listener is broken
+BrokenListener failed on started CalcTests#sub: listener is broken
+BrokenListener failed on finished CalcTests#sub: listener is broken
+BrokenListener failed on skipped CalcTests#div: listener is broken
+BrokenListener failed on started CalcTests#mul: listener is broken
+BrokenListener failed on finished CalcTests#mul: listener is broken
+BrokenListener failed on skipped StringTests#trim: listener is broken
+BrokenListener failed on started StringTests#concat: listener is broken
+BrokenListener failed on finished StringTests#concat: listener is broken
+[exit 0]
+
+$ java -cp out observer.ObserverDemo ../test-data/events.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ java -cp out observer.ObserverTest
+PASS report matches expected-output.txt
+PASS a throwing listener does not stop the next one
+PASS invalid input is rejected with expected-error.txt
+3 passed, 0 failed
+[exit 0]
+
+========== observer-test-listeners/python ==========
+
+$ python3 main.py ../test-data/events.txt
+== Summary ==
+total: 6
+SUCCESSFUL: 2
+FAILED: 1
+ABORTED: 1
+SKIPPED: 2
+== Log ==
+1. started CalcTests#add
+2. finished CalcTests#add SUCCESSFUL
+3. started CalcTests#sub
+4. finished CalcTests#sub FAILED
+5. skipped CalcTests#div (disabled)
+6. started CalcTests#mul
+7. finished CalcTests#mul ABORTED
+8. skipped StringTests#trim (not on this OS)
+9. started StringTests#concat
+10. finished StringTests#concat SUCCESSFUL
+== Listener failures (10) ==
+BrokenListener failed on started CalcTests#add: listener is broken
+BrokenListener failed on finished CalcTests#add: listener is broken
+BrokenListener failed on started CalcTests#sub: listener is broken
+BrokenListener failed on finished CalcTests#sub: listener is broken
+BrokenListener failed on skipped CalcTests#div: listener is broken
+BrokenListener failed on started CalcTests#mul: listener is broken
+BrokenListener failed on finished CalcTests#mul: listener is broken
+BrokenListener failed on skipped StringTests#trim: listener is broken
+BrokenListener failed on started StringTests#concat: listener is broken
+BrokenListener failed on finished StringTests#concat: listener is broken
+[exit 0]
+
+$ python3 main.py ../test-data/events.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ python3 -m unittest -v test_observer
+test_invalid_input_is_rejected_with_expected_error (test_observer.ObserverTest.test_invalid_input_is_rejected_with_expected_error) ... ok
+test_report_matches_expected_output (test_observer.ObserverTest.test_report_matches_expected_output) ... ok
+test_throwing_listener_does_not_stop_the_next_one (test_observer.ObserverTest.test_throwing_listener_does_not_stop_the_next_one) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK
+[exit 0]
+
+========== observer-test-listeners/javascript ==========
+
+$ node src/main.js ../test-data/events.txt
+== Summary ==
+total: 6
+SUCCESSFUL: 2
+FAILED: 1
+ABORTED: 1
+SKIPPED: 2
+== Log ==
+1. started CalcTests#add
+2. finished CalcTests#add SUCCESSFUL
+3. started CalcTests#sub
+4. finished CalcTests#sub FAILED
+5. skipped CalcTests#div (disabled)
+6. started CalcTests#mul
+7. finished CalcTests#mul ABORTED
+8. skipped StringTests#trim (not on this OS)
+9. started StringTests#concat
+10. finished StringTests#concat SUCCESSFUL
+== Listener failures (10) ==
+BrokenListener failed on started CalcTests#add: listener is broken
+BrokenListener failed on finished CalcTests#add: listener is broken
+BrokenListener failed on started CalcTests#sub: listener is broken
+BrokenListener failed on finished CalcTests#sub: listener is broken
+BrokenListener failed on skipped CalcTests#div: listener is broken
+BrokenListener failed on started CalcTests#mul: listener is broken
+BrokenListener failed on finished CalcTests#mul: listener is broken
+BrokenListener failed on skipped StringTests#trim: listener is broken
+BrokenListener failed on started StringTests#concat: listener is broken
+BrokenListener failed on finished StringTests#concat: listener is broken
+[exit 0]
+
+$ node src/main.js ../test-data/events.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ node --test test/observer.test.js
+✔ report matches expected-output.txt (0.957833ms)
+✔ a throwing listener does not stop the next one (0.585542ms)
+✔ invalid input is rejected with expected-error.txt (0.292ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 111.797
+[exit 0]
+
+========== observer-test-listeners/cpp ==========
+
+$ clang++ -std=c++20 -Wall -Wextra -pedantic -o observer main.cpp listeners.cpp runner.cpp
+[exit 0]
+
+$ ./observer ../test-data/events.txt
+== Summary ==
+total: 6
+SUCCESSFUL: 2
+FAILED: 1
+ABORTED: 1
+SKIPPED: 2
+== Log ==
+1. started CalcTests#add
+2. finished CalcTests#add SUCCESSFUL
+3. started CalcTests#sub
+4. finished CalcTests#sub FAILED
+5. skipped CalcTests#div (disabled)
+6. started CalcTests#mul
+7. finished CalcTests#mul ABORTED
+8. skipped StringTests#trim (not on this OS)
+9. started StringTests#concat
+10. finished StringTests#concat SUCCESSFUL
+== Listener failures (10) ==
+BrokenListener failed on started CalcTests#add: listener is broken
+BrokenListener failed on finished CalcTests#add: listener is broken
+BrokenListener failed on started CalcTests#sub: listener is broken
+BrokenListener failed on finished CalcTests#sub: listener is broken
+BrokenListener failed on skipped CalcTests#div: listener is broken
+BrokenListener failed on started CalcTests#mul: listener is broken
+BrokenListener failed on finished CalcTests#mul: listener is broken
+BrokenListener failed on skipped StringTests#trim: listener is broken
+BrokenListener failed on started StringTests#concat: listener is broken
+BrokenListener failed on finished StringTests#concat: listener is broken
+[exit 0]
+
+$ ./observer ../test-data/events.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ clang++ -std=c++20 -Wall -Wextra -pedantic -o observer_test test_main.cpp listeners.cpp runner.cpp
+[exit 0]
+
+$ ./observer_test
+PASS report matches expected-output.txt
+PASS a throwing listener does not stop the next one
+PASS invalid input is rejected with expected-error.txt
+3 passed, 0 failed
+[exit 0]
+
+========== composite-test-tree/java ==========
+
+$ javac -d out src/composite/*.java test/composite/*.java
+[exit 0]
+
+$ java -cp out composite.CompositeDemo ../test-data/tree.txt slow
+== Tree as read ==
+engine junit-jupiter (8 tests)
+  class CalcTests (3 tests)
+    test add
+    test sub @slow
+    test div @slow @flaky
+  class StringTests (2 tests)
+    test concat
+    test upper @flaky
+  class SlowTests (3 tests)
+    test bigSum @slow
+    class SlowTests$Huge (1 test)
+      test hugeSum @slow
+    test bigProduct @slow
+  class EmptyTests (0 tests)
+== Remove tests tagged @slow ==
+tests before: 8
+removed (5): sub, div, bigSum, hugeSum, bigProduct
+pruned (3): SlowTests$Huge, SlowTests, EmptyTests
+tests after: 3
+== Tree after ==
+engine junit-jupiter (3 tests)
+  class CalcTests (1 test)
+    test add
+  class StringTests (2 tests)
+    test concat
+    test upper @flaky
+[exit 0]
+
+$ java -cp out composite.CompositeDemo ../test-data/tree.txt slow | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ java -cp out composite.CompositeTest
+PASS report for tag 'slow' matches expected-output.txt
+PASS a leaf and a container answer countTests the same way
+PASS invalid input is rejected with expected-error.txt
+3 passed, 0 failed
+[exit 0]
+
+========== composite-test-tree/python ==========
+
+$ python3 main.py ../test-data/tree.txt slow
+== Tree as read ==
+engine junit-jupiter (8 tests)
+  class CalcTests (3 tests)
+    test add
+    test sub @slow
+    test div @slow @flaky
+  class StringTests (2 tests)
+    test concat
+    test upper @flaky
+  class SlowTests (3 tests)
+    test bigSum @slow
+    class SlowTests$Huge (1 test)
+      test hugeSum @slow
+    test bigProduct @slow
+  class EmptyTests (0 tests)
+== Remove tests tagged @slow ==
+tests before: 8
+removed (5): sub, div, bigSum, hugeSum, bigProduct
+pruned (3): SlowTests$Huge, SlowTests, EmptyTests
+tests after: 3
+== Tree after ==
+engine junit-jupiter (3 tests)
+  class CalcTests (1 test)
+    test add
+  class StringTests (2 tests)
+    test concat
+    test upper @flaky
+[exit 0]
+
+$ python3 main.py ../test-data/tree.txt slow | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ python3 -m unittest -v test_composite
+test_invalid_input_is_rejected_with_expected_error (test_composite.CompositeTest.test_invalid_input_is_rejected_with_expected_error) ... ok
+test_leaf_and_container_answer_count_tests_the_same_way (test_composite.CompositeTest.test_leaf_and_container_answer_count_tests_the_same_way) ... ok
+test_report_matches_expected_output (test_composite.CompositeTest.test_report_matches_expected_output) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK
+[exit 0]
+
+========== composite-test-tree/javascript ==========
+
+$ node src/main.js ../test-data/tree.txt slow
+== Tree as read ==
+engine junit-jupiter (8 tests)
+  class CalcTests (3 tests)
+    test add
+    test sub @slow
+    test div @slow @flaky
+  class StringTests (2 tests)
+    test concat
+    test upper @flaky
+  class SlowTests (3 tests)
+    test bigSum @slow
+    class SlowTests$Huge (1 test)
+      test hugeSum @slow
+    test bigProduct @slow
+  class EmptyTests (0 tests)
+== Remove tests tagged @slow ==
+tests before: 8
+removed (5): sub, div, bigSum, hugeSum, bigProduct
+pruned (3): SlowTests$Huge, SlowTests, EmptyTests
+tests after: 3
+== Tree after ==
+engine junit-jupiter (3 tests)
+  class CalcTests (1 test)
+    test add
+  class StringTests (2 tests)
+    test concat
+    test upper @flaky
+[exit 0]
+
+$ node src/main.js ../test-data/tree.txt slow | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ node --test test/composite.test.js
+✔ report for tag 'slow' matches expected-output.txt (0.692667ms)
+✔ a leaf and a container answer countTests the same way (0.29925ms)
+✔ invalid input is rejected with expected-error.txt (0.240875ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 101.6655
+[exit 0]
+
+========== composite-test-tree/cpp ==========
+
+$ clang++ -std=c++20 -Wall -Wextra -pedantic -o composite main.cpp nodes.cpp tree_parser.cpp
+[exit 0]
+
+$ ./composite ../test-data/tree.txt slow
+== Tree as read ==
+engine junit-jupiter (8 tests)
+  class CalcTests (3 tests)
+    test add
+    test sub @slow
+    test div @slow @flaky
+  class StringTests (2 tests)
+    test concat
+    test upper @flaky
+  class SlowTests (3 tests)
+    test bigSum @slow
+    class SlowTests$Huge (1 test)
+      test hugeSum @slow
+    test bigProduct @slow
+  class EmptyTests (0 tests)
+== Remove tests tagged @slow ==
+tests before: 8
+removed (5): sub, div, bigSum, hugeSum, bigProduct
+pruned (3): SlowTests$Huge, SlowTests, EmptyTests
+tests after: 3
+== Tree after ==
+engine junit-jupiter (3 tests)
+  class CalcTests (1 test)
+    test add
+  class StringTests (2 tests)
+    test concat
+    test upper @flaky
+[exit 0]
+
+$ ./composite ../test-data/tree.txt slow | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ clang++ -std=c++20 -Wall -Wextra -pedantic -o composite_test test_main.cpp nodes.cpp tree_parser.cpp
+[exit 0]
+
+$ ./composite_test
+PASS report for tag 'slow' matches expected-output.txt
+PASS a leaf and a container answer count_tests the same way
+PASS invalid input is rejected with expected-error.txt
+3 passed, 0 failed
+[exit 0]
+
+ALL STEPS PASSED

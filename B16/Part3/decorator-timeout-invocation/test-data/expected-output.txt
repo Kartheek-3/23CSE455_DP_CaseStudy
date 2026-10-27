@@ -1,0 +1,12 @@
+[log] calling add
+[log] add -> PASS
+[log] calling div
+[log] div -> TIMEOUT (250 ms > 100 ms limit)
+[log] calling sub
+[log] sub -> FAIL
+[log] calling slowFail
+[log] slowFail -> TIMEOUT (180 ms > 100 ms limit)
+== Summary ==
+PASS 1
+FAIL 1
+TIMEOUT 2
