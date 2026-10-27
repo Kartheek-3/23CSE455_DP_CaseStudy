@@ -1,0 +1,6 @@
+# the service is a recording test double; output = calls received by the service | HTTP status and message built by the controller
+deposit 1 50 => deposit(1,50.00)|200 Deposit done
+withdraw 2 5.5 => withdraw(2,5.50)|200 Withdraw done
+create 1 S 10 => create(1,S,10.00)|201 Account created
+create 4 C 0.5 => create(4,C,0.50)|201 Account created
+list => list()|200 3

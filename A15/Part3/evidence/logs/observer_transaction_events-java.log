@@ -1,0 +1,11 @@
+# javac -d out Snippet.java Runner.java && java -cp out Runner ../test-cases/cases.txt (working folder Part3/observer_transaction_events/java)
+# runtime: OpenJDK 21.0.12.1 (javac --release default)
+PASS case1
+PASS case2
+PASS case3
+PASS case4
+PASS case5
+PASS case6
+PASS case7
+PASS case8
+RESULT passed=8 total=8

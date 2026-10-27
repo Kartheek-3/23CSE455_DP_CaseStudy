@@ -1,0 +1,1270 @@
+RAW MODEL OUTPUT - Member 1: generated files, concatenated verbatim (no edits after generation)
+
+===== FILE: Part3/dao_account_persistence/test-cases/cases.txt =====
+# script of commands separated by ';'  =>  output of the LAST command
+# save <balance> prints the new id; find <id> prints the balance or NOT_FOUND; all prints balances by id or -
+save 100;find 1 => 100.00
+find 5 => NOT_FOUND
+save 10;save 20;all => 10.00,20.00
+all => -
+save 5;save 7;find 2 => 7.00
+save 1;find 2 => NOT_FOUND
+save 3;save 4;save 5 => 3
+
+
+===== FILE: Part3/dao_account_persistence/java/Snippet.java =====
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+class NotFound extends RuntimeException {
+    NotFound(String m) { super(m); }
+}
+
+class Account {                                   // TransferObject
+    final long id;
+    final double balance;
+    Account(long id, double balance) { this.id = id; this.balance = balance; }
+}
+
+interface AccountDao {                            // DataAccessObject (abstraction: find + list only, as in DAO<T>)
+    Account findById(long id);
+    List<Account> getAll();
+}
+
+class InMemoryAccountDao implements AccountDao {  // ConcreteDAO (save exists only on the concrete class)
+    private final Map<Long, Account> rows = new LinkedHashMap<>();
+    private long next = 1;
+
+    public Account findById(long id) {
+        Account a = rows.get(id);
+        if (a == null) throw new NotFound(String.valueOf(id));
+        return a;
+    }
+
+    long save(double balance) {
+        Account a = new Account(next++, balance);
+        rows.put(a.id, a);
+        return a.id;
+    }
+
+    public List<Account> getAll() { return new ArrayList<>(rows.values()); }
+}
+
+class AccountService {                            // BusinessObject: never touches storage directly
+    private final InMemoryAccountDao dao;
+    AccountService(InMemoryAccountDao dao) { this.dao = dao; }
+    long open(double balance) { return dao.save(balance); }
+    double balanceOf(long id) { return dao.findById(id).balance; }
+    List<Double> balances() {
+        List<Double> out = new ArrayList<>();
+        for (Account a : dao.getAll()) out.add(a.balance);
+        return out;
+    }
+}
+
+
+===== FILE: Part3/dao_account_persistence/java/Runner.java =====
+import java.nio.file.*;
+import java.util.*;
+
+public class Runner {
+    static String execute(String script) {
+        AccountService svc = new AccountService(new InMemoryAccountDao());
+        String out = "";
+        for (String cmd : script.split(";")) {
+            String[] t = cmd.trim().split("\\s+");
+            try {
+                switch (t[0]) {
+                    case "save" -> out = String.valueOf(svc.open(Double.parseDouble(t[1])));
+                    case "find" -> out = String.format(Locale.ROOT, "%.2f", svc.balanceOf(Long.parseLong(t[1])));
+                    default -> {
+                        StringJoiner j = new StringJoiner(",");
+                        for (double b : svc.balances()) j.add(String.format(Locale.ROOT, "%.2f", b));
+                        out = j.length() == 0 ? "-" : j.toString();
+                    }
+                }
+            } catch (NotFound e) {
+                out = "NOT_FOUND";
+            }
+        }
+        return out;
+    }
+
+    public static void main(String[] args) throws Exception {
+        int passed = 0, total = 0;
+        for (String line : Files.readAllLines(Path.of(args[0]))) {
+            if (line.isBlank() || line.startsWith("#")) continue;
+            String[] p = line.split(" => ", 2);
+            total++;
+            String got = execute(p[0]);
+            if (got.equals(p[1])) { passed++; System.out.println("PASS case" + total); }
+            else System.out.println("FAIL case" + total + " expected=" + p[1] + " got=" + got);
+        }
+        System.out.println("RESULT passed=" + passed + " total=" + total);
+        System.exit(passed == total ? 0 : 1);
+    }
+}
+
+
+===== FILE: Part3/dao_account_persistence/python/snippet.py =====
+class NotFound(Exception):
+    pass
+
+
+class Account:                              # TransferObject
+    def __init__(self, id, balance):
+        self.id, self.balance = id, balance
+
+
+class AccountDao:                           # DataAccessObject (abstraction: find + list only, as in DAO<T>)
+    def find_by_id(self, id):
+        raise NotImplementedError
+
+    def get_all(self):
+        raise NotImplementedError
+
+
+class InMemoryAccountDao(AccountDao):       # ConcreteDAO (save exists only on the concrete class)
+    def __init__(self):
+        self._rows, self._next = {}, 1
+
+    def find_by_id(self, id):
+        if id not in self._rows:
+            raise NotFound(id)
+        return self._rows[id]
+
+    def save(self, balance):
+        account = Account(self._next, balance)
+        self._rows[account.id] = account
+        self._next += 1
+        return account.id
+
+    def get_all(self):
+        return list(self._rows.values())
+
+
+class AccountService:                       # BusinessObject: never touches storage directly
+    def __init__(self, dao):
+        self.dao = dao
+
+    def open(self, balance):
+        return self.dao.save(balance)
+
+    def balance_of(self, id):
+        return self.dao.find_by_id(id).balance
+
+    def balances(self):
+        return [a.balance for a in self.dao.get_all()]
+
+
+===== FILE: Part3/dao_account_persistence/python/run_tests.py =====
+import sys
+from snippet import AccountService, InMemoryAccountDao, NotFound
+
+
+def execute(script):
+    svc, out = AccountService(InMemoryAccountDao()), ""
+    for cmd in script.split(";"):
+        t = cmd.split()
+        try:
+            if t[0] == "save":
+                out = str(svc.open(float(t[1])))
+            elif t[0] == "find":
+                out = "%.2f" % svc.balance_of(int(t[1]))
+            else:
+                out = ",".join("%.2f" % b for b in svc.balances()) or "-"
+        except NotFound:
+            out = "NOT_FOUND"
+    return out
+
+
+def main(path):
+    passed = total = 0
+    for line in open(path, encoding="utf-8"):
+        line = line.rstrip("\n")
+        if not line.strip() or line.startswith("#"):
+            continue
+        script, expected = line.split(" => ", 1)
+        total += 1
+        got = execute(script)
+        if got == expected:
+            passed += 1
+            print("PASS case%d" % total)
+        else:
+            print("FAIL case%d expected=%s got=%s" % (total, expected, got))
+    print("RESULT passed=%d total=%d" % (passed, total))
+    sys.exit(0 if passed == total else 1)
+
+
+main(sys.argv[1])
+
+
+===== FILE: Part3/dao_account_persistence/javascript/snippet.js =====
+class NotFound extends Error {}
+
+class Account {                              // TransferObject
+  constructor(id, balance) { this.id = id; this.balance = balance; }
+}
+
+class AccountDao {                           // DataAccessObject (abstraction: find + list only, as in DAO<T>)
+  findById(id) { throw new Error('abstract'); }
+  getAll() { throw new Error('abstract'); }
+}
+
+class InMemoryAccountDao extends AccountDao { // ConcreteDAO (save exists only on the concrete class)
+  constructor() { super(); this.rows = new Map(); this.next = 1; }
+  findById(id) {
+    if (!this.rows.has(id)) throw new NotFound(String(id));
+    return this.rows.get(id);
+  }
+  save(balance) {
+    const account = new Account(this.next, balance);
+    this.rows.set(account.id, account);
+    this.next += 1;
+    return account.id;
+  }
+  getAll() { return [...this.rows.values()]; }
+}
+
+class AccountService {                       // BusinessObject: never touches storage directly
+  constructor(dao) { this.dao = dao; }
+  open(balance) { return this.dao.save(balance); }
+  balanceOf(id) { return this.dao.findById(id).balance; }
+  balances() { return this.dao.getAll().map((a) => a.balance); }
+}
+
+module.exports = { NotFound, AccountService, InMemoryAccountDao };
+
+
+===== FILE: Part3/dao_account_persistence/javascript/run_tests.js =====
+const fs = require('fs');
+const { AccountService, InMemoryAccountDao, NotFound } = require('./snippet');
+
+function execute(script) {
+  const svc = new AccountService(new InMemoryAccountDao());
+  let out = '';
+  for (const cmd of script.split(';')) {
+    const t = cmd.trim().split(/\s+/);
+    try {
+      if (t[0] === 'save') out = String(svc.open(parseFloat(t[1])));
+      else if (t[0] === 'find') out = svc.balanceOf(parseInt(t[1], 10)).toFixed(2);
+      else out = svc.balances().map((b) => b.toFixed(2)).join(',') || '-';
+    } catch (e) {
+      if (!(e instanceof NotFound)) throw e;
+      out = 'NOT_FOUND';
+    }
+  }
+  return out;
+}
+
+let passed = 0, total = 0;
+for (const line of fs.readFileSync(process.argv[2], 'utf8').split('\n')) {
+  if (!line.trim() || line.startsWith('#')) continue;
+  const i = line.indexOf(' => ');
+  const script = line.slice(0, i), expected = line.slice(i + 4);
+  total += 1;
+  const got = execute(script);
+  if (got === expected) { passed += 1; console.log('PASS case' + total); }
+  else console.log(`FAIL case${total} expected=${expected} got=${got}`);
+}
+console.log(`RESULT passed=${passed} total=${total}`);
+process.exit(passed === total ? 0 : 1);
+
+
+===== FILE: Part3/dao_account_persistence/cpp/snippet.hpp =====
+#pragma once
+#include <map>
+#include <stdexcept>
+#include <vector>
+
+struct NotFound : std::runtime_error {
+    NotFound() : std::runtime_error("not found") {}
+};
+
+struct Account {                                   // TransferObject
+    long id;
+    double balance;
+};
+
+class AccountDao {                                 // DataAccessObject (abstraction: find + list only, as in DAO<T>)
+public:
+    virtual ~AccountDao() = default;
+    virtual const Account& findById(long id) const = 0;
+    virtual std::vector<Account> getAll() const = 0;
+};
+
+class InMemoryAccountDao : public AccountDao {     // ConcreteDAO (save exists only on the concrete class)
+    std::map<long, Account> rows_;
+    long next_ = 1;
+public:
+    const Account& findById(long id) const override {
+        auto it = rows_.find(id);
+        if (it == rows_.end()) throw NotFound();
+        return it->second;
+    }
+    long save(double balance) {
+        rows_[next_] = Account{next_, balance};
+        return next_++;
+    }
+    std::vector<Account> getAll() const override {
+        std::vector<Account> out;
+        for (const auto& kv : rows_) out.push_back(kv.second);
+        return out;
+    }
+};
+
+class AccountService {                             // BusinessObject: never touches storage directly
+    InMemoryAccountDao& dao_;
+public:
+    explicit AccountService(InMemoryAccountDao& dao) : dao_(dao) {}
+    long open(double balance) { return dao_.save(balance); }
+    double balanceOf(long id) const { return dao_.findById(id).balance; }
+    std::vector<double> balances() const {
+        std::vector<double> out;
+        for (const auto& a : dao_.getAll()) out.push_back(a.balance);
+        return out;
+    }
+};
+
+
+===== FILE: Part3/dao_account_persistence/cpp/run_tests.cpp =====
+#include <cstdio>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include "snippet.hpp"
+
+static std::string fmt(double v) { char b[64]; std::snprintf(b, sizeof b, "%.2f", v); return b; }
+
+static std::string execute(const std::string& script) {
+    InMemoryAccountDao dao; AccountService svc(dao);
+    std::string out; std::stringstream cmds(script); std::string cmd;
+    while (std::getline(cmds, cmd, ';')) {
+        std::stringstream ts(cmd); std::string name, arg; ts >> name >> arg;
+        try {
+            if (name == "save") out = std::to_string(svc.open(std::stod(arg)));
+            else if (name == "find") out = fmt(svc.balanceOf(std::stol(arg)));
+            else {
+                out.clear();
+                for (double b : svc.balances()) out += (out.empty() ? "" : ",") + fmt(b);
+                if (out.empty()) out = "-";
+            }
+        } catch (const NotFound&) { out = "NOT_FOUND"; }
+    }
+    return out;
+}
+
+int main(int, char** argv) {
+    std::ifstream in(argv[1]); std::string line; int passed = 0, total = 0;
+    while (std::getline(in, line)) {
+        if (line.empty() || line[0] == '#') continue;
+        auto i = line.find(" => ");
+        std::string expected = line.substr(i + 4), got = execute(line.substr(0, i));
+        ++total;
+        if (got == expected) { ++passed; std::cout << "PASS case" << total << "\n"; }
+        else std::cout << "FAIL case" << total << " expected=" << expected << " got=" << got << "\n";
+    }
+    std::cout << "RESULT passed=" << passed << " total=" << total << "\n";
+    return passed == total ? 0 : 1;
+}
+
+
+===== FILE: Part3/dto_user_assembly/test-cases/cases.txt =====
+# toDto: entity(id 7) -> DTO text; toEntity: DTO -> entity text (id not set = 0); roundtrip: DTO -> entity -> DTO
+toDto Ana 30 555 RuaA => Ana|30|555|RuaA
+toEntity Bob 41 111 RuaB => User#0:Bob|41|111|RuaB
+roundtrip Cy 22 9 Z => Cy|22|9|Z
+toDto Eve 99 7 W => Eve|99|7|W
+toEntity Zed 1 2 Y => User#0:Zed|1|2|Y
+
+
+===== FILE: Part3/dto_user_assembly/java/Snippet.java =====
+class User {                                   // DomainObject (entity)
+    final long id; final String name; final int age; final String phone; final String address;
+    User(long id, String name, int age, String phone, String address) {
+        this.id = id; this.name = name; this.age = age; this.phone = phone; this.address = address;
+    }
+    String text() { return "User#" + id + ":" + name + "|" + age + "|" + phone + "|" + address; }
+}
+
+class UserDto {                                // DataTransferObject: data only, no id
+    final String name; final int age; final String phone; final String address;
+    UserDto(String name, int age, String phone, String address) {
+        this.name = name; this.age = age; this.phone = phone; this.address = address;
+    }
+    String text() { return name + "|" + age + "|" + phone + "|" + address; }
+}
+
+class UserAssembler {                          // Assembler: the only place that knows both shapes
+    UserDto toDto(User u) { return new UserDto(u.name, u.age, u.phone, u.address); }
+    User toEntity(UserDto d) { return new User(0, d.name, d.age, d.phone, d.address); }
+}
+
+
+===== FILE: Part3/dto_user_assembly/java/Runner.java =====
+import java.nio.file.*;
+
+public class Runner {
+    static String execute(String script) {
+        String[] t = script.trim().split("\\s+");
+        UserAssembler asm = new UserAssembler();
+        int age = Integer.parseInt(t[2]);
+        if (t[0].equals("toDto")) return asm.toDto(new User(7, t[1], age, t[3], t[4])).text();
+        UserDto dto = new UserDto(t[1], age, t[3], t[4]);
+        if (t[0].equals("toEntity")) return asm.toEntity(dto).text();
+        return asm.toDto(asm.toEntity(dto)).text();
+    }
+
+    public static void main(String[] args) throws Exception {
+        int passed = 0, total = 0;
+        for (String line : Files.readAllLines(Path.of(args[0]))) {
+            if (line.isBlank() || line.startsWith("#")) continue;
+            String[] p = line.split(" => ", 2);
+            total++;
+            String got = execute(p[0]);
+            if (got.equals(p[1])) { passed++; System.out.println("PASS case" + total); }
+            else System.out.println("FAIL case" + total + " expected=" + p[1] + " got=" + got);
+        }
+        System.out.println("RESULT passed=" + passed + " total=" + total);
+        System.exit(passed == total ? 0 : 1);
+    }
+}
+
+
+===== FILE: Part3/dto_user_assembly/python/snippet.py =====
+class User:                                   # DomainObject (entity)
+    def __init__(self, id, name, age, phone, address):
+        self.id, self.name, self.age, self.phone, self.address = id, name, age, phone, address
+
+    def text(self):
+        return "User#%d:%s|%d|%s|%s" % (self.id, self.name, self.age, self.phone, self.address)
+
+
+class UserDto:                                # DataTransferObject: data only, no id
+    def __init__(self, name, age, phone, address):
+        self.name, self.age, self.phone, self.address = name, age, phone, address
+
+    def text(self):
+        return "%s|%d|%s|%s" % (self.name, self.age, self.phone, self.address)
+
+
+class UserAssembler:                          # Assembler: the only place that knows both shapes
+    def to_dto(self, user):
+        return UserDto(user.name, user.age, user.phone, user.address)
+
+    def to_entity(self, dto):
+        return User(0, dto.name, dto.age, dto.phone, dto.address)
+
+
+===== FILE: Part3/dto_user_assembly/python/run_tests.py =====
+import sys
+from snippet import User, UserDto, UserAssembler
+
+
+def execute(script):
+    cmd, name, age, phone, address = script.split()
+    asm = UserAssembler()
+    if cmd == "toDto":
+        return asm.to_dto(User(7, name, int(age), phone, address)).text()
+    dto = UserDto(name, int(age), phone, address)
+    if cmd == "toEntity":
+        return asm.to_entity(dto).text()
+    return asm.to_dto(asm.to_entity(dto)).text()
+
+
+def main(path):
+    passed = total = 0
+    for line in open(path, encoding="utf-8"):
+        line = line.rstrip("\n")
+        if not line.strip() or line.startswith("#"):
+            continue
+        script, expected = line.split(" => ", 1)
+        total += 1
+        got = execute(script)
+        if got == expected:
+            passed += 1
+            print("PASS case%d" % total)
+        else:
+            print("FAIL case%d expected=%s got=%s" % (total, expected, got))
+    print("RESULT passed=%d total=%d" % (passed, total))
+    sys.exit(0 if passed == total else 1)
+
+
+main(sys.argv[1])
+
+
+===== FILE: Part3/dto_user_assembly/javascript/snippet.js =====
+class User {                                   // DomainObject (entity)
+  constructor(id, name, age, phone, address) { Object.assign(this, { id, name, age, phone, address }); }
+  text() { return `User#${this.id}:${this.name}|${this.age}|${this.phone}|${this.address}`; }
+}
+
+class UserDto {                                // DataTransferObject: data only, no id
+  constructor(name, age, phone, address) { Object.assign(this, { name, age, phone, address }); }
+  text() { return `${this.name}|${this.age}|${this.phone}|${this.address}`; }
+}
+
+class UserAssembler {                          // Assembler: the only place that knows both shapes
+  toDto(user) { return new UserDto(user.name, user.age, user.phone, user.address); }
+  toEntity(dto) { return new User(0, dto.name, dto.age, dto.phone, dto.address); }
+}
+
+module.exports = { User, UserDto, UserAssembler };
+
+
+===== FILE: Part3/dto_user_assembly/javascript/run_tests.js =====
+const fs = require('fs');
+const { User, UserDto, UserAssembler } = require('./snippet');
+
+function execute(script) {
+  const [cmd, name, age, phone, address] = script.trim().split(/\s+/);
+  const asm = new UserAssembler();
+  if (cmd === 'toDto') return asm.toDto(new User(7, name, parseInt(age, 10), phone, address)).text();
+  const dto = new UserDto(name, parseInt(age, 10), phone, address);
+  if (cmd === 'toEntity') return asm.toEntity(dto).text();
+  return asm.toDto(asm.toEntity(dto)).text();
+}
+
+let passed = 0, total = 0;
+for (const line of fs.readFileSync(process.argv[2], 'utf8').split('\n')) {
+  if (!line.trim() || line.startsWith('#')) continue;
+  const i = line.indexOf(' => ');
+  const script = line.slice(0, i), expected = line.slice(i + 4);
+  total += 1;
+  const got = execute(script);
+  if (got === expected) { passed += 1; console.log('PASS case' + total); }
+  else console.log(`FAIL case${total} expected=${expected} got=${got}`);
+}
+console.log(`RESULT passed=${passed} total=${total}`);
+process.exit(passed === total ? 0 : 1);
+
+
+===== FILE: Part3/dto_user_assembly/cpp/snippet.hpp =====
+#pragma once
+#include <string>
+
+struct User {                                   // DomainObject (entity)
+    long id; std::string name; int age; std::string phone, address;
+    std::string text() const {
+        return "User#" + std::to_string(id) + ":" + name + "|" + std::to_string(age) + "|" + phone + "|" + address;
+    }
+};
+
+struct UserDto {                                // DataTransferObject: data only, no id
+    std::string name; int age; std::string phone, address;
+    std::string text() const { return name + "|" + std::to_string(age) + "|" + phone + "|" + address; }
+};
+
+struct UserAssembler {                          // Assembler: the only place that knows both shapes
+    UserDto toDto(const User& u) const { return {u.name, u.age, u.phone, u.address}; }
+    User toEntity(const UserDto& d) const { return {0, d.name, d.age, d.phone, d.address}; }
+};
+
+
+===== FILE: Part3/dto_user_assembly/cpp/run_tests.cpp =====
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include "snippet.hpp"
+
+static std::string execute(const std::string& script) {
+    std::stringstream ts(script); std::string cmd, name, phone, address; int age;
+    ts >> cmd >> name >> age >> phone >> address;
+    UserAssembler asm_;
+    if (cmd == "toDto") return asm_.toDto(User{7, name, age, phone, address}).text();
+    UserDto dto{name, age, phone, address};
+    if (cmd == "toEntity") return asm_.toEntity(dto).text();
+    return asm_.toDto(asm_.toEntity(dto)).text();
+}
+
+int main(int, char** argv) {
+    std::ifstream in(argv[1]); std::string line; int passed = 0, total = 0;
+    while (std::getline(in, line)) {
+        if (line.empty() || line[0] == '#') continue;
+        auto i = line.find(" => ");
+        std::string expected = line.substr(i + 4), got = execute(line.substr(0, i));
+        ++total;
+        if (got == expected) { ++passed; std::cout << "PASS case" << total << "\n"; }
+        else std::cout << "FAIL case" << total << " expected=" << expected << " got=" << got << "\n";
+    }
+    std::cout << "RESULT passed=" << passed << " total=" << total << "\n";
+    return passed == total ? 0 : 1;
+}
+
+
+===== FILE: Part3/service_layer_bank/test-cases/cases.txt =====
+# user <id> registers a user; open <userId> <balance> prints the new account id or NO_USER; balance <accountId> prints the balance or NOT_FOUND
+user 1;user 2;open 1 100;open 2 50;balance 2 => 50.00
+open 9 5 => NO_USER
+user 1;open 1 10;balance 7 => NOT_FOUND
+user 1;open 1 10;open 1 20;balance 2 => 20.00
+user 1;open 1 10;open 1 20 => 2
+user 1;open 2 5;balance 1 => NOT_FOUND
+
+
+===== FILE: Part3/service_layer_bank/java/Snippet.java =====
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+class NoUser extends RuntimeException { }
+class NotFound extends RuntimeException { }
+
+class UserRepo {                               // Collaborator
+    private final Set<Long> ids = new HashSet<>();
+    void add(long id) { ids.add(id); }
+    void require(long id) { if (!ids.contains(id)) throw new NoUser(); }
+}
+
+class AccountRepo {                            // Collaborator
+    private final List<Double> balances = new ArrayList<>();
+    long save(long userId, double balance) { balances.add(balance); return balances.size(); }
+    double get(long id) {
+        if (id < 1 || id > balances.size()) throw new NotFound();
+        return balances.get((int) id - 1);
+    }
+}
+
+class BankService {                            // ServiceLayer: one boundary that coordinates the use cases
+    private final UserRepo users;
+    private final AccountRepo accounts;
+    BankService(UserRepo users, AccountRepo accounts) { this.users = users; this.accounts = accounts; }
+    void createUser(long id) { users.add(id); }
+    long openAccount(long userId, double balance) {
+        users.require(userId);                 // use case: look up the owner first,
+        return accounts.save(userId, balance); // then store the account
+    }
+    double balance(long accountId) { return accounts.get(accountId); }
+}
+
+
+===== FILE: Part3/service_layer_bank/java/Runner.java =====
+import java.nio.file.*;
+import java.util.Locale;
+
+public class Runner {
+    static String execute(String script) {
+        BankService svc = new BankService(new UserRepo(), new AccountRepo());
+        String out = "";
+        for (String cmd : script.split(";")) {
+            String[] t = cmd.trim().split("\\s+");
+            try {
+                switch (t[0]) {
+                    case "user" -> { svc.createUser(Long.parseLong(t[1])); out = "ok"; }
+                    case "open" -> out = String.valueOf(svc.openAccount(Long.parseLong(t[1]), Double.parseDouble(t[2])));
+                    default -> out = String.format(Locale.ROOT, "%.2f", svc.balance(Long.parseLong(t[1])));
+                }
+            } catch (NoUser e) { out = "NO_USER"; }
+            catch (NotFound e) { out = "NOT_FOUND"; }
+        }
+        return out;
+    }
+
+    public static void main(String[] args) throws Exception {
+        int passed = 0, total = 0;
+        for (String line : Files.readAllLines(Path.of(args[0]))) {
+            if (line.isBlank() || line.startsWith("#")) continue;
+            String[] p = line.split(" => ", 2);
+            total++;
+            String got = execute(p[0]);
+            if (got.equals(p[1])) { passed++; System.out.println("PASS case" + total); }
+            else System.out.println("FAIL case" + total + " expected=" + p[1] + " got=" + got);
+        }
+        System.out.println("RESULT passed=" + passed + " total=" + total);
+        System.exit(passed == total ? 0 : 1);
+    }
+}
+
+
+===== FILE: Part3/service_layer_bank/python/snippet.py =====
+class NoUser(Exception):
+    pass
+
+
+class NotFound(Exception):
+    pass
+
+
+class UserRepo:                                # Collaborator
+    def __init__(self):
+        self.ids = set()
+
+    def add(self, id):
+        self.ids.add(id)
+
+    def require(self, id):
+        if id not in self.ids:
+            raise NoUser(id)
+
+
+class AccountRepo:                             # Collaborator
+    def __init__(self):
+        self.rows = []
+
+    def save(self, user_id, balance):
+        self.rows.append((user_id, balance))
+        return len(self.rows)
+
+    def get(self, id):
+        if not 1 <= id <= len(self.rows):
+            raise NotFound(id)
+        return self.rows[id - 1][1]
+
+
+class BankService:                             # ServiceLayer: one boundary that coordinates the use cases
+    def __init__(self, users, accounts):
+        self.users, self.accounts = users, accounts
+
+    def create_user(self, id):
+        self.users.add(id)
+
+    def open_account(self, user_id, balance):
+        self.users.require(user_id)            # use case: look up the owner first,
+        return self.accounts.save(user_id, balance)   # then store the account
+
+    def balance(self, account_id):
+        return self.accounts.get(account_id)
+
+
+===== FILE: Part3/service_layer_bank/python/run_tests.py =====
+import sys
+from snippet import BankService, UserRepo, AccountRepo, NoUser, NotFound
+
+
+def execute(script):
+    svc, out = BankService(UserRepo(), AccountRepo()), ""
+    for cmd in script.split(";"):
+        t = cmd.split()
+        try:
+            if t[0] == "user":
+                svc.create_user(int(t[1]))
+                out = "ok"
+            elif t[0] == "open":
+                out = str(svc.open_account(int(t[1]), float(t[2])))
+            else:
+                out = "%.2f" % svc.balance(int(t[1]))
+        except NoUser:
+            out = "NO_USER"
+        except NotFound:
+            out = "NOT_FOUND"
+    return out
+
+
+def main(path):
+    passed = total = 0
+    for line in open(path, encoding="utf-8"):
+        line = line.rstrip("\n")
+        if not line.strip() or line.startswith("#"):
+            continue
+        script, expected = line.split(" => ", 1)
+        total += 1
+        got = execute(script)
+        if got == expected:
+            passed += 1
+            print("PASS case%d" % total)
+        else:
+            print("FAIL case%d expected=%s got=%s" % (total, expected, got))
+    print("RESULT passed=%d total=%d" % (passed, total))
+    sys.exit(0 if passed == total else 1)
+
+
+main(sys.argv[1])
+
+
+===== FILE: Part3/service_layer_bank/javascript/snippet.js =====
+class NoUser extends Error {}
+class NotFound extends Error {}
+
+class UserRepo {                               // Collaborator
+  constructor() { this.ids = new Set(); }
+  add(id) { this.ids.add(id); }
+  require(id) { if (!this.ids.has(id)) throw new NoUser(String(id)); }
+}
+
+class AccountRepo {                            // Collaborator
+  constructor() { this.rows = []; }
+  save(userId, balance) { this.rows.push({ userId, balance }); return this.rows.length; }
+  get(id) {
+    if (id < 1 || id > this.rows.length) throw new NotFound(String(id));
+    return this.rows[id - 1].balance;
+  }
+}
+
+class BankService {                            // ServiceLayer: one boundary that coordinates the use cases
+  constructor(users, accounts) { this.users = users; this.accounts = accounts; }
+  createUser(id) { this.users.add(id); }
+  openAccount(userId, balance) {
+    this.users.require(userId);                // use case: look up the owner first,
+    return this.accounts.save(userId, balance); // then store the account
+  }
+  balance(accountId) { return this.accounts.get(accountId); }
+}
+
+module.exports = { BankService, UserRepo, AccountRepo, NoUser, NotFound };
+
+
+===== FILE: Part3/service_layer_bank/javascript/run_tests.js =====
+const fs = require('fs');
+const { BankService, UserRepo, AccountRepo, NoUser, NotFound } = require('./snippet');
+
+function execute(script) {
+  const svc = new BankService(new UserRepo(), new AccountRepo());
+  let out = '';
+  for (const cmd of script.split(';')) {
+    const t = cmd.trim().split(/\s+/);
+    try {
+      if (t[0] === 'user') { svc.createUser(parseInt(t[1], 10)); out = 'ok'; }
+      else if (t[0] === 'open') out = String(svc.openAccount(parseInt(t[1], 10), parseFloat(t[2])));
+      else out = svc.balance(parseInt(t[1], 10)).toFixed(2);
+    } catch (e) {
+      if (e instanceof NoUser) out = 'NO_USER';
+      else if (e instanceof NotFound) out = 'NOT_FOUND';
+      else throw e;
+    }
+  }
+  return out;
+}
+
+let passed = 0, total = 0;
+for (const line of fs.readFileSync(process.argv[2], 'utf8').split('\n')) {
+  if (!line.trim() || line.startsWith('#')) continue;
+  const i = line.indexOf(' => ');
+  const script = line.slice(0, i), expected = line.slice(i + 4);
+  total += 1;
+  const got = execute(script);
+  if (got === expected) { passed += 1; console.log('PASS case' + total); }
+  else console.log(`FAIL case${total} expected=${expected} got=${got}`);
+}
+console.log(`RESULT passed=${passed} total=${total}`);
+process.exit(passed === total ? 0 : 1);
+
+
+===== FILE: Part3/service_layer_bank/cpp/snippet.hpp =====
+#pragma once
+#include <set>
+#include <stdexcept>
+#include <vector>
+
+struct NoUser : std::runtime_error { NoUser() : std::runtime_error("no user") {} };
+struct NotFound : std::runtime_error { NotFound() : std::runtime_error("not found") {} };
+
+class UserRepo {                               // Collaborator
+    std::set<long> ids_;
+public:
+    void add(long id) { ids_.insert(id); }
+    void require(long id) const { if (!ids_.count(id)) throw NoUser(); }
+};
+
+class AccountRepo {                            // Collaborator
+    std::vector<double> balances_;
+public:
+    long save(long, double balance) { balances_.push_back(balance); return static_cast<long>(balances_.size()); }
+    double get(long id) const {
+        if (id < 1 || id > static_cast<long>(balances_.size())) throw NotFound();
+        return balances_[id - 1];
+    }
+};
+
+class BankService {                            // ServiceLayer: one boundary that coordinates the use cases
+    UserRepo& users_;
+    AccountRepo& accounts_;
+public:
+    BankService(UserRepo& u, AccountRepo& a) : users_(u), accounts_(a) {}
+    void createUser(long id) { users_.add(id); }
+    long openAccount(long userId, double balance) {
+        users_.require(userId);                // use case: look up the owner first,
+        return accounts_.save(userId, balance); // then store the account
+    }
+    double balance(long accountId) const { return accounts_.get(accountId); }
+};
+
+
+===== FILE: Part3/service_layer_bank/cpp/run_tests.cpp =====
+#include <cstdio>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include "snippet.hpp"
+
+static std::string fmt(double v) { char b[64]; std::snprintf(b, sizeof b, "%.2f", v); return b; }
+
+static std::string execute(const std::string& script) {
+    UserRepo users; AccountRepo accounts; BankService svc(users, accounts);
+    std::string out; std::stringstream cmds(script); std::string cmd;
+    while (std::getline(cmds, cmd, ';')) {
+        std::stringstream ts(cmd); std::string name, a, b; ts >> name >> a >> b;
+        try {
+            if (name == "user") { svc.createUser(std::stol(a)); out = "ok"; }
+            else if (name == "open") out = std::to_string(svc.openAccount(std::stol(a), std::stod(b)));
+            else out = fmt(svc.balance(std::stol(a)));
+        } catch (const NoUser&) { out = "NO_USER"; }
+        catch (const NotFound&) { out = "NOT_FOUND"; }
+    }
+    return out;
+}
+
+int main(int, char** argv) {
+    std::ifstream in(argv[1]); std::string line; int passed = 0, total = 0;
+    while (std::getline(in, line)) {
+        if (line.empty() || line[0] == '#') continue;
+        auto i = line.find(" => ");
+        std::string expected = line.substr(i + 4), got = execute(line.substr(0, i));
+        ++total;
+        if (got == expected) { ++passed; std::cout << "PASS case" << total << "\n"; }
+        else std::cout << "FAIL case" << total << " expected=" << expected << " got=" << got << "\n";
+    }
+    std::cout << "RESULT passed=" << passed << " total=" << total << "\n";
+    return passed == total ? 0 : 1;
+}
+
+
+===== FILE: Part3/transaction_script_account/test-cases/cases.txt =====
+# open <S|C> <balance> prints the id; deposit/withdraw <id> <amount> print the new balance, BAD_REQUEST or NOT_FOUND
+# (S = savings: +0.50 deposit bonus; withdrawal needs amount > 0 and balance > amount - the original rule)
+open S 100;deposit 1 50 => 150.50
+open C 100;deposit 1 50 => 150.00
+open C 100;withdraw 1 100 => BAD_REQUEST
+open C 100;withdraw 1 40 => 60.00
+open S 10;deposit 1 0 => BAD_REQUEST
+deposit 3 5 => NOT_FOUND
+open S 100;withdraw 1 0 => BAD_REQUEST
+open C 5;withdraw 9 1 => NOT_FOUND
+
+
+===== FILE: Part3/transaction_script_account/java/Snippet.java =====
+import java.util.HashMap;
+import java.util.Map;
+
+class BadRequest extends RuntimeException { }
+class NotFound extends RuntimeException { }
+
+class Row {                                     // RowData: data only, no behaviour (anemic)
+    final String kind;
+    double balance;
+    Row(String kind, double balance) { this.kind = kind; this.balance = balance; }
+}
+
+class AccountScripts {                          // host of the TransactionScripts: one procedure per use case
+    private final Map<Long, Row> rows = new HashMap<>();
+    private long next = 1;
+
+    long open(String kind, double balance) {
+        rows.put(next, new Row(kind, balance));
+        return next++;
+    }
+
+    private Row find(long id) {
+        Row r = rows.get(id);
+        if (r == null) throw new NotFound();
+        return r;
+    }
+
+    double deposit(long id, double amount) {    // script: all rules are inline
+        Row row = find(id);
+        if (amount > 0) {
+            double newBalance = row.balance + amount;
+            if (row.kind.equals("S")) newBalance += 0.5;
+            row.balance = newBalance;
+            return newBalance;
+        }
+        throw new BadRequest();
+    }
+
+    double withdraw(long id, double amount) {   // script: all rules are inline
+        Row row = find(id);
+        if (amount > 0 && row.balance > amount) {
+            row.balance -= amount;
+            return row.balance;
+        }
+        throw new BadRequest();
+    }
+}
+
+
+===== FILE: Part3/transaction_script_account/java/Runner.java =====
+import java.nio.file.*;
+import java.util.Locale;
+
+public class Runner {
+    static String execute(String script) {
+        AccountScripts scripts = new AccountScripts();
+        String out = "";
+        for (String cmd : script.split(";")) {
+            String[] t = cmd.trim().split("\\s+");
+            try {
+                switch (t[0]) {
+                    case "open" -> out = String.valueOf(scripts.open(t[1], Double.parseDouble(t[2])));
+                    case "deposit" -> out = String.format(Locale.ROOT, "%.2f", scripts.deposit(Long.parseLong(t[1]), Double.parseDouble(t[2])));
+                    default -> out = String.format(Locale.ROOT, "%.2f", scripts.withdraw(Long.parseLong(t[1]), Double.parseDouble(t[2])));
+                }
+            } catch (BadRequest e) { out = "BAD_REQUEST"; }
+            catch (NotFound e) { out = "NOT_FOUND"; }
+        }
+        return out;
+    }
+
+    public static void main(String[] args) throws Exception {
+        int passed = 0, total = 0;
+        for (String line : Files.readAllLines(Path.of(args[0]))) {
+            if (line.isBlank() || line.startsWith("#")) continue;
+            String[] p = line.split(" => ", 2);
+            total++;
+            String got = execute(p[0]);
+            if (got.equals(p[1])) { passed++; System.out.println("PASS case" + total); }
+            else System.out.println("FAIL case" + total + " expected=" + p[1] + " got=" + got);
+        }
+        System.out.println("RESULT passed=" + passed + " total=" + total);
+        System.exit(passed == total ? 0 : 1);
+    }
+}
+
+
+===== FILE: Part3/transaction_script_account/python/snippet.py =====
+class BadRequest(Exception):
+    pass
+
+
+class NotFound(Exception):
+    pass
+
+
+class Row:                                      # RowData: data only, no behaviour (anemic)
+    def __init__(self, kind, balance):
+        self.kind, self.balance = kind, balance
+
+
+class AccountScripts:                           # host of the TransactionScripts: one procedure per use case
+    def __init__(self):
+        self.rows, self.next = {}, 1
+
+    def open(self, kind, balance):
+        self.rows[self.next] = Row(kind, balance)
+        self.next += 1
+        return self.next - 1
+
+    def _find(self, id):
+        if id not in self.rows:
+            raise NotFound(id)
+        return self.rows[id]
+
+    def deposit(self, id, amount):              # script: all rules are inline
+        row = self._find(id)
+        if amount > 0:
+            new_balance = row.balance + amount
+            if row.kind == "S":
+                new_balance += 0.5
+            row.balance = new_balance
+            return new_balance
+        raise BadRequest()
+
+    def withdraw(self, id, amount):             # script: all rules are inline
+        row = self._find(id)
+        if amount > 0 and row.balance > amount:
+            row.balance -= amount
+            return row.balance
+        raise BadRequest()
+
+
+===== FILE: Part3/transaction_script_account/python/run_tests.py =====
+import sys
+from snippet import AccountScripts, BadRequest, NotFound
+
+
+def execute(script):
+    scripts, out = AccountScripts(), ""
+    for cmd in script.split(";"):
+        t = cmd.split()
+        try:
+            if t[0] == "open":
+                out = str(scripts.open(t[1], float(t[2])))
+            elif t[0] == "deposit":
+                out = "%.2f" % scripts.deposit(int(t[1]), float(t[2]))
+            else:
+                out = "%.2f" % scripts.withdraw(int(t[1]), float(t[2]))
+        except BadRequest:
+            out = "BAD_REQUEST"
+        except NotFound:
+            out = "NOT_FOUND"
+    return out
+
+
+def main(path):
+    passed = total = 0
+    for line in open(path, encoding="utf-8"):
+        line = line.rstrip("\n")
+        if not line.strip() or line.startswith("#"):
+            continue
+        script, expected = line.split(" => ", 1)
+        total += 1
+        got = execute(script)
+        if got == expected:
+            passed += 1
+            print("PASS case%d" % total)
+        else:
+            print("FAIL case%d expected=%s got=%s" % (total, expected, got))
+    print("RESULT passed=%d total=%d" % (passed, total))
+    sys.exit(0 if passed == total else 1)
+
+
+main(sys.argv[1])
+
+
+===== FILE: Part3/transaction_script_account/javascript/snippet.js =====
+class BadRequest extends Error {}
+class NotFound extends Error {}
+
+class AccountScripts {                          // host of the TransactionScripts: one procedure per use case
+  constructor() { this.rows = new Map(); this.next = 1; }
+  open(kind, balance) { this.rows.set(this.next, { kind, balance }); return this.next++; }  // row = data only (anemic)
+  find(id) {
+    if (!this.rows.has(id)) throw new NotFound(String(id));
+    return this.rows.get(id);
+  }
+  deposit(id, amount) {                         // script: all rules are inline
+    const row = this.find(id);
+    if (amount > 0) {
+      let newBalance = row.balance + amount;
+      if (row.kind === 'S') newBalance += 0.5;
+      row.balance = newBalance;
+      return newBalance;
+    }
+    throw new BadRequest();
+  }
+  withdraw(id, amount) {                        // script: all rules are inline
+    const row = this.find(id);
+    if (amount > 0 && row.balance > amount) { row.balance -= amount; return row.balance; }
+    throw new BadRequest();
+  }
+}
+
+module.exports = { AccountScripts, BadRequest, NotFound };
+
+
+===== FILE: Part3/transaction_script_account/javascript/run_tests.js =====
+const fs = require('fs');
+const { AccountScripts, BadRequest, NotFound } = require('./snippet');
+
+function execute(script) {
+  const scripts = new AccountScripts();
+  let out = '';
+  for (const cmd of script.split(';')) {
+    const t = cmd.trim().split(/\s+/);
+    try {
+      if (t[0] === 'open') out = String(scripts.open(t[1], parseFloat(t[2])));
+      else if (t[0] === 'deposit') out = scripts.deposit(parseInt(t[1], 10), parseFloat(t[2])).toFixed(2);
+      else out = scripts.withdraw(parseInt(t[1], 10), parseFloat(t[2])).toFixed(2);
+    } catch (e) {
+      if (e instanceof BadRequest) out = 'BAD_REQUEST';
+      else if (e instanceof NotFound) out = 'NOT_FOUND';
+      else throw e;
+    }
+  }
+  return out;
+}
+
+let passed = 0, total = 0;
+for (const line of fs.readFileSync(process.argv[2], "utf8").split("\n")) {
+  if (!line.trim() || line.startsWith("#")) continue;
+  const i = line.indexOf(" => ");
+  const script = line.slice(0, i), expected = line.slice(i + 4);
+  total += 1;
+  const got = execute(script);
+  if (got === expected) { passed += 1; console.log("PASS case" + total); }
+  else console.log(`FAIL case${total} expected=${expected} got=${got}`);
+}
+console.log(`RESULT passed=${passed} total=${total}`);
+process.exit(passed === total ? 0 : 1);
+
+
+===== FILE: Part3/transaction_script_account/cpp/snippet.hpp =====
+#pragma once
+#include <map>
+#include <stdexcept>
+#include <string>
+
+struct BadRequest : std::runtime_error { BadRequest() : std::runtime_error("bad request") {} };
+struct NotFound : std::runtime_error { NotFound() : std::runtime_error("not found") {} };
+
+struct Row {                                    // RowData: data only, no behaviour (anemic)
+    std::string kind;
+    double balance;
+};
+
+class AccountScripts {                          // host of the TransactionScripts: one procedure per use case
+    std::map<long, Row> rows_;
+    long next_ = 1;
+    Row& find(long id) {
+        auto it = rows_.find(id);
+        if (it == rows_.end()) throw NotFound();
+        return it->second;
+    }
+public:
+    long open(const std::string& kind, double balance) { rows_[next_] = Row{kind, balance}; return next_++; }
+
+    double deposit(long id, double amount) {    // script: all rules are inline
+        Row& row = find(id);
+        if (amount > 0) {
+            double newBalance = row.balance + amount;
+            if (row.kind == "S") newBalance += 0.5;
+            row.balance = newBalance;
+            return newBalance;
+        }
+        throw BadRequest();
+    }
+
+    double withdraw(long id, double amount) {   // script: all rules are inline
+        Row& row = find(id);
+        if (amount > 0 && row.balance > amount) {
+            row.balance -= amount;
+            return row.balance;
+        }
+        throw BadRequest();
+    }
+};
+
+
+===== FILE: Part3/transaction_script_account/cpp/run_tests.cpp =====
+#include <cstdio>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include "snippet.hpp"
+
+static std::string fmt(double v) { char b[64]; std::snprintf(b, sizeof b, "%.2f", v); return b; }
+
+static std::string execute(const std::string& script) {
+    AccountScripts scripts;
+    std::string out; std::stringstream cmds(script); std::string cmd;
+    while (std::getline(cmds, cmd, ';')) {
+        std::stringstream ts(cmd); std::string name, a, b; ts >> name >> a >> b;
+        try {
+            if (name == "open") out = std::to_string(scripts.open(a, std::stod(b)));
+            else if (name == "deposit") out = fmt(scripts.deposit(std::stol(a), std::stod(b)));
+            else out = fmt(scripts.withdraw(std::stol(a), std::stod(b)));
+        } catch (const BadRequest&) { out = "BAD_REQUEST"; }
+        catch (const NotFound&) { out = "NOT_FOUND"; }
+    }
+    return out;
+}
+
+int main(int, char** argv) {
+    std::ifstream in(argv[1]); std::string line; int passed = 0, total = 0;
+    while (std::getline(in, line)) {
+        if (line.empty() || line[0] == (char)35) continue;
+        auto i = line.find(" => ");
+        std::string expected = line.substr(i + 4), got = execute(line.substr(0, i));
+        ++total;
+        if (got == expected) { ++passed; std::cout << "PASS case" << total << "\n"; }
+        else std::cout << "FAIL case" << total << " expected=" << expected << " got=" << got << "\n";
+    }
+    std::cout << "RESULT passed=" << passed << " total=" << total << "\n";
+    return passed == total ? 0 : 1;
+}
+

@@ -1,0 +1,23 @@
+digraph Arch {
+ rankdir=LR; fontname="Helvetica"; labelloc=t; label="api-quarkus-2: request flow PUT /api/v1/accounts/deposit/{id} (baseline)";
+ node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10, fillcolor="#eef3fb", color="#4a6fa5"];
+ edge [fontname="Helvetica", fontsize=9, color="#555555"];
+ client [label="HTTP client\n(JSON)", fillcolor="#f3f3f3"];
+ subgraph cluster_rest { label="rest  (GRASP Controller)"; style=dashed; AC [label="AccountController\nUserController"]; }
+ subgraph cluster_dto  { label="persistence.dto  (DTO)"; style=dashed; DTO [label="AccountDTO\nUserDTO\nTransactionDTO"]; }
+ subgraph cluster_svc  { label="service  (Service Layer + Transaction Script)"; style=dashed; SVC [label="AccountService\nUserService"]; }
+ subgraph cluster_util { label="util  (DTO Assembler)"; style=dashed; UT [label="AccountUtil\nUserUtil"]; }
+ subgraph cluster_dao  { label="persistence.dao  (DAO)"; style=dashed; DAO [label="DAO<T>\nAccountDAO\nUserDAO"]; }
+ subgraph cluster_ent  { label="persistence.model"; style=dashed; ENT [label="Account\nUser\nAccountType"]; }
+ exc [label="BadRequestException\nNotFoundException\n(Exception Translation)", fillcolor="#fde9e7", color="#b5483a"];
+ em [label="EntityManager\n(Hibernate ORM)", fillcolor="#fff4d6", color="#a8841f"];
+ db [label="MySQL", shape=cylinder, fillcolor="#fff4d6", color="#a8841f"];
+ cdi [label="Quarkus ArC CDI container\n(Dependency Injection wires every box)", shape=note, fillcolor="#e8f5e9", color="#3b7d3f"];
+ client -> AC [label="1 JSON"]; AC -> DTO [label="2 binds", style=dashed];
+ AC -> SVC [label="3 depositToAccount(id, amount)"];
+ SVC -> DAO [label="4 findById / update"]; SVC -> UT [label="convert", style=dashed];
+ DAO -> em [label="5 find / merge"]; em -> db; DAO -> ENT [label="loads / stores", style=dashed];
+ SVC -> exc [label="400 / 404 on rule failure", color="#b5483a"]; exc -> client [label="HTTP error", color="#b5483a", style=dashed];
+ AC -> client [label="6 Response 200"];
+ cdi -> AC [style=dotted, arrowhead=none];
+}

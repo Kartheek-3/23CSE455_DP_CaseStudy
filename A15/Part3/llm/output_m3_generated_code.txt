@@ -1,0 +1,1150 @@
+RAW MODEL OUTPUT - Member 3: generated files, concatenated verbatim (no edits after generation)
+
+===== FILE: Part3/strategy_account_policy/test-cases/cases.txt =====
+# <type S|C> deposit <balance> <amount> prints the new balance; <type> withdraw <balance> <amount> prints ALLOWED or DENIED; unknown type -> NO_POLICY
+# S = savings: +0.50 deposit bonus, no overdraft.  C = checking: no bonus, overdraft limit 500.00
+S deposit 100 50 => 150.50
+C deposit 100 50 => 150.00
+S withdraw 100 100 => ALLOWED
+S withdraw 100 100.01 => DENIED
+C withdraw 100 600 => ALLOWED
+C withdraw 100 600.01 => DENIED
+S withdraw 100 0 => DENIED
+X deposit 1 1 => NO_POLICY
+
+
+===== FILE: Part3/strategy_account_policy/java/Snippet.java =====
+import java.util.Map;
+
+class NoPolicy extends RuntimeException { }
+
+interface AccountPolicy {                        // Strategy
+    double bonusOnDeposit(double amount);
+    boolean allowsWithdrawal(double balance, double amount);
+}
+
+class SavingsPolicy implements AccountPolicy {   // ConcreteStrategy
+    public double bonusOnDeposit(double amount) { return 0.5; }
+    public boolean allowsWithdrawal(double balance, double amount) { return amount <= balance; }
+}
+
+class CheckingPolicy implements AccountPolicy {  // ConcreteStrategy
+    static final double OVERDRAFT_LIMIT = 500.0;
+    public double bonusOnDeposit(double amount) { return 0.0; }
+    public boolean allowsWithdrawal(double balance, double amount) { return balance - amount >= -OVERDRAFT_LIMIT; }
+}
+
+class PolicyResolver {                           // StrategySelector
+    private final Map<String, AccountPolicy> policies = Map.of("S", new SavingsPolicy(), "C", new CheckingPolicy());
+    AccountPolicy forType(String kind) {
+        AccountPolicy p = policies.get(kind);
+        if (p == null) throw new NoPolicy();
+        return p;
+    }
+}
+
+class Account {                                  // Context: delegates the type-specific rules to the strategy
+    double balance;
+    private final AccountPolicy policy;
+    Account(double balance, AccountPolicy policy) { this.balance = balance; this.policy = policy; }
+    void deposit(double amount) { balance += amount + policy.bonusOnDeposit(amount); }
+    boolean withdraw(double amount) {
+        if (amount <= 0 || !policy.allowsWithdrawal(balance, amount)) return false;
+        balance -= amount;
+        return true;
+    }
+}
+
+
+===== FILE: Part3/strategy_account_policy/java/Runner.java =====
+import java.nio.file.*;
+import java.util.Locale;
+
+public class Runner {
+    static String execute(String script) {
+        String[] t = script.trim().split("\\s+");
+        Account account;
+        try { account = new Account(Double.parseDouble(t[2]), new PolicyResolver().forType(t[0])); }
+        catch (NoPolicy e) { return "NO_POLICY"; }
+        if (t[1].equals("deposit")) {
+            account.deposit(Double.parseDouble(t[3]));
+            return String.format(Locale.ROOT, "%.2f", account.balance);
+        }
+        return account.withdraw(Double.parseDouble(t[3])) ? "ALLOWED" : "DENIED";
+    }
+
+    public static void main(String[] args) throws Exception {
+        int passed = 0, total = 0;
+        for (String line : Files.readAllLines(Path.of(args[0]))) {
+            if (line.isBlank() || line.startsWith("#")) continue;
+            String[] p = line.split(" => ", 2);
+            total++;
+            String got = execute(p[0]);
+            if (got.equals(p[1])) { passed++; System.out.println("PASS case" + total); }
+            else System.out.println("FAIL case" + total + " expected=" + p[1] + " got=" + got);
+        }
+        System.out.println("RESULT passed=" + passed + " total=" + total);
+        System.exit(passed == total ? 0 : 1);
+    }
+}
+
+
+===== FILE: Part3/strategy_account_policy/python/snippet.py =====
+class NoPolicy(Exception):
+    pass
+
+
+class AccountPolicy:                            # Strategy
+    def bonus_on_deposit(self, amount):
+        raise NotImplementedError
+
+    def allows_withdrawal(self, balance, amount):
+        raise NotImplementedError
+
+
+class SavingsPolicy(AccountPolicy):             # ConcreteStrategy
+    def bonus_on_deposit(self, amount):
+        return 0.5
+
+    def allows_withdrawal(self, balance, amount):
+        return amount <= balance
+
+
+class CheckingPolicy(AccountPolicy):            # ConcreteStrategy
+    OVERDRAFT_LIMIT = 500.0
+
+    def bonus_on_deposit(self, amount):
+        return 0.0
+
+    def allows_withdrawal(self, balance, amount):
+        return balance - amount >= -self.OVERDRAFT_LIMIT
+
+
+class PolicyResolver:                           # StrategySelector
+    def __init__(self):
+        self.policies = {"S": SavingsPolicy(), "C": CheckingPolicy()}
+
+    def for_type(self, kind):
+        if kind not in self.policies:
+            raise NoPolicy(kind)
+        return self.policies[kind]
+
+
+class Account:                                  # Context: delegates the type-specific rules to the strategy
+    def __init__(self, balance, policy):
+        self.balance, self.policy = balance, policy
+
+    def deposit(self, amount):
+        self.balance += amount + self.policy.bonus_on_deposit(amount)
+
+    def withdraw(self, amount):
+        if amount <= 0 or not self.policy.allows_withdrawal(self.balance, amount):
+            return False
+        self.balance -= amount
+        return True
+
+
+===== FILE: Part3/strategy_account_policy/python/run_tests.py =====
+import sys
+from snippet import Account, PolicyResolver, NoPolicy
+
+
+def execute(script):
+    kind, op, balance, amount = script.split()
+    try:
+        account = Account(float(balance), PolicyResolver().for_type(kind))
+    except NoPolicy:
+        return "NO_POLICY"
+    if op == "deposit":
+        account.deposit(float(amount))
+        return "%.2f" % account.balance
+    return "ALLOWED" if account.withdraw(float(amount)) else "DENIED"
+
+
+def main(path):
+    passed = total = 0
+    for line in open(path, encoding="utf-8"):
+        line = line.rstrip("\n")
+        if not line.strip() or line.startswith("#"):
+            continue
+        script, expected = line.split(" => ", 1)
+        total += 1
+        got = execute(script)
+        if got == expected:
+            passed += 1
+            print("PASS case%d" % total)
+        else:
+            print("FAIL case%d expected=%s got=%s" % (total, expected, got))
+    print("RESULT passed=%d total=%d" % (passed, total))
+    sys.exit(0 if passed == total else 1)
+
+
+main(sys.argv[1])
+
+
+===== FILE: Part3/strategy_account_policy/javascript/snippet.js =====
+class NoPolicy extends Error {}
+
+class AccountPolicy {                            // Strategy
+  bonusOnDeposit(amount) { throw new Error('abstract'); }
+  allowsWithdrawal(balance, amount) { throw new Error('abstract'); }
+}
+
+class SavingsPolicy extends AccountPolicy {      // ConcreteStrategy
+  bonusOnDeposit() { return 0.5; }
+  allowsWithdrawal(balance, amount) { return amount <= balance; }
+}
+
+class CheckingPolicy extends AccountPolicy {     // ConcreteStrategy
+  bonusOnDeposit() { return 0.0; }
+  allowsWithdrawal(balance, amount) { return balance - amount >= -500.0; }
+}
+
+class PolicyResolver {                           // StrategySelector
+  constructor() { this.policies = { S: new SavingsPolicy(), C: new CheckingPolicy() }; }
+  forType(kind) {
+    if (!Object.prototype.hasOwnProperty.call(this.policies, kind)) throw new NoPolicy(kind);
+    return this.policies[kind];
+  }
+}
+
+class Account {                                  // Context: delegates the type-specific rules to the strategy
+  constructor(balance, policy) { this.balance = balance; this.policy = policy; }
+  deposit(amount) { this.balance += amount + this.policy.bonusOnDeposit(amount); }
+  withdraw(amount) {
+    if (amount <= 0 || !this.policy.allowsWithdrawal(this.balance, amount)) return false;
+    this.balance -= amount;
+    return true;
+  }
+}
+
+module.exports = { Account, PolicyResolver, NoPolicy };
+
+
+===== FILE: Part3/strategy_account_policy/javascript/run_tests.js =====
+const fs = require('fs');
+const { Account, PolicyResolver, NoPolicy } = require('./snippet');
+
+function execute(script) {
+  const [kind, op, balance, amount] = script.trim().split(/\s+/);
+  let account;
+  try { account = new Account(parseFloat(balance), new PolicyResolver().forType(kind)); }
+  catch (e) { if (e instanceof NoPolicy) return 'NO_POLICY'; throw e; }
+  if (op === 'deposit') { account.deposit(parseFloat(amount)); return account.balance.toFixed(2); }
+  return account.withdraw(parseFloat(amount)) ? 'ALLOWED' : 'DENIED';
+}
+
+let passed = 0, total = 0;
+for (const line of fs.readFileSync(process.argv[2], "utf8").split("\n")) {
+  if (!line.trim() || line.startsWith("#")) continue;
+  const i = line.indexOf(" => ");
+  const script = line.slice(0, i), expected = line.slice(i + 4);
+  total += 1;
+  const got = execute(script);
+  if (got === expected) { passed += 1; console.log("PASS case" + total); }
+  else console.log(`FAIL case${total} expected=${expected} got=${got}`);
+}
+console.log(`RESULT passed=${passed} total=${total}`);
+process.exit(passed === total ? 0 : 1);
+
+
+===== FILE: Part3/strategy_account_policy/cpp/snippet.hpp =====
+#pragma once
+#include <memory>
+#include <stdexcept>
+#include <string>
+
+struct NoPolicy : std::runtime_error { NoPolicy() : std::runtime_error("no policy") {} };
+
+struct AccountPolicy {                           // Strategy
+    virtual ~AccountPolicy() = default;
+    virtual double bonusOnDeposit(double amount) const = 0;
+    virtual bool allowsWithdrawal(double balance, double amount) const = 0;
+};
+
+struct SavingsPolicy : AccountPolicy {           // ConcreteStrategy
+    double bonusOnDeposit(double) const override { return 0.5; }
+    bool allowsWithdrawal(double balance, double amount) const override { return amount <= balance; }
+};
+
+struct CheckingPolicy : AccountPolicy {          // ConcreteStrategy
+    static constexpr double OVERDRAFT_LIMIT = 500.0;
+    double bonusOnDeposit(double) const override { return 0.0; }
+    bool allowsWithdrawal(double balance, double amount) const override { return balance - amount >= -OVERDRAFT_LIMIT; }
+};
+
+struct PolicyResolver {                          // StrategySelector
+    std::unique_ptr<AccountPolicy> forType(const std::string& kind) const {
+        if (kind == "S") return std::make_unique<SavingsPolicy>();
+        if (kind == "C") return std::make_unique<CheckingPolicy>();
+        throw NoPolicy();
+    }
+};
+
+class Account {                                  // Context: delegates the type-specific rules to the strategy
+    std::unique_ptr<AccountPolicy> policy_;
+public:
+    double balance;
+    Account(double b, std::unique_ptr<AccountPolicy> p) : policy_(std::move(p)), balance(b) {}
+    void deposit(double amount) { balance += amount + policy_->bonusOnDeposit(amount); }
+    bool withdraw(double amount) {
+        if (amount <= 0 || !policy_->allowsWithdrawal(balance, amount)) return false;
+        balance -= amount;
+        return true;
+    }
+};
+
+
+===== FILE: Part3/strategy_account_policy/cpp/run_tests.cpp =====
+#include <cstdio>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include "snippet.hpp"
+
+static std::string fmt(double v) { char b[64]; std::snprintf(b, sizeof b, "%.2f", v); return b; }
+
+static std::string execute(const std::string& script) {
+    std::stringstream ts(script); std::string kind, op; double balance, amount;
+    ts >> kind >> op >> balance >> amount;
+    try {
+        Account account(balance, PolicyResolver().forType(kind));
+        if (op == "deposit") { account.deposit(amount); return fmt(account.balance); }
+        return account.withdraw(amount) ? "ALLOWED" : "DENIED";
+    } catch (const NoPolicy&) { return "NO_POLICY"; }
+}
+
+int main(int, char** argv) {
+    std::ifstream in(argv[1]); std::string line; int passed = 0, total = 0;
+    while (std::getline(in, line)) {
+        if (line.empty() || line[0] == (char)35) continue;
+        auto i = line.find(" => ");
+        std::string expected = line.substr(i + 4), got = execute(line.substr(0, i));
+        ++total;
+        if (got == expected) { ++passed; std::cout << "PASS case" << total << "\n"; }
+        else std::cout << "FAIL case" << total << " expected=" << expected << " got=" << got << "\n";
+    }
+    std::cout << "RESULT passed=" << passed << " total=" << total << "\n";
+    return passed == total ? 0 : 1;
+}
+
+
+===== FILE: Part3/observer_transaction_events/test-cases/cases.txt =====
+# deposit/withdraw <account> <amount> print ok or BAD_REQUEST; audit <account> and alerts print what the two observers recorded ('-' if nothing)
+# audit entries look like KIND:amount; alerts (amount >= 10000.00) look like KIND:amount@account
+deposit 1 25;audit 1 => DEPOSIT:25.00
+deposit 1 25;withdraw 1 5;audit 1 => DEPOSIT:25.00,WITHDRAWAL:5.00
+deposit 1 10000;alerts => DEPOSIT:10000.00@1
+deposit 1 9999.99;alerts => -
+deposit 1 0;audit 1 => -
+deposit 1 5;deposit 2 6;audit 2 => DEPOSIT:6.00
+withdraw 3 20000;alerts => WITHDRAWAL:20000.00@3
+deposit 1 0 => BAD_REQUEST
+
+
+===== FILE: Part3/observer_transaction_events/java/Snippet.java =====
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.StringJoiner;
+
+class BadRequest extends RuntimeException { }
+
+class Event {                                    // Event (what is published)
+    final String kind; final long accountId; final double amount;
+    Event(String kind, long accountId, double amount) { this.kind = kind; this.accountId = accountId; this.amount = amount; }
+}
+
+interface Observer { void onEvent(Event e); }
+
+class EventPublisher {                           // SubjectChannel: keeps the observers, knows none by type
+    private final List<Observer> observers = new ArrayList<>();
+    void subscribe(Observer o) { observers.add(o); }
+    void publish(Event e) { for (Observer o : observers) o.onEvent(e); }
+}
+
+class AccountService {                           // Subject: publishes after a valid operation
+    private final EventPublisher publisher;
+    AccountService(EventPublisher publisher) { this.publisher = publisher; }
+    void deposit(long accountId, double amount) { apply("DEPOSIT", accountId, amount); }
+    void withdraw(long accountId, double amount) { apply("WITHDRAWAL", accountId, amount); }
+    private void apply(String kind, long accountId, double amount) {
+        if (amount <= 0) throw new BadRequest();  // failed operations publish nothing
+        publisher.publish(new Event(kind, accountId, amount));
+    }
+}
+
+class AuditLog implements Observer {             // ConcreteObserver
+    private final Map<Long, List<Event>> entries = new HashMap<>();
+    public void onEvent(Event e) { entries.computeIfAbsent(e.accountId, k -> new ArrayList<>()).add(e); }
+    String text(long accountId) {
+        StringJoiner j = new StringJoiner(",");
+        for (Event e : entries.getOrDefault(accountId, List.of())) j.add(String.format(Locale.ROOT, "%s:%.2f", e.kind, e.amount));
+        return j.length() == 0 ? "-" : j.toString();
+    }
+}
+
+class HighValueAlert implements Observer {       // ConcreteObserver
+    static final double THRESHOLD = 10000.0;
+    private final List<Event> alerts = new ArrayList<>();
+    public void onEvent(Event e) { if (e.amount >= THRESHOLD) alerts.add(e); }
+    String text() {
+        StringJoiner j = new StringJoiner(",");
+        for (Event e : alerts) j.add(String.format(Locale.ROOT, "%s:%.2f@%d", e.kind, e.amount, e.accountId));
+        return j.length() == 0 ? "-" : j.toString();
+    }
+}
+
+
+===== FILE: Part3/observer_transaction_events/java/Runner.java =====
+import java.nio.file.*;
+
+public class Runner {
+    static String execute(String script) {
+        EventPublisher publisher = new EventPublisher();
+        AuditLog audit = new AuditLog();
+        HighValueAlert alert = new HighValueAlert();
+        publisher.subscribe(audit);
+        publisher.subscribe(alert);
+        AccountService svc = new AccountService(publisher);
+        String out = "";
+        for (String cmd : script.split(";")) {
+            String[] t = cmd.trim().split("\\s+");
+            try {
+                switch (t[0]) {
+                    case "deposit" -> { svc.deposit(Long.parseLong(t[1]), Double.parseDouble(t[2])); out = "ok"; }
+                    case "withdraw" -> { svc.withdraw(Long.parseLong(t[1]), Double.parseDouble(t[2])); out = "ok"; }
+                    case "audit" -> out = audit.text(Long.parseLong(t[1]));
+                    default -> out = alert.text();
+                }
+            } catch (BadRequest e) { out = "BAD_REQUEST"; }
+        }
+        return out;
+    }
+
+    public static void main(String[] args) throws Exception {
+        int passed = 0, total = 0;
+        for (String line : Files.readAllLines(Path.of(args[0]))) {
+            if (line.isBlank() || line.startsWith("#")) continue;
+            String[] p = line.split(" => ", 2);
+            total++;
+            String got = execute(p[0]);
+            if (got.equals(p[1])) { passed++; System.out.println("PASS case" + total); }
+            else System.out.println("FAIL case" + total + " expected=" + p[1] + " got=" + got);
+        }
+        System.out.println("RESULT passed=" + passed + " total=" + total);
+        System.exit(passed == total ? 0 : 1);
+    }
+}
+
+
+===== FILE: Part3/observer_transaction_events/python/snippet.py =====
+class BadRequest(Exception):
+    pass
+
+
+class Event:                                    # Event (what is published)
+    def __init__(self, kind, account_id, amount):
+        self.kind, self.account_id, self.amount = kind, account_id, amount
+
+
+class EventPublisher:                           # SubjectChannel: keeps the observers, knows none by type
+    def __init__(self):
+        self.observers = []
+
+    def subscribe(self, observer):
+        self.observers.append(observer)
+
+    def publish(self, event):
+        for observer in self.observers:
+            observer.on_event(event)
+
+
+class AccountService:                           # Subject: publishes after a valid operation
+    def __init__(self, publisher):
+        self.publisher = publisher
+
+    def deposit(self, account_id, amount):
+        self._apply("DEPOSIT", account_id, amount)
+
+    def withdraw(self, account_id, amount):
+        self._apply("WITHDRAWAL", account_id, amount)
+
+    def _apply(self, kind, account_id, amount):
+        if amount <= 0:
+            raise BadRequest()                  # failed operations publish nothing
+        self.publisher.publish(Event(kind, account_id, amount))
+
+
+class AuditLog:                                 # ConcreteObserver
+    def __init__(self):
+        self.entries = {}
+
+    def on_event(self, event):
+        self.entries.setdefault(event.account_id, []).append(event)
+
+    def text(self, account_id):
+        return ",".join("%s:%.2f" % (e.kind, e.amount) for e in self.entries.get(account_id, [])) or "-"
+
+
+class HighValueAlert:                           # ConcreteObserver
+    THRESHOLD = 10000.0
+
+    def __init__(self):
+        self.alerts = []
+
+    def on_event(self, event):
+        if event.amount >= self.THRESHOLD:
+            self.alerts.append(event)
+
+    def text(self):
+        return ",".join("%s:%.2f@%d" % (e.kind, e.amount, e.account_id) for e in self.alerts) or "-"
+
+
+===== FILE: Part3/observer_transaction_events/python/run_tests.py =====
+import sys
+from snippet import AccountService, AuditLog, EventPublisher, HighValueAlert, BadRequest
+
+
+def execute(script):
+    publisher, audit, alert = EventPublisher(), AuditLog(), HighValueAlert()
+    publisher.subscribe(audit)
+    publisher.subscribe(alert)
+    svc, out = AccountService(publisher), ""
+    for cmd in script.split(";"):
+        t = cmd.split()
+        try:
+            if t[0] == "deposit":
+                svc.deposit(int(t[1]), float(t[2]))
+                out = "ok"
+            elif t[0] == "withdraw":
+                svc.withdraw(int(t[1]), float(t[2]))
+                out = "ok"
+            elif t[0] == "audit":
+                out = audit.text(int(t[1]))
+            else:
+                out = alert.text()
+        except BadRequest:
+            out = "BAD_REQUEST"
+    return out
+
+
+def main(path):
+    passed = total = 0
+    for line in open(path, encoding="utf-8"):
+        line = line.rstrip("\n")
+        if not line.strip() or line.startswith("#"):
+            continue
+        script, expected = line.split(" => ", 1)
+        total += 1
+        got = execute(script)
+        if got == expected:
+            passed += 1
+            print("PASS case%d" % total)
+        else:
+            print("FAIL case%d expected=%s got=%s" % (total, expected, got))
+    print("RESULT passed=%d total=%d" % (passed, total))
+    sys.exit(0 if passed == total else 1)
+
+
+main(sys.argv[1])
+
+
+===== FILE: Part3/observer_transaction_events/javascript/snippet.js =====
+class BadRequest extends Error {}
+
+class Event {                                    // Event (what is published)
+  constructor(kind, accountId, amount) { this.kind = kind; this.accountId = accountId; this.amount = amount; }
+}
+
+class EventPublisher {                           // SubjectChannel: keeps the observers, knows none by type
+  constructor() { this.observers = []; }
+  subscribe(observer) { this.observers.push(observer); }
+  publish(event) { for (const o of this.observers) o.onEvent(event); }
+}
+
+class AccountService {                           // Subject: publishes after a valid operation
+  constructor(publisher) { this.publisher = publisher; }
+  deposit(accountId, amount) { this.apply('DEPOSIT', accountId, amount); }
+  withdraw(accountId, amount) { this.apply('WITHDRAWAL', accountId, amount); }
+  apply(kind, accountId, amount) {
+    if (amount <= 0) throw new BadRequest();     // failed operations publish nothing
+    this.publisher.publish(new Event(kind, accountId, amount));
+  }
+}
+
+class AuditLog {                                 // ConcreteObserver
+  constructor() { this.entries = new Map(); }
+  onEvent(e) {
+    if (!this.entries.has(e.accountId)) this.entries.set(e.accountId, []);
+    this.entries.get(e.accountId).push(e);
+  }
+  text(accountId) { return (this.entries.get(accountId) || []).map((e) => `${e.kind}:${e.amount.toFixed(2)}`).join(',') || '-'; }
+}
+
+class HighValueAlert {                           // ConcreteObserver
+  constructor() { this.alerts = []; }
+  onEvent(e) { if (e.amount >= 10000.0) this.alerts.push(e); }
+  text() { return this.alerts.map((e) => `${e.kind}:${e.amount.toFixed(2)}@${e.accountId}`).join(',') || '-'; }
+}
+
+module.exports = { AccountService, AuditLog, EventPublisher, HighValueAlert, BadRequest };
+
+
+===== FILE: Part3/observer_transaction_events/javascript/run_tests.js =====
+const fs = require('fs');
+const { AccountService, AuditLog, EventPublisher, HighValueAlert, BadRequest } = require('./snippet');
+
+function execute(script) {
+  const publisher = new EventPublisher(), audit = new AuditLog(), alert = new HighValueAlert();
+  publisher.subscribe(audit);
+  publisher.subscribe(alert);
+  const svc = new AccountService(publisher);
+  let out = '';
+  for (const cmd of script.split(';')) {
+    const t = cmd.trim().split(/\s+/);
+    try {
+      if (t[0] === 'deposit') { svc.deposit(parseInt(t[1], 10), parseFloat(t[2])); out = 'ok'; }
+      else if (t[0] === 'withdraw') { svc.withdraw(parseInt(t[1], 10), parseFloat(t[2])); out = 'ok'; }
+      else if (t[0] === 'audit') out = audit.text(parseInt(t[1], 10));
+      else out = alert.text();
+    } catch (e) {
+      if (e instanceof BadRequest) out = 'BAD_REQUEST'; else throw e;
+    }
+  }
+  return out;
+}
+
+let passed = 0, total = 0;
+for (const line of fs.readFileSync(process.argv[2], "utf8").split("\n")) {
+  if (!line.trim() || line.startsWith("#")) continue;
+  const i = line.indexOf(" => ");
+  const script = line.slice(0, i), expected = line.slice(i + 4);
+  total += 1;
+  const got = execute(script);
+  if (got === expected) { passed += 1; console.log("PASS case" + total); }
+  else console.log(`FAIL case${total} expected=${expected} got=${got}`);
+}
+console.log(`RESULT passed=${passed} total=${total}`);
+process.exit(passed === total ? 0 : 1);
+
+
+===== FILE: Part3/observer_transaction_events/cpp/snippet.hpp =====
+#pragma once
+#include <cstdio>
+#include <map>
+#include <stdexcept>
+#include <string>
+#include <vector>
+
+struct BadRequest : std::runtime_error { BadRequest() : std::runtime_error("bad request") {} };
+
+struct Event {                                   // Event (what is published)
+    std::string kind; long accountId; double amount;
+};
+
+struct Observer {
+    virtual ~Observer() = default;
+    virtual void onEvent(const Event& e) = 0;
+};
+
+class EventPublisher {                           // SubjectChannel: keeps the observers, knows none by type
+    std::vector<Observer*> observers_;
+public:
+    void subscribe(Observer* o) { observers_.push_back(o); }
+    void publish(const Event& e) { for (auto* o : observers_) o->onEvent(e); }
+};
+
+class AccountService {                           // Subject: publishes after a valid operation
+    EventPublisher& publisher_;
+    void apply(const std::string& kind, long id, double amount) {
+        if (amount <= 0) throw BadRequest();     // failed operations publish nothing
+        publisher_.publish(Event{kind, id, amount});
+    }
+public:
+    explicit AccountService(EventPublisher& p) : publisher_(p) {}
+    void deposit(long id, double amount) { apply("DEPOSIT", id, amount); }
+    void withdraw(long id, double amount) { apply("WITHDRAWAL", id, amount); }
+};
+
+inline std::string money(double v) { char b[64]; std::snprintf(b, sizeof b, "%.2f", v); return b; }
+
+class AuditLog : public Observer {               // ConcreteObserver
+    std::map<long, std::vector<Event>> entries_;
+public:
+    void onEvent(const Event& e) override { entries_[e.accountId].push_back(e); }
+    std::string text(long id) const {
+        std::string out;
+        auto it = entries_.find(id);
+        if (it != entries_.end())
+            for (const auto& e : it->second) out += (out.empty() ? "" : ",") + e.kind + ":" + money(e.amount);
+        return out.empty() ? "-" : out;
+    }
+};
+
+class HighValueAlert : public Observer {         // ConcreteObserver
+    static constexpr double THRESHOLD = 10000.0;
+    std::vector<Event> alerts_;
+public:
+    void onEvent(const Event& e) override { if (e.amount >= THRESHOLD) alerts_.push_back(e); }
+    std::string text() const {
+        std::string out;
+        for (const auto& e : alerts_) out += (out.empty() ? "" : ",") + e.kind + ":" + money(e.amount) + "@" + std::to_string(e.accountId);
+        return out.empty() ? "-" : out;
+    }
+};
+
+
+===== FILE: Part3/observer_transaction_events/cpp/run_tests.cpp =====
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include "snippet.hpp"
+
+static std::string execute(const std::string& script) {
+    EventPublisher publisher; AuditLog audit; HighValueAlert alert;
+    publisher.subscribe(&audit); publisher.subscribe(&alert);
+    AccountService svc(publisher);
+    std::string out; std::stringstream cmds(script); std::string cmd;
+    while (std::getline(cmds, cmd, ';')) {
+        std::stringstream ts(cmd); std::string name, a, b; ts >> name >> a >> b;
+        try {
+            if (name == "deposit") { svc.deposit(std::stol(a), std::stod(b)); out = "ok"; }
+            else if (name == "withdraw") { svc.withdraw(std::stol(a), std::stod(b)); out = "ok"; }
+            else if (name == "audit") out = audit.text(std::stol(a));
+            else out = alert.text();
+        } catch (const BadRequest&) { out = "BAD_REQUEST"; }
+    }
+    return out;
+}
+
+int main(int, char** argv) {
+    std::ifstream in(argv[1]); std::string line; int passed = 0, total = 0;
+    while (std::getline(in, line)) {
+        if (line.empty() || line[0] == (char)35) continue;
+        auto i = line.find(" => ");
+        std::string expected = line.substr(i + 4), got = execute(line.substr(0, i));
+        ++total;
+        if (got == expected) { ++passed; std::cout << "PASS case" << total << "\n"; }
+        else std::cout << "FAIL case" << total << " expected=" << expected << " got=" << got << "\n";
+    }
+    std::cout << "RESULT passed=" << passed << " total=" << total << "\n";
+    return passed == total ? 0 : 1;
+}
+
+
+===== FILE: Part3/domain_model_account/test-cases/cases.txt =====
+# open <S|C> <balance> prints the id; deposit/withdraw <id> <amount> print the new balance; transfer <from> <to> <amount> prints OK; balance <id>
+# errors: BAD_REQUEST (rule violated, nothing changes) or NOT_FOUND.  S: +0.50 deposit bonus, no overdraft.  C: overdraft up to 500.00.  Transfers pay no bonus.
+open C 100;deposit 1 50 => 150.00
+open S 10;deposit 1 5 => 15.50
+open S 100;withdraw 1 100 => 0.00
+open S 100;withdraw 1 100.01 => BAD_REQUEST
+open C 100;withdraw 1 600 => -500.00
+open C 100;open S 50;transfer 1 2 30;balance 2 => 80.00
+open C 100;open S 50;transfer 1 2 30;balance 1 => 70.00
+open S 50;open C 1;transfer 1 2 50.01 => BAD_REQUEST
+open S 50;open C 1;transfer 1 2 50.01;balance 1 => 50.00
+open C 1;transfer 1 1 5 => BAD_REQUEST
+open C 1;transfer 1 9 5 => NOT_FOUND
+deposit 3 5 => NOT_FOUND
+
+
+===== FILE: Part3/domain_model_account/java/Snippet.java =====
+import java.util.HashMap;
+import java.util.Map;
+
+class BadRequest extends RuntimeException { }
+class NotFound extends RuntimeException { }
+
+class Account {                                  // DomainObject: data AND the rules that protect it
+    static final double OVERDRAFT_LIMIT = 500.0;
+    private final String kind;
+    private double balance;
+    Account(String kind, double balance) { this.kind = kind; this.balance = balance; }
+    double balance() { return balance; }
+
+    void deposit(double amount) {
+        if (amount <= 0) throw new BadRequest();
+        balance += amount + (kind.equals("S") ? 0.5 : 0.0);
+    }
+
+    void withdraw(double amount) {
+        boolean allowed = kind.equals("C") ? balance - amount >= -OVERDRAFT_LIMIT : amount <= balance;
+        if (amount <= 0 || !allowed) throw new BadRequest();
+        balance -= amount;
+    }
+
+    void credit(double amount) {
+        if (amount <= 0) throw new BadRequest();
+        balance += amount;
+    }
+}
+
+class Bank {                                     // Orchestrator: loads, calls the domain object, nothing more
+    private final Map<Long, Account> accounts = new HashMap<>();
+    private long next = 1;
+
+    long open(String kind, double balance) { accounts.put(next, new Account(kind, balance)); return next++; }
+
+    private Account find(long id) {
+        Account a = accounts.get(id);
+        if (a == null) throw new NotFound();
+        return a;
+    }
+
+    double deposit(long id, double amount) { Account a = find(id); a.deposit(amount); return a.balance(); }
+    double withdraw(long id, double amount) { Account a = find(id); a.withdraw(amount); return a.balance(); }
+
+    void transfer(long fromId, long toId, double amount) {
+        if (fromId == toId || amount <= 0) throw new BadRequest();
+        Account source = find(fromId), target = find(toId);
+        source.withdraw(amount);                 // throws before anything is changed
+        target.credit(amount);
+    }
+
+    double balance(long id) { return find(id).balance(); }
+}
+
+
+===== FILE: Part3/domain_model_account/java/Runner.java =====
+import java.nio.file.*;
+import java.util.Locale;
+
+public class Runner {
+    static String money(double v) { return String.format(Locale.ROOT, "%.2f", v); }
+
+    static String execute(String script) {
+        Bank bank = new Bank();
+        String out = "";
+        for (String cmd : script.split(";")) {
+            String[] t = cmd.trim().split("\\s+");
+            try {
+                switch (t[0]) {
+                    case "open" -> out = String.valueOf(bank.open(t[1], Double.parseDouble(t[2])));
+                    case "deposit" -> out = money(bank.deposit(Long.parseLong(t[1]), Double.parseDouble(t[2])));
+                    case "withdraw" -> out = money(bank.withdraw(Long.parseLong(t[1]), Double.parseDouble(t[2])));
+                    case "transfer" -> { bank.transfer(Long.parseLong(t[1]), Long.parseLong(t[2]), Double.parseDouble(t[3])); out = "OK"; }
+                    default -> out = money(bank.balance(Long.parseLong(t[1])));
+                }
+            } catch (BadRequest e) { out = "BAD_REQUEST"; }
+            catch (NotFound e) { out = "NOT_FOUND"; }
+        }
+        return out;
+    }
+
+    public static void main(String[] args) throws Exception {
+        int passed = 0, total = 0;
+        for (String line : Files.readAllLines(Path.of(args[0]))) {
+            if (line.isBlank() || line.startsWith("#")) continue;
+            String[] p = line.split(" => ", 2);
+            total++;
+            String got = execute(p[0]);
+            if (got.equals(p[1])) { passed++; System.out.println("PASS case" + total); }
+            else System.out.println("FAIL case" + total + " expected=" + p[1] + " got=" + got);
+        }
+        System.out.println("RESULT passed=" + passed + " total=" + total);
+        System.exit(passed == total ? 0 : 1);
+    }
+}
+
+
+===== FILE: Part3/domain_model_account/python/snippet.py =====
+class BadRequest(Exception):
+    pass
+
+
+class NotFound(Exception):
+    pass
+
+
+class Account:                                  # DomainObject: data AND the rules that protect it
+    OVERDRAFT_LIMIT = 500.0
+
+    def __init__(self, kind, balance):
+        self.kind, self.balance = kind, balance
+
+    def deposit(self, amount):
+        if amount <= 0:
+            raise BadRequest()
+        self.balance += amount + (0.5 if self.kind == "S" else 0.0)
+
+    def withdraw(self, amount):
+        allowed = (self.balance - amount >= -self.OVERDRAFT_LIMIT) if self.kind == "C" else amount <= self.balance
+        if amount <= 0 or not allowed:
+            raise BadRequest()
+        self.balance -= amount
+
+    def credit(self, amount):
+        if amount <= 0:
+            raise BadRequest()
+        self.balance += amount
+
+
+class Bank:                                     # Orchestrator: loads, calls the domain object, nothing more
+    def __init__(self):
+        self.accounts, self.next = {}, 1
+
+    def open(self, kind, balance):
+        self.accounts[self.next] = Account(kind, balance)
+        self.next += 1
+        return self.next - 1
+
+    def _find(self, id):
+        if id not in self.accounts:
+            raise NotFound(id)
+        return self.accounts[id]
+
+    def deposit(self, id, amount):
+        account = self._find(id)
+        account.deposit(amount)
+        return account.balance
+
+    def withdraw(self, id, amount):
+        account = self._find(id)
+        account.withdraw(amount)
+        return account.balance
+
+    def transfer(self, from_id, to_id, amount):
+        if from_id == to_id or amount <= 0:
+            raise BadRequest()
+        source, target = self._find(from_id), self._find(to_id)
+        source.withdraw(amount)                 # raises before anything is changed
+        target.credit(amount)
+
+    def balance(self, id):
+        return self._find(id).balance
+
+
+===== FILE: Part3/domain_model_account/python/run_tests.py =====
+import sys
+from snippet import Bank, BadRequest, NotFound
+
+
+def execute(script):
+    bank, out = Bank(), ""
+    for cmd in script.split(";"):
+        t = cmd.split()
+        try:
+            if t[0] == "open":
+                out = str(bank.open(t[1], float(t[2])))
+            elif t[0] == "deposit":
+                out = "%.2f" % bank.deposit(int(t[1]), float(t[2]))
+            elif t[0] == "withdraw":
+                out = "%.2f" % bank.withdraw(int(t[1]), float(t[2]))
+            elif t[0] == "transfer":
+                bank.transfer(int(t[1]), int(t[2]), float(t[3]))
+                out = "OK"
+            else:
+                out = "%.2f" % bank.balance(int(t[1]))
+        except BadRequest:
+            out = "BAD_REQUEST"
+        except NotFound:
+            out = "NOT_FOUND"
+    return out
+
+
+def main(path):
+    passed = total = 0
+    for line in open(path, encoding="utf-8"):
+        line = line.rstrip("\n")
+        if not line.strip() or line.startswith("#"):
+            continue
+        script, expected = line.split(" => ", 1)
+        total += 1
+        got = execute(script)
+        if got == expected:
+            passed += 1
+            print("PASS case%d" % total)
+        else:
+            print("FAIL case%d expected=%s got=%s" % (total, expected, got))
+    print("RESULT passed=%d total=%d" % (passed, total))
+    sys.exit(0 if passed == total else 1)
+
+
+main(sys.argv[1])
+
+
+===== FILE: Part3/domain_model_account/javascript/snippet.js =====
+class BadRequest extends Error {}
+class NotFound extends Error {}
+
+class Account {                                  // DomainObject: data AND the rules that protect it
+  constructor(kind, balance) { this.kind = kind; this.balance = balance; }
+  deposit(amount) {
+    if (amount <= 0) throw new BadRequest();
+    this.balance += amount + (this.kind === 'S' ? 0.5 : 0.0);
+  }
+  withdraw(amount) {
+    const allowed = this.kind === 'C' ? this.balance - amount >= -500.0 : amount <= this.balance;
+    if (amount <= 0 || !allowed) throw new BadRequest();
+    this.balance -= amount;
+  }
+  credit(amount) {
+    if (amount <= 0) throw new BadRequest();
+    this.balance += amount;
+  }
+}
+
+class Bank {                                     // Orchestrator: loads, calls the domain object, nothing more
+  constructor() { this.accounts = new Map(); this.next = 1; }
+  open(kind, balance) { this.accounts.set(this.next, new Account(kind, balance)); return this.next++; }
+  find(id) {
+    if (!this.accounts.has(id)) throw new NotFound(String(id));
+    return this.accounts.get(id);
+  }
+  deposit(id, amount) { const a = this.find(id); a.deposit(amount); return a.balance; }
+  withdraw(id, amount) { const a = this.find(id); a.withdraw(amount); return a.balance; }
+  transfer(fromId, toId, amount) {
+    if (fromId === toId || amount <= 0) throw new BadRequest();
+    const source = this.find(fromId), target = this.find(toId);
+    source.withdraw(amount);                     // throws before anything is changed
+    target.credit(amount);
+  }
+  balance(id) { return this.find(id).balance; }
+}
+
+module.exports = { Bank, BadRequest, NotFound };
+
+
+===== FILE: Part3/domain_model_account/javascript/run_tests.js =====
+const fs = require('fs');
+const { Bank, BadRequest, NotFound } = require('./snippet');
+
+function execute(script) {
+  const bank = new Bank();
+  let out = '';
+  for (const cmd of script.split(';')) {
+    const t = cmd.trim().split(/\s+/);
+    try {
+      if (t[0] === 'open') out = String(bank.open(t[1], parseFloat(t[2])));
+      else if (t[0] === 'deposit') out = bank.deposit(parseInt(t[1], 10), parseFloat(t[2])).toFixed(2);
+      else if (t[0] === 'withdraw') out = bank.withdraw(parseInt(t[1], 10), parseFloat(t[2])).toFixed(2);
+      else if (t[0] === 'transfer') { bank.transfer(parseInt(t[1], 10), parseInt(t[2], 10), parseFloat(t[3])); out = 'OK'; }
+      else out = bank.balance(parseInt(t[1], 10)).toFixed(2);
+    } catch (e) {
+      if (e instanceof BadRequest) out = 'BAD_REQUEST';
+      else if (e instanceof NotFound) out = 'NOT_FOUND';
+      else throw e;
+    }
+  }
+  return out;
+}
+
+let passed = 0, total = 0;
+for (const line of fs.readFileSync(process.argv[2], "utf8").split("\n")) {
+  if (!line.trim() || line.startsWith("#")) continue;
+  const i = line.indexOf(" => ");
+  const script = line.slice(0, i), expected = line.slice(i + 4);
+  total += 1;
+  const got = execute(script);
+  if (got === expected) { passed += 1; console.log("PASS case" + total); }
+  else console.log(`FAIL case${total} expected=${expected} got=${got}`);
+}
+console.log(`RESULT passed=${passed} total=${total}`);
+process.exit(passed === total ? 0 : 1);
+
+
+===== FILE: Part3/domain_model_account/cpp/snippet.hpp =====
+#pragma once
+#include <map>
+#include <stdexcept>
+#include <string>
+
+struct BadRequest : std::runtime_error { BadRequest() : std::runtime_error("bad request") {} };
+struct NotFound : std::runtime_error { NotFound() : std::runtime_error("not found") {} };
+
+class Account {                                  // DomainObject: data AND the rules that protect it
+    static constexpr double OVERDRAFT_LIMIT = 500.0;
+    std::string kind_;
+    double balance_;
+public:
+    Account() : balance_(0) {}
+    Account(std::string kind, double balance) : kind_(std::move(kind)), balance_(balance) {}
+    double balance() const { return balance_; }
+
+    void deposit(double amount) {
+        if (amount <= 0) throw BadRequest();
+        balance_ += amount + (kind_ == "S" ? 0.5 : 0.0);
+    }
+
+    void withdraw(double amount) {
+        bool allowed = kind_ == "C" ? balance_ - amount >= -OVERDRAFT_LIMIT : amount <= balance_;
+        if (amount <= 0 || !allowed) throw BadRequest();
+        balance_ -= amount;
+    }
+
+    void credit(double amount) {
+        if (amount <= 0) throw BadRequest();
+        balance_ += amount;
+    }
+};
+
+class Bank {                                     // Orchestrator: loads, calls the domain object, nothing more
+    std::map<long, Account> accounts_;
+    long next_ = 1;
+    Account& find(long id) {
+        auto it = accounts_.find(id);
+        if (it == accounts_.end()) throw NotFound();
+        return it->second;
+    }
+public:
+    long open(const std::string& kind, double balance) { accounts_[next_] = Account(kind, balance); return next_++; }
+    double deposit(long id, double amount) { Account& a = find(id); a.deposit(amount); return a.balance(); }
+    double withdraw(long id, double amount) { Account& a = find(id); a.withdraw(amount); return a.balance(); }
+    void transfer(long fromId, long toId, double amount) {
+        if (fromId == toId || amount <= 0) throw BadRequest();
+        Account& source = find(fromId);
+        Account& target = find(toId);
+        source.withdraw(amount);                 // throws before anything is changed
+        target.credit(amount);
+    }
+    double balance(long id) { return find(id).balance(); }
+};
+
+
+===== FILE: Part3/domain_model_account/cpp/run_tests.cpp =====
+#include <cstdio>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include "snippet.hpp"
+
+static std::string fmt(double v) { char b[64]; std::snprintf(b, sizeof b, "%.2f", v); return b; }
+
+static std::string execute(const std::string& script) {
+    Bank bank;
+    std::string out; std::stringstream cmds(script); std::string cmd;
+    while (std::getline(cmds, cmd, ';')) {
+        std::stringstream ts(cmd); std::string name, a, b, c; ts >> name >> a >> b >> c;
+        try {
+            if (name == "open") out = std::to_string(bank.open(a, std::stod(b)));
+            else if (name == "deposit") out = fmt(bank.deposit(std::stol(a), std::stod(b)));
+            else if (name == "withdraw") out = fmt(bank.withdraw(std::stol(a), std::stod(b)));
+            else if (name == "transfer") { bank.transfer(std::stol(a), std::stol(b), std::stod(c)); out = "OK"; }
+            else out = fmt(bank.balance(std::stol(a)));
+        } catch (const BadRequest&) { out = "BAD_REQUEST"; }
+        catch (const NotFound&) { out = "NOT_FOUND"; }
+    }
+    return out;
+}
+
+int main(int, char** argv) {
+    std::ifstream in(argv[1]); std::string line; int passed = 0, total = 0;
+    while (std::getline(in, line)) {
+        if (line.empty() || line[0] == (char)35) continue;
+        auto i = line.find(" => ");
+        std::string expected = line.substr(i + 4), got = execute(line.substr(0, i));
+        ++total;
+        if (got == expected) { ++passed; std::cout << "PASS case" << total << "\n"; }
+        else std::cout << "FAIL case" << total << " expected=" << expected << " got=" << got << "\n";
+    }
+    std::cout << "RESULT passed=" << passed << " total=" << total << "\n";
+    return passed == total ? 0 : 1;
+}
+

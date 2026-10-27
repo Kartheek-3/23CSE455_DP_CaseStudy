@@ -1,0 +1,7 @@
+# the translator turns exceptions raised by the service into "<status> <message>"; any other error becomes 500
+deposit 0 => 400 Deposit must be positive
+deposit -3 => 400 Deposit must be positive
+deposit 10 => 200 ok
+find 9 => 404 Account not found
+find 1 => 200 account 1
+boom => 500 Internal error

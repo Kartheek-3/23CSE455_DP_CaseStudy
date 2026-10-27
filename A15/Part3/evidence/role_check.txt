@@ -1,0 +1,153 @@
+Role presence check: every role of the pattern instance must be mapped to a declared symbol in each language snippet.
+Method: whole-word search of the symbol in the production file; exemptions are roles that duck-typed languages do not declare.
+
+dao_account_persistence        Java       DataAccessObject                   AccountDao               OK
+dao_account_persistence        Java       ConcreteDAO                        InMemoryAccountDao       OK
+dao_account_persistence        Java       TransferObject                     Account                  OK
+dao_account_persistence        Java       BusinessObject                     AccountService           OK
+dao_account_persistence        Python     DataAccessObject                   AccountDao               OK
+dao_account_persistence        Python     ConcreteDAO                        InMemoryAccountDao       OK
+dao_account_persistence        Python     TransferObject                     Account                  OK
+dao_account_persistence        Python     BusinessObject                     AccountService           OK
+dao_account_persistence        JavaScript DataAccessObject                   AccountDao               OK
+dao_account_persistence        JavaScript ConcreteDAO                        InMemoryAccountDao       OK
+dao_account_persistence        JavaScript TransferObject                     Account                  OK
+dao_account_persistence        JavaScript BusinessObject                     AccountService           OK
+dao_account_persistence        C++        DataAccessObject                   AccountDao               OK
+dao_account_persistence        C++        ConcreteDAO                        InMemoryAccountDao       OK
+dao_account_persistence        C++        TransferObject                     Account                  OK
+dao_account_persistence        C++        BusinessObject                     AccountService           OK
+dto_user_assembly              Java       DataTransferObject                 UserDto                  OK
+dto_user_assembly              Java       DomainObject                       User                     OK
+dto_user_assembly              Java       Assembler                          UserAssembler            OK
+dto_user_assembly              Python     DataTransferObject                 UserDto                  OK
+dto_user_assembly              Python     DomainObject                       User                     OK
+dto_user_assembly              Python     Assembler                          UserAssembler            OK
+dto_user_assembly              JavaScript DataTransferObject                 UserDto                  OK
+dto_user_assembly              JavaScript DomainObject                       User                     OK
+dto_user_assembly              JavaScript Assembler                          UserAssembler            OK
+dto_user_assembly              C++        DataTransferObject                 UserDto                  OK
+dto_user_assembly              C++        DomainObject                       User                     OK
+dto_user_assembly              C++        Assembler                          UserAssembler            OK
+service_layer_bank             Java       ServiceLayer                       BankService              OK
+service_layer_bank             Java       Collaborator                       UserRepo                 OK
+service_layer_bank             Java       Collaborator                       AccountRepo              OK
+service_layer_bank             Python     ServiceLayer                       BankService              OK
+service_layer_bank             Python     Collaborator                       UserRepo                 OK
+service_layer_bank             Python     Collaborator                       AccountRepo              OK
+service_layer_bank             JavaScript ServiceLayer                       BankService              OK
+service_layer_bank             JavaScript Collaborator                       UserRepo                 OK
+service_layer_bank             JavaScript Collaborator                       AccountRepo              OK
+service_layer_bank             C++        ServiceLayer                       BankService              OK
+service_layer_bank             C++        Collaborator                       UserRepo                 OK
+service_layer_bank             C++        Collaborator                       AccountRepo              OK
+transaction_script_account     Java       TransactionScript host (deposit, withdraw) AccountScripts           OK
+transaction_script_account     Java       RowData                            Row                      OK
+transaction_script_account     Python     TransactionScript host (deposit, withdraw) AccountScripts           OK
+transaction_script_account     Python     RowData                            Row                      OK
+transaction_script_account     JavaScript TransactionScript host (deposit, withdraw) AccountScripts           OK
+transaction_script_account     JavaScript RowData                            Row                      EXEMPT (duck typing / plain object: role is not separately declared)
+transaction_script_account     C++        TransactionScript host (deposit, withdraw) AccountScripts           OK
+transaction_script_account     C++        RowData                            Row                      OK
+controller_rest_use_case       Java       Controller                         AccountController        OK
+controller_rest_use_case       Java       Delegate (service contract)        BankApi                  OK
+controller_rest_use_case       Python     Controller                         AccountController        OK
+controller_rest_use_case       Python     Delegate (service contract)        BankApi                  EXEMPT (duck typing: role is not separately declared)
+controller_rest_use_case       JavaScript Controller                         AccountController        OK
+controller_rest_use_case       JavaScript Delegate (service contract)        BankApi                  EXEMPT (duck typing / plain object: role is not separately declared)
+controller_rest_use_case       C++        Controller                         AccountController        OK
+controller_rest_use_case       C++        Delegate (service contract)        BankApi                  OK
+dependency_injection_wiring    Java       Container                          Container                OK
+dependency_injection_wiring    Java       ManagedBean                        Service                  OK
+dependency_injection_wiring    Java       ManagedBean                        RealDao                  OK
+dependency_injection_wiring    Java       ManagedBean                        FakeDao                  OK
+dependency_injection_wiring    Java       Bean contract                      Bean                     OK
+dependency_injection_wiring    Python     Container                          Container                OK
+dependency_injection_wiring    Python     ManagedBean                        Service                  OK
+dependency_injection_wiring    Python     ManagedBean                        RealDao                  OK
+dependency_injection_wiring    Python     ManagedBean                        FakeDao                  OK
+dependency_injection_wiring    Python     Bean contract                      Bean                     OK
+dependency_injection_wiring    JavaScript Container                          Container                OK
+dependency_injection_wiring    JavaScript ManagedBean                        Service                  OK
+dependency_injection_wiring    JavaScript ManagedBean                        RealDao                  OK
+dependency_injection_wiring    JavaScript ManagedBean                        FakeDao                  OK
+dependency_injection_wiring    JavaScript Bean contract                      Bean                     OK
+dependency_injection_wiring    C++        Container                          Container                OK
+dependency_injection_wiring    C++        ManagedBean                        Service                  OK
+dependency_injection_wiring    C++        ManagedBean                        RealDao                  OK
+dependency_injection_wiring    C++        ManagedBean                        FakeDao                  OK
+dependency_injection_wiring    C++        Bean contract                      Bean                     OK
+exception_translation_http     Java       TranslatedException                HttpError                OK
+exception_translation_http     Java       TranslatedException                BadRequest               OK
+exception_translation_http     Java       TranslatedException                NotFound                 OK
+exception_translation_http     Java       Raiser                             AccountService           OK
+exception_translation_http     Java       Translator                         translate                OK
+exception_translation_http     Python     TranslatedException                HttpError                OK
+exception_translation_http     Python     TranslatedException                BadRequest               OK
+exception_translation_http     Python     TranslatedException                NotFound                 OK
+exception_translation_http     Python     Raiser                             AccountService           OK
+exception_translation_http     Python     Translator                         translate                OK
+exception_translation_http     JavaScript TranslatedException                HttpError                OK
+exception_translation_http     JavaScript TranslatedException                BadRequest               OK
+exception_translation_http     JavaScript TranslatedException                NotFound                 OK
+exception_translation_http     JavaScript Raiser                             AccountService           OK
+exception_translation_http     JavaScript Translator                         translate                OK
+exception_translation_http     C++        TranslatedException                HttpError                OK
+exception_translation_http     C++        TranslatedException                BadRequest               OK
+exception_translation_http     C++        TranslatedException                NotFound                 OK
+exception_translation_http     C++        Raiser                             AccountService           OK
+exception_translation_http     C++        Translator                         translate                OK
+strategy_account_policy        Java       Strategy                           AccountPolicy            OK
+strategy_account_policy        Java       ConcreteStrategy                   SavingsPolicy            OK
+strategy_account_policy        Java       ConcreteStrategy                   CheckingPolicy           OK
+strategy_account_policy        Java       StrategySelector                   PolicyResolver           OK
+strategy_account_policy        Java       Context                            Account                  OK
+strategy_account_policy        Python     Strategy                           AccountPolicy            OK
+strategy_account_policy        Python     ConcreteStrategy                   SavingsPolicy            OK
+strategy_account_policy        Python     ConcreteStrategy                   CheckingPolicy           OK
+strategy_account_policy        Python     StrategySelector                   PolicyResolver           OK
+strategy_account_policy        Python     Context                            Account                  OK
+strategy_account_policy        JavaScript Strategy                           AccountPolicy            OK
+strategy_account_policy        JavaScript ConcreteStrategy                   SavingsPolicy            OK
+strategy_account_policy        JavaScript ConcreteStrategy                   CheckingPolicy           OK
+strategy_account_policy        JavaScript StrategySelector                   PolicyResolver           OK
+strategy_account_policy        JavaScript Context                            Account                  OK
+strategy_account_policy        C++        Strategy                           AccountPolicy            OK
+strategy_account_policy        C++        ConcreteStrategy                   SavingsPolicy            OK
+strategy_account_policy        C++        ConcreteStrategy                   CheckingPolicy           OK
+strategy_account_policy        C++        StrategySelector                   PolicyResolver           OK
+strategy_account_policy        C++        Context                            Account                  OK
+observer_transaction_events    Java       Subject                            AccountService           OK
+observer_transaction_events    Java       SubjectChannel                     EventPublisher           OK
+observer_transaction_events    Java       Event                              Event                    OK
+observer_transaction_events    Java       Observer (contract)                Observer                 OK
+observer_transaction_events    Java       ConcreteObserver                   AuditLog                 OK
+observer_transaction_events    Java       ConcreteObserver                   HighValueAlert           OK
+observer_transaction_events    Python     Subject                            AccountService           OK
+observer_transaction_events    Python     SubjectChannel                     EventPublisher           OK
+observer_transaction_events    Python     Event                              Event                    OK
+observer_transaction_events    Python     Observer (contract)                Observer                 EXEMPT (duck typing: role is not separately declared)
+observer_transaction_events    Python     ConcreteObserver                   AuditLog                 OK
+observer_transaction_events    Python     ConcreteObserver                   HighValueAlert           OK
+observer_transaction_events    JavaScript Subject                            AccountService           OK
+observer_transaction_events    JavaScript SubjectChannel                     EventPublisher           OK
+observer_transaction_events    JavaScript Event                              Event                    OK
+observer_transaction_events    JavaScript Observer (contract)                Observer                 EXEMPT (duck typing / plain object: role is not separately declared)
+observer_transaction_events    JavaScript ConcreteObserver                   AuditLog                 OK
+observer_transaction_events    JavaScript ConcreteObserver                   HighValueAlert           OK
+observer_transaction_events    C++        Subject                            AccountService           OK
+observer_transaction_events    C++        SubjectChannel                     EventPublisher           OK
+observer_transaction_events    C++        Event                              Event                    OK
+observer_transaction_events    C++        Observer (contract)                Observer                 OK
+observer_transaction_events    C++        ConcreteObserver                   AuditLog                 OK
+observer_transaction_events    C++        ConcreteObserver                   HighValueAlert           OK
+domain_model_account           Java       DomainObject                       Account                  OK
+domain_model_account           Java       Orchestrator                       Bank                     OK
+domain_model_account           Python     DomainObject                       Account                  OK
+domain_model_account           Python     Orchestrator                       Bank                     OK
+domain_model_account           JavaScript DomainObject                       Account                  OK
+domain_model_account           JavaScript Orchestrator                       Bank                     OK
+domain_model_account           C++        DomainObject                       Account                  OK
+domain_model_account           C++        Orchestrator                       Bank                     OK
+
+missing roles: 0

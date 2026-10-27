@@ -1,0 +1,64 @@
+Change1 test result (sandbox harness: real main sources + Jakarta stubs + in-memory EntityManager; NOT `mvn test`)
+commit before: c9d7097   commit after: 6bdf74e
+command: bash data/test_result/harness/run_tests.sh <app-dir> <out-dir> <all test classes>
+date: 2026-10-11
+
+Picked up JAVA_TOOL_OPTIONS: 
+/home/claude/work/snaps/change1/src/main/java/br/com/michaelcruz/rest/UserController.java:5: warning: extraneous semicolon
+import jakarta.inject.Inject;;
+                             ^
+1 warning
+Picked up JAVA_TOOL_OPTIONS: 
+br.com.michaelcruz.persistence.dto.AccountDTO@34c45dca
+PASS BaselineBehaviourTest.createAccountEndpointReturns201
+br.com.michaelcruz.persistence.dto.AccountDTO@1e80bfe8
+PASS BaselineBehaviourTest.createAccountLinksUserAndKeepsBalance
+PASS BaselineBehaviourTest.createUserStoresAllFields
+PASS BaselineBehaviourTest.defectCreatingAnAccountForAnUnknownUserFailsWithNullPointerNotNotFound
+PASS BaselineBehaviourTest.defectUserDaoGetAllReturnsNull
+br.com.michaelcruz.persistence.dto.AccountDTO@6f539caf
+PASS BaselineBehaviourTest.depositOfZeroOrNegativeIsBadRequestAndBalanceUnchanged
+br.com.michaelcruz.persistence.dto.AccountDTO@7eda2dbb
+PASS BaselineBehaviourTest.depositToCheckingAddsExactAmount
+br.com.michaelcruz.persistence.dto.AccountDTO@6576fe71
+PASS BaselineBehaviourTest.depositToSavingsAddsAmountPlusHalfBonus
+PASS BaselineBehaviourTest.depositToUnknownAccountIsNotFound
+PASS BaselineBehaviourTest.errorsAreCarriedAsHttpResponsesByTheCustomExceptions
+br.com.michaelcruz.persistence.dto.AccountDTO@1f17ae12
+br.com.michaelcruz.persistence.dto.AccountDTO@4d405ef7
+PASS BaselineBehaviourTest.listAccountsReturnsAllAccounts
+PASS BaselineBehaviourTest.withdrawFromUnknownAccountIsNotFound
+br.com.michaelcruz.persistence.dto.AccountDTO@2e817b38
+PASS BaselineBehaviourTest.withdrawMoreThanBalanceOrNonPositiveIsBadRequest
+br.com.michaelcruz.persistence.dto.AccountDTO@3f91beef
+PASS BaselineBehaviourTest.withdrawOfExactlyTheBalanceIsAllowedAfterCh01
+br.com.michaelcruz.persistence.dto.AccountDTO@1a6c5a9e
+PASS BaselineBehaviourTest.withdrawReducesBalance
+br.com.michaelcruz.persistence.dto.AccountDTO@179d3b25
+PASS Change1PolicyTest.ac1CheckingMayOverdrawUpToTheLimit
+br.com.michaelcruz.persistence.dto.AccountDTO@254989ff
+PASS Change1PolicyTest.ac2CheckingCannotOverdrawBeyondTheLimit
+br.com.michaelcruz.persistence.dto.AccountDTO@37f8bb67
+PASS Change1PolicyTest.ac3SavingsCannotOverdraw
+br.com.michaelcruz.persistence.dto.AccountDTO@20ad9418
+PASS Change1PolicyTest.ac4SavingsMayWithdrawExactlyTheBalance
+br.com.michaelcruz.persistence.dto.AccountDTO@31cefde0
+br.com.michaelcruz.persistence.dto.AccountDTO@439f5b3d
+PASS Change1PolicyTest.ac5SavingsDepositBonusIsPreservedAndCheckingHasNone
+br.com.michaelcruz.persistence.dto.AccountDTO@1d56ce6a
+br.com.michaelcruz.persistence.dto.AccountDTO@5197848c
+PASS Change1PolicyTest.ac6NonPositiveWithdrawalStillRejectedForBothTypes
+PASS Change1PolicyTest.policiesAreInterchangeableBehindTheInterface
+PASS Change1PolicyTest.resolverReturnsTheMatchingStrategyAndRejectsMissingType
+RESULT passed=23 failed=0 total=23
+
+--- git diff --stat ---
+ .../michaelcruz/domain/policy/AccountPolicy.java   |  11 +++
+ .../domain/policy/AccountPolicyResolver.java       |  28 ++++++
+ .../domain/policy/CheckingAccountPolicy.java       |  16 ++++
+ .../domain/policy/SavingsAccountPolicy.java        |  16 ++++
+ .../br/com/michaelcruz/service/AccountService.java |  14 +--
+ .../br/com/michaelcruz/BaselineBehaviourTest.java  |   6 +-
+ .../java/br/com/michaelcruz/Change1PolicyTest.java | 104 +++++++++++++++++++++
+ .../java/br/com/michaelcruz/support/TestApp.java   |   2 +
+ 8 files changed, 187 insertions(+), 10 deletions(-)

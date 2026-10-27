@@ -1,0 +1,11 @@
+digraph G {
+ rankdir=LR; fontname="Helvetica"; labelloc=t; label="Controller - REST Use-Case Controller";
+ node [shape=box, style="rounded,filled", fillcolor="#eef3fb", color="#4a6fa5", fontname="Helvetica", fontsize=10];
+ edge [fontname="Helvetica", fontsize=9, color="#555555"];
+ n_AccountController [label="&laquo;Controller&raquo;\nAccountController", fillcolor="#eef3fb"];
+ n_UserController [label="&laquo;Controller&raquo;\nUserController", fillcolor="#eef3fb"];
+ n_AccountService [label="AccountService", fillcolor="#fff4d6"];
+ n_AccountController -> n_AccountService [label="delegates"];
+ n_UserService [label="UserService", fillcolor="#fff4d6"];
+ n_UserController -> n_UserService [label="delegates"];
+}

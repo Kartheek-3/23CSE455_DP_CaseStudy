@@ -1,0 +1,288 @@
+diff --git a/src/main/java/br/com/michaelcruz/domain/policy/AccountPolicy.java b/src/main/java/br/com/michaelcruz/domain/policy/AccountPolicy.java
+new file mode 100644
+index 0000000..910167b
+--- /dev/null
++++ b/src/main/java/br/com/michaelcruz/domain/policy/AccountPolicy.java
+@@ -0,0 +1,11 @@
++package br.com.michaelcruz.domain.policy;
++
++/** Account-type specific rules (Strategy). */
++public interface AccountPolicy {
++
++    /** Extra amount credited on top of a deposit of the given size. */
++    double bonusOnDeposit(double amount);
++
++    /** Whether withdrawing {@code amount} from an account holding {@code balance} is allowed. */
++    boolean allowsWithdrawal(double balance, double amount);
++}
+diff --git a/src/main/java/br/com/michaelcruz/domain/policy/AccountPolicyResolver.java b/src/main/java/br/com/michaelcruz/domain/policy/AccountPolicyResolver.java
+new file mode 100644
+index 0000000..1a94500
+--- /dev/null
++++ b/src/main/java/br/com/michaelcruz/domain/policy/AccountPolicyResolver.java
+@@ -0,0 +1,28 @@
++package br.com.michaelcruz.domain.policy;
++
++import br.com.michaelcruz.exception.BadRequestException;
++import br.com.michaelcruz.persistence.model.AccountType;
++import jakarta.enterprise.context.ApplicationScoped;
++
++import java.util.EnumMap;
++import java.util.Map;
++
++/** Selects the policy for an account type. */
++@ApplicationScoped
++public class AccountPolicyResolver {
++
++    private final Map<AccountType, AccountPolicy> policies = new EnumMap<>(AccountType.class);
++
++    public AccountPolicyResolver() {
++        policies.put(AccountType.CONTA_CORRENTE, new CheckingAccountPolicy());
++        policies.put(AccountType.CONTA_POUPANCA, new SavingsAccountPolicy());
++    }
++
++    public AccountPolicy forType(AccountType type) {
++        AccountPolicy policy = policies.get(type);
++        if (policy == null) {
++            throw new BadRequestException("Tipo de conta sem política definida: " + type);
++        }
++        return policy;
++    }
++}
+diff --git a/src/main/java/br/com/michaelcruz/domain/policy/CheckingAccountPolicy.java b/src/main/java/br/com/michaelcruz/domain/policy/CheckingAccountPolicy.java
+new file mode 100644
+index 0000000..913371a
+--- /dev/null
++++ b/src/main/java/br/com/michaelcruz/domain/policy/CheckingAccountPolicy.java
+@@ -0,0 +1,16 @@
++package br.com.michaelcruz.domain.policy;
++
++public class CheckingAccountPolicy implements AccountPolicy {
++
++    public static final double OVERDRAFT_LIMIT = 500.0;
++
++    @Override
++    public double bonusOnDeposit(double amount) {
++        return 0.0;
++    }
++
++    @Override
++    public boolean allowsWithdrawal(double balance, double amount) {
++        return balance - amount >= -OVERDRAFT_LIMIT;
++    }
++}
+diff --git a/src/main/java/br/com/michaelcruz/domain/policy/SavingsAccountPolicy.java b/src/main/java/br/com/michaelcruz/domain/policy/SavingsAccountPolicy.java
+new file mode 100644
+index 0000000..58421cf
+--- /dev/null
++++ b/src/main/java/br/com/michaelcruz/domain/policy/SavingsAccountPolicy.java
+@@ -0,0 +1,16 @@
++package br.com.michaelcruz.domain.policy;
++
++public class SavingsAccountPolicy implements AccountPolicy {
++
++    public static final double DEPOSIT_BONUS = 0.5;
++
++    @Override
++    public double bonusOnDeposit(double amount) {
++        return DEPOSIT_BONUS;
++    }
++
++    @Override
++    public boolean allowsWithdrawal(double balance, double amount) {
++        return amount <= balance;
++    }
++}
+diff --git a/src/main/java/br/com/michaelcruz/service/AccountService.java b/src/main/java/br/com/michaelcruz/service/AccountService.java
+index 6a1dd44..5e04635 100644
+--- a/src/main/java/br/com/michaelcruz/service/AccountService.java
++++ b/src/main/java/br/com/michaelcruz/service/AccountService.java
+@@ -3,7 +3,7 @@ package br.com.michaelcruz.service;
+ import br.com.michaelcruz.exception.BadRequestException;
+ import br.com.michaelcruz.exception.NotFoundException;
+ import br.com.michaelcruz.persistence.dao.AccountDAO;
+-import br.com.michaelcruz.persistence.model.AccountType;
++import br.com.michaelcruz.domain.policy.AccountPolicyResolver;
+ import br.com.michaelcruz.util.AccountUtil;
+ import br.com.michaelcruz.persistence.dto.AccountDTO;
+ import br.com.michaelcruz.persistence.dto.UserDTO;
+@@ -26,6 +26,9 @@ public class AccountService {
+     @Inject
+     AccountUtil accountUtil;
+ 
++    @Inject
++    AccountPolicyResolver policyResolver;
++
+ 
+     public void createAccount(@Valid AccountDTO accountDTO) {
+         UserDTO userDTO = userService.getUserDetails(accountDTO.getUserId());
+@@ -41,11 +44,8 @@ public class AccountService {
+             Account account = optionalAccount.get();
+ 
+             if (amount > 0){
+-                double newBalance = account.getBalance() + amount;
+-
+-                if(account.getType() == AccountType.CONTA_POUPANCA){
+-                    newBalance += 0.5;
+-                }
++                double newBalance = account.getBalance() + amount
++                        + policyResolver.forType(account.getType()).bonusOnDeposit(amount);
+ 
+                 account.setBalance(newBalance);
+                 accountDAO.update(account);
+@@ -64,7 +64,7 @@ public class AccountService {
+         if(optionalAccount != null && optionalAccount.isPresent()){
+             Account account = optionalAccount.get();
+ 
+-            if(amount > 0 && account.getBalance() > amount) {
++            if(amount > 0 && policyResolver.forType(account.getType()).allowsWithdrawal(account.getBalance(), amount)) {
+                 double newBalance = account.getBalance() - amount;
+ 
+                 account.setBalance(newBalance);
+diff --git a/src/test/java/br/com/michaelcruz/BaselineBehaviourTest.java b/src/test/java/br/com/michaelcruz/BaselineBehaviourTest.java
+index 18c6b93..7faab79 100644
+--- a/src/test/java/br/com/michaelcruz/BaselineBehaviourTest.java
++++ b/src/test/java/br/com/michaelcruz/BaselineBehaviourTest.java
+@@ -110,10 +110,10 @@ class BaselineBehaviourTest {
+     }
+ 
+     @Test
+-    void withdrawOfExactlyTheBalanceIsRejectedInBaseline() {
++    void withdrawOfExactlyTheBalanceIsAllowedAfterCh01() {   // CH01 intentionally changed this baseline quirk
+         open(AccountType.CONTA_CORRENTE, 100.0);
+-        assertEquals(400, status(() -> app.accounts.withdraw(1L, tx(100.0))));
+-        assertEquals(100.0, app.accountService.listAllAccounts().get(0).getBalance(), 0.0001);
++        assertEquals(200, app.accounts.withdraw(1L, tx(100.0)).getStatus());
++        assertEquals(0.0, app.accountService.listAllAccounts().get(0).getBalance(), 0.0001);
+     }
+ 
+     @Test
+diff --git a/src/test/java/br/com/michaelcruz/Change1PolicyTest.java b/src/test/java/br/com/michaelcruz/Change1PolicyTest.java
+new file mode 100644
+index 0000000..752fe18
+--- /dev/null
++++ b/src/test/java/br/com/michaelcruz/Change1PolicyTest.java
+@@ -0,0 +1,104 @@
++package br.com.michaelcruz;
++
++import br.com.michaelcruz.domain.policy.*;
++import br.com.michaelcruz.persistence.dto.AccountDTO;
++import br.com.michaelcruz.persistence.dto.TransactionDTO;
++import br.com.michaelcruz.persistence.dto.UserDTO;
++import br.com.michaelcruz.persistence.model.Account;
++import br.com.michaelcruz.persistence.model.AccountType;
++import br.com.michaelcruz.support.TestApp;
++import jakarta.ws.rs.WebApplicationException;
++import org.junit.jupiter.api.BeforeEach;
++import org.junit.jupiter.api.Test;
++
++import static org.junit.jupiter.api.Assertions.*;
++
++/** CH01 acceptance: account-type policies (Strategy), overdraft for checking, exact-balance withdrawal. */
++class Change1PolicyTest {
++
++    TestApp app;
++
++    @BeforeEach
++    void setUp() {
++        app = new TestApp();
++        UserDTO u = new UserDTO();
++        u.setName("Bia"); u.setAge(41); u.setPhone("555-0101"); u.setAddress("Rua B");
++        app.users.createUser(u);
++    }
++
++    private void open(AccountType type, double balance) {
++        AccountDTO dto = new AccountDTO();
++        dto.setType(type); dto.setBalance(balance); dto.setUserId(1L);
++        app.accounts.createAccount(dto);
++    }
++
++    private static TransactionDTO tx(double a) { TransactionDTO t = new TransactionDTO(); t.setAmount(a); return t; }
++
++    private double balance(int index) { return app.accountService.listAllAccounts().get(index).getBalance(); }
++
++    private int status(Runnable r) { return assertThrows(WebApplicationException.class, r).getResponse().getStatus(); }
++
++    @Test
++    void ac1CheckingMayOverdrawUpToTheLimit() {
++        open(AccountType.CONTA_CORRENTE, 100.0);
++        app.accounts.withdraw(1L, tx(600.0));
++        assertEquals(-500.0, balance(0), 0.0001);
++    }
++
++    @Test
++    void ac2CheckingCannotOverdrawBeyondTheLimit() {
++        open(AccountType.CONTA_CORRENTE, 100.0);
++        assertEquals(400, status(() -> app.accounts.withdraw(1L, tx(600.01))));
++        assertEquals(100.0, balance(0), 0.0001);
++    }
++
++    @Test
++    void ac3SavingsCannotOverdraw() {
++        open(AccountType.CONTA_POUPANCA, 100.0);
++        assertEquals(400, status(() -> app.accounts.withdraw(1L, tx(100.01))));
++        assertEquals(100.0, balance(0), 0.0001);
++    }
++
++    @Test
++    void ac4SavingsMayWithdrawExactlyTheBalance() {
++        open(AccountType.CONTA_POUPANCA, 100.0);
++        app.accounts.withdraw(1L, tx(100.0));
++        assertEquals(0.0, balance(0), 0.0001);
++    }
++
++    @Test
++    void ac5SavingsDepositBonusIsPreservedAndCheckingHasNone() {
++        open(AccountType.CONTA_POUPANCA, 10.0);
++        open(AccountType.CONTA_CORRENTE, 10.0);
++        app.accounts.depositToAccount(1L, tx(5.0));
++        app.accounts.depositToAccount(2L, tx(5.0));
++        assertEquals(15.5, balance(0), 0.0001);
++        assertEquals(15.0, balance(1), 0.0001);
++    }
++
++    @Test
++    void ac6NonPositiveWithdrawalStillRejectedForBothTypes() {
++        open(AccountType.CONTA_CORRENTE, 100.0);
++        open(AccountType.CONTA_POUPANCA, 100.0);
++        assertEquals(400, status(() -> app.accounts.withdraw(1L, tx(0))));
++        assertEquals(400, status(() -> app.accounts.withdraw(2L, tx(-1))));
++    }
++
++    @Test
++    void resolverReturnsTheMatchingStrategyAndRejectsMissingType() {
++        AccountPolicyResolver r = new AccountPolicyResolver();
++        assertTrue(r.forType(AccountType.CONTA_CORRENTE) instanceof CheckingAccountPolicy);
++        assertTrue(r.forType(AccountType.CONTA_POUPANCA) instanceof SavingsAccountPolicy);
++        assertEquals(400, status(() -> r.forType(null)));
++    }
++
++    @Test
++    void policiesAreInterchangeableBehindTheInterface() {
++        AccountPolicy checking = new CheckingAccountPolicy();
++        AccountPolicy savings = new SavingsAccountPolicy();
++        assertTrue(checking.allowsWithdrawal(0, 500));
++        assertFalse(savings.allowsWithdrawal(0, 0.01));
++        assertEquals(0.5, savings.bonusOnDeposit(1000), 0.0001);
++        assertEquals(0.0, checking.bonusOnDeposit(1000), 0.0001);
++    }
++}
+diff --git a/src/test/java/br/com/michaelcruz/support/TestApp.java b/src/test/java/br/com/michaelcruz/support/TestApp.java
+index c29ff7b..8996eb7 100644
+--- a/src/test/java/br/com/michaelcruz/support/TestApp.java
++++ b/src/test/java/br/com/michaelcruz/support/TestApp.java
+@@ -1,5 +1,6 @@
+ package br.com.michaelcruz.support;
+ 
++import br.com.michaelcruz.domain.policy.AccountPolicyResolver;
+ import br.com.michaelcruz.persistence.dao.AccountDAO;
+ import br.com.michaelcruz.persistence.dao.UserDAO;
+ import br.com.michaelcruz.rest.AccountController;
+@@ -22,6 +23,7 @@ public final class TestApp {
+     public TestApp() {
+         c.add(UserDAO.class); c.add(AccountDAO.class);
+         c.add(UserUtil.class); c.add(AccountUtil.class);
++        c.add(AccountPolicyResolver.class);
+         c.add(UserService.class); c.add(AccountService.class);
+         c.add(UserController.class); c.add(AccountController.class);
+         c.wire();
