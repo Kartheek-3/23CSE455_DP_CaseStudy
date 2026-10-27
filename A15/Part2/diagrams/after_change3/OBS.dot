@@ -1,0 +1,15 @@
+digraph G {
+ rankdir=LR; fontname="Helvetica"; labelloc=t; label="Observer - Transaction Audit and Alert Notification";
+ node [shape=box, style="rounded,filled", fillcolor="#eef3fb", color="#4a6fa5", fontname="Helvetica", fontsize=10];
+ edge [fontname="Helvetica", fontsize=9, color="#555555"];
+ n_AccountService [label="&laquo;Subject&raquo;\nAccountService", fillcolor="#eef3fb"];
+ n_TransactionEvent [label="&laquo;Event&raquo;\nTransactionEvent", fillcolor="#eef3fb"];
+ n__not_separately_declared___CDI__Observes_TransactionEvent_contract_ [label="&laquo;Observer&raquo;\n\n(not separately declared - CDI @Observes TransactionEvent contract)", fillcolor="#fff4d6"];
+ n_TransactionAuditLog [label="&laquo;ConcreteObserver&raquo;\nTransactionAuditLog", fillcolor="#eef3fb"];
+ n_HighValueAlertObserver [label="&laquo;ConcreteObserver&raquo;\nHighValueAlertObserver", fillcolor="#eef3fb"];
+ n_AccountService -> n_TransactionEvent [label="fires"];
+ n_TransactionEvent -> n_TransactionAuditLog [label="delivered to\n@Observes"];
+ n_TransactionEvent -> n_HighValueAlertObserver [label="delivered to\n@Observes"];
+ n_TransactionAuditLog -> n__not_separately_declared___CDI__Observes_TransactionEvent_contract_ [label="realises", style=dashed];
+ n_HighValueAlertObserver -> n__not_separately_declared___CDI__Observes_TransactionEvent_contract_ [label="realises", style=dashed];
+}

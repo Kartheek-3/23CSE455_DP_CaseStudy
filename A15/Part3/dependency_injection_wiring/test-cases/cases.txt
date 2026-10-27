@@ -1,0 +1,8 @@
+# the container always holds the Service bean; register real|fake puts a Dao bean under the name Dao; wire injects declared needs; run describes the Service
+register real;wire;run => Service->Dao:real
+register fake;wire;run => Service->Dao:fake
+register fake;register real;wire;run => Service->Dao:real
+register real;run => Service->Dao:unwired
+wire => MISSING:Dao
+wire;run => Service->Dao:unwired
+register real;wire => wired

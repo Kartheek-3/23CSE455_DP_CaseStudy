@@ -1,0 +1,20 @@
+digraph G {
+ rankdir=LR; fontname="Helvetica"; labelloc=t; label="Service Layer - Banking Use-Case Service Layer";
+ node [shape=box, style="rounded,filled", fillcolor="#eef3fb", color="#4a6fa5", fontname="Helvetica", fontsize=10];
+ edge [fontname="Helvetica", fontsize=9, color="#555555"];
+ n_AccountService [label="&laquo;ServiceLayer&raquo;\nAccountService", fillcolor="#eef3fb"];
+ n_UserService [label="&laquo;ServiceLayer&raquo;\nUserService", fillcolor="#eef3fb"];
+ n_AccountController [label="&laquo;Client&raquo;\nAccountController", fillcolor="#eef3fb"];
+ n_UserController [label="&laquo;Client&raquo;\nUserController", fillcolor="#eef3fb"];
+ n_AccountController -> n_AccountService [label="calls"];
+ n_UserController -> n_UserService [label="calls"];
+ n_AccountDAO [label="AccountDAO", fillcolor="#fff4d6"];
+ n_AccountService -> n_AccountDAO [label="uses"];
+ n_AccountService -> n_UserService [label="uses"];
+ n_AccountUtil [label="AccountUtil", fillcolor="#fff4d6"];
+ n_AccountService -> n_AccountUtil [label="uses"];
+ n_UserDAO [label="UserDAO", fillcolor="#fff4d6"];
+ n_UserService -> n_UserDAO [label="uses"];
+ n_UserUtil [label="UserUtil", fillcolor="#fff4d6"];
+ n_UserService -> n_UserUtil [label="uses"];
+}

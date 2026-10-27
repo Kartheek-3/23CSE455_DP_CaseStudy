@@ -1,0 +1,900 @@
+RAW MODEL OUTPUT - Member 2: generated files, concatenated verbatim (no edits after generation)
+
+===== FILE: Part3/controller_rest_use_case/test-cases/cases.txt =====
+# the service is a recording test double; output = calls received by the service | HTTP status and message built by the controller
+deposit 1 50 => deposit(1,50.00)|200 Deposit done
+withdraw 2 5.5 => withdraw(2,5.50)|200 Withdraw done
+create 1 S 10 => create(1,S,10.00)|201 Account created
+create 4 C 0.5 => create(4,C,0.50)|201 Account created
+list => list()|200 3
+
+
+===== FILE: Part3/controller_rest_use_case/java/Snippet.java =====
+import java.util.List;
+
+class Response {
+    final int status; final String message;
+    Response(int status, String message) { this.status = status; this.message = message; }
+}
+
+interface BankApi {                             // what the Delegate (service layer) offers to the controller
+    void create(long userId, String kind, double balance);
+    void deposit(long accountId, double amount);
+    void withdraw(long accountId, double amount);
+    List<Long> listAll();
+}
+
+class AccountController {                       // GRASP Controller: receives the system event, no business rules
+    private final BankApi service;
+    AccountController(BankApi service) { this.service = service; }
+    Response create(long userId, String kind, double balance) { service.create(userId, kind, balance); return new Response(201, "Account created"); }
+    Response deposit(long accountId, double amount) { service.deposit(accountId, amount); return new Response(200, "Deposit done"); }
+    Response withdraw(long accountId, double amount) { service.withdraw(accountId, amount); return new Response(200, "Withdraw done"); }
+    Response list() { return new Response(200, String.valueOf(service.listAll().size())); }
+}
+
+
+===== FILE: Part3/controller_rest_use_case/java/Runner.java =====
+import java.nio.file.*;
+import java.util.*;
+
+public class Runner {
+    static class Recorder implements BankApi {      // test double standing in for the service layer
+        final List<String> log = new ArrayList<>();
+        public void create(long u, String k, double b) { log.add(String.format(Locale.ROOT, "create(%d,%s,%.2f)", u, k, b)); }
+        public void deposit(long a, double m) { log.add(String.format(Locale.ROOT, "deposit(%d,%.2f)", a, m)); }
+        public void withdraw(long a, double m) { log.add(String.format(Locale.ROOT, "withdraw(%d,%.2f)", a, m)); }
+        public List<Long> listAll() { log.add("list()"); return List.of(1L, 2L, 3L); }
+    }
+
+    static String execute(String script) {
+        Recorder rec = new Recorder();
+        AccountController ctl = new AccountController(rec);
+        String[] t = script.trim().split("\\s+");
+        Response r;
+        switch (t[0]) {
+            case "create" -> r = ctl.create(Long.parseLong(t[1]), t[2], Double.parseDouble(t[3]));
+            case "deposit" -> r = ctl.deposit(Long.parseLong(t[1]), Double.parseDouble(t[2]));
+            case "withdraw" -> r = ctl.withdraw(Long.parseLong(t[1]), Double.parseDouble(t[2]));
+            default -> r = ctl.list();
+        }
+        return String.join(",", rec.log) + "|" + r.status + " " + r.message;
+    }
+
+    public static void main(String[] args) throws Exception {
+        int passed = 0, total = 0;
+        for (String line : Files.readAllLines(Path.of(args[0]))) {
+            if (line.isBlank() || line.startsWith("#")) continue;
+            String[] p = line.split(" => ", 2);
+            total++;
+            String got = execute(p[0]);
+            if (got.equals(p[1])) { passed++; System.out.println("PASS case" + total); }
+            else System.out.println("FAIL case" + total + " expected=" + p[1] + " got=" + got);
+        }
+        System.out.println("RESULT passed=" + passed + " total=" + total);
+        System.exit(passed == total ? 0 : 1);
+    }
+}
+
+
+===== FILE: Part3/controller_rest_use_case/python/snippet.py =====
+class Response:
+    def __init__(self, status, message):
+        self.status, self.message = status, message
+
+
+class AccountController:                        # GRASP Controller: receives the system event, no business rules
+    def __init__(self, service):
+        self.service = service                  # Delegate (any object offering create/deposit/withdraw/list_all)
+
+    def create(self, user_id, kind, balance):
+        self.service.create(user_id, kind, balance)
+        return Response(201, "Account created")
+
+    def deposit(self, account_id, amount):
+        self.service.deposit(account_id, amount)
+        return Response(200, "Deposit done")
+
+    def withdraw(self, account_id, amount):
+        self.service.withdraw(account_id, amount)
+        return Response(200, "Withdraw done")
+
+    def list(self):
+        return Response(200, str(len(self.service.list_all())))
+
+
+===== FILE: Part3/controller_rest_use_case/python/run_tests.py =====
+import sys
+from snippet import AccountController
+
+
+class Recorder:                                 # test double standing in for the service layer
+    def __init__(self):
+        self.log = []
+
+    def create(self, user_id, kind, balance):
+        self.log.append("create(%d,%s,%.2f)" % (user_id, kind, balance))
+
+    def deposit(self, account_id, amount):
+        self.log.append("deposit(%d,%.2f)" % (account_id, amount))
+
+    def withdraw(self, account_id, amount):
+        self.log.append("withdraw(%d,%.2f)" % (account_id, amount))
+
+    def list_all(self):
+        self.log.append("list()")
+        return [1, 2, 3]
+
+
+def execute(script):
+    rec = Recorder()
+    ctl = AccountController(rec)
+    t = script.split()
+    if t[0] == "create":
+        r = ctl.create(int(t[1]), t[2], float(t[3]))
+    elif t[0] == "deposit":
+        r = ctl.deposit(int(t[1]), float(t[2]))
+    elif t[0] == "withdraw":
+        r = ctl.withdraw(int(t[1]), float(t[2]))
+    else:
+        r = ctl.list()
+    return ",".join(rec.log) + "|" + str(r.status) + " " + r.message
+
+
+def main(path):
+    passed = total = 0
+    for line in open(path, encoding="utf-8"):
+        line = line.rstrip("\n")
+        if not line.strip() or line.startswith("#"):
+            continue
+        script, expected = line.split(" => ", 1)
+        total += 1
+        got = execute(script)
+        if got == expected:
+            passed += 1
+            print("PASS case%d" % total)
+        else:
+            print("FAIL case%d expected=%s got=%s" % (total, expected, got))
+    print("RESULT passed=%d total=%d" % (passed, total))
+    sys.exit(0 if passed == total else 1)
+
+
+main(sys.argv[1])
+
+
+===== FILE: Part3/controller_rest_use_case/javascript/snippet.js =====
+class AccountController {                       // GRASP Controller: receives the system event, no business rules
+  constructor(service) { this.service = service; }   // Delegate (any object offering create/deposit/withdraw/listAll)
+  create(userId, kind, balance) { this.service.create(userId, kind, balance); return { status: 201, message: 'Account created' }; }
+  deposit(accountId, amount) { this.service.deposit(accountId, amount); return { status: 200, message: 'Deposit done' }; }
+  withdraw(accountId, amount) { this.service.withdraw(accountId, amount); return { status: 200, message: 'Withdraw done' }; }
+  list() { return { status: 200, message: String(this.service.listAll().length) }; }
+}
+
+module.exports = { AccountController };
+
+
+===== FILE: Part3/controller_rest_use_case/javascript/run_tests.js =====
+const fs = require('fs');
+const { AccountController } = require('./snippet');
+
+class Recorder {                                // test double standing in for the service layer
+  constructor() { this.log = []; }
+  create(u, k, b) { this.log.push(`create(${u},${k},${b.toFixed(2)})`); }
+  deposit(a, m) { this.log.push(`deposit(${a},${m.toFixed(2)})`); }
+  withdraw(a, m) { this.log.push(`withdraw(${a},${m.toFixed(2)})`); }
+  listAll() { this.log.push('list()'); return [1, 2, 3]; }
+}
+
+function execute(script) {
+  const rec = new Recorder(), ctl = new AccountController(rec);
+  const t = script.trim().split(/\s+/);
+  let r;
+  if (t[0] === 'create') r = ctl.create(parseInt(t[1], 10), t[2], parseFloat(t[3]));
+  else if (t[0] === 'deposit') r = ctl.deposit(parseInt(t[1], 10), parseFloat(t[2]));
+  else if (t[0] === 'withdraw') r = ctl.withdraw(parseInt(t[1], 10), parseFloat(t[2]));
+  else r = ctl.list();
+  return rec.log.join(',') + '|' + r.status + ' ' + r.message;
+}
+
+let passed = 0, total = 0;
+for (const line of fs.readFileSync(process.argv[2], "utf8").split("\n")) {
+  if (!line.trim() || line.startsWith("#")) continue;
+  const i = line.indexOf(" => ");
+  const script = line.slice(0, i), expected = line.slice(i + 4);
+  total += 1;
+  const got = execute(script);
+  if (got === expected) { passed += 1; console.log("PASS case" + total); }
+  else console.log(`FAIL case${total} expected=${expected} got=${got}`);
+}
+console.log(`RESULT passed=${passed} total=${total}`);
+process.exit(passed === total ? 0 : 1);
+
+
+===== FILE: Part3/controller_rest_use_case/cpp/snippet.hpp =====
+#pragma once
+#include <string>
+#include <vector>
+
+struct Response { int status; std::string message; };
+
+class BankApi {                                 // what the Delegate (service layer) offers to the controller
+public:
+    virtual ~BankApi() = default;
+    virtual void create(long userId, const std::string& kind, double balance) = 0;
+    virtual void deposit(long accountId, double amount) = 0;
+    virtual void withdraw(long accountId, double amount) = 0;
+    virtual std::vector<long> listAll() = 0;
+};
+
+class AccountController {                       // GRASP Controller: receives the system event, no business rules
+    BankApi& service_;
+public:
+    explicit AccountController(BankApi& s) : service_(s) {}
+    Response create(long userId, const std::string& kind, double balance) { service_.create(userId, kind, balance); return {201, "Account created"}; }
+    Response deposit(long accountId, double amount) { service_.deposit(accountId, amount); return {200, "Deposit done"}; }
+    Response withdraw(long accountId, double amount) { service_.withdraw(accountId, amount); return {200, "Withdraw done"}; }
+    Response list() { return {200, std::to_string(service_.listAll().size())}; }
+};
+
+
+===== FILE: Part3/controller_rest_use_case/cpp/run_tests.cpp =====
+#include <cstdio>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include "snippet.hpp"
+
+static std::string fmt(double v) { char b[64]; std::snprintf(b, sizeof b, "%.2f", v); return b; }
+
+struct Recorder : BankApi {                     // test double standing in for the service layer
+    std::vector<std::string> log;
+    void create(long u, const std::string& k, double b) override { log.push_back("create(" + std::to_string(u) + "," + k + "," + fmt(b) + ")"); }
+    void deposit(long a, double m) override { log.push_back("deposit(" + std::to_string(a) + "," + fmt(m) + ")"); }
+    void withdraw(long a, double m) override { log.push_back("withdraw(" + std::to_string(a) + "," + fmt(m) + ")"); }
+    std::vector<long> listAll() override { log.push_back("list()"); return {1, 2, 3}; }
+};
+
+static std::string execute(const std::string& script) {
+    Recorder rec; AccountController ctl(rec);
+    std::stringstream ts(script); std::string cmd, a, b, c; ts >> cmd >> a >> b >> c;
+    Response r{};
+    if (cmd == "create") r = ctl.create(std::stol(a), b, std::stod(c));
+    else if (cmd == "deposit") r = ctl.deposit(std::stol(a), std::stod(b));
+    else if (cmd == "withdraw") r = ctl.withdraw(std::stol(a), std::stod(b));
+    else r = ctl.list();
+    std::string joined;
+    for (size_t i = 0; i < rec.log.size(); ++i) joined += (i ? "," : "") + rec.log[i];
+    return joined + "|" + std::to_string(r.status) + " " + r.message;
+}
+
+int main(int, char** argv) {
+    std::ifstream in(argv[1]); std::string line; int passed = 0, total = 0;
+    while (std::getline(in, line)) {
+        if (line.empty() || line[0] == (char)35) continue;
+        auto i = line.find(" => ");
+        std::string expected = line.substr(i + 4), got = execute(line.substr(0, i));
+        ++total;
+        if (got == expected) { ++passed; std::cout << "PASS case" << total << "\n"; }
+        else std::cout << "FAIL case" << total << " expected=" << expected << " got=" << got << "\n";
+    }
+    std::cout << "RESULT passed=" << passed << " total=" << total << "\n";
+    return passed == total ? 0 : 1;
+}
+
+
+===== FILE: Part3/dependency_injection_wiring/test-cases/cases.txt =====
+# the container always holds the Service bean; register real|fake puts a Dao bean under the name Dao; wire injects declared needs; run describes the Service
+register real;wire;run => Service->Dao:real
+register fake;wire;run => Service->Dao:fake
+register fake;register real;wire;run => Service->Dao:real
+register real;run => Service->Dao:unwired
+wire => MISSING:Dao
+wire;run => Service->Dao:unwired
+register real;wire => wired
+
+
+===== FILE: Part3/dependency_injection_wiring/java/Snippet.java =====
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+class MissingDependency extends RuntimeException {
+    MissingDependency(String name) { super(name); }
+}
+
+interface Bean {                                 // anything the container manages
+    default List<String> needs() { return List.of(); }
+    default void inject(String name, Bean dep) { }
+}
+
+interface Dao extends Bean { String kind(); }
+class RealDao implements Dao { public String kind() { return "real"; } }
+class FakeDao implements Dao { public String kind() { return "fake"; } }
+
+class Service implements Bean {                  // ManagedBean with one injection point (Dao); never creates it itself
+    private Dao dao;
+    public List<String> needs() { return List.of("Dao"); }
+    public void inject(String name, Bean dep) { dao = (Dao) dep; }
+    String describe() { return "Service->Dao:" + (dao == null ? "unwired" : dao.kind()); }
+}
+
+class Container {                                // Container: creates nothing, but wires every declared need
+    private final Map<String, Bean> beans = new LinkedHashMap<>();
+    void register(String name, Bean bean) { beans.put(name, bean); }
+    Bean get(String name) { return beans.get(name); }
+    void wire() {
+        for (Bean bean : beans.values()) {
+            for (String need : bean.needs()) {
+                if (!beans.containsKey(need)) throw new MissingDependency(need);
+                bean.inject(need, beans.get(need));
+            }
+        }
+    }
+}
+
+
+===== FILE: Part3/dependency_injection_wiring/java/Runner.java =====
+import java.nio.file.*;
+
+public class Runner {
+    static String execute(String script) {
+        Container c = new Container();
+        c.register("Service", new Service());
+        String out = "";
+        for (String cmd : script.split(";")) {
+            String[] t = cmd.trim().split("\\s+");
+            try {
+                switch (t[0]) {
+                    case "register" -> { c.register("Dao", t[1].equals("real") ? new RealDao() : new FakeDao()); out = "registered"; }
+                    case "wire" -> { c.wire(); out = "wired"; }
+                    default -> out = ((Service) c.get("Service")).describe();
+                }
+            } catch (MissingDependency e) { out = "MISSING:" + e.getMessage(); }
+        }
+        return out;
+    }
+
+    public static void main(String[] args) throws Exception {
+        int passed = 0, total = 0;
+        for (String line : Files.readAllLines(Path.of(args[0]))) {
+            if (line.isBlank() || line.startsWith("#")) continue;
+            String[] p = line.split(" => ", 2);
+            total++;
+            String got = execute(p[0]);
+            if (got.equals(p[1])) { passed++; System.out.println("PASS case" + total); }
+            else System.out.println("FAIL case" + total + " expected=" + p[1] + " got=" + got);
+        }
+        System.out.println("RESULT passed=" + passed + " total=" + total);
+        System.exit(passed == total ? 0 : 1);
+    }
+}
+
+
+===== FILE: Part3/dependency_injection_wiring/python/snippet.py =====
+class MissingDependency(Exception):
+    pass
+
+
+class Bean:                                     # anything the container manages
+    def needs(self):
+        return []
+
+    def inject(self, name, dep):
+        pass
+
+
+class RealDao(Bean):
+    def kind(self):
+        return "real"
+
+
+class FakeDao(Bean):
+    def kind(self):
+        return "fake"
+
+
+class Service(Bean):                            # ManagedBean with one injection point (Dao); never creates it itself
+    def __init__(self):
+        self.dao = None
+
+    def needs(self):
+        return ["Dao"]
+
+    def inject(self, name, dep):
+        self.dao = dep
+
+    def describe(self):
+        return "Service->Dao:" + (self.dao.kind() if self.dao else "unwired")
+
+
+class Container:                                # Container: creates nothing, but wires every declared need
+    def __init__(self):
+        self.beans = {}
+
+    def register(self, name, bean):
+        self.beans[name] = bean
+
+    def get(self, name):
+        return self.beans[name]
+
+    def wire(self):
+        for bean in self.beans.values():
+            for need in bean.needs():
+                if need not in self.beans:
+                    raise MissingDependency(need)
+                bean.inject(need, self.beans[need])
+
+
+===== FILE: Part3/dependency_injection_wiring/python/run_tests.py =====
+import sys
+from snippet import Container, Service, RealDao, FakeDao, MissingDependency
+
+
+def execute(script):
+    c = Container()
+    c.register("Service", Service())
+    out = ""
+    for cmd in script.split(";"):
+        t = cmd.split()
+        try:
+            if t[0] == "register":
+                c.register("Dao", RealDao() if t[1] == "real" else FakeDao())
+                out = "registered"
+            elif t[0] == "wire":
+                c.wire()
+                out = "wired"
+            else:
+                out = c.get("Service").describe()
+        except MissingDependency as e:
+            out = "MISSING:" + str(e)
+    return out
+
+
+def main(path):
+    passed = total = 0
+    for line in open(path, encoding="utf-8"):
+        line = line.rstrip("\n")
+        if not line.strip() or line.startswith("#"):
+            continue
+        script, expected = line.split(" => ", 1)
+        total += 1
+        got = execute(script)
+        if got == expected:
+            passed += 1
+            print("PASS case%d" % total)
+        else:
+            print("FAIL case%d expected=%s got=%s" % (total, expected, got))
+    print("RESULT passed=%d total=%d" % (passed, total))
+    sys.exit(0 if passed == total else 1)
+
+
+main(sys.argv[1])
+
+
+===== FILE: Part3/dependency_injection_wiring/javascript/snippet.js =====
+class MissingDependency extends Error {}
+
+class Bean {                                     // anything the container manages
+  needs() { return []; }
+  inject(name, dep) {}
+}
+class RealDao extends Bean { kind() { return 'real'; } }
+class FakeDao extends Bean { kind() { return 'fake'; } }
+
+class Service extends Bean {                     // ManagedBean with one injection point (Dao); never creates it itself
+  constructor() { super(); this.dao = null; }
+  needs() { return ['Dao']; }
+  inject(name, dep) { this.dao = dep; }
+  describe() { return 'Service->Dao:' + (this.dao ? this.dao.kind() : 'unwired'); }
+}
+
+class Container {                                // Container: creates nothing, but wires every declared need
+  constructor() { this.beans = new Map(); }
+  register(name, bean) { this.beans.set(name, bean); }
+  get(name) { return this.beans.get(name); }
+  wire() {
+    for (const bean of this.beans.values()) {
+      for (const need of bean.needs()) {
+        if (!this.beans.has(need)) throw new MissingDependency(need);
+        bean.inject(need, this.beans.get(need));
+      }
+    }
+  }
+}
+
+module.exports = { Container, Service, RealDao, FakeDao, MissingDependency };
+
+
+===== FILE: Part3/dependency_injection_wiring/javascript/run_tests.js =====
+const fs = require('fs');
+const { Container, Service, RealDao, FakeDao, MissingDependency } = require('./snippet');
+
+function execute(script) {
+  const c = new Container();
+  c.register('Service', new Service());
+  let out = '';
+  for (const cmd of script.split(';')) {
+    const t = cmd.trim().split(/\s+/);
+    try {
+      if (t[0] === 'register') { c.register('Dao', t[1] === 'real' ? new RealDao() : new FakeDao()); out = 'registered'; }
+      else if (t[0] === 'wire') { c.wire(); out = 'wired'; }
+      else out = c.get('Service').describe();
+    } catch (e) {
+      if (e instanceof MissingDependency) out = 'MISSING:' + e.message;
+      else throw e;
+    }
+  }
+  return out;
+}
+
+let passed = 0, total = 0;
+for (const line of fs.readFileSync(process.argv[2], "utf8").split("\n")) {
+  if (!line.trim() || line.startsWith("#")) continue;
+  const i = line.indexOf(" => ");
+  const script = line.slice(0, i), expected = line.slice(i + 4);
+  total += 1;
+  const got = execute(script);
+  if (got === expected) { passed += 1; console.log("PASS case" + total); }
+  else console.log(`FAIL case${total} expected=${expected} got=${got}`);
+}
+console.log(`RESULT passed=${passed} total=${total}`);
+process.exit(passed === total ? 0 : 1);
+
+
+===== FILE: Part3/dependency_injection_wiring/cpp/snippet.hpp =====
+#pragma once
+#include <map>
+#include <stdexcept>
+#include <string>
+#include <vector>
+
+struct MissingDependency : std::runtime_error {
+    explicit MissingDependency(const std::string& n) : std::runtime_error(n) {}
+};
+
+struct Bean {                                    // anything the container manages
+    virtual ~Bean() = default;
+    virtual std::vector<std::string> needs() const { return {}; }
+    virtual void inject(const std::string&, Bean*) {}
+};
+
+struct Dao : Bean { virtual std::string kind() const = 0; };
+struct RealDao : Dao { std::string kind() const override { return "real"; } };
+struct FakeDao : Dao { std::string kind() const override { return "fake"; } };
+
+class Service : public Bean {                    // ManagedBean with one injection point (Dao); never creates it itself
+    Dao* dao_ = nullptr;
+public:
+    std::vector<std::string> needs() const override { return {"Dao"}; }
+    void inject(const std::string&, Bean* dep) override { dao_ = dynamic_cast<Dao*>(dep); }
+    std::string describe() const { return "Service->Dao:" + (dao_ ? dao_->kind() : std::string("unwired")); }
+};
+
+class Container {                                // Container: creates nothing, but wires every declared need
+    std::map<std::string, Bean*> beans_;
+public:
+    void registerBean(const std::string& name, Bean* bean) { beans_[name] = bean; }
+    Bean* get(const std::string& name) { return beans_[name]; }
+    void wire() {
+        for (auto& kv : beans_)
+            for (const auto& need : kv.second->needs()) {
+                auto it = beans_.find(need);
+                if (it == beans_.end()) throw MissingDependency(need);
+                kv.second->inject(need, it->second);
+            }
+    }
+};
+
+
+===== FILE: Part3/dependency_injection_wiring/cpp/run_tests.cpp =====
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include "snippet.hpp"
+
+static std::string execute(const std::string& script) {
+    Service service; RealDao real; FakeDao fake; Container c;
+    c.registerBean("Service", &service);
+    std::string out; std::stringstream cmds(script); std::string cmd;
+    while (std::getline(cmds, cmd, ';')) {
+        std::stringstream ts(cmd); std::string name, arg; ts >> name >> arg;
+        try {
+            if (name == "register") { c.registerBean("Dao", arg == "real" ? static_cast<Bean*>(&real) : &fake); out = "registered"; }
+            else if (name == "wire") { c.wire(); out = "wired"; }
+            else out = static_cast<Service*>(c.get("Service"))->describe();
+        } catch (const MissingDependency& e) { out = std::string("MISSING:") + e.what(); }
+    }
+    return out;
+}
+
+int main(int, char** argv) {
+    std::ifstream in(argv[1]); std::string line; int passed = 0, total = 0;
+    while (std::getline(in, line)) {
+        if (line.empty() || line[0] == (char)35) continue;
+        auto i = line.find(" => ");
+        std::string expected = line.substr(i + 4), got = execute(line.substr(0, i));
+        ++total;
+        if (got == expected) { ++passed; std::cout << "PASS case" << total << "\n"; }
+        else std::cout << "FAIL case" << total << " expected=" << expected << " got=" << got << "\n";
+    }
+    std::cout << "RESULT passed=" << passed << " total=" << total << "\n";
+    return passed == total ? 0 : 1;
+}
+
+
+===== FILE: Part3/exception_translation_http/test-cases/cases.txt =====
+# the translator turns exceptions raised by the service into "<status> <message>"; any other error becomes 500
+deposit 0 => 400 Deposit must be positive
+deposit -3 => 400 Deposit must be positive
+deposit 10 => 200 ok
+find 9 => 404 Account not found
+find 1 => 200 account 1
+boom => 500 Internal error
+
+
+===== FILE: Part3/exception_translation_http/java/Snippet.java =====
+import java.util.function.Supplier;
+
+class HttpError extends RuntimeException {       // TranslatedException (base): carries the HTTP status and a message
+    final int status;
+    HttpError(int status, String message) { super(message); this.status = status; }
+}
+class BadRequest extends HttpError { BadRequest(String m) { super(400, m); } }
+class NotFound extends HttpError { NotFound(String m) { super(404, m); } }
+
+class AccountService {                           // Raiser
+    String deposit(double amount) {
+        if (amount <= 0) throw new BadRequest("Deposit must be positive");
+        return "ok";
+    }
+    String find(long id) {
+        if (id != 1) throw new NotFound("Account not found");
+        return "account 1";
+    }
+    String boom() { throw new IllegalStateException("unexpected"); }
+}
+
+class Translator {                               // Translator: the boundary that turns exceptions into responses
+    static String translate(Supplier<String> action) {
+        try {
+            return "200 " + action.get();
+        } catch (HttpError e) {
+            return e.status + " " + e.getMessage();
+        } catch (RuntimeException e) {
+            return "500 Internal error";
+        }
+    }
+}
+
+
+===== FILE: Part3/exception_translation_http/java/Runner.java =====
+import java.nio.file.*;
+
+public class Runner {
+    static String execute(String script) {
+        AccountService svc = new AccountService();
+        String[] t = script.trim().split("\\s+");
+        return switch (t[0]) {
+            case "deposit" -> Translator.translate(() -> svc.deposit(Double.parseDouble(t[1])));
+            case "find" -> Translator.translate(() -> svc.find(Long.parseLong(t[1])));
+            default -> Translator.translate(svc::boom);
+        };
+    }
+
+    public static void main(String[] args) throws Exception {
+        int passed = 0, total = 0;
+        for (String line : Files.readAllLines(Path.of(args[0]))) {
+            if (line.isBlank() || line.startsWith("#")) continue;
+            String[] p = line.split(" => ", 2);
+            total++;
+            String got = execute(p[0]);
+            if (got.equals(p[1])) { passed++; System.out.println("PASS case" + total); }
+            else System.out.println("FAIL case" + total + " expected=" + p[1] + " got=" + got);
+        }
+        System.out.println("RESULT passed=" + passed + " total=" + total);
+        System.exit(passed == total ? 0 : 1);
+    }
+}
+
+
+===== FILE: Part3/exception_translation_http/python/snippet.py =====
+class HttpError(Exception):                     # TranslatedException (base): carries the HTTP status and a message
+    status = 500
+
+    def __init__(self, message):
+        super().__init__(message)
+        self.message = message
+
+
+class BadRequest(HttpError):
+    status = 400
+
+
+class NotFound(HttpError):
+    status = 404
+
+
+class AccountService:                           # Raiser
+    def deposit(self, amount):
+        if amount <= 0:
+            raise BadRequest("Deposit must be positive")
+        return "ok"
+
+    def find(self, id):
+        if id != 1:
+            raise NotFound("Account not found")
+        return "account 1"
+
+    def boom(self):
+        raise RuntimeError("unexpected")
+
+
+def translate(action):                          # Translator: the boundary that turns exceptions into responses
+    try:
+        return "200 " + action()
+    except HttpError as e:
+        return "%d %s" % (e.status, e.message)
+    except Exception:
+        return "500 Internal error"
+
+
+===== FILE: Part3/exception_translation_http/python/run_tests.py =====
+import sys
+from snippet import AccountService, translate
+
+
+def execute(script):
+    svc = AccountService()
+    t = script.split()
+    if t[0] == "deposit":
+        return translate(lambda: svc.deposit(float(t[1])))
+    if t[0] == "find":
+        return translate(lambda: svc.find(int(t[1])))
+    return translate(svc.boom)
+
+
+def main(path):
+    passed = total = 0
+    for line in open(path, encoding="utf-8"):
+        line = line.rstrip("\n")
+        if not line.strip() or line.startswith("#"):
+            continue
+        script, expected = line.split(" => ", 1)
+        total += 1
+        got = execute(script)
+        if got == expected:
+            passed += 1
+            print("PASS case%d" % total)
+        else:
+            print("FAIL case%d expected=%s got=%s" % (total, expected, got))
+    print("RESULT passed=%d total=%d" % (passed, total))
+    sys.exit(0 if passed == total else 1)
+
+
+main(sys.argv[1])
+
+
+===== FILE: Part3/exception_translation_http/javascript/snippet.js =====
+class HttpError extends Error {                  // TranslatedException (base): carries the HTTP status and a message
+  constructor(status, message) { super(message); this.status = status; }
+}
+class BadRequest extends HttpError { constructor(m) { super(400, m); } }
+class NotFound extends HttpError { constructor(m) { super(404, m); } }
+
+class AccountService {                           // Raiser
+  deposit(amount) {
+    if (amount <= 0) throw new BadRequest('Deposit must be positive');
+    return 'ok';
+  }
+  find(id) {
+    if (id !== 1) throw new NotFound('Account not found');
+    return 'account 1';
+  }
+  boom() { throw new Error('unexpected'); }
+}
+
+function translate(action) {                     // Translator: the boundary that turns exceptions into responses
+  try {
+    return '200 ' + action();
+  } catch (e) {
+    return e instanceof HttpError ? `${e.status} ${e.message}` : '500 Internal error';
+  }
+}
+
+module.exports = { AccountService, translate };
+
+
+===== FILE: Part3/exception_translation_http/javascript/run_tests.js =====
+const fs = require('fs');
+const { AccountService, translate } = require('./snippet');
+
+function execute(script) {
+  const svc = new AccountService();
+  const t = script.trim().split(/\s+/);
+  if (t[0] === 'deposit') return translate(() => svc.deposit(parseFloat(t[1])));
+  if (t[0] === 'find') return translate(() => svc.find(parseInt(t[1], 10)));
+  return translate(() => svc.boom());
+}
+
+let passed = 0, total = 0;
+for (const line of fs.readFileSync(process.argv[2], "utf8").split("\n")) {
+  if (!line.trim() || line.startsWith("#")) continue;
+  const i = line.indexOf(" => ");
+  const script = line.slice(0, i), expected = line.slice(i + 4);
+  total += 1;
+  const got = execute(script);
+  if (got === expected) { passed += 1; console.log("PASS case" + total); }
+  else console.log(`FAIL case${total} expected=${expected} got=${got}`);
+}
+console.log(`RESULT passed=${passed} total=${total}`);
+process.exit(passed === total ? 0 : 1);
+
+
+===== FILE: Part3/exception_translation_http/cpp/snippet.hpp =====
+#pragma once
+#include <functional>
+#include <stdexcept>
+#include <string>
+
+struct HttpError : std::runtime_error {          // TranslatedException (base): carries the HTTP status and a message
+    int status;
+    HttpError(int s, const std::string& m) : std::runtime_error(m), status(s) {}
+};
+struct BadRequest : HttpError { explicit BadRequest(const std::string& m) : HttpError(400, m) {} };
+struct NotFound : HttpError { explicit NotFound(const std::string& m) : HttpError(404, m) {} };
+
+struct AccountService {                          // Raiser
+    std::string deposit(double amount) const {
+        if (amount <= 0) throw BadRequest("Deposit must be positive");
+        return "ok";
+    }
+    std::string find(long id) const {
+        if (id != 1) throw NotFound("Account not found");
+        return "account 1";
+    }
+    std::string boom() const { throw std::logic_error("unexpected"); }
+};
+
+inline std::string translate(const std::function<std::string()>& action) {   // Translator
+    try {
+        return "200 " + action();
+    } catch (const HttpError& e) {
+        return std::to_string(e.status) + " " + e.what();
+    } catch (const std::exception&) {
+        return "500 Internal error";
+    }
+}
+
+
+===== FILE: Part3/exception_translation_http/cpp/run_tests.cpp =====
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include "snippet.hpp"
+
+static std::string execute(const std::string& script) {
+    AccountService svc;
+    std::stringstream ts(script); std::string cmd, arg; ts >> cmd >> arg;
+    if (cmd == "deposit") return translate([&] { return svc.deposit(std::stod(arg)); });
+    if (cmd == "find") return translate([&] { return svc.find(std::stol(arg)); });
+    return translate([&] { return svc.boom(); });
+}
+
+int main(int, char** argv) {
+    std::ifstream in(argv[1]); std::string line; int passed = 0, total = 0;
+    while (std::getline(in, line)) {
+        if (line.empty() || line[0] == (char)35) continue;
+        auto i = line.find(" => ");
+        std::string expected = line.substr(i + 4), got = execute(line.substr(0, i));
+        ++total;
+        if (got == expected) { ++passed; std::cout << "PASS case" << total << "\n"; }
+        else std::cout << "FAIL case" << total << " expected=" << expected << " got=" << got << "\n";
+    }
+    std::cout << "RESULT passed=" << passed << " total=" << total << "\n";
+    return passed == total ? 0 : 1;
+}
+

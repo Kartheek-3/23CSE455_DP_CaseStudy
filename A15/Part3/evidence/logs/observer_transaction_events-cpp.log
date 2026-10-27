@@ -1,0 +1,11 @@
+# g++ -std=c++17 -O1 -o run_tests run_tests.cpp && ./run_tests ../test-cases/cases.txt (working folder Part3/observer_transaction_events/cpp)
+# runtime: g++ 13.3.0 (-std=c++17 -O1)
+PASS case1
+PASS case2
+PASS case3
+PASS case4
+PASS case5
+PASS case6
+PASS case7
+PASS case8
+RESULT passed=8 total=8

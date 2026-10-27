@@ -1,0 +1,10 @@
+# open <S|C> <balance> prints the id; deposit/withdraw <id> <amount> print the new balance, BAD_REQUEST or NOT_FOUND
+# (S = savings: +0.50 deposit bonus; withdrawal needs amount > 0 and balance > amount - the original rule)
+open S 100;deposit 1 50 => 150.50
+open C 100;deposit 1 50 => 150.00
+open C 100;withdraw 1 100 => BAD_REQUEST
+open C 100;withdraw 1 40 => 60.00
+open S 10;deposit 1 0 => BAD_REQUEST
+deposit 3 5 => NOT_FOUND
+open S 100;withdraw 1 0 => BAD_REQUEST
+open C 5;withdraw 9 1 => NOT_FOUND

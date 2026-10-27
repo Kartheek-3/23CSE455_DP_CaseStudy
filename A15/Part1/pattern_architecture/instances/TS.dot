@@ -1,0 +1,6 @@
+digraph G {
+ rankdir=LR; fontname="Helvetica"; labelloc=t; label="Transaction Script - Account Deposit and Withdrawal Script";
+ node [shape=box, style="rounded,filled", fillcolor="#eef3fb", color="#4a6fa5", fontname="Helvetica", fontsize=10];
+ edge [fontname="Helvetica", fontsize=9, color="#555555"];
+ n_Account [label="&laquo;RowData&raquo;\nAccount", fillcolor="#eef3fb"];
+}

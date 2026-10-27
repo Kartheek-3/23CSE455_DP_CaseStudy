@@ -1,0 +1,10 @@
+# python3 run_tests.py ../test-cases/cases.txt (working folder Part3/dao_account_persistence/python)
+# runtime: CPython 3.13.16
+PASS case1
+PASS case2
+PASS case3
+PASS case4
+PASS case5
+PASS case6
+PASS case7
+RESULT passed=7 total=7

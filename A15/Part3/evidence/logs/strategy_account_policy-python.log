@@ -1,0 +1,11 @@
+# python3 run_tests.py ../test-cases/cases.txt (working folder Part3/strategy_account_policy/python)
+# runtime: CPython 3.13.16
+PASS case1
+PASS case2
+PASS case3
+PASS case4
+PASS case5
+PASS case6
+PASS case7
+PASS case8
+RESULT passed=8 total=8
