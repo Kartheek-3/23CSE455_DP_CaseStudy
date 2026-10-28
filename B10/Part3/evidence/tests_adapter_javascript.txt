@@ -1,0 +1,6 @@
+# Adapter / javascript
+working folder: Part3/adapter_sensor_driver/javascript
+$ node test_sensor_driver.js
+Adapter tests: 12/12 passed
+
+[exit code: 0]

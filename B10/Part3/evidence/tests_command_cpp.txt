@@ -1,0 +1,9 @@
+# Command / cpp
+working folder: Part3/command_automation_actions/cpp
+$ g++ -std=c++14 -O2 -Wall -o test_automation_actions.exe test_automation_actions.cpp
+
+[compile exit code: 0]
+$ test_automation_actions.exe
+Command tests: 12/12 passed
+
+[exit code: 0]

@@ -1,0 +1,415 @@
+From bce41febb83c197044daf66b16b155d01f543674 Mon Sep 17 00:00:00 2001
+From: JohanR7 <143104864+JohanR7@users.noreply.github.com>
+Date: Sun, 11 Oct 2026 20:21:49 +0530
+Subject: [PATCH 9/9] CH03: sensor alerts with log and e-mail listeners
+
+Add mycodo/utils/sensor_alerts.py (SensorAlert, AlertListener,
+SensorAlertNotifier with attach/detach and once-per-episode delivery,
+LogAlertListener, EmailAlertListener). The bang-bang Function raises a
+missing_measurement alert when no usable reading is available (now also
+for None/[] results, which used to raise) and a critically_dry alert
+below the new alert_critical_moisture option; alert_email adds an
+e-mail listener that reuses DaemonControl.send_email. A failing listener
+is logged and does not stop the others. Tests for AC1-AC9.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ mycodo/functions/bang_bang.py                 |  72 ++++++++-
+ .../case_study/test_ch03_sensor_alerts.py     | 140 ++++++++++++++++++
+ mycodo/utils/sensor_alerts.py                 | 106 +++++++++++++
+ 3 files changed, 313 insertions(+), 5 deletions(-)
+ create mode 100644 mycodo/tests/case_study/test_ch03_sensor_alerts.py
+ create mode 100644 mycodo/utils/sensor_alerts.py
+
+diff --git a/mycodo/functions/bang_bang.py b/mycodo/functions/bang_bang.py
+index b84e33f15..230f78482 100644
+--- a/mycodo/functions/bang_bang.py
++++ b/mycodo/functions/bang_bang.py
+@@ -26,6 +26,13 @@ from mycodo.utils.irrigation_strategies import TURN_ON
+ from mycodo.utils.irrigation_strategies import IrrigationContext
+ from mycodo.utils.irrigation_strategies import UnknownIrrigationStrategyError
+ from mycodo.utils.irrigation_strategies import build_irrigation_strategy
++from mycodo.utils.sensor_alerts import CRITICALLY_DRY
++from mycodo.utils.sensor_alerts import MISSING_MEASUREMENT
++from mycodo.utils.sensor_alerts import EmailAlertListener
++from mycodo.utils.sensor_alerts import LogAlertListener
++from mycodo.utils.sensor_alerts import SensorAlert
++from mycodo.utils.sensor_alerts import SensorAlertNotifier
++from mycodo.utils.sensor_alerts import parse_recipients
+ 
+ # TODO: Remove this at next major version (obsolete because a On/Off Raise/Lower/Both Bang-Bang exists
+ FUNCTION_INFORMATION = {
+@@ -167,6 +174,23 @@ FUNCTION_INFORMATION = {
+             'name': 'Rain Indicator Max Age (Seconds)',
+             'phrase': 'The maximum age of the rain indicator measurement to use'
+         },
++        {
++            'id': 'alert_critical_moisture',
++            'type': 'float',
++            'default_value': 0.0,
++            'required': False,
++            'name': 'Alert: Critical Low Measurement',
++            'phrase': 'Raise a critically-dry alert when the measurement falls below this value (0 disables it)'
++        },
++        {
++            'id': 'alert_email',
++            'type': 'text',
++            'default_value': '',
++            'required': False,
++            'name': 'Alert: E-Mail Recipients',
++            'phrase': 'E-mail alerts (missing measurement, critically dry) to these addresses, separated by '
++                      'commas. Uses the SMTP settings of the system configuration. Empty: log only'
++        },
+         {
+             'id': 'update_period',
+             'type': 'float',
+@@ -212,6 +236,9 @@ class CustomModule(AbstractFunction):
+         self.output_channel = None
+         self.update_period = None
+         self.strategy = None
++        self.alert_critical_moisture = None
++        self.alert_email = None
++        self.alerts = SensorAlertNotifier(self.logger)
+ 
+         # Set custom options
+         custom_function = db_retrieve_table_daemon(
+@@ -226,6 +253,7 @@ class CustomModule(AbstractFunction):
+         self.output_channel = self.get_output_channel_from_channel_id(self.output_channel_id)
+         self._apply_crop_profile()
+         self.strategy = self._build_irrigation_strategy()
++        self._setup_alert_listeners()
+ 
+         self.logger.info(
+             "Bang-Bang controller started with options: "
+@@ -289,23 +317,25 @@ class CustomModule(AbstractFunction):
+             self.logger.error("Cannot run bang-bang controller: Check output channel.")
+             return
+ 
+-        last_measurement = self._read_measurement()
++        value = self._measurement_value(self._read_measurement())
+ 
+         output_state = self.control.output_state(self.output_device_id, self.output_channel)
+ 
+-        self.logger.debug(f"measurement: {last_measurement[1]}, output state: {output_state}, "
++        self.logger.debug(f"measurement: {value}, output state: {output_state}, "
+                           f"setpoint: {self.setpoint}, hysteresis: {self.hysteresis}")
+ 
+-        if not last_measurement or last_measurement[1] is None:
++        if value is None:
+             self._handle_missing_measurement()
+             return
++        self.alerts.clear(MISSING_MEASUREMENT)
++        self._check_critically_dry(value)
+ 
+         if self.strategy is None:
+             self.logger.error("Unknown controller direction: '{}'".format(self.direction))
+             return
+ 
+         self._apply_decision(self.strategy.decide(IrrigationContext(
+-            measurement=last_measurement[1],
++            measurement=value,
+             output_state=output_state,
+             lower_threshold=self._lower_threshold(),
+             upper_threshold=self._upper_threshold(),
+@@ -328,10 +358,42 @@ class CustomModule(AbstractFunction):
+             self.measurement_measurement_id,
+             max_age=self.measurement_max_age)
+ 
++    @staticmethod
++    def _measurement_value(last_measurement):
++        """Value of a [timestamp, value] result; None for None, an empty result or a missing value."""
++        if not last_measurement or len(last_measurement) < 2:
++            return None
++        return last_measurement[1]
++
+     def _handle_missing_measurement(self):
+-        """No usable measurement: the output must not stay on."""
++        """No usable measurement: the output must not stay on, and listeners are alerted."""
+         self.logger.error("No measurement available. Cannot operate without measurement. Turning output Off.")
+         self.control.output_off(self.output_device_id, output_channel=self.output_channel)
++        self.alerts.raise_alert(SensorAlert(
++            kind=MISSING_MEASUREMENT,
++            source=self.unique_id,
++            message=f"Bang-Bang Function {self.unique_id}: no measurement available from "
++                    f"{self.measurement_device_id} (max age {self.measurement_max_age} s). Output turned off."))
++
++    def _check_critically_dry(self, value):
++        """Raise a critically-dry alert below the configured critical level; clear it otherwise."""
++        if self.alert_critical_moisture and value < self.alert_critical_moisture:
++            self.alerts.raise_alert(SensorAlert(
++                kind=CRITICALLY_DRY,
++                source=self.unique_id,
++                message=f"Bang-Bang Function {self.unique_id}: measurement {value} is below the "
++                        f"critical level {self.alert_critical_moisture}.",
++                value=value))
++        else:
++            self.alerts.clear(CRITICALLY_DRY)
++
++    def _setup_alert_listeners(self):
++        """Attach the log listener and, if recipients are configured, the e-mail listener."""
++        self.alerts = SensorAlertNotifier(self.logger)
++        self.alerts.attach(LogAlertListener(self.logger))
++        recipients = parse_recipients(self.alert_email)
++        if recipients:
++            self.alerts.attach(EmailAlertListener(recipients, self.control.send_email))
+ 
+     @staticmethod
+     def _now():
+diff --git a/mycodo/tests/case_study/test_ch03_sensor_alerts.py b/mycodo/tests/case_study/test_ch03_sensor_alerts.py
+new file mode 100644
+index 000000000..d8eab4291
+--- /dev/null
++++ b/mycodo/tests/case_study/test_ch03_sensor_alerts.py
+@@ -0,0 +1,140 @@
++# coding=utf-8
++"""CH03 - Add sensor-based alerts: one test (or group) per acceptance criterion."""
++import logging
++import time
++from unittest import mock
++
++import pytest
++
++from mycodo.tests.case_study.helpers import run_loop
++from mycodo.utils.sensor_alerts import CRITICALLY_DRY
++from mycodo.utils.sensor_alerts import MISSING_MEASUREMENT
++from mycodo.utils.sensor_alerts import AlertListener
++from mycodo.utils.sensor_alerts import EmailAlertListener
++from mycodo.utils.sensor_alerts import LogAlertListener
++from mycodo.utils.sensor_alerts import SensorAlert
++from mycodo.utils.sensor_alerts import SensorAlertNotifier
++
++
++class RecordingListener(AlertListener):
++    """A custom listener as a developer would add one."""
++    def __init__(self):
++        self.alerts = []
++
++    def on_alert(self, alert):
++        self.alerts.append(alert)
++
++
++def attach_recorder(module):
++    recorder = RecordingListener()
++    module.alerts.attach(recorder)
++    return recorder
++
++
++def test_ac1_missing_measurement_alerts_log_and_email(make_bang_bang, caplog):
++    module = make_bang_bang(alert_email='grower@example.com')
++    with caplog.at_level(logging.WARNING):
++        control = run_loop(module, None, output_state='on')
++    control.output_off.assert_called_once_with('out-dev', output_channel=0)
++    assert "ALERT [missing_measurement]" in caplog.text
++    control.send_email.assert_called_once()
++    args, kwargs = control.send_email.call_args
++    assert args[0] == ['grower@example.com']
++    assert 'no measurement available' in args[1]
++    assert kwargs == {'subject': 'Mycodo alert: missing_measurement'}
++
++
++@pytest.mark.parametrize("result", [None, []], ids=["none", "empty-list"])
++def test_ac2_none_or_empty_result_no_longer_crashes(make_bang_bang, result):
++    module = make_bang_bang()
++    recorder = attach_recorder(module)
++    module.get_last_measurement.return_value = result
++    module.control.output_state.return_value = 'on'
++    module.timer_loop = time.time() - 0.001
++    module.loop()  # baseline raised TypeError / IndexError here
++    module.control.output_off.assert_called_once_with('out-dev', output_channel=0)
++    assert [a.kind for a in recorder.alerts] == [MISSING_MEASUREMENT]
++
++
++def test_ac3_critically_dry_alert_does_not_change_irrigation(make_bang_bang):
++    module = make_bang_bang(crop_profile='tomato', alert_critical_moisture=40)
++    recorder = attach_recorder(module)
++    control = run_loop(module, 35.0, output_state='off')
++    control.output_on.assert_called_once_with('out-dev', output_channel=0)
++    assert len(recorder.alerts) == 1
++    alert = recorder.alerts[0]
++    assert (alert.kind, alert.value, alert.source) == (CRITICALLY_DRY, 35.0, 'func-0001')
++    assert 'below the critical level 40' in alert.message
++
++
++def test_ac4_alerts_once_per_episode(make_bang_bang):
++    module = make_bang_bang(crop_profile='tomato', alert_critical_moisture=40)
++    recorder = attach_recorder(module)
++    for reading in (35.0, 34.0, 50.0, 33.0):
++        run_loop(module, reading)
++    assert [a.value for a in recorder.alerts] == [35.0, 33.0]
++
++    recorder.alerts.clear()
++    for reading in (None, None, 50.0, None):
++        run_loop(module, reading)
++    assert [a.kind for a in recorder.alerts] == [MISSING_MEASUREMENT, MISSING_MEASUREMENT]
++
++
++def test_ac5_email_listener_only_with_recipients(make_bang_bang):
++    plain = make_bang_bang()
++    assert [type(l) for l in plain.alerts.listeners] == [LogAlertListener]
++    run_loop(plain, None)
++    plain.control.send_email.assert_not_called()
++
++    with_email = make_bang_bang(alert_email=' a@x.com, b@y.com ')
++    assert [type(l) for l in with_email.alerts.listeners] == [LogAlertListener, EmailAlertListener]
++    assert with_email.alerts.listeners[1].recipients == ['a@x.com', 'b@y.com']
++
++
++def test_ac6_failing_listener_does_not_stop_others_or_control(make_bang_bang, caplog):
++    module = make_bang_bang(crop_profile='tomato', alert_critical_moisture=40, alert_email='a@x.com')
++    module.control.send_email.side_effect = OSError("SMTP server unreachable")
++    recorder = attach_recorder(module)
++    with caplog.at_level(logging.WARNING):
++        control = run_loop(module, 35.0, output_state='off')  # must not raise
++    control.output_on.assert_called_once_with('out-dev', output_channel=0)
++    assert "Alert listener EmailAlertListener failed to handle 'critically_dry' alert" in caplog.text
++    assert "ALERT [critically_dry]" in caplog.text
++    assert [a.kind for a in recorder.alerts] == [CRITICALLY_DRY]
++
++
++@pytest.mark.parametrize("overrides", [{}, {"alert_critical_moisture": 0}], ids=["absent", "zero"])
++def test_ac7_no_dry_alert_when_disabled(make_bang_bang, overrides):
++    module = make_bang_bang(**overrides)
++    recorder = attach_recorder(module)
++    control = run_loop(module, 1.0, output_state='off')
++    assert recorder.alerts == []
++    assert control.method_calls == [
++        mock.call.output_state('out-dev', 0),
++        mock.call.output_on('out-dev', output_channel=0),
++    ]
++
++
++def test_ac8_custom_listener_attach_and_detach():
++    notifier = SensorAlertNotifier()
++    recorder = RecordingListener()
++    notifier.attach(recorder)
++    notifier.attach(recorder)  # attaching twice has no effect
++    alert = SensorAlert(kind=CRITICALLY_DRY, source='f1', message='dry', value=10)
++    assert notifier.raise_alert(alert) is True
++    assert notifier.raise_alert(alert) is False  # still active: not repeated
++    notifier.clear(CRITICALLY_DRY)
++    notifier.detach(recorder)
++    assert notifier.raise_alert(alert) is True
++    assert recorder.alerts == [alert]
++    with pytest.raises(ValueError):
++        EmailAlertListener([], send=lambda *a, **k: None)
++
++
++def test_ac9_function_information_offers_alert_options():
++    from mycodo.functions.bang_bang import FUNCTION_INFORMATION
++    options = {o['id']: o for o in FUNCTION_INFORMATION['custom_options']}
++    assert (options['alert_critical_moisture']['type'], options['alert_critical_moisture']['default_value']) == ('float', 0.0)
++    assert (options['alert_email']['type'], options['alert_email']['default_value']) == ('text', '')
++    assert not options['alert_critical_moisture']['required']
++    assert not options['alert_email']['required']
+diff --git a/mycodo/utils/sensor_alerts.py b/mycodo/utils/sensor_alerts.py
+new file mode 100644
+index 000000000..8088f0fb8
+--- /dev/null
++++ b/mycodo/utils/sensor_alerts.py
+@@ -0,0 +1,106 @@
++# coding=utf-8
++"""Sensor-based alerts: a notifier (subject) and the listeners it informs.
++
++A controller raises an alert when a sensor condition starts (e.g. no reading, or
++critically dry soil) and clears it when the condition ends. The notifier delivers
++each alert once per episode to every attached listener; a failing listener is
++logged and does not stop the others. Plain Python (no Flask/database imports).
++"""
++import datetime
++import logging
++from abc import ABC
++from abc import abstractmethod
++from dataclasses import dataclass
++from dataclasses import field
++
++MISSING_MEASUREMENT = 'missing_measurement'
++CRITICALLY_DRY = 'critically_dry'
++
++
++@dataclass(frozen=True)
++class SensorAlert:
++    kind: str  # MISSING_MEASUREMENT, CRITICALLY_DRY, ...
++    source: str  # id of the controller that raised the alert
++    message: str
++    value: float = None  # measurement that caused the alert, if any
++    timestamp: datetime.datetime = field(default_factory=datetime.datetime.now)
++
++
++class AlertListener(ABC):
++    """Receives sensor alerts from a SensorAlertNotifier."""
++
++    @abstractmethod
++    def on_alert(self, alert):
++        """Handle one alert."""
++
++
++class SensorAlertNotifier:
++    """Keeps the attached listeners and the active alert kinds; notifies once per episode."""
++
++    def __init__(self, logger=None):
++        self.logger = logger or logging.getLogger(__name__)
++        self._listeners = []
++        self._active_kinds = set()
++
++    @property
++    def listeners(self):
++        return tuple(self._listeners)
++
++    def attach(self, listener):
++        if listener not in self._listeners:
++            self._listeners.append(listener)
++
++    def detach(self, listener):
++        if listener in self._listeners:
++            self._listeners.remove(listener)
++
++    def is_active(self, kind):
++        return kind in self._active_kinds
++
++    def raise_alert(self, alert):
++        """Notify the listeners unless this kind of alert is already active. Returns True if notified."""
++        if alert.kind in self._active_kinds:
++            return False
++        self._active_kinds.add(alert.kind)
++        self._notify(alert)
++        return True
++
++    def clear(self, kind):
++        """The condition has ended; the next alert of this kind is delivered again."""
++        self._active_kinds.discard(kind)
++
++    def _notify(self, alert):
++        for listener in list(self._listeners):
++            try:
++                listener.on_alert(alert)
++            except Exception:
++                self.logger.exception(
++                    f"Alert listener {type(listener).__name__} failed to handle '{alert.kind}' alert")
++
++
++class LogAlertListener(AlertListener):
++    """Writes alerts to a log as warnings."""
++
++    def __init__(self, logger):
++        self.logger = logger
++
++    def on_alert(self, alert):
++        self.logger.warning(f"ALERT [{alert.kind}] {alert.message}")
++
++
++class EmailAlertListener(AlertListener):
++    """E-mails alerts; `send(recipients, message, subject=...)` does the actual sending."""
++
++    def __init__(self, recipients, send):
++        if not recipients:
++            raise ValueError("At least one e-mail recipient is required")
++        self.recipients = list(recipients)
++        self.send = send
++
++    def on_alert(self, alert):
++        self.send(self.recipients, alert.message, subject=f"Mycodo alert: {alert.kind}")
++
++
++def parse_recipients(text):
++    """Split a comma-separated recipient list, dropping blanks."""
++    return [address.strip() for address in (text or '').split(',') if address.strip()]

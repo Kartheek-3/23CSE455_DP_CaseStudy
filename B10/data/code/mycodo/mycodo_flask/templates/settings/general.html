@@ -1,0 +1,441 @@
+{% extends "layout-settings.html" %}
+{% set active_page = "settings" %}
+{% set active_settings = "general" %}
+{% set help_page = ["https://kizniche.github.io/Mycodo/Configuration-Settings/#general-settings", dict_translation['settings']['title'] + ': ' + dict_translation['general']['title']] %}
+
+{% block title %} - {{dict_translation['settings']['title'] + ': ' + dict_translation['general']['title']}}{% endblock %}
+
+{% block head %}
+<link href="/static/css/toastr.min.css" rel="stylesheet"/>
+<script src="/static/js/toastr.min.js"></script>
+
+<script>
+  $(document).ready(function () {
+    toastr.options = {
+      "closeButton": true,
+      "debug": false,
+      "newestOnTop": false,
+      "progressBar": false,
+      "positionClass": "toast-top-left",
+      "preventDuplicates": false,
+      "onclick": null,
+      "showDuration": "300",
+      "hideDuration": "1000",
+      "timeOut": "15000",
+      "extendedTimeOut": "10000",
+      "showEasing": "swing",
+      "hideEasing": "linear",
+      "showMethod": "fadeIn",
+      "hideMethod": "fadeOut"
+    }
+  });
+</script>
+{% endblock %}
+
+{% block settings %}
+  <!-- Route: /settings/general -->
+  <div class="container">
+    <h3 style="text-align: right; padding-bottom: 1.3em;"><a href="https://kizniche.github.io/Mycodo/Configuration-Settings/#general-settings" target="_blank"><span style="font-size: 16px" class="fas fa-question-circle"></span></a> {{_('General Settings')}}</h3>
+
+    <form class="form-horizontal" method="post" action="/settings/general" enctype=multipart/form-data>
+      <input type="hidden" name="form-name" value="General">
+      {{form_settings_general.csrf_token}}
+      <div class="form-group">
+        {{form_settings_general.language.label(class_='col-sm-12 control-label')}}
+        <div class="col-sm-12">
+          <select class="form-control form-tooltip form-dropdown" data-placement="top" id="language" name="language" title="{{_("Selecting a language will override the web browser's language")}}">
+            <option value="">Browser Default</option>
+            {% for each_language in languages %}
+              <option value="{{each_language[0]}}"{% if current_user.language == each_language[0] %} selected{% endif %}>{{each_language[1]}}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.landing_page.label(class_='col-sm-12 control-label')}}
+        <div class="col-sm-12">
+          <select class="form-control form-tooltip form-dropdown" data-placement="top" id="landing_page" name="landing_page" title="{{_('Which page to land on after logging in')}}">
+            <option value="dashboard"{% if current_user.landing_page == 'dashboard' %} selected{% endif %}>{{_('Dashboard')}}</option>
+            <option value="live"{% if current_user.landing_page == 'live' %} selected{% endif %}>{{_('Live Measurements')}}</option>
+            <option value="info"{% if current_user.landing_page == 'system_information' %} selected{% endif %}>{{_('System Information')}}</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.index_page.label(class_='col-sm-12 control-label')}}
+        <div class="col-sm-12">
+          <select class="form-control form-tooltip form-dropdown" data-placement="top" id="index_page" name="index_page" title="{{_('Which page to land on after clicking brand link (top-corner link)')}}">
+            <option value="landing"{% if current_user.index_page == 'landing' %} selected{% endif %}>{{_('Same as Landing Page')}}</option>
+            <option value="dashboard"{% if current_user.index_page == 'dashboard' %} selected{% endif %}>{{_('Dashboard')}}</option>
+            <option value="live"{% if current_user.index_page == 'live' %} selected{% endif %}>{{_('Live Measurements')}}</option>
+            <option value="info"{% if current_user.index_page == 'info' %} selected{% endif %}>{{_('System Information')}}</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.brand_display.label(class_='col-sm-12 control-label')}}
+        <div class="col-sm-12">
+          <select class="form-control form-tooltip form-dropdown" data-placement="top" id="brand_display" name="brand_display" title="{{_('What to display in the top-left corner of the UI')}}">
+            <option value="hostname"{% if settings.brand_display == 'hostname' %} selected{% endif %}>{{_('Hostname')}}</option>
+            <option value="brand_text"{% if settings.brand_display == 'brand_text' %} selected{% endif %}>{{_('Brand Text')}}</option>
+            <option value="brand_image"{% if settings.brand_display == 'brand_image' %} selected{% endif %}>{{_('Brand Image')}}</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.title_display.label(class_='col-sm-12 control-label')}}
+        <div class="col-sm-12">
+          <select class="form-control form-tooltip form-dropdown" data-placement="top" id="title_display" name="title_display" title="{{_('What to display as the page title of the UI')}}">
+            <option value="hostname"{% if settings.title_display == 'hostname' %} selected{% endif %}>{{_('Hostname')}}</option>
+            <option value="brand_text"{% if settings.title_display == 'brand_text' %} selected{% endif %}>{{_('Brand Text')}}</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.hostname_override.label(class_='col-sm-12 control-label checkbox-nopad')}}
+        <div class="col-sm-12">
+          {{form_settings_general.hostname_override(class_='form-control', value=settings.hostname_override, **{'title':_("Override the hostname with this text. Leave blank to use hostname.")})}}
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.brand_image.label(class_='col-sm-12 control-label checkbox-nopad')}}
+        <div class="col-sm-12">
+          <span class="btn btn-sm btn-file"><input id="brand_image" name="brand_image" type="file" /></span> Data Saved: {% if settings.brand_image %}True{% else %}False{% endif %}
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.brand_image_height.label(class_='col-sm-12 control-label checkbox-nopad')}}
+        <div class="col-sm-12">
+          {{form_settings_general.brand_image_height(class_='form-control', value=settings.brand_image_height, **{'title':_("Height of the brand image, in pixels.")})}}
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.favicon_display.label(class_='col-sm-12 control-label')}}
+        <div class="col-sm-12">
+          <select class="form-control form-tooltip form-dropdown" data-placement="top" id="favicon_display" name="favicon_display" title="{{_('What to display as the favicon')}}">
+            <option value="default"{% if settings.favicon_display == 'default' %} selected{% endif %}>{{_('Default')}}</option>
+            <option value="brand_favicon"{% if settings.favicon_display == 'brand_favicon' %} selected{% endif %}>{{_('Brand Icon')}}</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.brand_favicon.label(class_='col-sm-12 control-label checkbox-nopad')}}
+        <div class="col-sm-12">
+          <span class="btn btn-sm btn-file"><input id="brand_favicon" name="brand_favicon" type="file" /></span> Data Saved: {% if settings.brand_favicon %}True{% else %}False{% endif %}
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.rpyc_timeout.label(class_='col-sm-12 control-label checkbox-nopad')}}
+        <div class="col-sm-12">
+          {{form_settings_general.rpyc_timeout(class_='form-control', value=settings.rpyc_timeout, **{'title':_("Set the timeout (seconds) for Pyro connections (client-daemon communication). Requires daemon restart.")})}}
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.custom_css.label(class_='col-sm-12 control-label checkbox-nopad')}}
+        <div class="col-sm-12">
+          <textarea class="form-control" id="custom_css" name="custom_css" title="Set custom CSS" rows="4">{{settings.custom_css}}</textarea>
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.custom_layout.label(class_='col-sm-12 control-label checkbox-nopad')}}
+        <div class="col-sm-12">
+          <textarea class="form-control" id="custom_layout" name="custom_layout" title="Set custom Layout HTML" rows="4">{{settings.custom_layout}}</textarea>
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.daemon_debug_mode.label(class_='col-sm-12 control-label checkbox-nopad')}}
+        <div class="col-sm-12">
+          {%- if settings.daemon_debug_mode == true -%}
+            {{form_settings_general.daemon_debug_mode(checked=True)}}
+          {%- else -%}
+            {{form_settings_general.daemon_debug_mode()}}
+          {%- endif -%}
+          &nbsp;&nbsp;{{_('Enable Daemon debug logging for diagnosing issues. Requires Daemon restart.')}}
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.force_https.label(class_='col-sm-12 control-label checkbox-nopad')}}
+        <div class="col-sm-12">
+          {%- if settings.force_https == true -%}
+            {{form_settings_general.force_https(checked=True)}}
+          {%- else -%}
+            {{form_settings_general.force_https()}}
+          {%- endif -%}
+          &nbsp;&nbsp;{{_('Check to force all web connections to use SSL (port 443) for greater security.')}}
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.hide_success.label(class_='col-sm-12 control-label checkbox-nopad')}}
+        <div class="col-sm-12">
+          {%- if settings.hide_alert_success == true -%}
+            {{form_settings_general.hide_success(checked=True)}}
+          {%- else -%}
+            {{form_settings_general.hide_success()}}
+          {%- endif -%}
+          &nbsp;&nbsp;{{_('Check to prevent Success alert messages from appearing at the top of the page.')}}
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.hide_info.label(class_='col-sm-12 control-label checkbox-nopad')}}
+        <div class="col-sm-12">
+          {%- if settings.hide_alert_info == true -%}
+            {{form_settings_general.hide_info(checked=True)}}
+          {%- else -%}
+            {{form_settings_general.hide_info()}}
+          {%- endif -%}
+          &nbsp;&nbsp;{{_('Check to prevent Info alert messages from appearing at the top of the page.')}}
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.hide_warning.label(class_='col-sm-12 control-label checkbox-nopad')}}
+        <div class="col-sm-12">
+          {%- if settings.hide_alert_warning == true -%}
+            {{form_settings_general.hide_warning(checked=True)}}
+          {%- else -%}
+            {{form_settings_general.hide_warning()}}
+          {%- endif -%}
+          &nbsp;&nbsp;{{_('Check to prevent Warning alert messages from appearing at the top of the page.')}}
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.hide_tooltips.label(class_='col-sm-12 control-label checkbox-nopad')}}
+        <div class="col-sm-12">
+          {%- if settings.hide_tooltips == true -%}
+            {{form_settings_general.hide_tooltips(checked=True)}}
+          {%- else -%}
+            {{form_settings_general.hide_tooltips()}}
+          {%- endif -%}
+          &nbsp;&nbsp;{{_('Hide tooltips that pop up over form inputs.')}}
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.stats_opt_out.label(class_='col-sm-12 control-label checkbox-nopad')}}
+        <div class="col-sm-12">
+          {%- if settings.stats_opt_out == true -%}
+            {{form_settings_general.stats_opt_out(checked=True)}}
+          {%- else -%}
+            {{form_settings_general.stats_opt_out()}}
+          {%- endif -%}
+          &nbsp;&nbsp;{{_('Check if you do not wish to send anonymous usage statistics.')}} <a href="/admin/statistics">{{_('View collected statistics')}}</a>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="col-sm-12">
+          <h3>Time Series Database Settings</h3>
+          A properly-configured time series database is required for Mycodo to function and is used to store and query measurements.
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.use_database.label(class_='col-sm-12 control-label checkbox-nopad')}}
+        <div class="col-sm-12">
+          <select class="form-control form-tooltip form-dropdown" id="use_database" name="use_database" title="">
+            <option value="influxdb_1"{% if settings.measurement_db_name == 'influxdb' and settings.measurement_db_version == '1' %} selected{% endif %}>Influxdb 1.x</option>
+            <option value="influxdb_2"{% if settings.measurement_db_name == 'influxdb' and settings.measurement_db_version == '2' %} selected{% endif %}>Influxdb 2.x</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.measurement_db_retention_policy.label(class_='col-sm-12 control-label checkbox-nopad')}}
+        <div class="col-sm-12">
+          {{form_settings_general.measurement_db_retention_policy(class_='form-control', value=settings.measurement_db_retention_policy)}}
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.measurement_db_host.label(class_='col-sm-12 control-label checkbox-nopad')}}
+        <div class="col-sm-12">
+          {{form_settings_general.measurement_db_host(class_='form-control', value=settings.measurement_db_host)}}
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.measurement_db_port.label(class_='col-sm-12 control-label checkbox-nopad')}}
+        <div class="col-sm-12">
+          {{form_settings_general.measurement_db_port(class_='form-control', value=settings.measurement_db_port)}}
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.measurement_db_dbname.label(class_='col-sm-12 control-label checkbox-nopad')}}
+        <div class="col-sm-12">
+          {{form_settings_general.measurement_db_dbname(class_='form-control', value=settings.measurement_db_dbname)}}
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.measurement_db_user.label(class_='col-sm-12 control-label checkbox-nopad')}}
+        <div class="col-sm-12">
+          {{form_settings_general.measurement_db_user(class_='form-control', value=settings.measurement_db_user)}}
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.measurement_db_password.label(class_='col-sm-12 control-label checkbox-nopad')}}
+        <div class="col-sm-12">
+          {{form_settings_general.measurement_db_password(class_='form-control', **{'title':"Only enter a password to change the saved password"})}}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="col-sm-12">
+          <h3>Dashboard Settings</h3>
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.grid_cell_height.label(class_='col-sm-12 control-label checkbox-nopad')}}
+        <div class="col-sm-12">
+          {{form_settings_general.grid_cell_height(class_='form-control', value=settings.grid_cell_height, **{'title':_("The height of the grid cell, in pixels.")})}}
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="col-sm-12">
+          <h3>Upgrade Settings</h3>
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.net_test_ip.label(class_='col-sm-12 control-label checkbox-nopad')}}
+        <div class="col-sm-12">
+          {{form_settings_general.net_test_ip(class_='form-control', value=settings.net_test_ip, **{'title':_("The IP address to test if there is an active internet connection required to allow upgrading.")})}}
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.net_test_port.label(class_='col-sm-12 control-label checkbox-nopad')}}
+        <div class="col-sm-12">
+          {{form_settings_general.net_test_port(class_='form-control', value=settings.net_test_port, **{'title':_("The port of the internet test IP address.")})}}
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.net_test_timeout.label(class_='col-sm-12 control-label checkbox-nopad')}}
+        <div class="col-sm-12">
+          {{form_settings_general.net_test_timeout(class_='form-control', value=settings.net_test_timeout, **{'title':_("The timeout period (seconds) for testing the internet connection.")})}}
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.enable_upgrade_check.label(class_='col-sm-12 control-label checkbox-nopad')}}
+        <div class="col-sm-12">
+          {%- if settings.enable_upgrade_check == true -%}
+            {{form_settings_general.enable_upgrade_check(checked=True)}}
+          {%- else -%}
+            {{form_settings_general.enable_upgrade_check()}}
+          {%- endif -%}
+          &nbsp;&nbsp;{{_('Check if you would like Mycodo to automatically check for upgrades.')}}
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="col-sm-12">
+          <h3>{{dict_translation['energy_usage']['title']}} Settings</h3>
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.max_amps.label(class_='col-sm-12 control-label checkbox-nopad')}}
+        <div class="col-sm-12">
+          {{form_settings_general.max_amps(class_='form-control', value=settings.max_amps, **{'title':_("Set the maximum allowed amperage to be switched on at any given time")})}}
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.output_stats_volts.label(class_='col-sm-12 control-label checkbox-nopad')}}
+        <div class="col-sm-12">
+          {{form_settings_general.output_stats_volts(class_='form-control', value=settings.output_usage_volts, **{'title':_('Set the voltage used to power the devices powered by the outputs')})}}
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.output_stats_cost.label(class_='col-sm-12 control-label checkbox-nopad')}}
+        <div class="col-sm-12">
+          {{form_settings_general.output_stats_cost(class_='form-control', value=settings.output_usage_cost, **{'title':_('Set the cost per kilowatt-hour')})}}
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.output_stats_currency.label(class_='col-sm-12 control-label checkbox-nopad')}}
+        <div class="col-sm-12">
+          {{form_settings_general.output_stats_currency(class_='form-control', value=settings.output_usage_currency, **{'title':_('Set the unit of currency used to pay for the electricity')})}}
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.output_stats_day_month.label(class_='col-sm-12 control-label checkbox-nopad')}}
+        <div class="col-sm-12">
+          {{form_settings_general.output_stats_day_month(class_='form-control', value=settings.output_usage_dayofmonth, **{'title':_('Set a day of the month to calculate monthly power usage')})}}
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.output_usage_report_gen.label(class_='col-sm-12 control-label checkbox-nopad')}}
+        <div class="col-sm-12">
+          {%- if settings.output_usage_report_gen == true -%}
+            {{form_settings_general.output_usage_report_gen(checked=True)}}
+          {%- else -%}
+            {{form_settings_general.output_usage_report_gen()}}
+          {%- endif -%}
+          &nbsp;&nbsp;{{_('Automatically generate output usage reports on a daily/weekly/monthly schedule')}}. Saved to {{report_path}}.
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.output_usage_report_span.label(class_='col-sm-12 control-label checkbox-nopad')}}
+        <div class="col-sm-12">
+          <select class="form-control form-tooltip form-dropdown" id="output_usage_report_span" name="output_usage_report_span" title="" data-original-title="{{_('How often to generate a report')}}">
+            <option value="monthly"{% if settings.output_usage_report_span == 'monthly' %} selected{% endif %}>Monthly</option>
+            <option value="weekly"{% if settings.output_usage_report_span == 'weekly' %} selected{% endif %}>Weekly</option>
+            <option value="daily"{% if settings.output_usage_report_span == 'daily' %} selected{% endif %}>Daily</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.output_usage_report_day.label(class_='col-sm-12 control-label checkbox-nopad')}}
+        <div class="col-sm-12">
+          {{form_settings_general.output_usage_report_day(class_='form-control', value=settings.output_usage_report_day, **{'title':_('Day Options: Daily: 1-7 (1=Monday), Monthly: 1-28')})}}
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.output_usage_report_hour.label(class_='col-sm-12 control-label checkbox-nopad')}}
+        <div class="col-sm-12">
+          {{form_settings_general.output_usage_report_hour(class_='form-control', value=settings.output_usage_report_hour, **{'title':_('Hour Options: 0-23')})}}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="col-sm-12">
+          <h3>Controller Sample Rate Settings</h3>
+          The sample rates of Mycodo daemon controllers can be changed below. Note that the daemon will need to be restarted after saving in order for the new options to take effect. Select Config [Gear Icon] -> Restart Backend to restart the daemon.
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.sample_rate_controller_conditional.label(class_='col-sm-12 control-label')}}
+        <div class="col-sm-12">
+          {{form_settings_general.sample_rate_controller_conditional(class_='form-control', value=settings.sample_rate_controller_conditional)}}
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.sample_rate_controller_function.label(class_='col-sm-12 control-label')}}
+        <div class="col-sm-12">
+          {{form_settings_general.sample_rate_controller_function(class_='form-control', value=settings.sample_rate_controller_function)}}
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.sample_rate_controller_input.label(class_='col-sm-12 control-label')}}
+        <div class="col-sm-12">
+          {{form_settings_general.sample_rate_controller_input(class_='form-control', value=settings.sample_rate_controller_input)}}
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.sample_rate_controller_output.label(class_='col-sm-12 control-label')}}
+        <div class="col-sm-12">
+          {{form_settings_general.sample_rate_controller_output(class_='form-control', value=settings.sample_rate_controller_output)}}
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.sample_rate_controller_pid.label(class_='col-sm-12 control-label')}}
+        <div class="col-sm-12">
+          {{form_settings_general.sample_rate_controller_pid(class_='form-control', value=settings.sample_rate_controller_pid)}}
+        </div>
+      </div>
+      <div class="form-group">
+        {{form_settings_general.sample_rate_controller_widget.label(class_='col-sm-12 control-label')}}
+        <div class="col-sm-12">
+          {{form_settings_general.sample_rate_controller_widget(class_='form-control', value=settings.sample_rate_controller_widget)}}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="col-sm-offset-4 col-sm-12">
+          {{form_settings_general.settings_general_save(class_='btn btn-primary')}}
+        </div>
+      </div>
+    </form>
+
+  </div>
+
+{% endblock %}

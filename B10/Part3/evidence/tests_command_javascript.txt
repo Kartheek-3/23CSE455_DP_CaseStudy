@@ -1,0 +1,6 @@
+# Command / javascript
+working folder: Part3/command_automation_actions/javascript
+$ node test_automation_actions.js
+Command tests: 12/12 passed
+
+[exit code: 0]

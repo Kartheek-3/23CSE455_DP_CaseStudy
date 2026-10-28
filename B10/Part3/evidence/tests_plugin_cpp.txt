@@ -1,0 +1,9 @@
+# Plugin / cpp
+working folder: Part3/plugin_module_loading/cpp
+$ g++ -std=c++14 -O2 -Wall -o test_module_loading.exe test_module_loading.cpp
+
+[compile exit code: 0]
+$ test_module_loading.exe
+Plugin tests: 9/9 passed
+
+[exit code: 0]

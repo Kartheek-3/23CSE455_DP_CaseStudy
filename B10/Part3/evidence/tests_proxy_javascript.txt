@@ -1,0 +1,6 @@
+# Proxy / javascript
+working folder: Part3/proxy_daemon_rpc/javascript
+$ node test_daemon_rpc.js
+Proxy tests: 12/12 passed
+
+[exit code: 0]

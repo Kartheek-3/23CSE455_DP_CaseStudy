@@ -1,0 +1,317 @@
+From bdc43f9a38939b773b0b655db17e23b694f09993 Mon Sep 17 00:00:00 2001
+From: JohanR7 <143104864+JohanR7@users.noreply.github.com>
+Date: Sun, 11 Oct 2026 20:03:50 +0530
+Subject: [PATCH 3/9] CH01: crop profiles for the bang-bang irrigation
+ controller
+
+Add mycodo/utils/crop_profiles.py (CropProfile value type, one
+registration point and one lookup point; tomato, rice, wheat) and a
+'crop_profile' option on the bang-bang Function. A selected crop
+supplies the setpoint (target soil moisture) and hysteresis
+(tolerance); 'custom' (default) keeps the configured values. Unknown
+crops are logged and ignored. Tests for AC1-AC7.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ mycodo/functions/bang_bang.py                 |  35 ++++-
+ .../case_study/test_ch01_crop_profiles.py     | 124 ++++++++++++++++++
+ mycodo/utils/crop_profiles.py                 |  78 +++++++++++
+ 3 files changed, 236 insertions(+), 1 deletion(-)
+ create mode 100644 mycodo/tests/case_study/test_ch01_crop_profiles.py
+ create mode 100644 mycodo/utils/crop_profiles.py
+
+diff --git a/mycodo/functions/bang_bang.py b/mycodo/functions/bang_bang.py
+index b75dfb4c0..3e9784226 100644
+--- a/mycodo/functions/bang_bang.py
++++ b/mycodo/functions/bang_bang.py
+@@ -12,6 +12,10 @@ from mycodo.databases.models import CustomController
+ from mycodo.functions.base_function import AbstractFunction
+ from mycodo.mycodo_client import DaemonControl
+ from mycodo.utils.constraints_pass import constraints_pass_positive_value
++from mycodo.utils.crop_profiles import CUSTOM_CROP_PROFILE
++from mycodo.utils.crop_profiles import UnknownCropProfileError
++from mycodo.utils.crop_profiles import crop_profile_choices
++from mycodo.utils.crop_profiles import get_crop_profile
+ from mycodo.utils.database import db_retrieve_table_daemon
+ 
+ # TODO: Remove this at next major version (obsolete because a On/Off Raise/Lower/Both Bang-Bang exists
+@@ -65,6 +69,18 @@ FUNCTION_INFORMATION = {
+             'name': lazy_gettext('Output'),
+             'phrase': lazy_gettext('Select an output to control that will affect the measurement')
+         },
++        {
++            'id': 'crop_profile',
++            'type': 'select',
++            'default_value': CUSTOM_CROP_PROFILE,
++            'required': False,
++            'options_select': [
++                (CUSTOM_CROP_PROFILE, 'Custom (use Setpoint and Hysteresis)')
++            ] + crop_profile_choices(),
++            'name': 'Crop Profile',
++            'phrase': 'Select a crop to use its target soil moisture (%) as the setpoint and its tolerance '
++                      'as the hysteresis, or Custom to use the Setpoint and Hysteresis options'
++        },
+         {
+             'id': 'setpoint',
+             'type': 'float',
+@@ -126,6 +142,7 @@ class CustomModule(AbstractFunction):
+         self.output_device_id = None
+         self.output_measurement_id = None
+         self.output_channel_id = None
++        self.crop_profile = None
+         self.setpoint = None
+         self.hysteresis = None
+         self.direction = None
+@@ -143,21 +160,37 @@ class CustomModule(AbstractFunction):
+ 
+     def initialize(self):
+         self.output_channel = self.get_output_channel_from_channel_id(self.output_channel_id)
++        self._apply_crop_profile()
+ 
+         self.logger.info(
+             "Bang-Bang controller started with options: "
+             "Measurement Device: {}, Measurement: {}, Output: {}, "
+-            "Output_Channel: {}, Setpoint: {}, Hysteresis: {}, "
++            "Output_Channel: {}, Crop Profile: {}, Setpoint: {}, Hysteresis: {}, "
+             "Direction: {}, Period: {}".format(
+                 self.measurement_device_id,
+                 self.measurement_measurement_id,
+                 self.output_device_id,
+                 self.output_channel,
++                self.crop_profile,
+                 self.setpoint,
+                 self.hysteresis,
+                 self.direction,
+                 self.update_period))
+ 
++    def _apply_crop_profile(self):
++        """Use the selected crop's target moisture and tolerance as setpoint and hysteresis."""
++        if not self.crop_profile or self.crop_profile == CUSTOM_CROP_PROFILE:
++            return
++        try:
++            profile = get_crop_profile(self.crop_profile)
++        except UnknownCropProfileError:
++            self.logger.error(
++                f"Unknown crop profile '{self.crop_profile}'. "
++                f"Using the configured Setpoint ({self.setpoint}) and Hysteresis ({self.hysteresis}).")
++            return
++        self.setpoint = profile.target_moisture
++        self.hysteresis = profile.tolerance
++
+     def loop(self):
+         if self.timer_loop > time.time():
+             return
+diff --git a/mycodo/tests/case_study/test_ch01_crop_profiles.py b/mycodo/tests/case_study/test_ch01_crop_profiles.py
+new file mode 100644
+index 000000000..041d2e4fd
+--- /dev/null
++++ b/mycodo/tests/case_study/test_ch01_crop_profiles.py
+@@ -0,0 +1,124 @@
++# coding=utf-8
++"""CH01 - Add new crop types: one test (or group) per acceptance criterion."""
++import logging
++
++import pytest
++
++from mycodo.tests.case_study.helpers import run_loop
++from mycodo.utils.crop_profiles import CUSTOM_CROP_PROFILE
++from mycodo.utils.crop_profiles import CropProfile
++from mycodo.utils.crop_profiles import UnknownCropProfileError
++from mycodo.utils.crop_profiles import crop_profile_choices
++from mycodo.utils.crop_profiles import get_crop_profile
++from mycodo.utils.crop_profiles import register_crop_profile
++from mycodo.utils.crop_profiles import unregister_crop_profile
++
++
++def test_ac1_tomato_profile_supplies_setpoint_and_tolerance(make_bang_bang):
++    module = make_bang_bang(crop_profile='tomato')
++    assert (module.setpoint, module.hysteresis) == (65.0, 5.0)
++
++    run_loop(module, 59.0, output_state='off')  # below 65 - 5: irrigate
++    module.control.output_on.assert_called_once_with('out-dev', output_channel=0)
++
++    module.control.reset_mock()
++    run_loop(module, 71.0, output_state='on')  # above 65 + 5: stop irrigating
++    module.control.output_off.assert_called_once_with('out-dev', output_channel=0)
++    module.control.output_on.assert_not_called()
++
++    module.control.reset_mock()
++    run_loop(module, 65.0, output_state='on')  # inside the band: no command
++    module.control.output_on.assert_not_called()
++    module.control.output_off.assert_not_called()
++
++
++def test_ac2_each_crop_uses_its_own_values(make_bang_bang):
++    rice = make_bang_bang(crop_profile='rice')
++    wheat = make_bang_bang(crop_profile='wheat')
++    assert (rice.setpoint, rice.hysteresis) == (85.0, 5.0)
++    assert (wheat.setpoint, wheat.hysteresis) == (50.0, 5.0)
++
++    run_loop(rice, 70.0, output_state='on')
++    run_loop(wheat, 70.0, output_state='on')
++    rice.control.output_on.assert_called_once_with('out-dev', output_channel=0)
++    rice.control.output_off.assert_not_called()
++    wheat.control.output_off.assert_called_once_with('out-dev', output_channel=0)
++    wheat.control.output_on.assert_not_called()
++
++
++@pytest.mark.parametrize("overrides", [{}, {"crop_profile": CUSTOM_CROP_PROFILE}],
++                         ids=["option-absent-in-stored-config", "custom-selected"])
++def test_ac3_custom_or_missing_crop_keeps_configured_values(make_bang_bang, overrides):
++    module = make_bang_bang(**overrides)
++    assert module.crop_profile == CUSTOM_CROP_PROFILE
++    assert (module.setpoint, module.hysteresis) == (50, 1)
++    run_loop(module, 48.9)
++    module.control.output_on.assert_called_once_with('out-dev', output_channel=0)
++
++
++@pytest.fixture
++def lettuce():
++    profile = register_crop_profile(CropProfile('lettuce', 'Lettuce', target_moisture=70.0, tolerance=4.0))
++    yield profile
++    unregister_crop_profile('lettuce')
++
++
++def test_ac4_new_crop_type_registered_in_one_place(make_bang_bang, lettuce):
++    assert get_crop_profile('lettuce') is lettuce
++    assert ('lettuce', 'Lettuce') in crop_profile_choices()
++
++    module = make_bang_bang(crop_profile='lettuce')
++    assert (module.setpoint, module.hysteresis) == (70.0, 4.0)
++    run_loop(module, 65.9)  # below 70 - 4
++    module.control.output_on.assert_called_once_with('out-dev', output_channel=0)
++
++
++def test_ac5_unknown_crop_logs_error_and_keeps_configured_values(make_bang_bang, caplog):
++    with caplog.at_level(logging.ERROR):
++        module = make_bang_bang(crop_profile='banana', setpoint=40, hysteresis=2)
++    assert (module.setpoint, module.hysteresis) == (40, 2)
++    assert "Unknown crop profile 'banana'" in caplog.text
++    run_loop(module, 37.9)
++    module.control.output_on.assert_called_once_with('out-dev', output_channel=0)
++
++
++def test_ac5_lookup_of_unknown_crop_raises_lookup_error():
++    with pytest.raises(UnknownCropProfileError):
++        get_crop_profile('banana')
++
++
++@pytest.mark.parametrize("kwargs", [
++    dict(name_unique='a', name='A', target_moisture=50, tolerance=0),
++    dict(name_unique='a', name='A', target_moisture=50, tolerance=-1),
++    dict(name_unique='a', name='A', target_moisture=101, tolerance=1),
++    dict(name_unique='a', name='A', target_moisture=-1, tolerance=1),
++    dict(name_unique='a', name='A', target_moisture=98, tolerance=5),
++    dict(name_unique='a', name='A', target_moisture=2, tolerance=5),
++    dict(name_unique='', name='A', target_moisture=50, tolerance=5),
++    dict(name_unique=CUSTOM_CROP_PROFILE, name='Custom', target_moisture=50, tolerance=5),
++], ids=["zero-tolerance", "negative-tolerance", "target-over-100", "target-below-0",
++        "band-over-100", "band-below-0", "empty-id", "reserved-id"])
++def test_ac6_invalid_crop_definition_rejected(kwargs):
++    before = crop_profile_choices()
++    with pytest.raises(ValueError):
++        register_crop_profile(CropProfile(**kwargs))
++    assert crop_profile_choices() == before
++
++
++def test_ac6_duplicate_crop_id_rejected():
++    before = crop_profile_choices()
++    with pytest.raises(ValueError):
++        register_crop_profile(CropProfile('tomato', 'Tomato again', target_moisture=60, tolerance=5))
++    assert crop_profile_choices() == before
++    assert get_crop_profile('tomato').target_moisture == 65.0
++
++
++def test_ac7_function_information_offers_crop_selection():
++    from mycodo.functions.bang_bang import FUNCTION_INFORMATION
++    option = next(o for o in FUNCTION_INFORMATION['custom_options'] if o['id'] == 'crop_profile')
++    assert option['type'] == 'select'
++    assert option['default_value'] == CUSTOM_CROP_PROFILE
++    assert not option['required']
++    ids = [value for value, _label in option['options_select']]
++    assert ids == [CUSTOM_CROP_PROFILE] + [crop_id for crop_id, _name in crop_profile_choices()]
++    assert ids == ['custom', 'rice', 'tomato', 'wheat']
+diff --git a/mycodo/utils/crop_profiles.py b/mycodo/utils/crop_profiles.py
+new file mode 100644
+index 000000000..41bff8a4d
+--- /dev/null
++++ b/mycodo/utils/crop_profiles.py
+@@ -0,0 +1,78 @@
++# coding=utf-8
++"""Crop profiles: target soil moisture and tolerance per crop type.
++
++A crop profile supplies the setpoint (target soil moisture) and the hysteresis
++(tolerance) for irrigation control, so a user can select a crop instead of
++entering raw numbers. Soil moisture is expressed in percent (0-100); the
++measurement used with a profile must be in percent (rescale raw sensor values
++with the Input's measurement rescaling if needed).
++
++New crop types are added in one place: register them below with
++register_crop_profile(). This module is plain Python (no Flask/database
++imports) so it can be used by any Function module and tested in isolation.
++
++The values below are illustrative defaults for the case study, not agronomic advice.
++"""
++from dataclasses import dataclass
++
++# Selection value meaning "no crop profile: use the Setpoint and Hysteresis options"
++CUSTOM_CROP_PROFILE = 'custom'
++
++
++class UnknownCropProfileError(LookupError):
++    """Raised when a crop profile id is not registered."""
++
++
++@dataclass(frozen=True)
++class CropProfile:
++    name_unique: str
++    name: str
++    target_moisture: float  # setpoint, percent soil moisture
++    tolerance: float  # hysteresis, percent soil moisture above/below the target
++
++    def __post_init__(self):
++        if not self.name_unique:
++            raise ValueError("Crop profile id must not be empty")
++        if self.name_unique == CUSTOM_CROP_PROFILE:
++            raise ValueError(f"Crop profile id '{CUSTOM_CROP_PROFILE}' is reserved")
++        if self.tolerance <= 0:
++            raise ValueError(f"Crop '{self.name_unique}': tolerance must be greater than 0")
++        if not 0 <= self.target_moisture <= 100:
++            raise ValueError(f"Crop '{self.name_unique}': target moisture must be between 0 and 100 %")
++        if self.target_moisture - self.tolerance < 0 or self.target_moisture + self.tolerance > 100:
++            raise ValueError(f"Crop '{self.name_unique}': target +/- tolerance must stay between 0 and 100 %")
++
++
++_crop_profiles = {}
++
++
++def register_crop_profile(profile):
++    """Add a crop type. Raises ValueError if its id is already registered."""
++    if profile.name_unique in _crop_profiles:
++        raise ValueError(f"Crop profile '{profile.name_unique}' is already registered")
++    _crop_profiles[profile.name_unique] = profile
++    return profile
++
++
++def unregister_crop_profile(name_unique):
++    """Remove a crop type (used by tests and plugins that add temporary crops)."""
++    _crop_profiles.pop(name_unique, None)
++
++
++def get_crop_profile(name_unique):
++    """Single lookup point for crop profiles."""
++    try:
++        return _crop_profiles[name_unique]
++    except KeyError:
++        raise UnknownCropProfileError(f"Unknown crop profile '{name_unique}'") from None
++
++
++def crop_profile_choices():
++    """(id, display name) pairs of all registered crops, sorted by display name."""
++    return [(profile.name_unique, profile.name)
++            for profile in sorted(_crop_profiles.values(), key=lambda p: p.name)]
++
++
++register_crop_profile(CropProfile('tomato', 'Tomato', target_moisture=65.0, tolerance=5.0))
++register_crop_profile(CropProfile('rice', 'Rice', target_moisture=85.0, tolerance=5.0))
++register_crop_profile(CropProfile('wheat', 'Wheat', target_moisture=50.0, tolerance=5.0))

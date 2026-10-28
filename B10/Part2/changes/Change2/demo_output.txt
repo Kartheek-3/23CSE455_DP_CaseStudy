@@ -1,0 +1,26 @@
+Crop profile 'tomato': irrigate below 60 %, stop above 70 %
+time_window: 05:00-09:00,18:00-21:00   skip_if_rain: rain probability >= 60 %
+  hysteresis    -> RaiseHysteresisStrategy
+  time_window   -> TimeWindowStrategy(RaiseHysteresisStrategy)
+  skip_if_rain  -> RainSkipStrategy(RaiseHysteresisStrategy)
+
+time  soil % rain % | hysteresis    | time_window   | skip_if_rain 
+-----------------------------------------------------------------
+04:00     58     10 | ON  (on)      | -   (off)     | ON  (on)     
+06:00     57     10 | ON  (on)      | ON  (on)      | ON  (on)     
+07:00     64     10 | -   (on)      | -   (on)      | -   (on)     
+08:00     71     10 | OFF (off)     | OFF (off)     | OFF (off)    
+11:00     63     20 | -   (off)     | -   (off)     | -   (off)    
+13:00     57     30 | ON  (on)      | -   (off)     | ON  (on)     
+15:00     55     75 | ON  (on)      | -   (off)     | OFF (off)    
+17:00     54     80 | ON  (on)      | -   (off)     | -   (off)    
+18:30     54     85 | ON  (on)      | ON  (on)      | -   (off)    
+19:30     54     30 | ON  (on)      | ON  (on)      | ON  (on)     
+20:30     66     20 | -   (on)      | -   (on)      | -   (on)     
+22:00     72     10 | OFF (off)     | OFF (off)     | OFF (off)    
+
+command sent (pump state afterwards); '-' = no command
+
+--- Error case: time_window with invalid windows 'abc' -> logged, falls back to hysteresis
+    [log ERROR] Irrigation strategy 'time_window' cannot be used: Invalid irrigation time window 'abc' (expected HH:MM-HH:MM). Using the 'hysteresis' strategy.
+  strategy in use: RaiseHysteresisStrategy

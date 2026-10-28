@@ -1,0 +1,55 @@
+# Timings for Command (command_automation_actions)
+# time.perf_counter() around subprocess.run(); 1 warmup + 5 measured runs; milliseconds
+# machine: <host>, measured with Python 3.12.7
+
+[java]
+working folder: B10\Part3\command_automation_actions\java
+compile command: javac -d out AbstractFunctionAction.java AutomationActionsTest.java
+run command: java -cp out AutomationActionsTest
+warmup_ms: 225.270
+run_1_ms: 171.237
+run_2_ms: 188.928
+run_3_ms: 169.087
+run_4_ms: 173.109
+run_5_ms: 193.550
+median_ms: 173.109
+last run exit code: 0; last line: Command tests: 12/12 passed
+
+[python]
+working folder: B10\Part3\command_automation_actions\python
+compile command: (none)
+run command: python test_automation_actions.py
+warmup_ms: 65.857
+run_1_ms: 78.251
+run_2_ms: 71.580
+run_3_ms: 74.217
+run_4_ms: 81.581
+run_5_ms: 65.426
+median_ms: 74.217
+last run exit code: 0; last line: Command tests: 12/12 passed
+
+[javascript]
+working folder: B10\Part3\command_automation_actions\javascript
+compile command: (none)
+run command: node test_automation_actions.js
+warmup_ms: 92.694
+run_1_ms: 90.169
+run_2_ms: 91.074
+run_3_ms: 90.155
+run_4_ms: 83.769
+run_5_ms: 84.685
+median_ms: 90.155
+last run exit code: 0; last line: Command tests: 12/12 passed
+
+[cpp]
+working folder: B10\Part3\command_automation_actions\cpp
+compile command: g++ -std=c++14 -O2 -Wall -o test_automation_actions.exe test_automation_actions.cpp
+run command: B10\Part3\command_automation_actions\cpp\test_automation_actions.exe
+warmup_ms: 320.241
+run_1_ms: 33.296
+run_2_ms: 32.214
+run_3_ms: 41.006
+run_4_ms: 32.462
+run_5_ms: 31.972
+median_ms: 32.462
+last run exit code: 0; last line: Command tests: 12/12 passed

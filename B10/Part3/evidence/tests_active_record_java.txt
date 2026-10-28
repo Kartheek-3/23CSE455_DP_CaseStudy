@@ -1,0 +1,9 @@
+# Active Record / java
+working folder: Part3/active_record_user_role/java
+$ javac -d out CRUDMixin.java UserRoleTest.java
+
+[compile exit code: 0]
+$ java -cp out UserRoleTest
+Active Record tests: 12/12 passed
+
+[exit code: 0]

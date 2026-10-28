@@ -1,0 +1,1037 @@
+# Part 1 – Design pattern instances in Mycodo (baseline ee70a111c622e2a81026fd5c1553a948acf8161e)
+
+> DRAFT for human verification. All paths are written relative to `data/code/` as requested.
+> Note: in this workspace the source tree was found at `Mycodo/` (git HEAD = ee70a111c622e2a81026fd5c1553a948acf8161e, clean working tree); `Mycodo/mycodo/...` is reported here as `data/code/mycodo/...`. Line numbers were confirmed with the Read tool and `grep -n`.
+
+---
+
+## 1. Architecture summary
+
+**Main components / layers**
+
+- **Daemon-module layer supertype** – `AbstractBaseController` (`data/code/mycodo/abstract_base_controller.py`) gives every daemon-side module a logger, custom-option parsing (CSV/JSON), device-measurement/conversion loading, DB-persisted custom options and measurement look-ups.
+- **Sensor management (Inputs)** – `AbstractInput` (`data/code/mycodo/inputs/base_input.py`) with concrete input modules `adafruit_i2c_soil.py` (capacitive soil moisture + temperature over I²C) and `weather_openweathermap_weather.py` (city weather over HTTP); registry, rescaling and conversion helpers in `data/code/mycodo/utils/inputs.py`.
+- **Controller threads** – `AbstractController` (`data/code/mycodo/controllers/base_controller.py`) defines the thread loop; `InputController` (`controllers/controller_input.py`) schedules readings, pre-output activation and storage; `ConditionalController` (`controllers/controller_conditional.py`) periodically runs user conditional code.
+- **Irrigation / outputs** – `AbstractOutput` (`data/code/mycodo/outputs/base_output.py`) implements on/off/duration/volume switching, on-duration logging and output triggers; concrete `pump_gpio.py` (peristaltic pump that dispenses volumes) and `on_off_gpio.py` (GPIO relay); output registry and `output_types()` in `data/code/mycodo/utils/outputs.py`.
+- **Functions (closed-loop control)** – `AbstractFunction` (`functions/base_function.py`) and `bang_bang.CustomModule` (`functions/bang_bang.py`), a hysteresis controller that reads the last measurement and switches an output through the daemon.
+- **Setpoint schedules** – `data/code/mycodo/utils/method.py`: `AbstractMethod` family (`DateMethod`, `DailyMethod`, `DailySineMethod`, `DailyBezierMethod`, `DurationMethod`, `CascadeMethod`) plus `create_method_handler` / `load_method_handler`.
+- **Module loading** – `load_module_from_file` (`data/code/mycodo/utils/modules.py`) – importlib-based loader used by `utils/inputs.py`, `utils/outputs.py` and `InputController`.
+- **Alerts / actions** – `AbstractConditional` (`controllers/base_conditional.py`) is the API offered to user conditional code; `AbstractFunctionAction` (`actions/base_action.py`) with `email.ActionModule` and `output_on_off.ActionModule`.
+- **UI/CLI-to-daemon communication** – `DaemonControl` (`data/code/mycodo/mycodo_client.py`) wraps a Pyro5 `Proxy`; the daemon server side is defined outside scope.
+- **Persistence / user management** – `CRUDMixin` (`data/code/mycodo/databases/__init__.py`), `User` and `Role` models (`databases/models/user.py`, `databases/models/role.py`) on `db.Model` (`db` defined outside scope in `mycodo.mycodo_flask.extensions`).
+
+**Event flow – one soil-moisture reading, from thread start to storage**
+
+1. The daemon (defined outside scope) starts an `InputController` thread; `AbstractController.run` (`controllers/base_controller.py:69-99`) calls `InputController.initialize_variables` (`controllers/controller_input.py:246-343`).
+2. `initialize_variables` calls `parse_input_information()` (`utils/inputs.py:163-308`), which scans the input directories and loads every file through `load_module_from_file` (`utils/modules.py:10-21`). It then loads the module for `self.device` and instantiates `input_loaded.InputModule(self.input_dev)` (`controller_input.py:309-313`). The soil module's constructor calls `try_initialize()` → `initialize()`, which builds the `Seesaw` I²C driver (`adafruit_i2c_soil.py:58, 60-69`).
+3. `AbstractController.run` repeatedly calls `InputController.loop` (`controller_input.py:129-238`). When the period has elapsed (141-147) it optionally switches a pre-output on via `DaemonControl.output_on` (166-171), then calls `update_measure` (345-393) → `self.measure_input.next()` (361) → `AbstractInput.next` (`base_input.py:88-92`) → `AbstractInput.read` (115-146) → `adafruit_i2c_soil.InputModule.get_measurement` (71-84) → `self.sensor.moisture_read()` / `get_temp()` → `value_set` (`base_input.py:195-220`).
+4. On success, `create_measurements_dict` (`controller_input.py:395-425`) calls `parse_measurement` (`utils/inputs.py:34-73`), which applies `rescale_measurements` and `convert_units` (defined outside scope).
+5. `run_input_actions` (defined outside scope, called at `controller_input.py:224`) runs the Input's actions, then `add_measurements_influxdb` (defined outside scope, called at 232-235) writes the measurements to the time-series store.
+
+**Architecture flowchart**
+
+```mermaid
+flowchart TB
+    UI["Flask web UI (outside scope)"] --> DC
+    CLI["mycodo_client.py __main__ CLI"] --> DC
+    DC["DaemonControl (mycodo_client.py)"] -->|"Pyro5.api.Proxy RPC"| DAEMON["Daemon process (outside scope)"]
+    DAEMON --> IC["InputController"]
+    DAEMON --> CC["ConditionalController"]
+    DAEMON -.->|"loads / calls (outside scope)"| OUT
+    DAEMON -.->|"loads / calls (outside scope)"| FN
+    DAEMON -.->|"executes actions (outside scope)"| ACT
+    IC -->|"parse_input_information / load_module_from_file"| REG["utils/inputs.py + utils/modules.py"]
+    IC -->|"measure_input.next()"| IN["AbstractInput: adafruit_i2c_soil / weather_openweathermap_weather"]
+    IN --> HW["Seesaw I2C driver / OpenWeatherMap HTTP (dependencies)"]
+    IC -->|"parse_measurement"| REG
+    IC -->|"add_measurements_influxdb (outside scope)"| TSDB[("InfluxDB")]
+    IC -->|"output_on / output_off"| DC
+    CC -->|"ConditionalRun user code (outside scope)"| COND["AbstractConditional"]
+    COND -->|"trigger_action / get_condition_measurement"| DC
+    ACT["AbstractFunctionAction: email / output_on_off"] -->|"output_on_off"| DC
+    FN["AbstractFunction: bang_bang.CustomModule"] -->|"output_state / output_on / output_off"| DC
+    OUT["AbstractOutput: pump_gpio / on_off_gpio"] --> GPIO["RPi.GPIO (dependency)"]
+    OUT -->|"trigger_all_actions"| DC
+    METH["utils/method.py setpoint methods (clients outside scope)"]
+    BASE["AbstractBaseController"] -.->|"supertype of"| IN
+    BASE -.->|"supertype of"| OUT
+    BASE -.->|"supertype of"| FN
+    BASE -.->|"supertype of"| ACT
+    BASE -.->|"supertype of"| IC
+    MODELS["User / Role + CRUDMixin"] --> SQL[("SQL DB via db (outside scope)")]
+```
+
+---
+
+## 2. Candidate list
+
+| # | Candidate pattern | Files involved | Result |
+|---|---|---|---|
+| 1 | Template Method – Sensor Measurement Acquisition | inputs/base_input.py, inputs/adafruit_i2c_soil.py, inputs/weather_openweathermap_weather.py, controllers/controller_input.py | CONFIRMED |
+| 2 | Template Method – Module Initialization with Retry | abstract_base_controller.py, inputs/base_input.py, functions/base_function.py, actions/base_action.py, inputs/adafruit_i2c_soil.py, inputs/weather_openweathermap_weather.py, functions/bang_bang.py, actions/email.py, actions/output_on_off.py | CONFIRMED |
+| 3 | Template Method – Controller Thread Lifecycle | controllers/base_controller.py, controllers/controller_input.py, controllers/controller_conditional.py | CONFIRMED |
+| 4 | Template Method – Output Actuation (irrigation switching) | outputs/base_output.py, outputs/pump_gpio.py, outputs/on_off_gpio.py | CONFIRMED |
+| 5 | Template Method – Formula Setpoint Plot Sampling | utils/method.py | CONFIRMED |
+| 6 | Template Method – Date/Daily Setpoint Interpolation | utils/method.py | CONFIRMED |
+| 7 | Strategy – Setpoint Schedule Calculation | utils/method.py | CONFIRMED |
+| 8 | Adapter – Sensor Driver Adaptation | inputs/base_input.py, inputs/adafruit_i2c_soil.py, inputs/weather_openweathermap_weather.py, controllers/controller_input.py | CONFIRMED |
+| 9 | Proxy (Remote Proxy) – Daemon RPC Client | mycodo_client.py, functions/bang_bang.py, controllers/controller_input.py, controllers/base_conditional.py, outputs/base_output.py | CONFIRMED |
+| 10 | Command – Automation/Alert Actions | actions/base_action.py, actions/email.py, actions/output_on_off.py, controllers/base_conditional.py, outputs/base_output.py, mycodo_client.py | CONFIRMED |
+| 11 | Plugin – Input/Output Module Loading | utils/modules.py, utils/inputs.py, utils/outputs.py, controllers/controller_input.py, inputs/base_input.py, outputs/base_output.py, inputs/adafruit_i2c_soil.py, inputs/weather_openweathermap_weather.py, outputs/pump_gpio.py, outputs/on_off_gpio.py | CONFIRMED |
+| 12 | Layer Supertype – Daemon Module Base | abstract_base_controller.py, inputs/base_input.py, outputs/base_output.py, controllers/base_controller.py, functions/base_function.py, actions/base_action.py | CONFIRMED |
+| 13 | Active Record – User and Role persistence | databases/__init__.py, databases/models/user.py, databases/models/role.py | CONFIRMED |
+| 14 | Observer – Output trigger notification | outputs/base_output.py | UNCERTAIN |
+| 15 | Composite – Cascade setpoint methods | utils/method.py | UNCERTAIN |
+| 16 | Mediator – daemon as central coordinator | mycodo_client.py, functions/bang_bang.py, controllers/controller_input.py, outputs/base_output.py | UNCERTAIN |
+| 17 | Plugin / Template Method – user Conditional code (ConditionalRun) | controllers/controller_conditional.py, controllers/base_conditional.py | UNCERTAIN |
+| 18 | Adapter – output modules over RPi.GPIO | outputs/pump_gpio.py, outputs/on_off_gpio.py | UNCERTAIN |
+| 19 | Singleton | mycodo_client.py, controllers/controller_input.py, outputs/base_output.py, controllers/base_conditional.py, functions/bang_bang.py, actions/base_action.py | REJECTED |
+| 20 | Factory Method (create_method_handler, InputModule instantiation) | utils/method.py, controllers/controller_input.py | REJECTED |
+| 21 | Prototype (clone_model) | databases/__init__.py | REJECTED |
+| 22 | Facade (DaemonControl) | mycodo_client.py | REJECTED |
+| 23 | Decorator (@property / @staticmethod) | inputs/base_input.py, abstract_base_controller.py, databases/models/user.py, mycodo_client.py | REJECTED |
+| 24 | Iterator (AbstractInput iterator protocol) | inputs/base_input.py, controllers/controller_input.py | REJECTED |
+| 25 | Repository | abstract_base_controller.py, controllers/base_conditional.py, actions/base_action.py | REJECTED |
+| 26 | MVC | databases/models/user.py, databases/models/role.py | REJECTED |
+| 27 | Chain of Responsibility (action message accumulation) | actions/email.py, actions/output_on_off.py | REJECTED |
+| 28 | State (output on/off bookkeeping, bang-bang direction) | outputs/base_output.py, functions/bang_bang.py | REJECTED |
+| 29 | Strategy (bang-bang direction, rescale_method) | functions/bang_bang.py, utils/inputs.py | REJECTED |
+| 30 | Strategy (InputController.measure_input) as separate instance | controllers/controller_input.py | REJECTED |
+| 31 | Template Method on plain overrides / super() calls | inputs/adafruit_i2c_soil.py, outputs/on_off_gpio.py, controllers/controller_conditional.py | REJECTED |
+| 32 | Command (CLI argument dispatch) | mycodo_client.py | REJECTED |
+| 33 | Null Object (AbstractMethod fallback) as separate instance | utils/method.py | REJECTED |
+| 34 | Broker (Pyro5) as separate instance | mycodo_client.py | REJECTED |
+| 35 | Unit of Work (session_scope) | abstract_base_controller.py | REJECTED |
+| 36 | Virtual Proxy / Lazy Load (AbstractInput.measurements) | inputs/base_input.py | REJECTED |
+| 37 | Framework hook – Flask-Login UserMixin | databases/models/user.py | REJECTED |
+| 38 | DTO / Serializer (UserSchema) | databases/models/user.py | REJECTED |
+| 39 | Value Object / DTO (Measurement) | controllers/controller_input.py | REJECTED |
+| 40 | Retry (try_initialize / attempt_execute) as separate pattern | abstract_base_controller.py, controllers/base_controller.py | REJECTED |
+| 41 | GRASP Controller / Polymorphism / Indirection / Protected Variations / Pure Fabrication | (various) | REJECTED |
+
+---
+
+## 3. One record per CONFIRMED instance
+
+### 3.1 Sensor Measurement Acquisition
+
+- **Pattern:** Template Method — GoF Behavioral
+- **Origin:** application (all participants). The Python iterator protocol (`__next__`) is only the entry point the application exposes.
+- **Purpose:** every sensor (soil moisture, weather) follows the same reading procedure. The procedure clears the cached measurements, calls the device-specific acquisition step, classifies `TimeoutError` / `IOError` / other exceptions, logs at a level that depends on the debug setting, and returns an error flag. Only the acquisition step varies between devices.
+
+| Pattern role | Actual symbol | path:lines |
+|---|---|---|
+| AbstractClass | `AbstractInput` | data/code/mycodo/inputs/base_input.py:18-271 |
+| TemplateMethod | `AbstractInput.read` | data/code/mycodo/inputs/base_input.py:115-146 |
+| TemplateMethodEntry | `AbstractInput.next` (wraps `read`) | data/code/mycodo/inputs/base_input.py:88-92 |
+| PrimitiveOperation | `AbstractInput.get_measurement` (raises `NotImplementedError`) | data/code/mycodo/inputs/base_input.py:108-113 |
+| ConcreteClass | `adafruit_i2c_soil.InputModule` (overrides `get_measurement` at 71-84) | data/code/mycodo/inputs/adafruit_i2c_soil.py:50-84 |
+| ConcreteClass | `weather_openweathermap_weather.InputModule` (overrides `get_measurement` at 102-146) | data/code/mycodo/inputs/weather_openweathermap_weather.py:82-146 |
+| Client | `InputController.update_measure` | data/code/mycodo/controllers/controller_input.py:345-393 |
+
+**Evidence.** `read()` is defined only in `AbstractInput` and fixes the algorithm. It calls the abstract `get_measurement()` hook, which each concrete input module overrides. The client never calls `get_measurement` directly. It calls `next()`, which runs `read()` and converts the error flag into `StopIteration`.
+
+```text
+base_input.py:90   if self.read():  # raised an error
+base_input.py:91       raise StopIteration  # required
+base_input.py:113      raise NotImplementedError
+base_input.py:121      self._measurements = None
+base_input.py:123          self._measurements = self.get_measurement()
+base_input.py:126      except TimeoutError as error:
+base_input.py:132      except IOError as e:
+base_input.py:146      return 1
+adafruit_i2c_soil.py:79        self.value_set(0, self.sensor.moisture_read())
+controller_input.py:361        measurements = self.measure_input.next()
+```
+
+**How to prove it with a test:** subclass `AbstractInput` with `testing=True` (input_dev=None). Make `get_measurement()` return `{0: {...}}` and assert that `read()` returns `None` and `next()` returns the dict. Then make `get_measurement()` raise `IOError` and assert that `read()` returns `1` and `next()` raises `StopIteration`. Only the hook changed; the skeleton in the base class handled both cases.
+
+```mermaid
+classDiagram
+    class AbstractInput {
+        +next()
+        +read()
+        +get_measurement()
+    }
+    class adafruit_i2c_soil_InputModule["adafruit_i2c_soil.InputModule"]
+    adafruit_i2c_soil_InputModule : +get_measurement()
+    class weather_openweathermap_weather_InputModule["weather_openweathermap_weather.InputModule"]
+    weather_openweathermap_weather_InputModule : +get_measurement()
+    class InputController {
+        +update_measure()
+    }
+    AbstractInput <|-- adafruit_i2c_soil_InputModule
+    AbstractInput <|-- weather_openweathermap_weather_InputModule
+    InputController --> AbstractInput : measure_input.next()
+```
+
+### 3.2 Module Initialization with Retry
+
+- **Pattern:** Template Method — GoF Behavioral
+- **Origin:** application.
+- **Purpose:** hardware and service modules (I²C sensors, weather API, bang-bang function, actions) can fail during first set-up. `try_initialize` fixes the retry, back-off and logging skeleton, and each module supplies its own `initialize()` step.
+
+| Pattern role | Actual symbol | path:lines |
+|---|---|---|
+| AbstractClass | `AbstractBaseController` | data/code/mycodo/abstract_base_controller.py:35-543 |
+| TemplateMethod | `AbstractBaseController.try_initialize` | data/code/mycodo/abstract_base_controller.py:52-65 |
+| PrimitiveOperation (default no-op hook) | `AbstractBaseController.initialize` | data/code/mycodo/abstract_base_controller.py:49-50 |
+| PrimitiveOperation (abstract redeclaration) | `AbstractInput.initialize` | data/code/mycodo/inputs/base_input.py:101-106 |
+| PrimitiveOperation (abstract redeclaration) | `AbstractFunction.initialize` | data/code/mycodo/functions/base_function.py:57-62 |
+| PrimitiveOperation (abstract redeclaration) | `AbstractFunctionAction.initialize` | data/code/mycodo/actions/base_action.py:70-75 |
+| ConcreteClass | `adafruit_i2c_soil.InputModule` (initialize 60-69; calls try_initialize at 58) | data/code/mycodo/inputs/adafruit_i2c_soil.py:50-84 |
+| ConcreteClass | `weather_openweathermap_weather.InputModule` (initialize 96-100; call at 94) | data/code/mycodo/inputs/weather_openweathermap_weather.py:82-146 |
+| ConcreteClass | `bang_bang.CustomModule` (initialize 144-159; call at 142) | data/code/mycodo/functions/bang_bang.py:110-213 |
+| ConcreteClass | `email.ActionModule` (initialize 56-57; call at 54) | data/code/mycodo/actions/email.py:41-98 |
+| ConcreteClass | `output_on_off.ActionModule` (initialize 86-87; call at 84) | data/code/mycodo/actions/output_on_off.py:68-139 |
+
+**Evidence.** `try_initialize` loops `tries` times, calling the polymorphic `self.initialize()`. On an exception it logs and sleeps `wait_sec`, and after the last failure it gives up without propagating the exception. Each concrete module calls `self.try_initialize()` from its constructor and overrides only `initialize()`. `pump_gpio.OutputModule` and `on_off_gpio.OutputModule` also override `initialize` (pump_gpio.py:158-187, on_off_gpio.py:125-166), but no code in SCOPE calls `try_initialize` or `initialize` for outputs, so they are not listed here.
+
+```text
+abstract_base_controller.py:52   def try_initialize(self, tries=3, wait_sec=5):
+abstract_base_controller.py:54       for i in range(tries):
+abstract_base_controller.py:56               self.initialize()
+abstract_base_controller.py:61                   time.sleep(wait_sec)
+base_input.py:106                    raise NotImplementedError
+adafruit_i2c_soil.py:58                  self.try_initialize()
+adafruit_i2c_soil.py:65              self.sensor = Seesaw(
+bang_bang.py:145         self.output_channel = self.get_output_channel_from_channel_id(self.output_channel_id)
+```
+
+**How to prove it with a test:** create a subclass of `AbstractBaseController` whose `initialize()` raises on its first two calls and then succeeds. Call `try_initialize(tries=3, wait_sec=0)` and assert that `initialize` ran 3 times and that no exception escaped. Then use an `initialize()` that always raises and assert that it ran exactly 3 times, with no exception propagated.
+
+```mermaid
+classDiagram
+    class AbstractBaseController {
+        +try_initialize(tries, wait_sec)
+        +initialize()
+    }
+    class AbstractInput {
+        +initialize()
+    }
+    class AbstractFunction {
+        +initialize()
+    }
+    class AbstractFunctionAction {
+        +initialize()
+    }
+    class adafruit_i2c_soil_InputModule["adafruit_i2c_soil.InputModule"]
+    adafruit_i2c_soil_InputModule : +initialize()
+    class weather_openweathermap_weather_InputModule["weather_openweathermap_weather.InputModule"]
+    weather_openweathermap_weather_InputModule : +initialize()
+    class bang_bang_CustomModule["bang_bang.CustomModule"]
+    bang_bang_CustomModule : +initialize()
+    class email_ActionModule["email.ActionModule"]
+    email_ActionModule : +initialize()
+    class output_on_off_ActionModule["output_on_off.ActionModule"]
+    output_on_off_ActionModule : +initialize()
+    AbstractBaseController <|-- AbstractInput
+    AbstractBaseController <|-- AbstractFunction
+    AbstractBaseController <|-- AbstractFunctionAction
+    AbstractInput <|-- adafruit_i2c_soil_InputModule
+    AbstractInput <|-- weather_openweathermap_weather_InputModule
+    AbstractFunction <|-- bang_bang_CustomModule
+    AbstractFunctionAction <|-- email_ActionModule
+    AbstractFunctionAction <|-- output_on_off_ActionModule
+```
+
+### 3.3 Controller Thread Lifecycle
+
+- **Pattern:** Template Method — GoF Behavioral
+- **Origin:** application (`AbstractController`, `InputController`, `ConditionalController`) taking part in a standard-library hook. `threading.Thread` is on the framework side: its `start()` calls `run()`. The application overrides that `run()` hook in `AbstractController`, which comes first in the MRO of `InputController(AbstractController, threading.Thread)`.
+- **Purpose:** every daemon controller thread has the same lifecycle. It initializes, logs activation time, loops until stopped (isolating each iteration's errors and sleeping `sample_rate`), and always runs final clean-up. Concrete controllers (sensor input, conditional alerts) supply only the per-iteration behaviour.
+
+| Pattern role | Actual symbol | path:lines |
+|---|---|---|
+| AbstractClass | `AbstractController` | data/code/mycodo/controllers/base_controller.py:20-129 |
+| TemplateMethod | `AbstractController.run` (overrides `threading.Thread.run`) | data/code/mycodo/controllers/base_controller.py:69-99 |
+| TemplateMethod | `AbstractController.stop_controller` | data/code/mycodo/controllers/base_controller.py:104-107 |
+| PrimitiveOperation | `AbstractController.initialize_variables` | data/code/mycodo/controllers/base_controller.py:45-49 |
+| PrimitiveOperation | `AbstractController.loop` | data/code/mycodo/controllers/base_controller.py:51-55 |
+| Hook | `AbstractController.run_finally` | data/code/mycodo/controllers/base_controller.py:57-59 |
+| Hook | `AbstractController.pre_stop` | data/code/mycodo/controllers/base_controller.py:61-63 |
+| ConcreteClass | `InputController` (loop 129-238, run_finally 240-244, initialize_variables 246-343, pre_stop 454-462) | data/code/mycodo/controllers/controller_input.py:65-462 |
+| ConcreteClass | `ConditionalController` (loop 73-90, initialize_variables 92-147; replaces stop_controller entirely at 190-197) | data/code/mycodo/controllers/controller_conditional.py:41-197 |
+| FrameworkCaller | `threading.Thread` (Python standard library, defined outside scope; inherited at these lines) | data/code/mycodo/controllers/controller_input.py:65-70 |
+
+**Evidence.** `run()` contains the invariant control flow and calls the overridable steps in a fixed order. Both concrete controllers inherit `(AbstractController, threading.Thread)` and override `initialize_variables()` and `loop()`. `InputController` also overrides the `run_finally` and `pre_stop` hooks.
+
+```text
+base_controller.py:72              self.initialize_variables()
+base_controller.py:79          while self.running:
+base_controller.py:81                  self.loop()
+base_controller.py:87                  time.sleep(self.sample_rate)
+base_controller.py:93          self.run_finally()
+base_controller.py:106     self.pre_stop()
+controller_input.py:65  class InputController(AbstractController, threading.Thread):
+controller_input.py:70      threading.Thread.__init__(self)
+controller_conditional.py:90        self.attempt_execute(self.check_conditionals)
+```
+
+**How to prove it with a test:** subclass `AbstractController(ready=threading.Event(), unique_id=None)`. Its `initialize_variables` sets `running=True` and `sample_rate=0` and records "init". Its `loop` records "loop" and sets `running=False` after the third call. Its `run_finally` records "finally". Call `run()` directly, or `start()` and `join()`, and assert the order `["init", "loop", "loop", "loop", "finally"]`.
+
+```mermaid
+classDiagram
+    class threading_Thread["threading.Thread"]
+    <<framework>> threading_Thread
+    threading_Thread : +start()
+    threading_Thread : +run()
+    class AbstractController {
+        +run()
+        +stop_controller()
+        +initialize_variables()
+        +loop()
+        +run_finally()
+        +pre_stop()
+    }
+    class InputController {
+        +initialize_variables()
+        +loop()
+        +run_finally()
+        +pre_stop()
+    }
+    class ConditionalController {
+        +initialize_variables()
+        +loop()
+        +stop_controller()
+    }
+    AbstractController <|-- InputController
+    AbstractController <|-- ConditionalController
+    threading_Thread <|-- InputController
+    threading_Thread <|-- ConditionalController
+```
+
+### 3.4 Output Actuation (irrigation switching)
+
+- **Pattern:** Template Method — GoF Behavioral
+- **Origin:** application.
+- **Purpose:** irrigation pumps and relays share one switching policy. That policy normalizes the requested state, validates the channel and set-up, enforces a minimum off-time, keeps on-duration bookkeeping, writes the on-duration to the time-series DB and fires output triggers. Only the hardware-specific switch and status read vary between output types.
+
+| Pattern role | Actual symbol | path:lines |
+|---|---|---|
+| AbstractClass | `AbstractOutput` | data/code/mycodo/outputs/base_output.py:30-641 |
+| TemplateMethod | `AbstractOutput.output_on_off` | data/code/mycodo/outputs/base_output.py:164-455 |
+| PrimitiveOperation | `AbstractOutput.output_switch` | data/code/mycodo/outputs/base_output.py:81-86 |
+| PrimitiveOperation | `AbstractOutput.is_on` | data/code/mycodo/outputs/base_output.py:88-93 |
+| PrimitiveOperation | `AbstractOutput.is_setup` | data/code/mycodo/outputs/base_output.py:95-100 |
+| ConcreteClass | `pump_gpio.OutputModule` (output_switch 258-341, is_on 343-350, is_setup 352-353) | data/code/mycodo/outputs/pump_gpio.py:145-353 |
+| ConcreteClass | `on_off_gpio.OutputModule` (output_switch 168-180, is_on 182-188, is_setup 190-191) | data/code/mycodo/outputs/on_off_gpio.py:113-200 |
+| Client | the caller of `output_on_off` on an output instance — defined outside scope | — |
+
+**Evidence.** `output_on_off` (≈290 lines) is defined only in the base class and calls the three abstract operations at fixed points. The pump overrides `output_switch` to dispense a volume in a background thread. The relay overrides it to set a GPIO pin. `output_state` (603-623) and `check_triggers` (457-585) also rely on the `is_on` primitive.
+
+```text
+base_output.py:209      output_is_on = self.is_on(output_channel)
+base_output.py:218      if not self.is_setup():
+base_output.py:237          if off_until_datetime and off_until_datetime > current_time:
+base_output.py:258              self.output_switch(
+base_output.py:343              out_ret = self.output_switch(
+base_output.py:390          ret_value = self.output_switch('off', output_type=output_type, output_channel=output_channel)
+base_output.py:450              self.check_triggers(self.unique_id, amount=amount, output_channel=output_channel)
+pump_gpio.py:272        elif state == 'on' and output_type in ['vol', None] and amount:
+on_off_gpio.py:171              self.GPIO.output(self.options_channels['pin'][output_channel],
+```
+
+**How to prove it with a test:** build a `FakeOutput(AbstractOutput)` with `testing=True`. Set `unique_id`, `output_name`, `output_type='fake'` and `output_types={'on_off':['fake'],'pwm':[],'value':[],'volume':[]}`, then call `setup_output_variables({'output_types':['on_off'],'channels_dict':{0:{}}})`. Implement `is_setup()` returning True, `is_on()` returning the recorded state, and an `output_switch` that records its calls. `output_on_off('on', amount=10, trigger_conditionals=False)` must record `('on','sec',10)`. With `is_setup()` returning False, the same call must return `(1, "...Output not set up.")` without calling `output_switch`.
+
+```mermaid
+classDiagram
+    class AbstractOutput {
+        +output_on_off(state, output_channel, output_type, amount, min_off, trigger_conditionals)
+        +output_switch(state, output_type, amount, duty_cycle, output_channel)
+        +is_on(output_channel)
+        +is_setup()
+        +check_triggers(output_id, amount, output_channel)
+    }
+    class pump_gpio_OutputModule["pump_gpio.OutputModule"]
+    pump_gpio_OutputModule : +output_switch(state, output_type, amount, output_channel)
+    pump_gpio_OutputModule : +is_on(output_channel)
+    pump_gpio_OutputModule : +is_setup()
+    class on_off_gpio_OutputModule["on_off_gpio.OutputModule"]
+    on_off_gpio_OutputModule : +output_switch(state, output_type, amount, output_channel)
+    on_off_gpio_OutputModule : +is_on(output_channel)
+    on_off_gpio_OutputModule : +is_setup()
+    AbstractOutput <|-- pump_gpio_OutputModule
+    AbstractOutput <|-- on_off_gpio_OutputModule
+```
+
+### 3.5 Formula Setpoint Plot Sampling
+
+- **Pattern:** Template Method — GoF Behavioral
+- **Origin:** application.
+- **Purpose:** the frontend plot of a daily formula-based setpoint schedule (sine wave, Bezier curve) needs the 24-hour axis sampled in the same way for every formula. The base class does the sampling, and the subclass supplies the formula.
+
+| Pattern role | Actual symbol | path:lines |
+|---|---|---|
+| AbstractClass | `AbstractDailyFormulaMethod` | data/code/mycodo/utils/method.py:199-217 |
+| TemplateMethod | `AbstractDailyFormulaMethod.get_plot` | data/code/mycodo/utils/method.py:205-217 |
+| PrimitiveOperation | `AbstractMethod.calculate_setpoint` (declared in the superclass, default `(None, False)`) | data/code/mycodo/utils/method.py:57-64 |
+| ConcreteClass | `DailySineMethod` (calculate_setpoint 227-239) | data/code/mycodo/utils/method.py:220-239 |
+| ConcreteClass | `DailyBezierMethod` (calculate_setpoint 243-258) | data/code/mycodo/utils/method.py:242-258 |
+
+**Evidence.** `get_plot` iterates `max_points_x` sample times across one day and calls the polymorphic `self.calculate_setpoint(now)` for each. It appends only the points for which the method has not ended. The two subclasses override only `calculate_setpoint`, delegating to `sine_wave_y_out` and `bezier_curve_y_out` respectively.
+
+```text
+method.py:210        for n in range(max_points_x):
+method.py:212            now = today + datetime.timedelta(seconds=percent * seconds_in_day)
+method.py:213            y, ended = self.calculate_setpoint(now)
+method.py:214            if not ended:
+method.py:215                result.append([percent * seconds_in_day * 1000, y])
+method.py:234        new_setpoint = sine_wave_y_out(self.method_data_first.amplitude,
+method.py:250        new_setpoint = bezier_curve_y_out(
+```
+
+**How to prove it with a test:** subclass `AbstractDailyFormulaMethod` with a `calculate_setpoint` returning `(now.hour, False)`. Construct it with fake `method` / `method_data` objects whose `filter(...)` returns an object with `all()` / `first()`. Assert that `get_plot(24)` returns 24 points whose y equals the hour. Then return `ended=True` and assert that the plot is empty.
+
+```mermaid
+classDiagram
+    class AbstractMethod {
+        +calculate_setpoint(now, method_start_time)
+        +get_plot(max_points_x)
+    }
+    class AbstractDailyFormulaMethod {
+        +get_plot(max_points_x)
+    }
+    class DailySineMethod {
+        +calculate_setpoint(now, method_start_time)
+    }
+    class DailyBezierMethod {
+        +calculate_setpoint(now, method_start_time)
+    }
+    AbstractMethod <|-- AbstractDailyFormulaMethod
+    AbstractDailyFormulaMethod <|-- DailySineMethod
+    AbstractDailyFormulaMethod <|-- DailyBezierMethod
+```
+
+### 3.6 Date/Daily Setpoint Interpolation
+
+- **Pattern:** Template Method (with hook method) — GoF Behavioral
+- **Origin:** application.
+- **Purpose:** a time/date schedule and a repeating daily schedule interpolate the setpoint the same way. They differ only in whether the date part of the timestamp is ignored. A hook decides that, so the daily variant reuses the whole interpolation algorithm.
+
+| Pattern role | Actual symbol | path:lines |
+|---|---|---|
+| AbstractClass | `DateMethod` (also a usable ConcreteClass that provides the default hook) | data/code/mycodo/utils/method.py:75-162 |
+| TemplateMethod | `DateMethod.calculate_setpoint` | data/code/mycodo/utils/method.py:87-135 |
+| Hook | `DateMethod.ignore_date` (returns False) | data/code/mycodo/utils/method.py:81-85 |
+| ConcreteClass | `DailyMethod` (overrides `ignore_date` at 172-176 → True) | data/code/mycodo/utils/method.py:165-196 |
+
+**Evidence.** `calculate_setpoint` calls `self.ignore_date()` three times to choose the time-parsing format and the logging. `DailyMethod` overrides only the hook (plus `get_plot`) and inherits the interpolation unchanged.
+
+```text
+method.py:90         if self.ignore_date():
+method.py:91             now = datetime.datetime.strptime(str(now.strftime('%H:%M:%S')), '%H:%M:%S')
+method.py:94             if self.ignore_date():
+method.py:98                 start_time = datetime.datetime.strptime(each_method.time_start, '%Y-%m-%d %H:%M:%S')
+method.py:101            if start_time < now < end_time:
+method.py:114                    new_setpoint = setpoint_start + (setpoint_diff * percent_total)
+method.py:176        return True
+```
+
+**How to prove it with a test:** give `DailyMethod` one data row (`time_start='06:00:00'`, `time_end='18:00:00'`, `setpoint_start=20`, `setpoint_end=30`). Assert `calculate_setpoint(<noon on 2020-01-01>)` == `calculate_setpoint(<noon on 2024-06-30>)` == `(25.0, False)`, so the date is ignored. Give `DateMethod` a dated row for 2020-01-01 and assert that noon on 2024-06-30 returns `(None, False)`.
+
+```mermaid
+classDiagram
+    class AbstractMethod {
+        +calculate_setpoint(now, method_start_time)
+    }
+    class DateMethod {
+        +calculate_setpoint(now, method_start_time)
+        +ignore_date()
+        +get_plot(max_points_x)
+    }
+    class DailyMethod {
+        +ignore_date()
+        +get_plot(max_points_x)
+    }
+    AbstractMethod <|-- DateMethod
+    DateMethod <|-- DailyMethod
+```
+
+### 3.7 Setpoint Schedule Calculation
+
+- **Pattern:** Strategy — GoF Behavioral
+- **Origin:** application.
+- **Purpose:** the algorithm that turns time into a setpoint can be date, daily, sine, Bezier, duration or cascade. It is chosen at run time from the stored `method_type`. Clients ask for `calculate_setpoint` / `determine_end_time` / `get_plot` without knowing which algorithm runs, and new schedule types are added as new subclasses.
+
+| Pattern role | Actual symbol | path:lines |
+|---|---|---|
+| Strategy | `AbstractMethod` | data/code/mycodo/utils/method.py:22-72 |
+| StrategyOperation | `AbstractMethod.calculate_setpoint` (also `determine_end_time` 50-55, `get_plot` 66-72) | data/code/mycodo/utils/method.py:57-64 |
+| ConcreteStrategy | `DateMethod` | data/code/mycodo/utils/method.py:75-162 |
+| ConcreteStrategy | `DailyMethod` | data/code/mycodo/utils/method.py:165-196 |
+| ConcreteStrategy | `DailySineMethod` | data/code/mycodo/utils/method.py:220-239 |
+| ConcreteStrategy | `DailyBezierMethod` | data/code/mycodo/utils/method.py:242-258 |
+| ConcreteStrategy | `DurationMethod` | data/code/mycodo/utils/method.py:261-378 |
+| ConcreteStrategy | `CascadeMethod` | data/code/mycodo/utils/method.py:381-428 |
+| StrategySelector | `create_method_handler` | data/code/mycodo/utils/method.py:431-441 |
+| StrategySelector (DB loading) | `load_method_handler` | data/code/mycodo/utils/method.py:444-455 |
+| Context | `CascadeMethod.calculate_setpoint` (in-scope client; also part of a ConcreteStrategy). Other contexts (controllers that consume setpoints) are defined outside scope | data/code/mycodo/utils/method.py:383-428 |
+
+**Evidence.** `create_method_handler` maps the stored type name to a class and instantiates it. Unknown types fall back to `AbstractMethod`, whose operations return neutral values; this Null-Object fallback belongs to the same collaboration and is not counted separately. `CascadeMethod.calculate_setpoint` obtains each linked strategy through `load_method_handler` and calls `calculate_setpoint` on it without knowing its concrete class (apart from forwarding the blacklist to nested cascades). `DurationMethod` additionally overrides `determine_end_time` (337-349).
+
+```text
+method.py:436    method_class = globals().get(method.method_type+"Method")
+method.py:437    if not method_class or not issubclass(method_class, AbstractMethod):
+method.py:439        method_class = AbstractMethod
+method.py:441    return method_class(method, method_data, logger)
+method.py:402            linked_method = load_method_handler(each_method.linked_method_id, self.logger)
+method.py:413                linked_method_setpoint, linked_method_ended = linked_method.calculate_setpoint(
+method.py:417                setpoint *= linked_method_setpoint / 100.
+```
+
+**How to prove it with a test:** pass `create_method_handler` fake `method` objects with `method_type='DailySine'` and `method_type='Duration'` (plus fake `method_data`) and a logger. Assert that the returned classes are `DailySineMethod` / `DurationMethod` and that, for the same `now`, `calculate_setpoint` returns different values. Then use `method_type='Foo'` and assert that the result is an `AbstractMethod` returning `(None, False)`.
+
+```mermaid
+classDiagram
+    class AbstractMethod {
+        +calculate_setpoint(now, method_start_time)
+        +determine_end_time(method_start_time)
+        +get_plot(max_points_x)
+    }
+    class AbstractDailyFormulaMethod
+    class DateMethod
+    class DailyMethod
+    class DailySineMethod
+    class DailyBezierMethod
+    class DurationMethod {
+        +determine_end_time(method_start_time)
+    }
+    class CascadeMethod {
+        +calculate_setpoint(now, method_start_time, blacklist)
+    }
+    class create_method_handler
+    <<function>> create_method_handler
+    class load_method_handler
+    <<function>> load_method_handler
+    AbstractMethod <|-- DateMethod
+    DateMethod <|-- DailyMethod
+    AbstractMethod <|-- AbstractDailyFormulaMethod
+    AbstractDailyFormulaMethod <|-- DailySineMethod
+    AbstractDailyFormulaMethod <|-- DailyBezierMethod
+    AbstractMethod <|-- DurationMethod
+    AbstractMethod <|-- CascadeMethod
+    load_method_handler ..> create_method_handler : calls
+    create_method_handler ..> AbstractMethod : instantiates subclass
+    CascadeMethod ..> load_method_handler : linked_method
+    CascadeMethod --> AbstractMethod : calculate_setpoint()
+```
+
+### 3.8 Sensor Driver Adaptation
+
+- **Pattern:** Adapter (object adapter) — GoF Structural
+- **Origin:** application (Target, Adapters, Client) and dependency (Adaptees: `adafruit_seesaw.seesaw.Seesaw`; the OpenWeatherMap HTTP API reached through `requests`).
+- **Purpose:** let the input controller consume very different sources through one `get_measurement()` → channel-dict interface: an I²C capacitive soil sensor driver with `moisture_read()` / `get_temp()`, and a JSON web API with `main.temp`, `wind.speed` and so on.
+- **Why this is not the same collaboration as 3.1:** 3.1 is the base→subclass hook (`read` → `get_measurement`). This collaboration is client → Target → Adapter → **Adaptee**, i.e. how a module wraps and translates a foreign interface.
+
+| Pattern role | Actual symbol | path:lines |
+|---|---|---|
+| Target | `AbstractInput` (`get_measurement` contract at 108-113) | data/code/mycodo/inputs/base_input.py:18-271 |
+| Adapter | `adafruit_i2c_soil.InputModule` | data/code/mycodo/inputs/adafruit_i2c_soil.py:50-84 |
+| Adaptee | `adafruit_seesaw.seesaw.Seesaw` (dependency, defined outside scope; import/construction site) | data/code/mycodo/inputs/adafruit_i2c_soil.py:61-67 |
+| Adapter | `weather_openweathermap_weather.InputModule` | data/code/mycodo/inputs/weather_openweathermap_weather.py:82-146 |
+| Adaptee | OpenWeatherMap HTTP API via `requests.get` (dependency, defined outside scope; call site) | data/code/mycodo/inputs/weather_openweathermap_weather.py:111-112 |
+| Client | `InputController.update_measure` | data/code/mycodo/controllers/controller_input.py:345-393 |
+
+**Evidence.** The soil module holds the driver object in `self.sensor` and translates its methods into the channel dictionary expected by the Target. The weather module translates a JSON response into the same structure and derives dew point. The client handles both through the `AbstractInput` interface only.
+
+```text
+adafruit_i2c_soil.py:65          self.sensor = Seesaw(
+adafruit_i2c_soil.py:66              ExtendedI2C(self.input_dev.i2c_bus),
+adafruit_i2c_soil.py:76      self.return_dict = copy.deepcopy(measurements_dict)
+adafruit_i2c_soil.py:79          self.value_set(0, self.sensor.moisture_read())
+adafruit_i2c_soil.py:82          self.value_set(1, self.sensor.get_temp())
+weather_openweathermap_weather.py:111        response = requests.get(self.api_url)
+weather_openweathermap_weather.py:116            temperature = x["main"]["temp"]
+weather_openweathermap_weather.py:139        self.value_set(3, calculate_dewpoint(temperature, humidity))
+controller_input.py:313          self.measure_input = input_loaded.InputModule(self.input_dev)
+```
+
+**How to prove it with a test:** construct `adafruit_i2c_soil.InputModule(None, testing=True)`. Set `channels_measurement = {0: obj(is_enabled=True), 1: obj(is_enabled=True)}` and inject `sensor = FakeSeesaw(moisture=612, temp=21.5)`. Assert that `get_measurement()` returns `{0: {..., 'value': 612.0}, 1: {..., 'value': 21.5}}`. Swapping in a different fake adaptee changes the values while the client-facing interface stays the same.
+
+```mermaid
+classDiagram
+    class InputController {
+        +update_measure()
+    }
+    class AbstractInput {
+        +get_measurement()
+        +value_set(chan, value, timestamp)
+    }
+    class adafruit_i2c_soil_InputModule["adafruit_i2c_soil.InputModule"]
+    adafruit_i2c_soil_InputModule : +get_measurement()
+    class weather_openweathermap_weather_InputModule["weather_openweathermap_weather.InputModule"]
+    weather_openweathermap_weather_InputModule : +get_measurement()
+    class Seesaw
+    <<dependency>> Seesaw
+    Seesaw : +moisture_read()
+    Seesaw : +get_temp()
+    class requests
+    <<dependency>> requests
+    requests : +get(url)
+    InputController --> AbstractInput
+    AbstractInput <|-- adafruit_i2c_soil_InputModule
+    AbstractInput <|-- weather_openweathermap_weather_InputModule
+    adafruit_i2c_soil_InputModule --> Seesaw : sensor
+    weather_openweathermap_weather_InputModule ..> requests : get(api_url)
+```
+
+### 3.9 Daemon RPC Client
+
+- **Pattern:** Proxy (Remote Proxy) — GoF Structural
+- **Origin:** application (`DaemonControl`) wrapping a dependency (`Pyro5.api.Proxy`). The RealSubject (the daemon object served at `PYRO_URI`) is defined outside scope.
+- **Purpose:** the CLI and daemon-side modules (input controller, outputs, bang-bang function, conditionals, actions) call daemon operations as ordinary local methods: switching irrigation outputs, triggering actions, querying state. `DaemonControl` hides the remote connection, URI and timeout, and turns communication failures into return values.
+
+| Pattern role | Actual symbol | path:lines |
+|---|---|---|
+| Proxy | `DaemonControl` | data/code/mycodo/mycodo_client.py:50-292 |
+| ProxyConnection | `DaemonControl.proxy` | data/code/mycodo/mycodo_client.py:65-74 |
+| WrappedRemoteProxy | `Pyro5.api.Proxy` (dependency, defined outside scope; import site) | data/code/mycodo/mycodo_client.py:32-32 |
+| Client | `bang_bang.CustomModule.loop` | data/code/mycodo/functions/bang_bang.py:161-210 |
+| Client | `InputController.loop` | data/code/mycodo/controllers/controller_input.py:129-238 |
+| Client | `AbstractConditional.run_action` | data/code/mycodo/controllers/base_conditional.py:40-64 |
+| Client | `AbstractOutput.check_triggers` | data/code/mycodo/outputs/base_output.py:457-585 |
+| Client | `daemon_active` | data/code/mycodo/mycodo_client.py:294-302 |
+| Subject | not separately declared (remote interface implied by forwarded method names) | — |
+| RealSubject | daemon object served at `PYRO_URI` — defined outside scope | — |
+
+**Evidence.** Each remote-facing method of `DaemonControl` obtains a configured Pyro5 proxy and forwards the call under the same method name. `check_daemon` adds access control on the timeout and translates Pyro errors into messages. Clients hold a `DaemonControl` in `self.control` and treat it like a local object. A few methods run locally rather than forwarding: `output_on_off` dispatches to `output_on` / `output_off` (214-222), and the static `send_email` (270-276) is not a remote call.
+
+```text
+mycodo_client.py:32    from Pyro5.api import Proxy
+mycodo_client.py:67            proxy = Proxy(self.uri)
+mycodo_client.py:71                proxy._pyroTimeout = self.pyro_timeout
+mycodo_client.py:85            result = proxy.check_daemon()
+mycodo_client.py:94        except Pyro5.errors.CommunicationError as err:
+mycodo_client.py:126       return self.proxy().controller_activate(controller_id)
+mycodo_client.py:200       return self.proxy().output_off(
+bang_bang.py:118       self.control = DaemonControl()
+bang_bang.py:177       output_state = self.control.output_state(self.output_device_id, self.output_channel)
+controller_input.py:167                target=self.control.output_on,
+```
+
+**How to prove it with a test:** monkeypatch `mycodo.mycodo_client.Proxy` with a `FakeProxy` that records attribute calls. `DaemonControl(pyro_timeout=7).output_off('abc', output_channel=1)` must reach the fake as `output_off('abc', output_channel=1, trigger_conditionals=True)` with `_pyroTimeout == 7`. If `FakeProxy.check_daemon` raises `Pyro5.errors.CommunicationError`, `check_daemon()` must return a "Pyro5 Communication error: ..." string instead of raising.
+
+```mermaid
+classDiagram
+    class DaemonControl {
+        +proxy(timeout)
+        +check_daemon()
+        +output_on(output_id, output_type, amount, min_off, output_channel, trigger_conditionals)
+        +output_off(output_id, output_channel, trigger_conditionals)
+        +output_state(output_id, output_channel)
+        +trigger_action(action_id, value, debug)
+        +trigger_all_actions(function_id, message, debug)
+    }
+    class Pyro5_api_Proxy["Pyro5.api.Proxy"]
+    <<dependency>> Pyro5_api_Proxy
+    class bang_bang_CustomModule["bang_bang.CustomModule"]
+    bang_bang_CustomModule : +loop()
+    class InputController {
+        +loop()
+    }
+    class AbstractConditional {
+        +run_action(action_id, value, message)
+    }
+    class AbstractOutput {
+        +check_triggers(output_id, amount, output_channel)
+    }
+    DaemonControl ..> Pyro5_api_Proxy : creates and forwards to
+    bang_bang_CustomModule --> DaemonControl : control
+    InputController --> DaemonControl : control
+    AbstractConditional --> DaemonControl : control
+    AbstractOutput --> DaemonControl : control
+    note for DaemonControl "RealSubject = daemon object at PYRO_URI (defined outside scope)"
+```
+
+### 3.10 Automation / Alert Actions
+
+- **Pattern:** Command — GoF Behavioral
+- **Origin:** application. The Invoker, i.e. the daemon-side code that resolves an action ID and calls `run_action`, is defined outside scope.
+- **Purpose:** alerts and automations, such as "send an e-mail" or "turn the irrigation output on for 300 s", are configured as stored Action objects. Their parameters are bound when they are constructed, and they run later through a uniform `run_action(dict_vars)` when a conditional, input or output trigger fires. The requester knows only the action ID, not the receiver.
+
+| Pattern role | Actual symbol | path:lines |
+|---|---|---|
+| Command | `AbstractFunctionAction` | data/code/mycodo/actions/base_action.py:25-114 |
+| Execute | `AbstractFunctionAction.run_action` | data/code/mycodo/actions/base_action.py:77-79 |
+| ConcreteCommand | `email.ActionModule` (run_action 59-95) | data/code/mycodo/actions/email.py:41-98 |
+| ConcreteCommand | `output_on_off.ActionModule` (run_action 89-136) | data/code/mycodo/actions/output_on_off.py:68-139 |
+| Receiver | `send_email` (`mycodo.utils.send_data`, defined outside scope; call site) | data/code/mycodo/actions/email.py:86-88 |
+| Receiver | `DaemonControl.output_on_off` | data/code/mycodo/mycodo_client.py:214-222 |
+| Client (requests execution by ID) | `AbstractConditional.run_action` | data/code/mycodo/controllers/base_conditional.py:40-64 |
+| Client (requests execution by ID) | `AbstractOutput.check_triggers` | data/code/mycodo/outputs/base_output.py:457-585 |
+| RequestChannel | `DaemonControl.trigger_action` | data/code/mycodo/mycodo_client.py:150-153 |
+| RequestChannel | `DaemonControl.trigger_all_actions` | data/code/mycodo/mycodo_client.py:155-157 |
+| Invoker | defined outside scope | — |
+
+**Evidence.** Each concrete action binds its parameters (recipient address; output ID, state and duration) from the stored `Actions` row in its constructor via `setup_custom_options`. It exposes one `execute`-style method, `run_action(dict_vars)`, which calls its receiver and returns the updated `dict_vars`. Requesters only send the action ID plus an optional `value`. The dict they send (`message`, `value`) has the same shape that `run_action` reads (`dict_vars['message']`, `dict_vars['value'][...]`).
+
+```text
+base_action.py:77      def run_action(self, dict_vars):
+email.py:50            self.setup_custom_options(
+email.py:61                email_recipients = dict_vars["value"]["email_address"]
+email.py:86                send_email(smtp.host, smtp.protocol, smtp.port,
+output_on_off.py:127               target=self.control.output_on_off,
+output_on_off.py:136           return dict_vars
+base_conditional.py:60     return_dict = self.control.trigger_action(
+base_conditional.py:61         full_action_id, value=send_dict)
+base_output.py:540             self.control.trigger_all_actions(
+```
+
+**How to prove it with a test:** create an `output_on_off.ActionModule` without the DB, either with `object.__new__` or by patching `db_retrieve_table_daemon`. Set `output_device_id='out1'`, `state='on'`, `duration=30`, `logger`, and `control=FakeControl`, and patch `threading.Thread` to run synchronously. `run_action({'message': '', 'value': {}})` must call `FakeControl.output_on_off('out1', 'on', output_type='sec', amount=30, output_channel=...)`. Calling `email.ActionModule.run_action` with the same invocation and a patched `send_email` sends an e-mail instead: the invocation is identical and only the command differs.
+
+```mermaid
+classDiagram
+    class AbstractFunctionAction {
+        +run_action(dict_vars)
+        +initialize()
+        +is_setup()
+    }
+    class email_ActionModule["email.ActionModule"]
+    email_ActionModule : +run_action(dict_vars)
+    class output_on_off_ActionModule["output_on_off.ActionModule"]
+    output_on_off_ActionModule : +run_action(dict_vars)
+    class send_email
+    <<function>> send_email
+    class DaemonControl {
+        +output_on_off(output_id, state, output_type, amount, output_channel)
+        +trigger_action(action_id, value, debug)
+        +trigger_all_actions(function_id, message, debug)
+    }
+    class AbstractConditional {
+        +run_action(action_id, value, message)
+    }
+    class AbstractOutput {
+        +check_triggers(output_id, amount, output_channel)
+    }
+    AbstractFunctionAction <|-- email_ActionModule
+    AbstractFunctionAction <|-- output_on_off_ActionModule
+    email_ActionModule ..> send_email : receiver
+    output_on_off_ActionModule ..> DaemonControl : receiver output_on_off()
+    AbstractConditional ..> DaemonControl : trigger_action(id)
+    AbstractOutput ..> DaemonControl : trigger_all_actions(id)
+    note for AbstractFunctionAction "Invoker that calls run_action is defined outside scope"
+```
+
+### 3.11 Input/Output Module Loading
+
+- **Pattern:** Plugin — Architectural
+- **Origin:** application (loader, registries, plugin contract, plugins). It uses the Python standard library `importlib` (dependency side) for the actual import.
+- **Purpose:** new sensors and actuators, including user-supplied ones in the custom directories, are added by dropping in a module file. The file declares a metadata dictionary (`INPUT_INFORMATION` / `OUTPUT_INFORMATION`) and a class with a well-known name (`InputModule` / `OutputModule`) deriving from the abstract base. The core discovers, describes and instantiates these modules without code changes.
+
+| Pattern role | Actual symbol | path:lines |
+|---|---|---|
+| PluginLoader | `load_module_from_file` | data/code/mycodo/utils/modules.py:10-21 |
+| PluginRegistry | `parse_input_information` | data/code/mycodo/utils/inputs.py:163-308 |
+| PluginRegistry | `parse_output_information` | data/code/mycodo/utils/outputs.py:33-148 |
+| RegistryQuery | `output_types` | data/code/mycodo/utils/outputs.py:183-189 |
+| PluginInterface (inputs) | `AbstractInput` | data/code/mycodo/inputs/base_input.py:18-271 |
+| PluginInterface (outputs) | `AbstractOutput` | data/code/mycodo/outputs/base_output.py:30-641 |
+| Host (instantiation) | `InputController.initialize_variables` | data/code/mycodo/controllers/controller_input.py:246-343 |
+| PluginMetadata | `adafruit_i2c_soil.INPUT_INFORMATION` | data/code/mycodo/inputs/adafruit_i2c_soil.py:19-47 |
+| ConcretePlugin | `adafruit_i2c_soil.InputModule` | data/code/mycodo/inputs/adafruit_i2c_soil.py:50-84 |
+| PluginMetadata | `weather_openweathermap_weather.INPUT_INFORMATION` | data/code/mycodo/inputs/weather_openweathermap_weather.py:41-79 |
+| ConcretePlugin | `weather_openweathermap_weather.InputModule` | data/code/mycodo/inputs/weather_openweathermap_weather.py:82-146 |
+| PluginMetadata | `pump_gpio.OUTPUT_INFORMATION` | data/code/mycodo/outputs/pump_gpio.py:46-142 |
+| ConcretePlugin | `pump_gpio.OutputModule` | data/code/mycodo/outputs/pump_gpio.py:145-353 |
+| PluginMetadata | `on_off_gpio.OUTPUT_INFORMATION` | data/code/mycodo/outputs/on_off_gpio.py:28-110 |
+| ConcretePlugin | `on_off_gpio.OutputModule` | data/code/mycodo/outputs/on_off_gpio.py:113-200 |
+
+**Evidence.** The registries scan the built-in and custom directories and import every file through the loader. They keep only modules that expose the metadata dictionary and record each module's `file_path` under its unique name. The host later loads that file and instantiates the well-known class. Optional capabilities are detected by reflection: an overridden `get_measurement` or a `listener` attribute. The function and action modules in SCOPE (`bang_bang.FUNCTION_INFORMATION` / `CustomModule`, `email` / `output_on_off` `ACTION_INFORMATION` / `ActionModule`) follow the same convention, but their loader is defined outside scope, so they are not mapped here. Output instantiation is also outside scope.
+
+```text
+modules.py:14          spec = importlib.util.spec_from_file_location(module_name, path_file)
+modules.py:16          spec.loader.exec_module(module_custom)
+inputs.py:189          input_paths.append(PATH_INPUTS_CUSTOM)
+inputs.py:202          input_custom, status = load_module_from_file(full_path, 'inputs')
+inputs.py:204          if not input_custom or not hasattr(input_custom, 'INPUT_INFORMATION'):
+inputs.py:214          dict_inputs[input_custom.INPUT_INFORMATION['input_name_unique']]['file_path'] = full_path
+controller_input.py:309        input_loaded, status = load_module_from_file(
+controller_input.py:313            self.measure_input = input_loaded.InputModule(self.input_dev)
+controller_input.py:327    if type(self.measure_input).get_measurement != AbstractInput.get_measurement:
+controller_input.py:334    if hasattr(self.measure_input, 'listener'):
+```
+
+**How to prove it with a test:** write a temporary file `fake_soil.py` that defines `INPUT_INFORMATION = {'input_name_unique': 'FAKE_SOIL', ...}` and `class InputModule(AbstractInput)`. Patch `mycodo.utils.inputs.PATH_INPUTS` to the temporary directory. Assert that `parse_input_information(exclude_custom=True)` contains `'FAKE_SOIL'` with the right `file_path`, and that `load_module_from_file(path, 'inputs')[0].InputModule` exists. Delete the file and assert the key disappears. No core code changed.
+
+```mermaid
+classDiagram
+    class load_module_from_file
+    <<function>> load_module_from_file
+    class parse_input_information
+    <<function>> parse_input_information
+    class parse_output_information
+    <<function>> parse_output_information
+    class output_types
+    <<function>> output_types
+    class InputController {
+        +initialize_variables()
+    }
+    class AbstractInput
+    class AbstractOutput
+    class adafruit_i2c_soil_InputModule["adafruit_i2c_soil.InputModule"]
+    class weather_openweathermap_weather_InputModule["weather_openweathermap_weather.InputModule"]
+    class pump_gpio_OutputModule["pump_gpio.OutputModule"]
+    class on_off_gpio_OutputModule["on_off_gpio.OutputModule"]
+    parse_input_information ..> load_module_from_file
+    parse_output_information ..> load_module_from_file
+    output_types ..> parse_output_information
+    InputController ..> parse_input_information
+    InputController ..> load_module_from_file
+    InputController --> AbstractInput : measure_input
+    AbstractInput <|-- adafruit_i2c_soil_InputModule
+    AbstractInput <|-- weather_openweathermap_weather_InputModule
+    AbstractOutput <|-- pump_gpio_OutputModule
+    AbstractOutput <|-- on_off_gpio_OutputModule
+```
+
+### 3.12 Daemon Module Base
+
+- **Pattern:** Layer Supertype — Architectural (Fowler, PoEAA)
+- **Origin:** application.
+- **Purpose:** one supertype for every daemon-side module type (inputs, outputs, controllers, functions, actions) holds the cross-cutting infrastructure. That includes the per-module logger, user-option parsing (CSV and JSON formats), device-measurement and conversion loading, DB-persisted custom options and last-measurement look-ups, so no module type re-implements them.
+
+| Pattern role | Actual symbol | path:lines |
+|---|---|---|
+| LayerSupertype | `AbstractBaseController` | data/code/mycodo/abstract_base_controller.py:35-543 |
+| SharedService | `AbstractBaseController.setup_custom_options` | data/code/mycodo/abstract_base_controller.py:67-74 |
+| SharedService | `AbstractBaseController.setup_device_measurement` | data/code/mycodo/abstract_base_controller.py:76-88 |
+| SharedService | `AbstractBaseController._set_custom_option` | data/code/mycodo/abstract_base_controller.py:425-439 |
+| LayerMember | `AbstractInput` | data/code/mycodo/inputs/base_input.py:18-271 |
+| LayerMember | `AbstractOutput` | data/code/mycodo/outputs/base_output.py:30-641 |
+| LayerMember | `AbstractController` | data/code/mycodo/controllers/base_controller.py:20-129 |
+| LayerMember | `AbstractFunction` | data/code/mycodo/functions/base_function.py:17-83 |
+| LayerMember | `AbstractFunctionAction` | data/code/mycodo/actions/base_action.py:25-114 |
+
+**Evidence.** All five abstract bases inherit `AbstractBaseController`. They and their concrete modules call its services instead of duplicating them. Each member's `set_custom_option` is a one-line delegation that passes its own model class (`Input`, `Output`, `CustomController`). The boundary is visible in `AbstractConditional` (`base_conditional.py:22`), which does not inherit the supertype and therefore re-implements `set_custom_option` / `get_custom_option` itself (103-126).
+
+```text
+base_input.py:18       class AbstractInput(AbstractBaseController):
+base_input.py:43           self.setup_device_measurement(self.unique_id)
+base_input.py:265          return self._set_custom_option(Input, self.unique_id, option, value)
+base_output.py:626         return self._set_custom_option(Output, self.unique_id, option, value)
+base_function.py:77        return self._set_custom_option(CustomController, self.unique_id, option, value)
+base_controller.py:38          self.setup_device_measurement(unique_id)
+weather_openweathermap_weather.py:92       self.setup_custom_options(
+bang_bang.py:172           last_measurement = self.get_last_measurement(
+pump_gpio.py:155           self.options_channels = self.setup_custom_channel_options_json(
+```
+
+**How to prove it with a test:** create two layer members with `testing=True`, an `AbstractInput` subclass and an `AbstractFunction` subclass. Call `setup_custom_options([{'id': 'setpoint', 'type': 'float', 'default_value': 50}], fake)` on each, where `fake.custom_options = '{"setpoint": 42}'`. Both must expose `.setpoint == 42` through the single inherited implementation.
+
+```mermaid
+classDiagram
+    class AbstractBaseController {
+        +try_initialize(tries, wait_sec)
+        +setup_custom_options(custom_options, custom_controller)
+        +setup_device_measurement(unique_id)
+        +setup_custom_channel_options_json(custom_options, custom_controller_channels)
+        #_set_custom_option(controller, unique_id, option, value)
+        +get_last_measurement(device_id, measurement_id, max_age)
+    }
+    class AbstractInput
+    class AbstractOutput
+    class AbstractController
+    class AbstractFunction
+    class AbstractFunctionAction
+    AbstractBaseController <|-- AbstractInput
+    AbstractBaseController <|-- AbstractOutput
+    AbstractBaseController <|-- AbstractController
+    AbstractBaseController <|-- AbstractFunction
+    AbstractBaseController <|-- AbstractFunctionAction
+```
+
+### 3.13 User and Role Persistence
+
+- **Pattern:** Active Record — Architectural (Fowler, PoEAA)
+- **Origin:** application (`CRUDMixin`, `User`, `Role`) and framework (`db.Model` / `db.session` / `db.Column` from `db` in `mycodo.mycodo_flask.extensions`, defined outside scope). `User` also inherits `flask_login.UserMixin` (framework) without overriding it.
+- **Purpose:** web-UI accounts and permission roles are persisted by the domain objects themselves. Each object maps to one row, carries domain behaviour (password hashing) and saves or deletes itself.
+
+| Pattern role | Actual symbol | path:lines |
+|---|---|---|
+| ActiveRecordBase | `CRUDMixin` | data/code/mycodo/databases/__init__.py:10-32 |
+| PersistenceOperation | `CRUDMixin.save` | data/code/mycodo/databases/__init__.py:16-24 |
+| PersistenceOperation | `CRUDMixin.delete` | data/code/mycodo/databases/__init__.py:26-32 |
+| ActiveRecord | `User` | data/code/mycodo/databases/models/user.py:11-52 |
+| DomainLogic | `User.set_password` | data/code/mycodo/databases/models/user.py:35-39 |
+| DomainLogic | `User.check_password` | data/code/mycodo/databases/models/user.py:42-52 |
+| ActiveRecord | `Role` | data/code/mycodo/databases/models/role.py:7-27 |
+| ORMBase (framework) | `db.Model` (`db` defined outside scope) | data/code/mycodo/databases/models/user.py:11-11; data/code/mycodo/databases/models/role.py:7-7 |
+
+**Evidence.** `User` and `Role` are table-mapped classes (`__tablename__`, `db.Column` fields) that inherit `save()` / `delete()` from the application's `CRUDMixin`, which acts on `self` through the session. `User` also holds domain logic on the same object. This combination of row data, persistence and domain logic in one class is what defines Active Record. It is not a simple ORM query, so it is not a Repository.
+
+```text
+__init__.py:19         db.session.add(self)
+__init__.py:20         db.session.commit()
+__init__.py:29         db.session.delete(self)
+user.py:11     class User(UserMixin, CRUDMixin, db.Model):
+user.py:12         __tablename__ = "users"
+user.py:39         self.password_hash = bcrypt.hashpw(new_password, bcrypt.gensalt())
+role.py:7      class Role(CRUDMixin, db.Model):
+role.py:15         edit_settings = db.Column(db.Boolean, nullable=False, default=False)
+```
+
+**How to prove it with a test:** in a Flask app context with an in-memory SQLite `db`, which is outside scope, create `u = User(name='a', email='a@x')`, call `u.set_password('pw')` and `u.save()`, and reload by name. `password_hash` must be persisted, and `User.check_password('pw', u.password_hash) == u.password_hash`. After `u.delete()` the row must be gone. Do the same for `Role(name='Guest').save()`.
+
+```mermaid
+classDiagram
+    class CRUDMixin {
+        +save()
+        +delete()
+    }
+    class db_Model["db.Model"]
+    <<framework>> db_Model
+    class UserMixin
+    <<framework>> UserMixin
+    class User {
+        +set_password(new_password)
+        +check_password(password, hashed_password)
+    }
+    class Role
+    CRUDMixin <|-- User
+    db_Model <|-- User
+    UserMixin <|-- User
+    CRUDMixin <|-- Role
+    db_Model <|-- Role
+```
+
+---
+
+## 4. Rejected and uncertain candidates
+
+| Candidate | Result | Reason (with path:line) |
+|---|---|---|
+| Observer – Output trigger notification | UNCERTAIN | `AbstractOutput.output_on_off` calls `check_triggers` after every state change (data/code/mycodo/outputs/base_output.py:448-450), and `check_triggers` notifies matching "subscribers" (457-585). However, the subscribers are `Trigger` DB rows selected by query (471-475): there is no attach/detach API and no observer objects with an update method. The notification is delegated to the daemon through `trigger_all_actions` (540-541), and the daemon is defined outside scope. |
+| Composite – Cascade setpoint methods | UNCERTAIN | `CascadeMethod.calculate_setpoint` (data/code/mycodo/utils/method.py:383-428) recursively aggregates child methods through the same `calculate_setpoint` (413-417). However, children are re-loaded by ID on every call (402) instead of being held, there are no child-management operations, and transparency is broken by `isinstance(linked_method, CascadeMethod)` (409-411). The uniform interface is already counted as Strategy 3.7. |
+| Mediator – daemon as central coordinator | UNCERTAIN | Modules never reference each other directly. `bang_bang.CustomModule` (data/code/mycodo/functions/bang_bang.py:177, 184, 190-197), `InputController` (data/code/mycodo/controllers/controller_input.py:166-171) and `AbstractOutput` (data/code/mycodo/outputs/base_output.py:540-541) all go through `DaemonControl` to the daemon. The daemon would be the Mediator, but it is defined outside scope. |
+| Plugin / Template Method – user Conditional code | UNCERTAIN | `ConditionalController.initialize_variables` imports a generated file and instantiates `ConditionalRun` (data/code/mycodo/controllers/controller_conditional.py:131-137), then calls `conditional_code_run()` (183). `ConditionalRun` and `save_conditional_code` are defined outside scope, so it cannot be verified that `ConditionalRun` extends `AbstractConditional` (data/code/mycodo/controllers/base_conditional.py:22-126). |
+| Adapter – output modules over RPi.GPIO | UNCERTAIN | `pump_gpio.OutputModule` / `on_off_gpio.OutputModule` translate `output_switch` / `is_on` into `GPIO.output` / `GPIO.input` (data/code/mycodo/outputs/on_off_gpio.py:171-175, 185-186; data/code/mycodo/outputs/pump_gpio.py:270, 331, 348). However, `RPi.GPIO` is a module-level procedural API imported inside `initialize` (pump_gpio.py:159; on_off_gpio.py:126), and the translating methods are exactly the primitive operations already counted in Template Method 3.4. No in-scope client uses outputs through the `AbstractOutput` type. |
+| Singleton | REJECTED | Nothing controls instantiation. `DaemonControl()` is constructed independently in many places (data/code/mycodo/controllers/controller_input.py:77; data/code/mycodo/outputs/base_output.py:43; data/code/mycodo/controllers/base_conditional.py:33; data/code/mycodo/functions/bang_bang.py:118; data/code/mycodo/actions/base_action.py:39; data/code/mycodo/mycodo_client.py:297). Module-level loggers (data/code/mycodo/utils/modules.py:7) are plain globals. |
+| Factory Method | REJECTED | `create_method_handler` (data/code/mycodo/utils/method.py:431-441) is a plain module function that picks a class by name (436). There is no Creator hierarchy overriding a factory method. `InputController` instantiates the plugin class directly (data/code/mycodo/controllers/controller_input.py:313). Both selections are counted inside Strategy 3.7 and Plugin 3.11. |
+| Prototype | REJECTED | `clone_model` (data/code/mycodo/databases/__init__.py:45-61) is an external reflective copy helper (`model.__class__(**data)` at 58), not a polymorphic `clone()` on a prototype interface. There is no in-scope caller. |
+| Facade | REJECTED | `DaemonControl` forwards 1:1 to one remote object (data/code/mycodo/mycodo_client.py:125-126, 199-201); it does not simplify several subsystem classes. The collaboration is counted once, as Proxy 3.9. |
+| Decorator | REJECTED | `@property` (data/code/mycodo/inputs/base_input.py:94) and `@staticmethod` (data/code/mycodo/abstract_base_controller.py:528, 532, 536; data/code/mycodo/databases/models/user.py:41; data/code/mycodo/mycodo_client.py:270) are Python language decorators. There is no wrapper object that implements the component interface and adds behaviour. |
+| Iterator | REJECTED | `AbstractInput.__iter__` / `__next__` / `next` (data/code/mycodo/inputs/base_input.py:45-47, 85-92) return one fresh sensor reading per call; they do not traverse the elements of an aggregate. The client calls `.next()` directly and uses `StopIteration` as an error signal (data/code/mycodo/controllers/controller_input.py:361-374). |
+| Repository | REJECTED | There is no collection-like repository abstraction. ORM queries are written inline in callers (data/code/mycodo/abstract_base_controller.py:411-413, 461-467; data/code/mycodo/controllers/base_conditional.py:46-47; data/code/mycodo/actions/base_action.py:96-103). `db_retrieve_table_daemon` is defined outside scope. |
+| MVC | REJECTED | Only Model classes are in scope (data/code/mycodo/databases/models/user.py:11-52; data/code/mycodo/databases/models/role.py:7-27). Views and controllers (Flask blueprints, templates) are outside scope. |
+| Chain of Responsibility | REJECTED | Actions append to `dict_vars['message']` and return it (data/code/mycodo/actions/email.py:82, 95; data/code/mycodo/actions/output_on_off.py:120-136). Every action always handles the request; there is no successor link and no pass-or-handle decision. The loop over actions is outside scope. |
+| State | REJECTED | Output state is kept in dicts and flags (data/code/mycodo/outputs/base_output.py:49-55, 197-202), and the bang-bang direction is an if/elif on a string (data/code/mycodo/functions/bang_bang.py:187-210). There are no state objects that the context switches between. |
+| Strategy – bang-bang direction / rescale_method | REJECTED | These are conditional branches on strings (data/code/mycodo/functions/bang_bang.py:187, 198; data/code/mycodo/utils/inputs.py:80, 116), not interchangeable objects. |
+| Strategy – InputController.measure_input | REJECTED (as separate instance) | The polymorphic use of the input object (data/code/mycodo/controllers/controller_input.py:313, 361) is already counted in Template Method 3.1, Adapter 3.8 and Plugin 3.11. |
+| Template Method on plain overrides | REJECTED | Constructors such as `adafruit_i2c_soil.InputModule.__init__` (data/code/mycodo/inputs/adafruit_i2c_soil.py:52-58) only call `super().__init__`. `on_off_gpio.OutputModule.stop_output` (data/code/mycodo/outputs/on_off_gpio.py:193-200) and `ConditionalController.stop_controller` (data/code/mycodo/controllers/controller_conditional.py:190-197) replace the base method entirely, with no base skeleton calling them. |
+| Command – CLI dispatch | REJECTED | `mycodo_client.py __main__` (data/code/mycodo/mycodo_client.py:442-592) is an if/elif chain over argparse flags that calls `DaemonControl` methods directly. No request objects are created. |
+| Null Object – AbstractMethod fallback | REJECTED (as separate instance) | The fallback (data/code/mycodo/utils/method.py:437-439) uses the neutral base operations (57-72) and belongs to the same collaboration as Strategy 3.7. |
+| Broker | REJECTED (as separate instance) | The Pyro5 URI / remote invocation (data/code/mycodo/mycodo_client.py:32, 67) is the same collaboration as Proxy 3.9. The broker and server side are outside scope. |
+| Unit of Work | REJECTED | `session_scope` (imported at data/code/mycodo/abstract_base_controller.py:29) is defined outside scope. The application only opens, commits and expunges sessions (e.g. 421, 436, 446). |
+| Virtual Proxy / Lazy Load | REJECTED | `AbstractInput.measurements` (data/code/mycodo/inputs/base_input.py:94-99) lazily calls `read()` on the same object; there is no surrogate object. |
+| Framework hook – Flask-Login UserMixin | REJECTED | `User` inherits `UserMixin` (data/code/mycodo/databases/models/user.py:3, 11) but overrides none of its hooks in scope, so the application does not take part in a framework pattern here. |
+| DTO / Serializer – UserSchema | REJECTED | `UserSchema` (data/code/mycodo/databases/models/user.py:55-58) is declarative framework configuration (`ma.SQLAlchemyAutoSchema` `Meta`) with no application behaviour. Its callers are outside scope. |
+| Value Object / DTO – Measurement | REJECTED | `Measurement` (data/code/mycodo/controllers/controller_input.py:44-62) is a mutable holder of a raw dict used inside a single class (387, 401). It has no value semantics. |
+| Retry | REJECTED (not in requested catalogs) | `try_initialize` (data/code/mycodo/abstract_base_controller.py:52-65) and `attempt_execute` (data/code/mycodo/controllers/base_controller.py:115-129) are resilience idioms. The `try_initialize` → `initialize` hook collaboration is already counted as Template Method 3.2. |
+| GRASP Controller / Polymorphism / Indirection / Protected Variations / Pure Fabrication | REJECTED | Every collaboration where one would apply is already covered by a GoF or architectural instance: indirection by Proxy 3.9, polymorphism by Template Method 3.1-3.6 and Strategy 3.7, protected variations by Plugin 3.11, and pure fabrication by Proxy 3.9 and Layer Supertype 3.12. Per the rules, none is reported. |
+
+---
+
+## 5. patterns.csv rows
+
+```csv
+source_version,pattern_name,pattern_type,instance_name,participant_roles,source_locations,intent_and_evidence
+Original code,Template Method,GoF Behavioral,Sensor Measurement Acquisition,"AbstractClass=AbstractInput; TemplateMethod=AbstractInput.read; TemplateMethodEntry=AbstractInput.next; PrimitiveOperation=AbstractInput.get_measurement; ConcreteClass=adafruit_i2c_soil.InputModule; ConcreteClass=weather_openweathermap_weather.InputModule; Client=InputController.update_measure","data/code/mycodo/inputs/base_input.py:18-271; data/code/mycodo/inputs/base_input.py:115-146; data/code/mycodo/inputs/base_input.py:88-92; data/code/mycodo/inputs/base_input.py:108-113; data/code/mycodo/inputs/adafruit_i2c_soil.py:50-84; data/code/mycodo/inputs/weather_openweathermap_weather.py:82-146; data/code/mycodo/controllers/controller_input.py:345-393","Fixed sensor-reading algorithm with a device-specific step: read() resets the cache, calls the abstract get_measurement() (base_input.py:123), classifies TimeoutError/IOError/other errors and returns 1 on failure (126-146); next() turns failure into StopIteration (90-91). The soil sensor (adafruit_i2c_soil.py:71-84) and weather input (weather_openweathermap_weather.py:102-146) override only get_measurement; InputController.update_measure calls measure_input.next() (controller_input.py:361)."
+Original code,Template Method,GoF Behavioral,Module Initialization with Retry,"AbstractClass=AbstractBaseController; TemplateMethod=AbstractBaseController.try_initialize; PrimitiveOperation=AbstractBaseController.initialize (default no-op hook); PrimitiveOperation=AbstractInput.initialize (abstract redeclaration); PrimitiveOperation=AbstractFunction.initialize (abstract redeclaration); PrimitiveOperation=AbstractFunctionAction.initialize (abstract redeclaration); ConcreteClass=adafruit_i2c_soil.InputModule; ConcreteClass=weather_openweathermap_weather.InputModule; ConcreteClass=bang_bang.CustomModule; ConcreteClass=email.ActionModule; ConcreteClass=output_on_off.ActionModule","data/code/mycodo/abstract_base_controller.py:35-543; data/code/mycodo/abstract_base_controller.py:52-65; data/code/mycodo/abstract_base_controller.py:49-50; data/code/mycodo/inputs/base_input.py:101-106; data/code/mycodo/functions/base_function.py:57-62; data/code/mycodo/actions/base_action.py:70-75; data/code/mycodo/inputs/adafruit_i2c_soil.py:50-84; data/code/mycodo/inputs/weather_openweathermap_weather.py:82-146; data/code/mycodo/functions/bang_bang.py:110-213; data/code/mycodo/actions/email.py:41-98; data/code/mycodo/actions/output_on_off.py:68-139","Retry skeleton for fragile hardware/service set-up: try_initialize loops tries times calling the polymorphic self.initialize() and sleeps wait_sec on exceptions without propagating them (abstract_base_controller.py:54-65). Concrete modules call self.try_initialize() from their constructors (adafruit_i2c_soil.py:58; weather_openweathermap_weather.py:94; bang_bang.py:142; email.py:54; output_on_off.py:84) and override only initialize()."
+Original code,Template Method,GoF Behavioral,Controller Thread Lifecycle,"AbstractClass=AbstractController; TemplateMethod=AbstractController.run (overrides threading.Thread.run); TemplateMethod=AbstractController.stop_controller; PrimitiveOperation=AbstractController.initialize_variables; PrimitiveOperation=AbstractController.loop; Hook=AbstractController.run_finally; Hook=AbstractController.pre_stop; ConcreteClass=InputController; ConcreteClass=ConditionalController; FrameworkCaller=threading.Thread (Python standard library; defined outside scope)","data/code/mycodo/controllers/base_controller.py:20-129; data/code/mycodo/controllers/base_controller.py:69-99; data/code/mycodo/controllers/base_controller.py:104-107; data/code/mycodo/controllers/base_controller.py:45-49; data/code/mycodo/controllers/base_controller.py:51-55; data/code/mycodo/controllers/base_controller.py:57-59; data/code/mycodo/controllers/base_controller.py:61-63; data/code/mycodo/controllers/controller_input.py:65-462; data/code/mycodo/controllers/controller_conditional.py:41-197; data/code/mycodo/controllers/controller_input.py:65-70","Invariant controller-thread lifecycle: run() calls initialize_variables() (base_controller.py:72), loops loop() while running with per-iteration error isolation and sleep(sample_rate) (79-87) and always calls run_finally() (93); stop_controller() calls pre_stop() (106). InputController and ConditionalController inherit (AbstractController, threading.Thread) so run() is the application override of the stdlib Thread.run hook; they override loop/initialize_variables (controller_input.py:129-343; controller_conditional.py:73-147)."
+Original code,Template Method,GoF Behavioral,Output Actuation (irrigation switching),"AbstractClass=AbstractOutput; TemplateMethod=AbstractOutput.output_on_off; PrimitiveOperation=AbstractOutput.output_switch; PrimitiveOperation=AbstractOutput.is_on; PrimitiveOperation=AbstractOutput.is_setup; ConcreteClass=pump_gpio.OutputModule; ConcreteClass=on_off_gpio.OutputModule; Client=defined outside scope","data/code/mycodo/outputs/base_output.py:30-641; data/code/mycodo/outputs/base_output.py:164-455; data/code/mycodo/outputs/base_output.py:81-86; data/code/mycodo/outputs/base_output.py:88-93; data/code/mycodo/outputs/base_output.py:95-100; data/code/mycodo/outputs/pump_gpio.py:145-353; data/code/mycodo/outputs/on_off_gpio.py:113-200","Shared irrigation switching policy (state normalisation, channel/setup validation, min-off lock-out, duration bookkeeping, duration logging, trigger firing) in output_on_off, which calls the abstract is_on (base_output.py:209), is_setup (218) and output_switch (258, 343, 378, 390) and finally check_triggers (450). The peristaltic pump (pump_gpio.py:258-353) and GPIO relay (on_off_gpio.py:168-191) override only these primitive operations."
+Original code,Template Method,GoF Behavioral,Formula Setpoint Plot Sampling,"AbstractClass=AbstractDailyFormulaMethod; TemplateMethod=AbstractDailyFormulaMethod.get_plot; PrimitiveOperation=AbstractMethod.calculate_setpoint; ConcreteClass=DailySineMethod; ConcreteClass=DailyBezierMethod","data/code/mycodo/utils/method.py:199-217; data/code/mycodo/utils/method.py:205-217; data/code/mycodo/utils/method.py:57-64; data/code/mycodo/utils/method.py:220-239; data/code/mycodo/utils/method.py:242-258","get_plot samples max_points_x instants across a day and calls the polymorphic self.calculate_setpoint(now) for each, appending only non-ended points (method.py:210-215); DailySineMethod (227-239) and DailyBezierMethod (243-258) override only calculate_setpoint, delegating to sine_wave_y_out / bezier_curve_y_out."
+Original code,Template Method,GoF Behavioral,Date/Daily Setpoint Interpolation,"AbstractClass=DateMethod (also a ConcreteClass providing the default hook); TemplateMethod=DateMethod.calculate_setpoint; Hook=DateMethod.ignore_date; ConcreteClass=DailyMethod","data/code/mycodo/utils/method.py:75-162; data/code/mycodo/utils/method.py:87-135; data/code/mycodo/utils/method.py:81-85; data/code/mycodo/utils/method.py:165-196","DateMethod.calculate_setpoint interpolates the setpoint between row start/end and consults the hook self.ignore_date() to choose time parsing and logging (method.py:90-99, 119); DailyMethod overrides only the hook to return True (172-176) and thereby reuses the whole interpolation as a daily repeating schedule."
+Original code,Strategy,GoF Behavioral,Setpoint Schedule Calculation,"Strategy=AbstractMethod; StrategyOperation=AbstractMethod.calculate_setpoint; ConcreteStrategy=DateMethod; ConcreteStrategy=DailyMethod; ConcreteStrategy=DailySineMethod; ConcreteStrategy=DailyBezierMethod; ConcreteStrategy=DurationMethod; ConcreteStrategy=CascadeMethod; StrategySelector=create_method_handler; StrategySelector=load_method_handler; Context=CascadeMethod.calculate_setpoint (in-scope client; other contexts defined outside scope)","data/code/mycodo/utils/method.py:22-72; data/code/mycodo/utils/method.py:57-64; data/code/mycodo/utils/method.py:75-162; data/code/mycodo/utils/method.py:165-196; data/code/mycodo/utils/method.py:220-239; data/code/mycodo/utils/method.py:242-258; data/code/mycodo/utils/method.py:261-378; data/code/mycodo/utils/method.py:381-428; data/code/mycodo/utils/method.py:431-441; data/code/mycodo/utils/method.py:444-455; data/code/mycodo/utils/method.py:383-428","Interchangeable setpoint-schedule algorithms selected at run time from the stored method_type: create_method_handler maps the type name to an AbstractMethod subclass and instantiates it, falling back to the neutral AbstractMethod (method.py:436-441); CascadeMethod obtains linked strategies via load_method_handler and calls calculate_setpoint on them without knowing their class (402, 413-417); DurationMethod also overrides determine_end_time (337-349)."
+Original code,Adapter,GoF Structural,Sensor Driver Adaptation,"Target=AbstractInput; Adapter=adafruit_i2c_soil.InputModule; Adaptee=adafruit_seesaw.seesaw.Seesaw (dependency; defined outside scope; use site); Adapter=weather_openweathermap_weather.InputModule; Adaptee=OpenWeatherMap HTTP API via requests.get (dependency; defined outside scope; use site); Client=InputController.update_measure","data/code/mycodo/inputs/base_input.py:18-271; data/code/mycodo/inputs/adafruit_i2c_soil.py:50-84; data/code/mycodo/inputs/adafruit_i2c_soil.py:61-67; data/code/mycodo/inputs/weather_openweathermap_weather.py:82-146; data/code/mycodo/inputs/weather_openweathermap_weather.py:111-112; data/code/mycodo/controllers/controller_input.py:345-393","Input modules wrap foreign interfaces behind the AbstractInput get_measurement() contract: the soil module holds a Seesaw driver in self.sensor (adafruit_i2c_soil.py:65-67) and translates moisture_read()/get_temp() into channel values (79, 82); the weather module translates the OpenWeatherMap JSON from requests.get (weather_openweathermap_weather.py:111-120) into the same channel dict (131-144). InputController uses both only through AbstractInput (controller_input.py:313, 361)."
+Original code,Proxy,GoF Structural,Daemon RPC Client,"Proxy=DaemonControl; ProxyConnection=DaemonControl.proxy; WrappedRemoteProxy=Pyro5.api.Proxy (dependency; defined outside scope; import site); Client=bang_bang.CustomModule.loop; Client=InputController.loop; Client=AbstractConditional.run_action; Client=AbstractOutput.check_triggers; Client=daemon_active; Subject=not separately declared; RealSubject=daemon object at PYRO_URI (defined outside scope)","data/code/mycodo/mycodo_client.py:50-292; data/code/mycodo/mycodo_client.py:65-74; data/code/mycodo/mycodo_client.py:32-32; data/code/mycodo/functions/bang_bang.py:161-210; data/code/mycodo/controllers/controller_input.py:129-238; data/code/mycodo/controllers/base_conditional.py:40-64; data/code/mycodo/outputs/base_output.py:457-585; data/code/mycodo/mycodo_client.py:294-302","Local stand-in for the remote daemon: DaemonControl.proxy() builds a Pyro5 Proxy with the configured URI and timeout (mycodo_client.py:65-74) and each method forwards under the same name (e.g. 126, 200-201); check_daemon adds timeout control and error translation (80-107). Daemon-side modules hold it as self.control and call it like a local object (bang_bang.py:118, 177, 195-197; controller_input.py:77, 166-171; base_conditional.py:33, 60-61; base_output.py:43, 540-541)."
+Original code,Command,GoF Behavioral,Automation/Alert Actions,"Command=AbstractFunctionAction; Execute=AbstractFunctionAction.run_action; ConcreteCommand=email.ActionModule; ConcreteCommand=output_on_off.ActionModule; Receiver=send_email (defined outside scope; call site); Receiver=DaemonControl.output_on_off; Client=AbstractConditional.run_action; Client=AbstractOutput.check_triggers; RequestChannel=DaemonControl.trigger_action; RequestChannel=DaemonControl.trigger_all_actions; Invoker=defined outside scope","data/code/mycodo/actions/base_action.py:25-114; data/code/mycodo/actions/base_action.py:77-79; data/code/mycodo/actions/email.py:41-98; data/code/mycodo/actions/output_on_off.py:68-139; data/code/mycodo/actions/email.py:86-88; data/code/mycodo/mycodo_client.py:214-222; data/code/mycodo/controllers/base_conditional.py:40-64; data/code/mycodo/outputs/base_output.py:457-585; data/code/mycodo/mycodo_client.py:150-153; data/code/mycodo/mycodo_client.py:155-157","Stored, parameterised requests executed later through a uniform run_action(dict_vars): each action binds its parameters from the Actions row in its constructor (email.py:48-51; output_on_off.py:78-81) and run_action calls its receiver (send_email at email.py:86-88; control.output_on_off at output_on_off.py:126-131) and returns dict_vars. Requesters know only the action ID (base_conditional.py:60-61; base_output.py:540-541); the daemon-side invoker calling run_action is outside scope."
+Original code,Plugin,Architectural,Input/Output Module Loading,"PluginLoader=load_module_from_file; PluginRegistry=parse_input_information; PluginRegistry=parse_output_information; RegistryQuery=output_types; PluginInterface=AbstractInput; PluginInterface=AbstractOutput; Host=InputController.initialize_variables; PluginMetadata=adafruit_i2c_soil.INPUT_INFORMATION; ConcretePlugin=adafruit_i2c_soil.InputModule; PluginMetadata=weather_openweathermap_weather.INPUT_INFORMATION; ConcretePlugin=weather_openweathermap_weather.InputModule; PluginMetadata=pump_gpio.OUTPUT_INFORMATION; ConcretePlugin=pump_gpio.OutputModule; PluginMetadata=on_off_gpio.OUTPUT_INFORMATION; ConcretePlugin=on_off_gpio.OutputModule","data/code/mycodo/utils/modules.py:10-21; data/code/mycodo/utils/inputs.py:163-308; data/code/mycodo/utils/outputs.py:33-148; data/code/mycodo/utils/outputs.py:183-189; data/code/mycodo/inputs/base_input.py:18-271; data/code/mycodo/outputs/base_output.py:30-641; data/code/mycodo/controllers/controller_input.py:246-343; data/code/mycodo/inputs/adafruit_i2c_soil.py:19-47; data/code/mycodo/inputs/adafruit_i2c_soil.py:50-84; data/code/mycodo/inputs/weather_openweathermap_weather.py:41-79; data/code/mycodo/inputs/weather_openweathermap_weather.py:82-146; data/code/mycodo/outputs/pump_gpio.py:46-142; data/code/mycodo/outputs/pump_gpio.py:145-353; data/code/mycodo/outputs/on_off_gpio.py:28-110; data/code/mycodo/outputs/on_off_gpio.py:113-200","Drop-in sensor/actuator modules: registries scan the built-in and custom directories (inputs.py:186-197; outputs.py:55-66), import each file with importlib via load_module_from_file (modules.py:14-16), keep modules exposing INPUT_INFORMATION/OUTPUT_INFORMATION and record their file_path (inputs.py:204-214; outputs.py:73-83). InputController loads the selected file and instantiates the well-known InputModule class (controller_input.py:309-313) and detects optional capabilities by reflection (327, 334)."
+Original code,Layer Supertype,Architectural,Daemon Module Base,"LayerSupertype=AbstractBaseController; SharedService=AbstractBaseController.setup_custom_options; SharedService=AbstractBaseController.setup_device_measurement; SharedService=AbstractBaseController._set_custom_option; LayerMember=AbstractInput; LayerMember=AbstractOutput; LayerMember=AbstractController; LayerMember=AbstractFunction; LayerMember=AbstractFunctionAction","data/code/mycodo/abstract_base_controller.py:35-543; data/code/mycodo/abstract_base_controller.py:67-74; data/code/mycodo/abstract_base_controller.py:76-88; data/code/mycodo/abstract_base_controller.py:425-439; data/code/mycodo/inputs/base_input.py:18-271; data/code/mycodo/outputs/base_output.py:30-641; data/code/mycodo/controllers/base_controller.py:20-129; data/code/mycodo/functions/base_function.py:17-83; data/code/mycodo/actions/base_action.py:25-114","Common supertype of all daemon-side module types holding cross-cutting infrastructure (logger, option parsing, device measurements, DB-stored custom options, measurement look-ups). Members delegate to it instead of duplicating: base_input.py:43, 264-265; base_output.py:625-626; base_function.py:35, 76-77; base_controller.py:38; concrete modules call setup_custom_options (weather_openweathermap_weather.py:92; bang_bang.py:138; email.py:50) and get_last_measurement (bang_bang.py:172). AbstractConditional does not inherit it and re-implements custom options (base_conditional.py:103-126)."
+Original code,Active Record,Architectural,User and Role Persistence,"ActiveRecordBase=CRUDMixin; PersistenceOperation=CRUDMixin.save; PersistenceOperation=CRUDMixin.delete; ActiveRecord=User; DomainLogic=User.set_password; DomainLogic=User.check_password; ActiveRecord=Role; ORMBase=db.Model (framework; db defined outside scope)","data/code/mycodo/databases/__init__.py:10-32; data/code/mycodo/databases/__init__.py:16-24; data/code/mycodo/databases/__init__.py:26-32; data/code/mycodo/databases/models/user.py:11-52; data/code/mycodo/databases/models/user.py:35-39; data/code/mycodo/databases/models/user.py:42-52; data/code/mycodo/databases/models/role.py:7-27; data/code/mycodo/databases/models/user.py:11-11; data/code/mycodo/databases/models/role.py:7-7","Table-mapped domain objects that persist themselves: User and Role (user.py:11-29; role.py:7-22) inherit save()/delete() from the application CRUDMixin, which acts on self via db.session.add/delete/commit (__init__.py:19-20, 29-30); User also carries domain logic (bcrypt password hashing at user.py:35-52). Framework side: db.Model/db.Column/db.session (db defined outside scope)."
+```
+
+---
+
+## 6. pattern_counts.csv rows
+
+```csv
+source_version,summary,pattern_name,count
+Original code,per_pattern,Template Method,6
+Original code,per_pattern,Strategy,1
+Original code,per_pattern,Adapter,1
+Original code,per_pattern,Proxy,1
+Original code,per_pattern,Command,1
+Original code,per_pattern,Plugin,1
+Original code,per_pattern,Layer Supertype,1
+Original code,per_pattern,Active Record,1
+Original code,total_pattern_types,,8
+Original code,total_pattern_instances,,13
+```
+
+---
+
+## 7. Baseline totals
+
+- **Confirmed pattern types (8):** Template Method, Strategy, Adapter, Proxy, Command, Plugin, Layer Supertype, Active Record.
+- **Confirmed pattern instances: 13.** Template Method ×6: Sensor Measurement Acquisition; Module Initialization with Retry; Controller Thread Lifecycle; Output Actuation; Formula Setpoint Plot Sampling; Date/Daily Setpoint Interpolation. Each of the other seven types has one instance.
+- **Concrete participant classes (18).** These are classes filling a variable/concrete role: ConcreteClass, ConcreteStrategy, Adapter, Proxy, ConcreteCommand, ConcretePlugin, ActiveRecord. Each is counted once.
+  1. `adafruit_i2c_soil.InputModule`
+  2. `weather_openweathermap_weather.InputModule`
+  3. `pump_gpio.OutputModule`
+  4. `on_off_gpio.OutputModule`
+  5. `bang_bang.CustomModule`
+  6. `email.ActionModule`
+  7. `output_on_off.ActionModule`
+  8. `InputController`
+  9. `ConditionalController`
+  10. `DateMethod`
+  11. `DailyMethod`
+  12. `DailySineMethod`
+  13. `DailyBezierMethod`
+  14. `DurationMethod`
+  15. `CascadeMethod`
+  16. `DaemonControl`
+  17. `User`
+  18. `Role`
+
+  The five abstract LayerMember classes of Layer Supertype (`AbstractInput`, `AbstractOutput`, `AbstractController`, `AbstractFunction`, `AbstractFunctionAction`) are not counted here because they are abstract; including them gives 23.
+- **Unique participant symbols: 79 in-scope + 6 external = 85.** These are all symbols mapped in the section-3 tables, each counted once.
+  - *Classes (27):* `AbstractBaseController`, `AbstractInput`, `AbstractOutput`, `AbstractController`, `AbstractFunction`, `AbstractFunctionAction`, `adafruit_i2c_soil.InputModule`, `weather_openweathermap_weather.InputModule`, `pump_gpio.OutputModule`, `on_off_gpio.OutputModule`, `bang_bang.CustomModule`, `email.ActionModule`, `output_on_off.ActionModule`, `InputController`, `ConditionalController`, `AbstractMethod`, `AbstractDailyFormulaMethod`, `DateMethod`, `DailyMethod`, `DailySineMethod`, `DailyBezierMethod`, `DurationMethod`, `CascadeMethod`, `DaemonControl`, `CRUDMixin`, `User`, `Role`.
+  - *Methods (41):* `AbstractInput.read`, `AbstractInput.next`, `AbstractInput.get_measurement`, `AbstractInput.initialize`, `InputController.update_measure`, `InputController.initialize_variables`, `InputController.loop`, `AbstractBaseController.try_initialize`, `AbstractBaseController.initialize`, `AbstractBaseController.setup_custom_options`, `AbstractBaseController.setup_device_measurement`, `AbstractBaseController._set_custom_option`, `AbstractFunction.initialize`, `AbstractFunctionAction.initialize`, `AbstractFunctionAction.run_action`, `AbstractController.run`, `AbstractController.stop_controller`, `AbstractController.initialize_variables`, `AbstractController.loop`, `AbstractController.run_finally`, `AbstractController.pre_stop`, `AbstractOutput.output_on_off`, `AbstractOutput.output_switch`, `AbstractOutput.is_on`, `AbstractOutput.is_setup`, `AbstractOutput.check_triggers`, `AbstractDailyFormulaMethod.get_plot`, `AbstractMethod.calculate_setpoint`, `DateMethod.calculate_setpoint`, `DateMethod.ignore_date`, `CascadeMethod.calculate_setpoint`, `DaemonControl.proxy`, `DaemonControl.trigger_action`, `DaemonControl.trigger_all_actions`, `DaemonControl.output_on_off`, `bang_bang.CustomModule.loop`, `AbstractConditional.run_action`, `CRUDMixin.save`, `CRUDMixin.delete`, `User.set_password`, `User.check_password`.
+  - *Module-level functions (7):* `create_method_handler`, `load_method_handler`, `daemon_active`, `load_module_from_file`, `parse_input_information`, `parse_output_information`, `output_types`.
+  - *Module-level metadata (4):* `adafruit_i2c_soil.INPUT_INFORMATION`, `weather_openweathermap_weather.INPUT_INFORMATION`, `pump_gpio.OUTPUT_INFORMATION`, `on_off_gpio.OUTPUT_INFORMATION`.
+  - *External / defined outside scope (6):* `threading.Thread`, `adafruit_seesaw.seesaw.Seesaw`, `requests.get`, `Pyro5.api.Proxy`, `send_email`, `db.Model`.
+  - *Sum:* 27 + 41 + 7 + 4 = **79 in-scope symbols**; with the 6 external symbols the total is **85**.
+- **Rejected: 23. Uncertain: 5.**
+- **Best two confirmed pattern types for a small standalone re-implementation in Java, Python, JavaScript and C++:**
+  1. **Template Method** (Sensor Measurement Acquisition: `read()` → `get_measurement()` with error classification). It needs only an abstract base class with one final/non-virtual skeleton method and one abstract/virtual hook. Every one of the four languages supports this directly: an abstract class in Java, `abc`/`NotImplementedError` in Python, a class with a throwing method in JavaScript, and a pure virtual function in C++. The behaviour (success vs. error flag vs. `StopIteration`-style signal) is deterministic and easy to test without hardware.
+  2. **Strategy** (Setpoint Schedule Calculation: `calculate_setpoint(now)` with Date, Daily, Sine and Duration variants chosen by a type key). It needs only an interface, a few concrete classes, and a name→constructor map that replaces `globals().get(...)`. The algorithms are pure functions of time and stored rows, so tests can compare outputs across strategies with fixed timestamps.
+
+  The other types are worse candidates. Proxy needs an RPC library, Plugin needs runtime module loading that differs per language (importlib, ClassLoader, dynamic `import()`, `dlopen`), Active Record needs an ORM, Adapter needs a hardware or HTTP adaptee, and Command's invoker is outside scope.
+
+---
+
+## 8. Limitations
+
+- **Source location:** `data/code/` does not exist in this workspace. The analysis used `Mycodo/` (git HEAD = ee70a111c622e2a81026fd5c1553a948acf8161e, clean tree), and paths were rewritten to the requested `data/code/` prefix. Line numbers are from that tree.
+- **Participants defined outside SCOPE** (not inspected; named only where the in-scope code references them):
+  - the daemon server object behind `PYRO_URI` (RealSubject of 3.9, possible Mediator, and Invoker of 3.10);
+  - `db_retrieve_table_daemon` and `session_scope` (DB access);
+  - `add_measurements_influxdb`, `write_influxdb_value`, `get_last_measurement` / `get_past_measurements` (`mycodo.utils.influx`);
+  - `run_input_actions`, `check_allowed_to_email`, `send_email` (`mycodo.utils.send_data`), `convert_units`, `calculate_dewpoint`, `get_sec`, `save_conditional_code`;
+  - the generated `ConditionalRun` class;
+  - `mycodo.config` constants (`PATH_INPUTS`, `PATH_OUTPUTS`, `PYRO_URI`, …) and `mycodo.databases.models` (`Input`, `Output`, `OutputChannel`, `Trigger`, `Method`, `MethodData`, `Actions`, `SMTP`, `Misc`, …);
+  - `db` / `ma` (`mycodo.mycodo_flask.extensions`), `LockFile`, the `constraints_pass_*` functions, `TRANSLATIONS`;
+  - third-party libraries (Pyro5, adafruit_seesaw, RPi.GPIO, requests, bcrypt, Flask-Login, marshmallow).
+- **Callers not visible:** who calls `AbstractOutput.output_on_off` / `initialize` / `stop_output`; who calls `bang_bang.CustomModule.loop` and `stop_function`; who consumes `create_method_handler` / `load_method_handler` (setpoint-tracking controllers); who calls `ActionModule.run_action`; the loaders for function and action modules; the Flask views (so MVC and any role-based authorization use of `Role` flags cannot be assessed).
+- **Command (3.10)** is confirmed on the command side: interface, concrete commands, parameter binding, receivers, and ID-based requests whose dict shape matches `run_action`'s input. However, the exact invoker call `action.run_action(dict_vars)` is not visible in SCOPE.
+- **Proxy (3.9):** the remote Subject interface is implicit. That the RealSubject exposes the same method names is inferred from the forwarding calls; it is not verified.
+- **Static analysis only:** no code was executed and no tests were run. The test ideas are proposals.
+- **Observations relevant to the proposed tests (not verified at run time):**
+  - `create_method_handler` calls `logger.error(...)` when `logger` is `None` and the type is unknown (data/code/mycodo/utils/method.py:438), which would raise `AttributeError`, so pass a logger.
+  - `User.check_password` returns the computed hash rather than a boolean (data/code/mycodo/databases/models/user.py:51-52).
+  - With `testing=True`, `AbstractFunctionAction` does not set `unique_id` (data/code/mycodo/actions/base_action.py:46-47), but `email.ActionModule.__init__` / `output_on_off.ActionModule.__init__` read `self.unique_id` (email.py:48-49; output_on_off.py:78-79), so test construction must bypass or patch `__init__`.
+  - `AbstractInput.is_enabled` needs `channels_measurement` to be populated (data/code/mycodo/inputs/base_input.py:148-156).
+- **GRASP:** Information Expert, Creator, Low Coupling and High Cohesion are not reported, by rule. Examples would be `AbstractInput.value_set` as Information Expert over `return_dict`, and `InputController.update_measure` creating `Measurement` (Creator). The other GRASP patterns were rejected as already covered (section 4).
+- **Granularity:** the six Template Method instances are separate collaborations, each with a different skeleton method and different hooks. A verifier who prefers coarser grouping could merge 3.5 and 3.6, both inside `utils/method.py`. Adapter 3.8 shares the input modules with Template Method 3.1 but is a different collaboration because it adds the Adaptee.

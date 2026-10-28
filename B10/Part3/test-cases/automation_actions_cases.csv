@@ -1,0 +1,13 @@
+case_id,action_id,config,value,message,expected_message,expected_log
+CM01,email-1,,,Soil dry.,Soil dry. Email 'grower@farm.org'.,send_email to=grower@farm.org body=Soil dry. Email 'grower@farm.org'.
+CM02,email-1,,email_address=a@x.org;b@x.org|message=Custom text,Soil dry.,Soil dry. Email 'grower@farm.org'.,send_email to=a@x.org;b@x.org body=Custom text
+CM03,email-1,,email_address=,Soil dry.,Soil dry. Error: No recipients specified.,none
+CM04,email-1,hourly_max=0,,Soil dry.,Soil dry.,none
+CM05,email-1,email=grower@farm.org;agro@farm.org,,Alert.,Alert. Email 'grower@farm.org;agro@farm.org'.,send_email to=grower@farm.org;agro@farm.org body=Alert. Email 'grower@farm.org;agro@farm.org'.
+CM06,output-1,output_id=pump1|channel=0|state=on|duration=300,,Trigger.,Trigger. Turn output pump1 CH0 (Main Pump) on for 300 seconds.,output_on_off id=pump1 state=on amount=300 channel=0
+CM07,output-1,output_id=pump1|channel=0|state=on|duration=300,state=off,Trigger.,Trigger. Turn output pump1 CH0 (Main Pump) off.,output_on_off id=pump1 state=off amount=300 channel=0
+CM08,output-1,output_id=valve2|channel=1|state=on|duration=0,,Trigger.,Trigger. Turn output valve2 CH1 (Drip Valve) on.,output_on_off id=valve2 state=on amount=0 channel=1
+CM09,output-1,,output_id=pump9,Trigger.,Trigger. Error: Output with ID 'pump9' not found.,none
+CM10,action-404,,,Trigger.,ERROR,ERROR
+CM11,email-1,,,-,ERROR,ERROR
+CM12,output-1,,,-,ERROR,ERROR

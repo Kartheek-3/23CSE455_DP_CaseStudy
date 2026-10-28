@@ -1,0 +1,45 @@
+Part 1 - files read as input
+============================
+Original code ("data/code"): https://github.com/kizniche/Mycodo.git at
+commit ee70a111c622e2a81026fd5c1553a948acf8161e (v8.17.0), read-only.
+At the time of the run the source was in Mycodo/ (now data/code/); see the header of output.txt.
+
+Prompt: Part1/llm/part1_prompt_Johan.txt (SCOPE section)
+
+Scope files, read completely (24)
+Core abstractions
+   mycodo/abstract_base_controller.py
+   mycodo/databases/__init__.py
+Sensor management
+   mycodo/inputs/base_input.py
+   mycodo/inputs/adafruit_i2c_soil.py
+   mycodo/controllers/base_controller.py
+   mycodo/controllers/controller_input.py
+   mycodo/utils/inputs.py
+Weather
+   mycodo/inputs/weather_openweathermap_weather.py
+Irrigation / outputs
+   mycodo/outputs/base_output.py
+   mycodo/outputs/pump_gpio.py
+   mycodo/outputs/on_off_gpio.py
+   mycodo/utils/outputs.py
+   mycodo/functions/base_function.py
+   mycodo/functions/bang_bang.py
+Setpoint schedules
+   mycodo/utils/method.py
+Module loading
+   mycodo/utils/modules.py
+Alerts
+   mycodo/controllers/base_conditional.py
+   mycodo/controllers/controller_conditional.py
+   mycodo/actions/base_action.py
+   mycodo/actions/email.py
+   mycodo/actions/output_on_off.py
+UI-to-daemon communication
+   mycodo/mycodo_client.py
+User management
+   mycodo/databases/models/user.py
+   mycodo/databases/models/role.py
+
+Files outside the scope were not analysed; participants defined there are marked
+"defined outside scope" in output.txt.

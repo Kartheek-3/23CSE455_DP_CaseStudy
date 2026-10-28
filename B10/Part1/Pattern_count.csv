@@ -1,0 +1,11 @@
+source_version,summary,pattern_name,count
+Original code,per_pattern,Template Method,6
+Original code,per_pattern,Strategy,1
+Original code,per_pattern,Adapter,1
+Original code,per_pattern,Proxy,1
+Original code,per_pattern,Command,1
+Original code,per_pattern,Plugin,1
+Original code,per_pattern,Layer Supertype,1
+Original code,per_pattern,Active Record,1
+Original code,total_pattern_types,,8
+Original code,total_pattern_instances,,13

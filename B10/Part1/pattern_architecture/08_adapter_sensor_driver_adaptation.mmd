@@ -1,0 +1,26 @@
+%% Adapter - "Sensor Driver Adaptation"
+%% Target AbstractInput; adapters adafruit_i2c_soil / weather_openweathermap_weather InputModule; adaptees are dependencies
+classDiagram
+    class InputController {
+        +update_measure()
+    }
+    class AbstractInput {
+        +get_measurement()
+        +value_set(chan, value, timestamp)
+    }
+    class adafruit_i2c_soil_InputModule["adafruit_i2c_soil.InputModule"]
+    adafruit_i2c_soil_InputModule : +get_measurement()
+    class weather_openweathermap_weather_InputModule["weather_openweathermap_weather.InputModule"]
+    weather_openweathermap_weather_InputModule : +get_measurement()
+    class Seesaw
+    <<dependency>> Seesaw
+    Seesaw : +moisture_read()
+    Seesaw : +get_temp()
+    class requests
+    <<dependency>> requests
+    requests : +get(url)
+    InputController --> AbstractInput
+    AbstractInput <|-- adafruit_i2c_soil_InputModule
+    AbstractInput <|-- weather_openweathermap_weather_InputModule
+    adafruit_i2c_soil_InputModule --> Seesaw : sensor
+    weather_openweathermap_weather_InputModule ..> requests : get(api_url)

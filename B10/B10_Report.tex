@@ -1,0 +1,604 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=22mm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern,tabularx,booktabs,hyperref,xcolor}
+\usepackage{graphicx,longtable,array,float,caption,url}
+\setlength{\parindent}{0pt}\setlength{\parskip}{6pt}
+\newcommand{\entry}[2]{\textbf{#1:} \textcolor{gray}{\textit{[#2]}}\par}
+\newcommand{\help}[1]{\textbf{Add:} #1\par}
+\newcommand{\field}[2]{\textbf{#1:} #2\par}
+\newcolumntype{P}[1]{>{\raggedright\arraybackslash}p{#1}}
+\begin{document}
+\begin{center}\Large\textbf{23CSE455 Design Patterns}\\[4pt]\LARGE Case Study Report\end{center}
+
+\field{Team}{B10}
+\field{Case study}{Agriculture management (sensor-driven irrigation and alerts); Python / Flask; "Design patterns in Mycodo"}
+\field{Application}{Mycodo v8.17.0 -- open-source environmental monitoring and regulation system (GPL-3.0), used as the agriculture management application}
+\field{Date}{2026-10-25}
+\textbf{Submission repository:} \href{https://github.com/aswathymohan-amrita/23CSE455_DP_CaseStudy}{23CSE455\_DP\_CaseStudy} (team folder \texttt{B10/})\par
+\textbf{Students}\par
+\begin{tabularx}{\linewidth}{@{}llX@{}}\toprule
+Roll number & Student name & Batch\\\midrule
+AM.SC.U4AIE23038 & Johan Rajesh & AIE - A\\
+AM.SC.U4AIE23003 & Aadarsh Jayan Nair & AIE - A\\
+AM.SC.U4AIE23029 & Dano Aby Alex & AIE - A\\
+AM.SC.U4AIE23140 & P Arya & AIE - B\\\bottomrule
+\end{tabularx}
+
+\section{Application and architecture}
+\field{Original source}{\url{https://github.com/kizniche/Mycodo.git}, release v8.17.0, baseline commit \texttt{ee70a111c622e2a81026fd5c1553a948acf8161e}, accessed 2026-10-11, GPL-3.0. Saved unchanged in \texttt{data/\allowbreak{}code/\allowbreak{}}.}
+\field{Environment}{Python 3.12.7 with Flask 3.1.2, Flask-SQLAlchemy 3.1.1, SQLAlchemy 2.0.45, Flask-Login 0.6.3, marshmallow-sqlalchemy 1.4.2, Pyro5 5.16, bcrypt 5.0.0, requests 2.32.5 (pins from \texttt{install/\allowbreak{}requirements.\allowbreak{}txt}); SQLite settings database and InfluxDB time-series store (mocked in our tests). Part 3: OpenJDK 21.0.2, Node.js v23.11.0, MinGW g++ 6.3.0 (\texttt{-std=c++14}). Tools: pytest 9.0.2, lizard 1.24.1. Windows 11.}
+\field{Scope}{24 files under \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}} that form the agriculture path: sensor inputs (soil moisture, weather), controller threads, irrigation outputs (pump, relay), the bang-bang irrigation function, setpoint schedules, module loading, conditional alerts and actions, the UI-to-daemon RPC client and the user/role models. Excluded: the Flask UI (\texttt{mycodo\_\allowbreak{}flask/\allowbreak{}}), the daemon server, \textasciitilde{}400 other device modules and the migrations, because they are outside the irrigation scenario or repeat the same base-class collaborations. The file list is in \texttt{README.\allowbreak{}md}.}
+\field{Architecture}{Figure 1. Mycodo is a daemon of controller threads plus a Flask web UI. Every daemon-side module (input, output, function, action) extends \texttt{AbstractBaseController}. Event flow for one soil reading: the daemon starts an \texttt{InputController} thread; \texttt{AbstractController.\allowbreak{}run} calls \texttt{initialize\_\allowbreak{}variables}, which loads the input module through \texttt{load\_\allowbreak{}module\_\allowbreak{}from\_\allowbreak{}file}; \texttt{loop} periodically calls \texttt{update\_\allowbreak{}measure} $\rightarrow$ \texttt{AbstractInput.\allowbreak{}next/\allowbreak{}read} $\rightarrow$ \texttt{adafruit\_\allowbreak{}i2c\_\allowbreak{}soil.\allowbreak{}InputModule.\allowbreak{}get\_\allowbreak{}measurement} $\rightarrow$ the Seesaw I\textsuperscript{2}C driver; the values are rescaled, converted and written to InfluxDB. The bang-bang function reads the last value and switches the pump output through \texttt{DaemonControl} (Pyro5 RPC).}
+\field{Run instructions}{\texttt{README.\allowbreak{}md} (team folder). Part 2: \texttt{cd Part2/\allowbreak{}code; python -m pytest -p no:cacheprovider -v mycodo/\allowbreak{}tests/\allowbreak{}case\_\allowbreak{}study} $\rightarrow$ 83 passed. Part 3: per-language commands in each \texttt{README.\allowbreak{}md}. All suites: \texttt{python -B data/\allowbreak{}test\_\allowbreak{}result/\allowbreak{}run\_\allowbreak{}all\_\allowbreak{}tests.\allowbreak{}py} $\rightarrow$ Part 2 83/83, 3 demos OK, Part 3 32/32 (run 2026-10-25, logs in \texttt{data/\allowbreak{}test\_\allowbreak{}result/\allowbreak{}}).}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth,height=0.42\textheight,keepaspectratio]{00_architecture.png}
+\caption*{\small Figure 1. Architecture of the inspected scope (source: \texttt{Part1/\allowbreak{}pattern\_\allowbreak{}architecture/\allowbreak{}00\_\allowbreak{}architecture.\allowbreak{}mmd}).}
+\end{figure}
+\section{Part 1 Pattern discovery}
+\field{Method}{Each member's LLM run read the 24 scope files with a fixed prompt (\texttt{Part1/\allowbreak{}llm/\allowbreak{}part1\_\allowbreak{}prompt\_\allowbreak{}\textless{}name\textgreater{}.\allowbreak{}txt}) and proposed candidates for GoF and PoEAA patterns, each with roles mapped to real symbols and line ranges. A candidate was accepted only if the collaboration (calls, inheritance, delegation) is visible in the code; names or annotations alone were not enough. A script checked that every \texttt{path:start-end} exists and lies inside its file (112 references). The team compared the result with an independent member list (29 rows: renamed or split versions of the same instances, candidates we keep as rejected or uncertain, and rows outside the 24-file scope) and kept the 13 instances below.}
+\subsection{Totals at the baseline}
+\field{Confirmed pattern types}{8: Template Method, Strategy, Adapter, Proxy, Command, Plugin, Layer Supertype, Active Record.}
+\field{Confirmed pattern instances}{13 independent collaborations (Template Method $\times$6, one of each other type).}
+\field{Concrete participant classes}{18: \texttt{adafruit\_\allowbreak{}i2c\_\allowbreak{}soil.\allowbreak{}InputModule}, \texttt{weather\_\allowbreak{}openweathermap\_\allowbreak{}weather.\allowbreak{}InputModule}, \texttt{pump\_\allowbreak{}gpio.\allowbreak{}OutputModule}, \texttt{on\_\allowbreak{}off\_\allowbreak{}gpio.\allowbreak{}OutputModule}, \texttt{bang\_\allowbreak{}bang.\allowbreak{}CustomModule}, \texttt{email.\allowbreak{}ActionModule}, \texttt{output\_\allowbreak{}on\_\allowbreak{}off.\allowbreak{}ActionModule}, \texttt{InputController}, \texttt{ConditionalController}, \texttt{DateMethod}, \texttt{DailyMethod}, \texttt{DailySineMethod}, \texttt{DailyBezierMethod}, \texttt{DurationMethod}, \texttt{CascadeMethod}, \texttt{DaemonControl}, \texttt{User}, \texttt{Role} (23 if the five abstract Layer Supertype members are included).}
+\field{Unique participant symbols}{85 = 79 in scope (27 classes, 41 methods, 7 module functions, 4 other) + 6 external (\texttt{threading.\allowbreak{}Thread}, \texttt{Seesaw}, \texttt{requests.\allowbreak{}get}, \texttt{Pyro5.\allowbreak{}api.\allowbreak{}Proxy}, \texttt{send\_\allowbreak{}email}, \texttt{db.\allowbreak{}Model}); shared symbols counted once.}
+\field{Rejected and uncertain}{23 rejected, 5 uncertain (observation scope: the 24 files only). See the table below.}
+\subsection{Pattern inventory}
+{\small\setlength{\tabcolsep}{3pt}
+\begin{longtable}{@{}P{0.17\linewidth}P{0.54\linewidth}P{0.12\linewidth}P{0.14\linewidth}@{}}\toprule
+\textbf{Pattern type} & \textbf{Instance names} & \textbf{Instances} & \textbf{Concrete classes} \\ \midrule\endhead
+Template Method & Sensor Measurement Acquisition; Module Initialization with Retry; Controller Thread Lifecycle; Output Actuation (irrigation switching); Formula Setpoint Plot Sampling; Date/Daily Setpoint Interpolation & 6 & 14 \\
+Strategy & Setpoint Schedule Calculation & 1 & 6 \\
+Adapter & Sensor Driver Adaptation & 1 & 2 \\
+Proxy & Daemon RPC Client & 1 & 1 \\
+Command & Automation/Alert Actions & 1 & 2 \\
+Plugin & Input/Output Module Loading & 1 & 4 \\
+Layer Supertype & Daemon Module Base & 1 & 5 \\
+Active Record & User and Role Persistence & 1 & 2 \\
+\bottomrule\end{longtable}}
+Concrete classes are counted per instance (a class can take part in several instances, so the column sum is larger than the 18 distinct classes in 2.1). For Layer Supertype the five abstract layer members are counted.\par
+\subsubsection*{Rejected and uncertain candidates}
+{\small\setlength{\tabcolsep}{3pt}
+\begin{longtable}{@{}P{0.29\linewidth}P{0.12\linewidth}P{0.56\linewidth}@{}}\toprule
+\textbf{Candidate} & \textbf{Result} & \textbf{Reason} \\ \midrule\endhead
+Observer -- output trigger notification & Uncertain & Subscribers are DB rows selected by query; no attach/detach and no observer objects; delivery delegated to the out-of-scope daemon. \\
+Composite -- cascade setpoint methods & Uncertain & Recursive \texttt{calculate\_\allowbreak{}setpoint}, but children are reloaded by id, no child management, \texttt{isinstance} breaks transparency. \\
+Mediator -- daemon as coordinator & Uncertain & All modules talk through \texttt{DaemonControl}, but the daemon is outside scope. \\
+Plugin / Template Method -- user Conditional code & Uncertain & \texttt{ConditionalRun} is generated outside scope; inheritance from \texttt{AbstractConditional} cannot be verified. \\
+Adapter -- outputs over RPi.GPIO & Uncertain & Procedural GPIO module; the translating methods are already the Output Actuation primitives. \\
+Singleton & Rejected & DaemonControl() is constructed in 6 places; nothing controls instantiation. \\
+Factory Method & Rejected & \texttt{create\_\allowbreak{}method\_\allowbreak{}handler} is a plain function; no creator hierarchy (counted inside Strategy / Plugin). \\
+Prototype & Rejected & \texttt{clone\_\allowbreak{}model} is a reflective helper with no caller in scope. \\
+Facade & Rejected & \texttt{DaemonControl} forwards 1:1 to one remote object (counted as Proxy). \\
+Decorator (baseline) & Rejected & Only Python \texttt{@property} / \texttt{@staticmethod} language decorators. \\
+Iterator & Rejected & \texttt{\_\allowbreak{}\_\allowbreak{}next\_\allowbreak{}\_\allowbreak{}} returns a fresh reading; no aggregate is traversed. \\
+Repository & Rejected & ORM queries are inline in callers; no repository abstraction. \\
+MVC & Rejected & Only models are in scope. \\
+Chain of Responsibility & Rejected & Every action handles the request; no successor link. \\
+State & Rejected & Output state is dicts/flags and an if/elif on a string. \\
+Strategy -- bang-bang direction / rescale method & Rejected & Conditional branches on strings, not objects. \\
+Strategy -- InputController.measure\_input & Rejected & Already counted in Template Method, Adapter and Plugin. \\
+Template Method on plain overrides & Rejected & Constructors / full overrides with no base skeleton. \\
+Command -- CLI dispatch & Rejected & If/elif over argparse flags; no request objects. \\
+Null Object -- AbstractMethod fallback & Rejected & Part of the Strategy collaboration. \\
+Broker & Rejected & Same collaboration as Proxy; broker side outside scope. \\
+Unit of Work & Rejected & \texttt{session\_\allowbreak{}scope} is defined outside scope. \\
+Virtual Proxy / Lazy Load & Rejected & \texttt{measurements} lazily calls \texttt{read()} on the same object. \\
+Framework hook -- UserMixin & Rejected & No hooks overridden in scope. \\
+DTO / Serializer -- UserSchema & Rejected & Declarative framework configuration only. \\
+Value Object -- Measurement & Rejected & Mutable holder used inside one class. \\
+Retry & Rejected & Resilience idiom; its hook collaboration is Template Method 2. \\
+GRASP principles & Rejected & Excluded: every case is already covered by a GoF / architectural instance. \\
+\bottomrule\end{longtable}}
+\subsection{One record for each pattern instance}
+\subsubsection{Sensor Measurement Acquisition}
+\field{Instance name}{Sensor Measurement Acquisition}
+\field{Pattern type and category}{Template Method -- GoF Behavioral}
+\field{Purpose and origin}{application code (GoF Behavioral).}
+\textbf{Participant mapping}\par
+{\small\setlength{\tabcolsep}{3pt}
+\begin{longtable}{@{}P{0.21\linewidth}P{0.37\linewidth}P{0.39\linewidth}@{}}\toprule
+\textbf{Pattern role} & \textbf{Actual class / function} & \textbf{File and line range} \\ \midrule\endhead
+AbstractClass & \texttt{AbstractInput} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}inputs/\allowbreak{}base\_\allowbreak{}input.\allowbreak{}py:18-271} \\
+TemplateMethod & \texttt{AbstractInput.\allowbreak{}read} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}inputs/\allowbreak{}base\_\allowbreak{}input.\allowbreak{}py:115-146} \\
+TemplateMethodEntry & \texttt{AbstractInput.\allowbreak{}next} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}inputs/\allowbreak{}base\_\allowbreak{}input.\allowbreak{}py:88-92} \\
+PrimitiveOperation & \texttt{AbstractInput.\allowbreak{}get\_\allowbreak{}measurement} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}inputs/\allowbreak{}base\_\allowbreak{}input.\allowbreak{}py:108-113} \\
+ConcreteClass & \texttt{adafruit\_\allowbreak{}i2c\_\allowbreak{}soil.\allowbreak{}InputModule} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}inputs/\allowbreak{}adafruit\_\allowbreak{}i2c\_\allowbreak{}soil.\allowbreak{}py:50-84} \\
+ConcreteClass & \texttt{weather\_\allowbreak{}openweathermap\_\allowbreak{}weather.\allowbreak{}InputModule} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}inputs/\allowbreak{}weather\_\allowbreak{}openweathermap\_\allowbreak{}weather.\allowbreak{}py:82-146} \\
+Client & \texttt{InputController.\allowbreak{}update\_\allowbreak{}measure} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}controllers/\allowbreak{}controller\_\allowbreak{}input.\allowbreak{}py:345-393} \\
+\bottomrule\end{longtable}}
+\field{Evidence}{Fixed sensor-reading algorithm with a device-specific step: read() resets the cache, calls the abstract get\_measurement() (base\_input.py:123), classifies TimeoutError/IOError/other errors and returns 1 on failure (126-146); next() turns failure into StopIteration (90-91). The soil sensor (adafruit\_i2c\_soil.py:71-84) and weather input (weather\_openweathermap\_weather.py:102-146) override only get\_measurement; InputController.update\_measure calls measure\_input.next() (controller\_input.py:361).}
+\field{Diagram}{\texttt{Part1/\allowbreak{}pattern\_\allowbreak{}architecture/\allowbreak{}01\_\allowbreak{}template\_\allowbreak{}method\_\allowbreak{}sensor\_\allowbreak{}measurement\_\allowbreak{}acquisition.\allowbreak{}mmd} (editable Mermaid) and \texttt{.\allowbreak{}png} (Figure 2).}
+\field{Verification}{Confirmed; verified by Team B10. Roles and line ranges were checked against \texttt{data/\allowbreak{}code/\allowbreak{}} (script check of every range plus manual reading of the calls). Strategy was considered and rejected: the variation is supplied by subclass overrides called from a fixed base-class skeleton, not by an exchangeable object.}
+\begin{figure}[H]\centering
+\includegraphics[width=0.62\linewidth,height=0.42\textheight,keepaspectratio]{01_template_method_sensor_measurement_acquisition.png}
+\caption*{\small Figure 2. Template Method -- Sensor Measurement Acquisition.}
+\end{figure}
+\subsubsection{Module Initialization with Retry}
+\field{Instance name}{Module Initialization with Retry}
+\field{Pattern type and category}{Template Method -- GoF Behavioral}
+\field{Purpose and origin}{application code (GoF Behavioral).}
+\textbf{Participant mapping}\par
+{\small\setlength{\tabcolsep}{3pt}
+\begin{longtable}{@{}P{0.21\linewidth}P{0.37\linewidth}P{0.39\linewidth}@{}}\toprule
+\textbf{Pattern role} & \textbf{Actual class / function} & \textbf{File and line range} \\ \midrule\endhead
+AbstractClass & \texttt{AbstractBaseController} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}abstract\_\allowbreak{}base\_\allowbreak{}controller.\allowbreak{}py:35-543} \\
+TemplateMethod & \texttt{AbstractBaseController.\allowbreak{}try\_\allowbreak{}initialize} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}abstract\_\allowbreak{}base\_\allowbreak{}controller.\allowbreak{}py:52-65} \\
+PrimitiveOperation & \texttt{AbstractBaseController.\allowbreak{}initialize (default no-op hook)} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}abstract\_\allowbreak{}base\_\allowbreak{}controller.\allowbreak{}py:49-50} \\
+PrimitiveOperation & \texttt{AbstractInput.\allowbreak{}initialize (abstract redeclaration)} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}inputs/\allowbreak{}base\_\allowbreak{}input.\allowbreak{}py:101-106} \\
+PrimitiveOperation & \texttt{AbstractFunction.\allowbreak{}initialize (abstract redeclaration)} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}functions/\allowbreak{}base\_\allowbreak{}function.\allowbreak{}py:57-62} \\
+PrimitiveOperation & \texttt{AbstractFunctionAction.\allowbreak{}initialize (abstract redeclaration)} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}actions/\allowbreak{}base\_\allowbreak{}action.\allowbreak{}py:70-75} \\
+ConcreteClass & \texttt{adafruit\_\allowbreak{}i2c\_\allowbreak{}soil.\allowbreak{}InputModule} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}inputs/\allowbreak{}adafruit\_\allowbreak{}i2c\_\allowbreak{}soil.\allowbreak{}py:50-84} \\
+ConcreteClass & \texttt{weather\_\allowbreak{}openweathermap\_\allowbreak{}weather.\allowbreak{}InputModule} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}inputs/\allowbreak{}weather\_\allowbreak{}openweathermap\_\allowbreak{}weather.\allowbreak{}py:82-146} \\
+ConcreteClass & \texttt{bang\_\allowbreak{}bang.\allowbreak{}CustomModule} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}functions/\allowbreak{}bang\_\allowbreak{}bang.\allowbreak{}py:110-213} \\
+ConcreteClass & \texttt{email.\allowbreak{}ActionModule} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}actions/\allowbreak{}email.\allowbreak{}py:41-98} \\
+ConcreteClass & \texttt{output\_\allowbreak{}on\_\allowbreak{}off.\allowbreak{}ActionModule} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}actions/\allowbreak{}output\_\allowbreak{}on\_\allowbreak{}off.\allowbreak{}py:68-139} \\
+\bottomrule\end{longtable}}
+\field{Evidence}{Retry skeleton for fragile hardware/service set-up: try\_initialize loops tries times calling the polymorphic self.initialize() and sleeps wait\_sec on exceptions without propagating them (abstract\_base\_controller.py:54-65). Concrete modules call self.try\_initialize() from their constructors (adafruit\_i2c\_soil.py:58; weather\_openweathermap\_weather.py:94; bang\_bang.py:142; email.py:54; output\_on\_off.py:84) and override only initialize().}
+\field{Diagram}{\texttt{Part1/\allowbreak{}pattern\_\allowbreak{}architecture/\allowbreak{}02\_\allowbreak{}template\_\allowbreak{}method\_\allowbreak{}module\_\allowbreak{}initialization\_\allowbreak{}with\_\allowbreak{}retry.\allowbreak{}mmd} (editable Mermaid) and \texttt{.\allowbreak{}png} (Figure 3).}
+\field{Verification}{Confirmed; verified by Team B10. Roles and line ranges were checked against \texttt{data/\allowbreak{}code/\allowbreak{}} (script check of every range plus manual reading of the calls). Strategy was considered and rejected: the variation is supplied by subclass overrides called from a fixed base-class skeleton, not by an exchangeable object.}
+\begin{figure}[H]\centering
+\includegraphics[width=0.95\linewidth,height=0.42\textheight,keepaspectratio]{02_template_method_module_initialization_with_retry.png}
+\caption*{\small Figure 3. Template Method -- Module Initialization with Retry.}
+\end{figure}
+\subsubsection{Controller Thread Lifecycle}
+\field{Instance name}{Controller Thread Lifecycle}
+\field{Pattern type and category}{Template Method -- GoF Behavioral}
+\field{Purpose and origin}{application code (GoF Behavioral).}
+\textbf{Participant mapping}\par
+{\small\setlength{\tabcolsep}{3pt}
+\begin{longtable}{@{}P{0.21\linewidth}P{0.37\linewidth}P{0.39\linewidth}@{}}\toprule
+\textbf{Pattern role} & \textbf{Actual class / function} & \textbf{File and line range} \\ \midrule\endhead
+AbstractClass & \texttt{AbstractController} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}controllers/\allowbreak{}base\_\allowbreak{}controller.\allowbreak{}py:20-129} \\
+TemplateMethod & \texttt{AbstractController.\allowbreak{}run (overrides threading.\allowbreak{}Thread.\allowbreak{}run)} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}controllers/\allowbreak{}base\_\allowbreak{}controller.\allowbreak{}py:69-99} \\
+TemplateMethod & \texttt{AbstractController.\allowbreak{}stop\_\allowbreak{}controller} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}controllers/\allowbreak{}base\_\allowbreak{}controller.\allowbreak{}py:104-107} \\
+PrimitiveOperation & \texttt{AbstractController.\allowbreak{}initialize\_\allowbreak{}variables} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}controllers/\allowbreak{}base\_\allowbreak{}controller.\allowbreak{}py:45-49} \\
+PrimitiveOperation & \texttt{AbstractController.\allowbreak{}loop} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}controllers/\allowbreak{}base\_\allowbreak{}controller.\allowbreak{}py:51-55} \\
+Hook & \texttt{AbstractController.\allowbreak{}run\_\allowbreak{}finally} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}controllers/\allowbreak{}base\_\allowbreak{}controller.\allowbreak{}py:57-59} \\
+Hook & \texttt{AbstractController.\allowbreak{}pre\_\allowbreak{}stop} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}controllers/\allowbreak{}base\_\allowbreak{}controller.\allowbreak{}py:61-63} \\
+ConcreteClass & \texttt{InputController} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}controllers/\allowbreak{}controller\_\allowbreak{}input.\allowbreak{}py:65-462} \\
+ConcreteClass & \texttt{ConditionalController} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}controllers/\allowbreak{}controller\_\allowbreak{}conditional.\allowbreak{}py:41-197} \\
+FrameworkCaller & \texttt{threading.\allowbreak{}Thread (Python standard library, defined outside scope)} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}controllers/\allowbreak{}controller\_\allowbreak{}input.\allowbreak{}py:65-70} \\
+\bottomrule\end{longtable}}
+\field{Evidence}{Invariant controller-thread lifecycle: run() calls initialize\_variables() (base\_controller.py:72), loops loop() while running with per-iteration error isolation and sleep(sample\_rate) (79-87) and always calls run\_finally() (93); stop\_controller() calls pre\_stop() (106). InputController and ConditionalController inherit (AbstractController, threading.Thread) so run() is the application override of the stdlib Thread.run hook; they override loop/initialize\_variables (controller\_input.py:129-343; controller\_conditional.py:73-147).}
+\field{Diagram}{\texttt{Part1/\allowbreak{}pattern\_\allowbreak{}architecture/\allowbreak{}03\_\allowbreak{}template\_\allowbreak{}method\_\allowbreak{}controller\_\allowbreak{}thread\_\allowbreak{}lifecycle.\allowbreak{}mmd} (editable Mermaid) and \texttt{.\allowbreak{}png} (Figure 4).}
+\field{Verification}{Confirmed; verified by Team B10. Roles and line ranges were checked against \texttt{data/\allowbreak{}code/\allowbreak{}} (script check of every range plus manual reading of the calls). Strategy was considered and rejected: the variation is supplied by subclass overrides called from a fixed base-class skeleton, not by an exchangeable object.}
+\begin{figure}[H]\centering
+\includegraphics[width=0.62\linewidth,height=0.42\textheight,keepaspectratio]{03_template_method_controller_thread_lifecycle.png}
+\caption*{\small Figure 4. Template Method -- Controller Thread Lifecycle.}
+\end{figure}
+\subsubsection{Output Actuation (irrigation switching)}
+\field{Instance name}{Output Actuation (irrigation switching)}
+\field{Pattern type and category}{Template Method -- GoF Behavioral}
+\field{Purpose and origin}{application code (GoF Behavioral).}
+\textbf{Participant mapping}\par
+{\small\setlength{\tabcolsep}{3pt}
+\begin{longtable}{@{}P{0.29\linewidth}P{0.68\linewidth}@{}}\toprule
+\textbf{Pattern role} & \textbf{Actual class / function} \\ \midrule\endhead
+AbstractClass & \texttt{AbstractOutput} \\
+TemplateMethod & \texttt{AbstractOutput.\allowbreak{}output\_\allowbreak{}on\_\allowbreak{}off} \\
+PrimitiveOperation & \texttt{AbstractOutput.\allowbreak{}output\_\allowbreak{}switch} \\
+PrimitiveOperation & \texttt{AbstractOutput.\allowbreak{}is\_\allowbreak{}on} \\
+PrimitiveOperation & \texttt{AbstractOutput.\allowbreak{}is\_\allowbreak{}setup} \\
+ConcreteClass & \texttt{pump\_\allowbreak{}gpio.\allowbreak{}OutputModule} \\
+ConcreteClass & \texttt{on\_\allowbreak{}off\_\allowbreak{}gpio.\allowbreak{}OutputModule} \\
+Client & \texttt{defined outside scope} \\
+\bottomrule\end{longtable}}
+\textbf{Source locations:} \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}outputs/\allowbreak{}base\_\allowbreak{}output.\allowbreak{}py:30-641}; \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}outputs/\allowbreak{}base\_\allowbreak{}output.\allowbreak{}py:164-455}; \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}outputs/\allowbreak{}base\_\allowbreak{}output.\allowbreak{}py:81-86}; \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}outputs/\allowbreak{}base\_\allowbreak{}output.\allowbreak{}py:88-93}; \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}outputs/\allowbreak{}base\_\allowbreak{}output.\allowbreak{}py:95-100}; \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}outputs/\allowbreak{}pump\_\allowbreak{}gpio.\allowbreak{}py:145-353}; \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}outputs/\allowbreak{}on\_\allowbreak{}off\_\allowbreak{}gpio.\allowbreak{}py:113-200}\par
+\field{Evidence}{Shared irrigation switching policy (state normalisation, channel/setup validation, min-off lock-out, duration bookkeeping, duration logging, trigger firing) in output\_on\_off, which calls the abstract is\_on (base\_output.py:209), is\_setup (218) and output\_switch (258, 343, 378, 390) and finally check\_triggers (450). The peristaltic pump (pump\_gpio.py:258-353) and GPIO relay (on\_off\_gpio.py:168-191) override only these primitive operations.}
+\field{Diagram}{\texttt{Part1/\allowbreak{}pattern\_\allowbreak{}architecture/\allowbreak{}04\_\allowbreak{}template\_\allowbreak{}method\_\allowbreak{}output\_\allowbreak{}actuation.\allowbreak{}mmd} (editable Mermaid) and \texttt{.\allowbreak{}png} (Figure 5).}
+\field{Verification}{Confirmed; verified by Team B10. Roles and line ranges were checked against \texttt{data/\allowbreak{}code/\allowbreak{}} (script check of every range plus manual reading of the calls). Strategy was considered and rejected: the variation is supplied by subclass overrides called from a fixed base-class skeleton, not by an exchangeable object.}
+\begin{figure}[H]\centering
+\includegraphics[width=0.95\linewidth,height=0.42\textheight,keepaspectratio]{04_template_method_output_actuation.png}
+\caption*{\small Figure 5. Template Method -- Output Actuation (irrigation switching).}
+\end{figure}
+\subsubsection{Formula Setpoint Plot Sampling}
+\field{Instance name}{Formula Setpoint Plot Sampling}
+\field{Pattern type and category}{Template Method -- GoF Behavioral}
+\field{Purpose and origin}{application code (GoF Behavioral).}
+\textbf{Participant mapping}\par
+{\small\setlength{\tabcolsep}{3pt}
+\begin{longtable}{@{}P{0.21\linewidth}P{0.37\linewidth}P{0.39\linewidth}@{}}\toprule
+\textbf{Pattern role} & \textbf{Actual class / function} & \textbf{File and line range} \\ \midrule\endhead
+AbstractClass & \texttt{AbstractDailyFormulaMethod} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}utils/\allowbreak{}method.\allowbreak{}py:199-217} \\
+TemplateMethod & \texttt{AbstractDailyFormulaMethod.\allowbreak{}get\_\allowbreak{}plot} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}utils/\allowbreak{}method.\allowbreak{}py:205-217} \\
+PrimitiveOperation & \texttt{AbstractMethod.\allowbreak{}calculate\_\allowbreak{}setpoint} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}utils/\allowbreak{}method.\allowbreak{}py:57-64} \\
+ConcreteClass & \texttt{DailySineMethod} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}utils/\allowbreak{}method.\allowbreak{}py:220-239} \\
+ConcreteClass & \texttt{DailyBezierMethod} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}utils/\allowbreak{}method.\allowbreak{}py:242-258} \\
+\bottomrule\end{longtable}}
+\field{Evidence}{get\_plot samples max\_points\_x instants across a day and calls the polymorphic self.calculate\_setpoint(now) for each, appending only non-ended points (method.py:210-215); DailySineMethod (227-239) and DailyBezierMethod (243-258) override only calculate\_setpoint, delegating to sine\_wave\_y\_out / bezier\_curve\_y\_out.}
+\field{Diagram}{\texttt{Part1/\allowbreak{}pattern\_\allowbreak{}architecture/\allowbreak{}05\_\allowbreak{}template\_\allowbreak{}method\_\allowbreak{}formula\_\allowbreak{}setpoint\_\allowbreak{}plot\_\allowbreak{}sampling.\allowbreak{}mmd} (editable Mermaid) and \texttt{.\allowbreak{}png} (Figure 6).}
+\field{Verification}{Confirmed; verified by Team B10. Roles and line ranges were checked against \texttt{data/\allowbreak{}code/\allowbreak{}} (script check of every range plus manual reading of the calls). Strategy was considered and rejected: the variation is supplied by subclass overrides called from a fixed base-class skeleton, not by an exchangeable object.}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth,height=0.42\textheight,keepaspectratio]{05_template_method_formula_setpoint_plot_sampling.png}
+\caption*{\small Figure 6. Template Method -- Formula Setpoint Plot Sampling.}
+\end{figure}
+\subsubsection{Date/Daily Setpoint Interpolation}
+\field{Instance name}{Date/Daily Setpoint Interpolation}
+\field{Pattern type and category}{Template Method -- GoF Behavioral}
+\field{Purpose and origin}{application code (GoF Behavioral).}
+\textbf{Participant mapping}\par
+{\small\setlength{\tabcolsep}{3pt}
+\begin{longtable}{@{}P{0.21\linewidth}P{0.37\linewidth}P{0.39\linewidth}@{}}\toprule
+\textbf{Pattern role} & \textbf{Actual class / function} & \textbf{File and line range} \\ \midrule\endhead
+AbstractClass & \texttt{DateMethod (also a ConcreteClass providing the default hook)} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}utils/\allowbreak{}method.\allowbreak{}py:75-162} \\
+TemplateMethod & \texttt{DateMethod.\allowbreak{}calculate\_\allowbreak{}setpoint} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}utils/\allowbreak{}method.\allowbreak{}py:87-135} \\
+Hook & \texttt{DateMethod.\allowbreak{}ignore\_\allowbreak{}date} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}utils/\allowbreak{}method.\allowbreak{}py:81-85} \\
+ConcreteClass & \texttt{DailyMethod} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}utils/\allowbreak{}method.\allowbreak{}py:165-196} \\
+\bottomrule\end{longtable}}
+\field{Evidence}{DateMethod.calculate\_setpoint interpolates the setpoint between row start/end and consults the hook self.ignore\_date() to choose time parsing and logging (method.py:90-99, 119); DailyMethod overrides only the hook to return True (172-176) and thereby reuses the whole interpolation as a daily repeating schedule.}
+\field{Diagram}{\texttt{Part1/\allowbreak{}pattern\_\allowbreak{}architecture/\allowbreak{}06\_\allowbreak{}template\_\allowbreak{}method\_\allowbreak{}date\_\allowbreak{}daily\_\allowbreak{}setpoint\_\allowbreak{}interpolation.\allowbreak{}mmd} (editable Mermaid) and \texttt{.\allowbreak{}png} (Figure 7).}
+\field{Verification}{Confirmed; verified by Team B10. Roles and line ranges were checked against \texttt{data/\allowbreak{}code/\allowbreak{}} (script check of every range plus manual reading of the calls). Strategy was considered and rejected: the variation is supplied by subclass overrides called from a fixed base-class skeleton, not by an exchangeable object.}
+\begin{figure}[H]\centering
+\includegraphics[width=0.42\linewidth,height=0.42\textheight,keepaspectratio]{06_template_method_date_daily_setpoint_interpolation.png}
+\caption*{\small Figure 7. Template Method -- Date/Daily Setpoint Interpolation.}
+\end{figure}
+\subsubsection{Setpoint Schedule Calculation}
+\field{Instance name}{Setpoint Schedule Calculation}
+\field{Pattern type and category}{Strategy -- GoF Behavioral}
+\field{Purpose and origin}{application code (GoF Behavioral).}
+\textbf{Participant mapping}\par
+{\small\setlength{\tabcolsep}{3pt}
+\begin{longtable}{@{}P{0.21\linewidth}P{0.37\linewidth}P{0.39\linewidth}@{}}\toprule
+\textbf{Pattern role} & \textbf{Actual class / function} & \textbf{File and line range} \\ \midrule\endhead
+Strategy & \texttt{AbstractMethod} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}utils/\allowbreak{}method.\allowbreak{}py:22-72} \\
+StrategyOperation & \texttt{AbstractMethod.\allowbreak{}calculate\_\allowbreak{}setpoint} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}utils/\allowbreak{}method.\allowbreak{}py:57-64} \\
+ConcreteStrategy & \texttt{DateMethod} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}utils/\allowbreak{}method.\allowbreak{}py:75-162} \\
+ConcreteStrategy & \texttt{DailyMethod} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}utils/\allowbreak{}method.\allowbreak{}py:165-196} \\
+ConcreteStrategy & \texttt{DailySineMethod} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}utils/\allowbreak{}method.\allowbreak{}py:220-239} \\
+ConcreteStrategy & \texttt{DailyBezierMethod} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}utils/\allowbreak{}method.\allowbreak{}py:242-258} \\
+ConcreteStrategy & \texttt{DurationMethod} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}utils/\allowbreak{}method.\allowbreak{}py:261-378} \\
+ConcreteStrategy & \texttt{CascadeMethod} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}utils/\allowbreak{}method.\allowbreak{}py:381-428} \\
+StrategySelector & \texttt{create\_\allowbreak{}method\_\allowbreak{}handler} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}utils/\allowbreak{}method.\allowbreak{}py:431-441} \\
+StrategySelector & \texttt{load\_\allowbreak{}method\_\allowbreak{}handler} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}utils/\allowbreak{}method.\allowbreak{}py:444-455} \\
+Context & \texttt{CascadeMethod.\allowbreak{}calculate\_\allowbreak{}setpoint (in-scope client, other contexts defined outside scope)} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}utils/\allowbreak{}method.\allowbreak{}py:383-428} \\
+\bottomrule\end{longtable}}
+\field{Evidence}{Interchangeable setpoint-schedule algorithms selected at run time from the stored method\_type: create\_method\_handler maps the type name to an AbstractMethod subclass and instantiates it, falling back to the neutral AbstractMethod (method.py:436-441); CascadeMethod obtains linked strategies via load\_method\_handler and calls calculate\_setpoint on them without knowing their class (402, 413-417); DurationMethod also overrides determine\_end\_time (337-349).}
+\field{Diagram}{\texttt{Part1/\allowbreak{}pattern\_\allowbreak{}architecture/\allowbreak{}07\_\allowbreak{}strategy\_\allowbreak{}setpoint\_\allowbreak{}schedule\_\allowbreak{}calculation.\allowbreak{}mmd} (editable Mermaid) and \texttt{.\allowbreak{}png} (Figure 8).}
+\field{Verification}{Confirmed; verified by Team B10. Roles and line ranges were checked against \texttt{data/\allowbreak{}code/\allowbreak{}} (script check of every range plus manual reading of the calls). Factory Method and Null Object were rejected as separate instances (the selector and fallback belong to this collaboration); Composite for CascadeMethod is uncertain.}
+\begin{figure}[H]\centering
+\includegraphics[width=0.62\linewidth,height=0.42\textheight,keepaspectratio]{07_strategy_setpoint_schedule_calculation.png}
+\caption*{\small Figure 8. Strategy -- Setpoint Schedule Calculation.}
+\end{figure}
+\subsubsection{Sensor Driver Adaptation}
+\field{Instance name}{Sensor Driver Adaptation}
+\field{Pattern type and category}{Adapter -- GoF Structural}
+\field{Purpose and origin}{application code wrapping a dependency (GoF Structural).}
+\textbf{Participant mapping}\par
+{\small\setlength{\tabcolsep}{3pt}
+\begin{longtable}{@{}P{0.21\linewidth}P{0.37\linewidth}P{0.39\linewidth}@{}}\toprule
+\textbf{Pattern role} & \textbf{Actual class / function} & \textbf{File and line range} \\ \midrule\endhead
+Target & \texttt{AbstractInput} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}inputs/\allowbreak{}base\_\allowbreak{}input.\allowbreak{}py:18-271} \\
+Adapter & \texttt{adafruit\_\allowbreak{}i2c\_\allowbreak{}soil.\allowbreak{}InputModule} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}inputs/\allowbreak{}adafruit\_\allowbreak{}i2c\_\allowbreak{}soil.\allowbreak{}py:50-84} \\
+Adaptee & \texttt{adafruit\_\allowbreak{}seesaw.\allowbreak{}seesaw.\allowbreak{}Seesaw (dependency, defined outside scope, use site)} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}inputs/\allowbreak{}adafruit\_\allowbreak{}i2c\_\allowbreak{}soil.\allowbreak{}py:61-67} \\
+Adapter & \texttt{weather\_\allowbreak{}openweathermap\_\allowbreak{}weather.\allowbreak{}InputModule} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}inputs/\allowbreak{}weather\_\allowbreak{}openweathermap\_\allowbreak{}weather.\allowbreak{}py:82-146} \\
+Adaptee & \texttt{OpenWeatherMap HTTP API via requests.\allowbreak{}get (dependency, defined outside scope, use site)} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}inputs/\allowbreak{}weather\_\allowbreak{}openweathermap\_\allowbreak{}weather.\allowbreak{}py:111-112} \\
+Client & \texttt{InputController.\allowbreak{}update\_\allowbreak{}measure} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}controllers/\allowbreak{}controller\_\allowbreak{}input.\allowbreak{}py:345-393} \\
+\bottomrule\end{longtable}}
+\field{Evidence}{Input modules wrap foreign interfaces behind the AbstractInput get\_measurement() contract: the soil module holds a Seesaw driver in self.sensor (adafruit\_i2c\_soil.py:65-67) and translates moisture\_read()/get\_temp() into channel values (79, 82); the weather module translates the OpenWeatherMap JSON from requests.get (weather\_openweathermap\_weather.py:111-120) into the same channel dict (131-144). InputController uses both only through AbstractInput (controller\_input.py:313, 361).}
+\field{Diagram}{\texttt{Part1/\allowbreak{}pattern\_\allowbreak{}architecture/\allowbreak{}08\_\allowbreak{}adapter\_\allowbreak{}sensor\_\allowbreak{}driver\_\allowbreak{}adaptation.\allowbreak{}mmd} (editable Mermaid) and \texttt{.\allowbreak{}png} (Figure 9).}
+\field{Verification}{Confirmed; verified by Team B10. Roles and line ranges were checked against \texttt{data/\allowbreak{}code/\allowbreak{}} (script check of every range plus manual reading of the calls). Overlaps with Template Method 1 (the same \texttt{get\_\allowbreak{}measurement} is a primitive operation); counted separately because the defining relation is translation to a foreign interface.}
+\begin{figure}[H]\centering
+\includegraphics[width=0.62\linewidth,height=0.42\textheight,keepaspectratio]{08_adapter_sensor_driver_adaptation.png}
+\caption*{\small Figure 9. Adapter -- Sensor Driver Adaptation.}
+\end{figure}
+\subsubsection{Daemon RPC Client}
+\field{Instance name}{Daemon RPC Client}
+\field{Pattern type and category}{Proxy -- GoF Structural}
+\field{Purpose and origin}{application code wrapping the Pyro5 dependency (GoF Structural).}
+\textbf{Participant mapping}\par
+{\small\setlength{\tabcolsep}{3pt}
+\begin{longtable}{@{}P{0.29\linewidth}P{0.68\linewidth}@{}}\toprule
+\textbf{Pattern role} & \textbf{Actual class / function} \\ \midrule\endhead
+Proxy & \texttt{DaemonControl} \\
+ProxyConnection & \texttt{DaemonControl.\allowbreak{}proxy} \\
+WrappedRemoteProxy & \texttt{Pyro5.\allowbreak{}api.\allowbreak{}Proxy (dependency, defined outside scope, import site)} \\
+Client & \texttt{bang\_\allowbreak{}bang.\allowbreak{}CustomModule.\allowbreak{}loop} \\
+Client & \texttt{InputController.\allowbreak{}loop} \\
+Client & \texttt{AbstractConditional.\allowbreak{}run\_\allowbreak{}action} \\
+Client & \texttt{AbstractOutput.\allowbreak{}check\_\allowbreak{}triggers} \\
+Client & \texttt{daemon\_\allowbreak{}active} \\
+Subject & \texttt{not separately declared} \\
+RealSubject & \texttt{daemon object at PYRO\_\allowbreak{}URI (defined outside scope)} \\
+\bottomrule\end{longtable}}
+\textbf{Source locations:} \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}mycodo\_\allowbreak{}client.\allowbreak{}py:50-292}; \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}mycodo\_\allowbreak{}client.\allowbreak{}py:65-74}; \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}mycodo\_\allowbreak{}client.\allowbreak{}py:32-32}; \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}functions/\allowbreak{}bang\_\allowbreak{}bang.\allowbreak{}py:161-210}; \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}controllers/\allowbreak{}controller\_\allowbreak{}input.\allowbreak{}py:129-238}; \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}controllers/\allowbreak{}base\_\allowbreak{}conditional.\allowbreak{}py:40-64}; \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}outputs/\allowbreak{}base\_\allowbreak{}output.\allowbreak{}py:457-585}; \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}mycodo\_\allowbreak{}client.\allowbreak{}py:294-302}\par
+\field{Evidence}{Local stand-in for the remote daemon: DaemonControl.proxy() builds a Pyro5 Proxy with the configured URI and timeout (mycodo\_client.py:65-74) and each method forwards under the same name (e.g. 126, 200-201); check\_daemon adds timeout control and error translation (80-107). Daemon-side modules hold it as self.control and call it like a local object (bang\_bang.py:118, 177, 195-197; controller\_input.py:77, 166-171; base\_conditional.py:33, 60-61; base\_output.py:43, 540-541).}
+\field{Diagram}{\texttt{Part1/\allowbreak{}pattern\_\allowbreak{}architecture/\allowbreak{}09\_\allowbreak{}proxy\_\allowbreak{}daemon\_\allowbreak{}rpc\_\allowbreak{}client.\allowbreak{}mmd} (editable Mermaid) and \texttt{.\allowbreak{}png} (Figure 10).}
+\field{Verification}{Confirmed; verified by Team B10. Roles and line ranges were checked against \texttt{data/\allowbreak{}code/\allowbreak{}} (script check of every range plus manual reading of the calls). Facade and Broker were rejected (single remote subject; broker side outside scope).}
+\begin{figure}[H]\centering
+\includegraphics[width=0.95\linewidth,height=0.42\textheight,keepaspectratio]{09_proxy_daemon_rpc_client.png}
+\caption*{\small Figure 10. Proxy -- Daemon RPC Client.}
+\end{figure}
+\subsubsection{Automation/Alert Actions}
+\field{Instance name}{Automation/Alert Actions}
+\field{Pattern type and category}{Command -- GoF Behavioral}
+\field{Purpose and origin}{application code (GoF Behavioral).}
+\textbf{Participant mapping}\par
+{\small\setlength{\tabcolsep}{3pt}
+\begin{longtable}{@{}P{0.29\linewidth}P{0.68\linewidth}@{}}\toprule
+\textbf{Pattern role} & \textbf{Actual class / function} \\ \midrule\endhead
+Command & \texttt{AbstractFunctionAction} \\
+Execute & \texttt{AbstractFunctionAction.\allowbreak{}run\_\allowbreak{}action} \\
+ConcreteCommand & \texttt{email.\allowbreak{}ActionModule} \\
+ConcreteCommand & \texttt{output\_\allowbreak{}on\_\allowbreak{}off.\allowbreak{}ActionModule} \\
+Receiver & \texttt{send\_\allowbreak{}email (defined outside scope, call site)} \\
+Receiver & \texttt{DaemonControl.\allowbreak{}output\_\allowbreak{}on\_\allowbreak{}off} \\
+Client & \texttt{AbstractConditional.\allowbreak{}run\_\allowbreak{}action} \\
+Client & \texttt{AbstractOutput.\allowbreak{}check\_\allowbreak{}triggers} \\
+RequestChannel & \texttt{DaemonControl.\allowbreak{}trigger\_\allowbreak{}action} \\
+RequestChannel & \texttt{DaemonControl.\allowbreak{}trigger\_\allowbreak{}all\_\allowbreak{}actions} \\
+Invoker & \texttt{defined outside scope} \\
+\bottomrule\end{longtable}}
+\textbf{Source locations:} \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}actions/\allowbreak{}base\_\allowbreak{}action.\allowbreak{}py:25-114}; \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}actions/\allowbreak{}base\_\allowbreak{}action.\allowbreak{}py:77-79}; \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}actions/\allowbreak{}email.\allowbreak{}py:41-98}; \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}actions/\allowbreak{}output\_\allowbreak{}on\_\allowbreak{}off.\allowbreak{}py:68-139}; \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}actions/\allowbreak{}email.\allowbreak{}py:86-88}; \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}mycodo\_\allowbreak{}client.\allowbreak{}py:214-222}; \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}controllers/\allowbreak{}base\_\allowbreak{}conditional.\allowbreak{}py:40-64}; \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}outputs/\allowbreak{}base\_\allowbreak{}output.\allowbreak{}py:457-585}; \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}mycodo\_\allowbreak{}client.\allowbreak{}py:150-153}; \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}mycodo\_\allowbreak{}client.\allowbreak{}py:155-157}\par
+\field{Evidence}{Stored, parameterised requests executed later through a uniform run\_action(dict\_vars): each action binds its parameters from the Actions row in its constructor (email.py:48-51; output\_on\_off.py:78-81) and run\_action calls its receiver (send\_email at email.py:86-88; control.output\_on\_off at output\_on\_off.py:126-131) and returns dict\_vars. Requesters know only the action ID (base\_conditional.py:60-61; base\_output.py:540-541); the daemon-side invoker calling run\_action is outside scope.}
+\field{Diagram}{\texttt{Part1/\allowbreak{}pattern\_\allowbreak{}architecture/\allowbreak{}10\_\allowbreak{}command\_\allowbreak{}automation\_\allowbreak{}alert\_\allowbreak{}actions.\allowbreak{}mmd} (editable Mermaid) and \texttt{.\allowbreak{}png} (Figure 11).}
+\field{Verification}{Confirmed; verified by Team B10. Roles and line ranges were checked against \texttt{data/\allowbreak{}code/\allowbreak{}} (script check of every range plus manual reading of the calls). Chain of Responsibility was rejected; the invoker is outside scope, which is the main uncertainty.}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth,height=0.42\textheight,keepaspectratio]{10_command_automation_alert_actions.png}
+\caption*{\small Figure 11. Command -- Automation/Alert Actions.}
+\end{figure}
+\subsubsection{Input/Output Module Loading}
+\field{Instance name}{Input/Output Module Loading}
+\field{Pattern type and category}{Plugin -- Architectural}
+\field{Purpose and origin}{application code (PoEAA, Fowler 2002).}
+\textbf{Participant mapping}\par
+{\small\setlength{\tabcolsep}{3pt}
+\begin{longtable}{@{}P{0.21\linewidth}P{0.37\linewidth}P{0.39\linewidth}@{}}\toprule
+\textbf{Pattern role} & \textbf{Actual class / function} & \textbf{File and line range} \\ \midrule\endhead
+PluginLoader & \texttt{load\_\allowbreak{}module\_\allowbreak{}from\_\allowbreak{}file} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}utils/\allowbreak{}modules.\allowbreak{}py:10-21} \\
+PluginRegistry & \texttt{parse\_\allowbreak{}input\_\allowbreak{}information} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}utils/\allowbreak{}inputs.\allowbreak{}py:163-308} \\
+PluginRegistry & \texttt{parse\_\allowbreak{}output\_\allowbreak{}information} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}utils/\allowbreak{}outputs.\allowbreak{}py:33-148} \\
+RegistryQuery & \texttt{output\_\allowbreak{}types} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}utils/\allowbreak{}outputs.\allowbreak{}py:183-189} \\
+PluginInterface & \texttt{AbstractInput} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}inputs/\allowbreak{}base\_\allowbreak{}input.\allowbreak{}py:18-271} \\
+PluginInterface & \texttt{AbstractOutput} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}outputs/\allowbreak{}base\_\allowbreak{}output.\allowbreak{}py:30-641} \\
+Host & \texttt{InputController.\allowbreak{}initialize\_\allowbreak{}variables} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}controllers/\allowbreak{}controller\_\allowbreak{}input.\allowbreak{}py:246-343} \\
+PluginMetadata & \texttt{adafruit\_\allowbreak{}i2c\_\allowbreak{}soil.\allowbreak{}INPUT\_\allowbreak{}INFORMATION} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}inputs/\allowbreak{}adafruit\_\allowbreak{}i2c\_\allowbreak{}soil.\allowbreak{}py:19-47} \\
+ConcretePlugin & \texttt{adafruit\_\allowbreak{}i2c\_\allowbreak{}soil.\allowbreak{}InputModule} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}inputs/\allowbreak{}adafruit\_\allowbreak{}i2c\_\allowbreak{}soil.\allowbreak{}py:50-84} \\
+PluginMetadata & \texttt{weather\_\allowbreak{}openweathermap\_\allowbreak{}weather.\allowbreak{}INPUT\_\allowbreak{}INFORMATION} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}inputs/\allowbreak{}weather\_\allowbreak{}openweathermap\_\allowbreak{}weather.\allowbreak{}py:41-79} \\
+ConcretePlugin & \texttt{weather\_\allowbreak{}openweathermap\_\allowbreak{}weather.\allowbreak{}InputModule} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}inputs/\allowbreak{}weather\_\allowbreak{}openweathermap\_\allowbreak{}weather.\allowbreak{}py:82-146} \\
+PluginMetadata & \texttt{pump\_\allowbreak{}gpio.\allowbreak{}OUTPUT\_\allowbreak{}INFORMATION} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}outputs/\allowbreak{}pump\_\allowbreak{}gpio.\allowbreak{}py:46-142} \\
+ConcretePlugin & \texttt{pump\_\allowbreak{}gpio.\allowbreak{}OutputModule} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}outputs/\allowbreak{}pump\_\allowbreak{}gpio.\allowbreak{}py:145-353} \\
+PluginMetadata & \texttt{on\_\allowbreak{}off\_\allowbreak{}gpio.\allowbreak{}OUTPUT\_\allowbreak{}INFORMATION} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}outputs/\allowbreak{}on\_\allowbreak{}off\_\allowbreak{}gpio.\allowbreak{}py:28-110} \\
+ConcretePlugin & \texttt{on\_\allowbreak{}off\_\allowbreak{}gpio.\allowbreak{}OutputModule} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}outputs/\allowbreak{}on\_\allowbreak{}off\_\allowbreak{}gpio.\allowbreak{}py:113-200} \\
+\bottomrule\end{longtable}}
+\field{Evidence}{Drop-in sensor/actuator modules: registries scan the built-in and custom directories (inputs.py:186-197; outputs.py:55-66), import each file with importlib via load\_module\_from\_file (modules.py:14-16), keep modules exposing INPUT\_INFORMATION/OUTPUT\_INFORMATION and record their file\_path (inputs.py:204-214; outputs.py:73-83). InputController loads the selected file and instantiates the well-known InputModule class (controller\_input.py:309-313) and detects optional capabilities by reflection (327, 334).}
+\field{Diagram}{\texttt{Part1/\allowbreak{}pattern\_\allowbreak{}architecture/\allowbreak{}11\_\allowbreak{}plugin\_\allowbreak{}input\_\allowbreak{}output\_\allowbreak{}module\_\allowbreak{}loading.\allowbreak{}mmd} (editable Mermaid) and \texttt{.\allowbreak{}png} (Figure 12).}
+\field{Verification}{Confirmed; verified by Team B10. Roles and line ranges were checked against \texttt{data/\allowbreak{}code/\allowbreak{}} (script check of every range plus manual reading of the calls). Factory Method was rejected (no creator hierarchy).}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth,height=0.42\textheight,keepaspectratio]{11_plugin_input_output_module_loading.png}
+\caption*{\small Figure 12. Plugin -- Input/Output Module Loading.}
+\end{figure}
+\subsubsection{Daemon Module Base}
+\field{Instance name}{Daemon Module Base}
+\field{Pattern type and category}{Layer Supertype -- Architectural}
+\field{Purpose and origin}{application code (PoEAA, Fowler 2002).}
+\textbf{Participant mapping}\par
+{\small\setlength{\tabcolsep}{3pt}
+\begin{longtable}{@{}P{0.21\linewidth}P{0.37\linewidth}P{0.39\linewidth}@{}}\toprule
+\textbf{Pattern role} & \textbf{Actual class / function} & \textbf{File and line range} \\ \midrule\endhead
+LayerSupertype & \texttt{AbstractBaseController} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}abstract\_\allowbreak{}base\_\allowbreak{}controller.\allowbreak{}py:35-543} \\
+SharedService & \texttt{AbstractBaseController.\allowbreak{}setup\_\allowbreak{}custom\_\allowbreak{}options} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}abstract\_\allowbreak{}base\_\allowbreak{}controller.\allowbreak{}py:67-74} \\
+SharedService & \texttt{AbstractBaseController.\allowbreak{}setup\_\allowbreak{}device\_\allowbreak{}measurement} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}abstract\_\allowbreak{}base\_\allowbreak{}controller.\allowbreak{}py:76-88} \\
+SharedService & \texttt{AbstractBaseController.\allowbreak{}\_\allowbreak{}set\_\allowbreak{}custom\_\allowbreak{}option} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}abstract\_\allowbreak{}base\_\allowbreak{}controller.\allowbreak{}py:425-439} \\
+LayerMember & \texttt{AbstractInput} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}inputs/\allowbreak{}base\_\allowbreak{}input.\allowbreak{}py:18-271} \\
+LayerMember & \texttt{AbstractOutput} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}outputs/\allowbreak{}base\_\allowbreak{}output.\allowbreak{}py:30-641} \\
+LayerMember & \texttt{AbstractController} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}controllers/\allowbreak{}base\_\allowbreak{}controller.\allowbreak{}py:20-129} \\
+LayerMember & \texttt{AbstractFunction} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}functions/\allowbreak{}base\_\allowbreak{}function.\allowbreak{}py:17-83} \\
+LayerMember & \texttt{AbstractFunctionAction} & \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}actions/\allowbreak{}base\_\allowbreak{}action.\allowbreak{}py:25-114} \\
+\bottomrule\end{longtable}}
+\field{Evidence}{Common supertype of all daemon-side module types holding cross-cutting infrastructure (logger, option parsing, device measurements, DB-stored custom options, measurement look-ups). Members delegate to it instead of duplicating: base\_input.py:43, 264-265; base\_output.py:625-626; base\_function.py:35, 76-77; base\_controller.py:38; concrete modules call setup\_custom\_options (weather\_openweathermap\_weather.py:92; bang\_bang.py:138; email.py:50) and get\_last\_measurement (bang\_bang.py:172). AbstractConditional does not inherit it and re-implements custom options (base\_conditional.py:103-126).}
+\field{Diagram}{\texttt{Part1/\allowbreak{}pattern\_\allowbreak{}architecture/\allowbreak{}12\_\allowbreak{}layer\_\allowbreak{}supertype\_\allowbreak{}daemon\_\allowbreak{}module\_\allowbreak{}base.\allowbreak{}mmd} (editable Mermaid) and \texttt{.\allowbreak{}png} (Figure 13).}
+\field{Verification}{Confirmed; verified by Team B10. Roles and line ranges were checked against \texttt{data/\allowbreak{}code/\allowbreak{}} (script check of every range plus manual reading of the calls). GRASP Pure Fabrication/Polymorphism were not reported separately.}
+\begin{figure}[H]\centering
+\includegraphics[width=0.95\linewidth,height=0.42\textheight,keepaspectratio]{12_layer_supertype_daemon_module_base.png}
+\caption*{\small Figure 13. Layer Supertype -- Daemon Module Base.}
+\end{figure}
+\subsubsection{User and Role Persistence}
+\field{Instance name}{User and Role Persistence}
+\field{Pattern type and category}{Active Record -- Architectural}
+\field{Purpose and origin}{application code on the Flask-SQLAlchemy framework (PoEAA, Fowler 2002).}
+\textbf{Participant mapping}\par
+{\small\setlength{\tabcolsep}{3pt}
+\begin{longtable}{@{}P{0.29\linewidth}P{0.68\linewidth}@{}}\toprule
+\textbf{Pattern role} & \textbf{Actual class / function} \\ \midrule\endhead
+ActiveRecordBase & \texttt{CRUDMixin} \\
+PersistenceOperation & \texttt{CRUDMixin.\allowbreak{}save} \\
+PersistenceOperation & \texttt{CRUDMixin.\allowbreak{}delete} \\
+ActiveRecord & \texttt{User} \\
+DomainLogic & \texttt{User.\allowbreak{}set\_\allowbreak{}password} \\
+DomainLogic & \texttt{User.\allowbreak{}check\_\allowbreak{}password} \\
+ActiveRecord & \texttt{Role} \\
+ORMBase & \texttt{db.\allowbreak{}Model (framework, db defined outside scope)} \\
+\bottomrule\end{longtable}}
+\textbf{Source locations:} \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}databases/\allowbreak{}\_\allowbreak{}\_\allowbreak{}init\_\allowbreak{}\_\allowbreak{}.\allowbreak{}py:10-32}; \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}databases/\allowbreak{}\_\allowbreak{}\_\allowbreak{}init\_\allowbreak{}\_\allowbreak{}.\allowbreak{}py:16-24}; \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}databases/\allowbreak{}\_\allowbreak{}\_\allowbreak{}init\_\allowbreak{}\_\allowbreak{}.\allowbreak{}py:26-32}; \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}databases/\allowbreak{}models/\allowbreak{}user.\allowbreak{}py:11-52}; \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}databases/\allowbreak{}models/\allowbreak{}user.\allowbreak{}py:35-39}; \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}databases/\allowbreak{}models/\allowbreak{}user.\allowbreak{}py:42-52}; \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}databases/\allowbreak{}models/\allowbreak{}role.\allowbreak{}py:7-27}; \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}databases/\allowbreak{}models/\allowbreak{}user.\allowbreak{}py:11-11}; \texttt{data/\allowbreak{}code/\allowbreak{}mycodo/\allowbreak{}databases/\allowbreak{}models/\allowbreak{}role.\allowbreak{}py:7-7}\par
+\field{Evidence}{Table-mapped domain objects that persist themselves: User and Role (user.py:11-29; role.py:7-22) inherit save()/delete() from the application CRUDMixin, which acts on self via db.session.add/delete/commit (\_\_init\_\_.py:19-20, 29-30); User also carries domain logic (bcrypt password hashing at user.py:35-52). Framework side: db.Model/db.Column/db.session (db defined outside scope).}
+\field{Diagram}{\texttt{Part1/\allowbreak{}pattern\_\allowbreak{}architecture/\allowbreak{}13\_\allowbreak{}active\_\allowbreak{}record\_\allowbreak{}user\_\allowbreak{}and\_\allowbreak{}role\_\allowbreak{}persistence.\allowbreak{}mmd} (editable Mermaid) and \texttt{.\allowbreak{}png} (Figure 14).}
+\field{Verification}{Confirmed; verified by Team B10. Roles and line ranges were checked against \texttt{data/\allowbreak{}code/\allowbreak{}} (script check of every range plus manual reading of the calls). Repository and Unit of Work were rejected (no repository abstraction; session handling outside scope).}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth,height=0.42\textheight,keepaspectratio]{13_active_record_user_and_role_persistence.png}
+\caption*{\small Figure 14. Active Record -- User and Role Persistence.}
+\end{figure}
+\section{Part 2 Evolution and refactoring}
+All three changes extend the irrigation function \texttt{mycodo/\allowbreak{}functions/\allowbreak{}bang\_\allowbreak{}bang.\allowbreak{}py} (\texttt{CustomModule}, an on/off hysteresis controller that switches a pump from a soil-moisture reading). Each change has three commits: (a) characterization tests on the unchanged code, (b) a behaviour-preserving refactoring, (c) the feature with tests named after its acceptance criteria. Patches: \texttt{Part2/\allowbreak{}changes/\allowbreak{}commits/\allowbreak{}}; diffs: \texttt{Part2/\allowbreak{}changes/\allowbreak{}ChangeN/\allowbreak{}\{characterization\_\allowbreak{}tests,refactoring,feature\}.\allowbreak{}diff}.\par
+\subsection*{CH01 -- Add new crop types}
+\field{Change and acceptance criteria}{A farmer selects a crop (tomato 65$\pm$5 \%, rice 85$\pm$5 \%, wheat 50$\pm$5 \%) instead of typing setpoint and hysteresis; new crops are registered in one place. Acceptance: AC1--AC7 (crop values applied, two functions with different crops, \texttt{custom}/missing option keeps old behaviour, register a new crop without editing \texttt{bang\_\allowbreak{}bang.\allowbreak{}py}, unknown crop logged and ignored, invalid definitions rejected, UI option lists all crops). (\texttt{Part2/\allowbreak{}changes/\allowbreak{}Change1/\allowbreak{}requirement.\allowbreak{}md})}
+\field{Before and after}{Before \texttt{ee70a111c}; commits dee5d7d76, d454803d0, bdc43f9a3. Changed paths: \texttt{mycodo/\allowbreak{}functions/\allowbreak{}bang\_\allowbreak{}bang.\allowbreak{}py}; new \texttt{mycodo/\allowbreak{}utils/\allowbreak{}crop\_\allowbreak{}profiles.\allowbreak{}py}; tests \texttt{test\_\allowbreak{}bang\_\allowbreak{}bang\_\allowbreak{}characterization.\allowbreak{}py}, \texttt{test\_\allowbreak{}ch01\_\allowbreak{}crop\_\allowbreak{}profiles.\allowbreak{}py}.}
+\field{Implementation and tests}{25 characterization tests (one parametrised over 15 decisions) pass before and after (b); 42/42 after (c). Run: \texttt{cd Part2/\allowbreak{}code; python -m pytest -p no:cacheprovider -v mycodo/\allowbreak{}tests/\allowbreak{}case\_\allowbreak{}study}. Log: \texttt{Part2/\allowbreak{}changes/\allowbreak{}Change1/\allowbreak{}test\_\allowbreak{}result.\allowbreak{}log}; demo: \texttt{Part2/\allowbreak{}changes/\allowbreak{}Change1/\allowbreak{}demo\_\allowbreak{}output.\allowbreak{}txt}.}
+\field{Pattern effects}{changed or new instances below; all other 11 instances preserved (\texttt{Part2/\allowbreak{}pattern\_\allowbreak{}evolution.\allowbreak{}csv}, Code after Change1).}
+{\small\setlength{\tabcolsep}{3pt}
+\begin{longtable}{@{}P{0.21\linewidth}P{0.14\linewidth}P{0.13\linewidth}P{0.49\linewidth}@{}}\toprule
+\textbf{Instance} & \textbf{Pattern} & \textbf{Status} & \textbf{Change description} \\ \midrule\endhead
+Module Initialization with Retry & Template Method & modified & Same roles and try\_initialize skeleton; code inside the concrete step bang\_bang.CustomModule.initialize changed: now also applies the selected crop profile via \_apply\_crop\_profile(). \\
+Daemon RPC Client & Proxy & modified & Same roles; the client bang\_bang.CustomModule.loop changed in Change1: Extract Method replaced the four setpoint +/- hysteresis expressions by \_lower\_threshold()/\_upper\_threshold(). Calls to the Proxy (output\_state, output\_on, output\_off) are unchanged. \\
+\bottomrule\end{longtable}}
+\field{Refactoring}{\textbf{Duplicated Code} -- the band edges \texttt{setpoint $\pm$ hysteresis} were computed four times in \texttt{loop()} (baseline lines 188, 194, 199, 205). \textbf{Extract Method} $\rightarrow$ \texttt{\_\allowbreak{}lower\_\allowbreak{}threshold()} / \texttt{\_\allowbreak{}upper\_\allowbreak{}threshold()}; the 25 characterization tests pass unchanged (\texttt{Part2/\allowbreak{}changes/\allowbreak{}Change1/\allowbreak{}refactoring.\allowbreak{}diff}).}
+\field{Before/after metrics}{lizard 1.24.1 on the scope files + new modules (tests excluded): original 24 files / 4024 NLOC / 240 functions / max CCN 51 / avg 3.6; after this change 25 / 4098 / 248 / 51 / 3.5; tests 42/42 passed (\texttt{Part2/\allowbreak{}changes/\allowbreak{}metrics.\allowbreak{}csv}). Max CCN 51 is \texttt{base\_\allowbreak{}output.\allowbreak{}output\_\allowbreak{}on\_\allowbreak{}off}, which no change touches.}
+\subsection*{CH02 -- Add different irrigation strategies}
+\field{Change and acceptance criteria}{Irrigation can follow a policy: plain hysteresis, only inside time windows (HH:MM--HH:MM, may cross midnight), or skip while a rain indicator is above a threshold; policies stack. Acceptance: AC1--AC9 including invalid windows / missing rain measurement falling back to hysteresis. (\texttt{Part2/\allowbreak{}changes/\allowbreak{}Change2/\allowbreak{}requirement.\allowbreak{}md})}
+\field{Before and after}{Before \texttt{bdc43f9a3}; commits fb1794585, c18ecb1e5, 9e3d56e8d. Changed paths: \texttt{mycodo/\allowbreak{}functions/\allowbreak{}bang\_\allowbreak{}bang.\allowbreak{}py}; new \texttt{mycodo/\allowbreak{}utils/\allowbreak{}irrigation\_\allowbreak{}strategies.\allowbreak{}py}; tests \texttt{test\_\allowbreak{}ch02\_\allowbreak{}characterization.\allowbreak{}py}, \texttt{test\_\allowbreak{}ch02\_\allowbreak{}irrigation\_\allowbreak{}strategies.\allowbreak{}py}.}
+\field{Implementation and tests}{6 new characterization tests (48 in total) pass before and after (b); 64/64 after (c). A mutation check (bypassing the time-window test) made AC2, AC3 and AC8 fail. Run: \texttt{cd Part2/\allowbreak{}code; python -m pytest -p no:cacheprovider -v mycodo/\allowbreak{}tests/\allowbreak{}case\_\allowbreak{}study}. Log: \texttt{Part2/\allowbreak{}changes/\allowbreak{}Change2/\allowbreak{}test\_\allowbreak{}result.\allowbreak{}log}; demo: \texttt{Part2/\allowbreak{}changes/\allowbreak{}Change2/\allowbreak{}demo\_\allowbreak{}output.\allowbreak{}txt}.}
+\field{Pattern effects}{changed or new instances below; all other 11 instances preserved (\texttt{Part2/\allowbreak{}pattern\_\allowbreak{}evolution.\allowbreak{}csv}, Code after Change2).}
+{\small\setlength{\tabcolsep}{3pt}
+\begin{longtable}{@{}P{0.21\linewidth}P{0.14\linewidth}P{0.13\linewidth}P{0.49\linewidth}@{}}\toprule
+\textbf{Instance} & \textbf{Pattern} & \textbf{Status} & \textbf{Change description} \\ \midrule\endhead
+Module Initialization with Retry & Template Method & modified & Same roles and try\_initialize skeleton; code inside the concrete step bang\_bang.CustomModule.initialize changed: now also builds the irrigation strategy via \_build\_irrigation\_strategy(). \\
+Daemon RPC Client & Proxy & modified & Same roles; the client bang\_bang.CustomModule.loop changed in Change2: the direction if/elif was replaced by a strategy call; output\_on/output\_off are now sent from \_apply\_decision(). Calls to the Proxy (output\_state, output\_on, output\_off) are unchanged. \\
+Irrigation Decision Strategy & Strategy & newly\_introduced & New collaboration: Replace Conditional with Polymorphism (step b) introduced IrrigationStrategy with RaiseHysteresisStrategy/LowerHysteresisStrategy; the feature (step c) added TimeWindowStrategy, RainSkipStrategy and build\_irrigation\_strategy. \\
+Irrigation Restriction Decorators & Decorator & newly\_introduced & New collaboration: IrrigationRestriction wraps any IrrigationStrategy; TimeWindowStrategy and RainSkipStrategy add irrigation restrictions. \\
+\bottomrule\end{longtable}}
+\field{Refactoring}{\textbf{Switch Statements} -- \texttt{loop()} switched on the type code \texttt{self.\allowbreak{}direction} with mirrored raise/lower branches. \textbf{Replace Conditional with Polymorphism} $\rightarrow$ \texttt{IrrigationStrategy.\allowbreak{}decide()} with \texttt{RaiseHysteresisStrategy} / \texttt{LowerHysteresisStrategy}; 48 tests pass unchanged. \texttt{loop()} CCN 14 $\rightarrow$ 7.}
+\field{Before/after metrics}{lizard 1.24.1 on the scope files + new modules (tests excluded): original 24 files / 4024 NLOC / 240 functions / max CCN 51 / avg 3.6; after this change 26 / 4298 / 268 / 51 / 3.5; tests 64/64 passed (\texttt{Part2/\allowbreak{}changes/\allowbreak{}metrics.\allowbreak{}csv}). Max CCN 51 is \texttt{base\_\allowbreak{}output.\allowbreak{}output\_\allowbreak{}on\_\allowbreak{}off}, which no change touches.}
+\subsection*{CH03 -- Add sensor-based alerts}
+\field{Change and acceptance criteria}{Alert the farmer when the soil is critically dry or the sensor stops reporting; alerts are logged and optionally e-mailed, once per episode, and re-armed on recovery. Acceptance: AC1--AC9 (critical-dry alert, missing reading turns the pump off and alerts, a \texttt{None}/\texttt{[]} reading no longer crashes, failing listener isolated, recipients parsed). (\texttt{Part2/\allowbreak{}changes/\allowbreak{}Change3/\allowbreak{}requirement.\allowbreak{}md})}
+\field{Before and after}{Before \texttt{9e3d56e8d}; commits 1146fe42a, 349ed087c, bce41febb. Changed paths: \texttt{mycodo/\allowbreak{}functions/\allowbreak{}bang\_\allowbreak{}bang.\allowbreak{}py}; new \texttt{mycodo/\allowbreak{}utils/\allowbreak{}sensor\_\allowbreak{}alerts.\allowbreak{}py}; tests \texttt{test\_\allowbreak{}ch03\_\allowbreak{}characterization.\allowbreak{}py}, \texttt{test\_\allowbreak{}ch03\_\allowbreak{}sensor\_\allowbreak{}alerts.\allowbreak{}py}.}
+\field{Implementation and tests}{8 new characterization tests (72 in total) pass before and after (b); 83/83 after (c). Disabling \texttt{\_\allowbreak{}notify} made 7 AC tests fail. Run: \texttt{cd Part2/\allowbreak{}code; python -m pytest -p no:cacheprovider -v mycodo/\allowbreak{}tests/\allowbreak{}case\_\allowbreak{}study}. Log: \texttt{Part2/\allowbreak{}changes/\allowbreak{}Change3/\allowbreak{}test\_\allowbreak{}result.\allowbreak{}log}; demo: \texttt{Part2/\allowbreak{}changes/\allowbreak{}Change3/\allowbreak{}demo\_\allowbreak{}output.\allowbreak{}txt}.}
+\field{Pattern effects}{changed or new instances below; all other 12 instances preserved (\texttt{Part2/\allowbreak{}pattern\_\allowbreak{}evolution.\allowbreak{}csv}, Code after Change3).}
+{\small\setlength{\tabcolsep}{3pt}
+\begin{longtable}{@{}P{0.21\linewidth}P{0.14\linewidth}P{0.13\linewidth}P{0.49\linewidth}@{}}\toprule
+\textbf{Instance} & \textbf{Pattern} & \textbf{Status} & \textbf{Change description} \\ \midrule\endhead
+Module Initialization with Retry & Template Method & modified & Same roles and try\_initialize skeleton; code inside the concrete step bang\_bang.CustomModule.initialize changed: now also attaches the alert listeners via \_setup\_alert\_listeners(). \\
+Daemon RPC Client & Proxy & modified & Same roles; the client bang\_bang.CustomModule.loop changed in Change3: Extract Method (\_period\_elapsed, \_read\_measurement, \_handle\_missing\_measurement); output\_off for a missing value is sent from \_handle\_missing\_measurement(), which also raises an alert. Calls to the Proxy (output\_state, output\_on, output\_off) are unchanged. \\
+Irrigation Decision Strategy & Strategy & modified & Same roles; the Context code bang\_bang.CustomModule.loop changed (Extract Method, safe measurement value) and moved. Strategy classes unchanged. \\
+Sensor Alert Notification & Observer & newly\_introduced & New collaboration: SensorAlertNotifier notifies LogAlertListener and EmailAlertListener of missing-measurement and critically-dry alerts. \\
+\bottomrule\end{longtable}}
+\field{Refactoring}{\textbf{Long Method} -- \texttt{loop()} mixed timer gating, reading, missing-value handling and strategy evaluation. \textbf{Extract Method} $\rightarrow$ \texttt{\_\allowbreak{}period\_\allowbreak{}elapsed()}, \texttt{\_\allowbreak{}read\_\allowbreak{}measurement()}, \texttt{\_\allowbreak{}handle\_\allowbreak{}missing\_\allowbreak{}measurement()}; 72 tests pass unchanged. \texttt{loop()} CCN 7 $\rightarrow$ 5.}
+\field{Before/after metrics}{lizard 1.24.1 on the scope files + new modules (tests excluded): original 24 files / 4024 NLOC / 240 functions / max CCN 51 / avg 3.6; after this change 27 / 4426 / 288 / 51 / 3.3; tests 83/83 passed (\texttt{Part2/\allowbreak{}changes/\allowbreak{}metrics.\allowbreak{}csv}). Max CCN 51 is \texttt{base\_\allowbreak{}output.\allowbreak{}output\_\allowbreak{}on\_\allowbreak{}off}, which no change touches.}
+\subsection{Updated pattern counts}
+{\small\setlength{\tabcolsep}{3pt}
+\begin{longtable}{@{}P{0.27\linewidth}P{0.15\linewidth}P{0.13\linewidth}P{0.23\linewidth}P{0.19\linewidth}@{}}\toprule
+\textbf{Snapshot} & \textbf{Pattern types} & \textbf{Instances} & \textbf{Concrete participant classes} & \textbf{Rejected / uncertain} \\ \midrule\endhead
+Original code & 8 & 13 & 18 & 23 / 5 \\
+Code after Change1 & 8 & 13 & 18 & 23 / 5 \\
+Code after Change2 & 9 & 15 & 22 & 23 / 5 \\
+Code after Change3 & 10 & 16 & 24 & 23 / 5 \\
+\bottomrule\end{longtable}}
+Concrete participant classes are the distinct symbols in a concrete role (ConcreteClass, ConcreteStrategy, ConcreteDecorator, ConcreteObserver, Adapter, Proxy, ConcreteCommand, ConcretePlugin, ActiveRecord) in \texttt{Part2/\allowbreak{}pattern\_\allowbreak{}evolution.\allowbreak{}csv}, excluding the five abstract Layer Supertype members (as in 2.1). No instance was removed or replaced; continuing collaborations keep their Part 1 names. New collaborations: CH02 \emph{Irrigation Decision Strategy} (Strategy) and \emph{Irrigation Restriction Decorators} (Decorator, wrapping any strategy); CH03 \emph{Sensor Alert Notification} (Observer). The Part 1 uncertain candidate ``Observer -- output trigger notification'' is unrelated and unchanged.\par
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth,height=0.42\textheight,keepaspectratio]{evolved_architecture.png}
+\caption*{\small Figure 15. Architecture after CH03 (\texttt{Part2/\allowbreak{}diagrams/\allowbreak{}evolved\_\allowbreak{}architecture.\allowbreak{}mmd}); per-change UML in \texttt{Part2/\allowbreak{}diagrams/\allowbreak{}}.}
+\end{figure}
+\field{Interpretation}{NLOC grew from 4024 to 4426 (+10 \%) because three modules were added, while \texttt{bang\_\allowbreak{}bang.\allowbreak{}loop()} fell from CCN 14 to 5 and each new policy or listener is a small class that can be tested alone (CCN $\leq$ 6). New crops, policies and alert channels are added without editing the controller (open/closed). Trade-offs: more classes and indirection to read; Strategy and Decorator over the same classes could be seen as one extended instance; alerts are edge-triggered with in-memory state, so a restart re-arms them; the tests mock the database, the daemon and InfluxDB, so end-to-end behaviour in a running Mycodo was not verified. More or fewer LOC alone does not prove a better design.}
+\section{Part 3 Cross-language comparison}
+\field{Selected instances}{One verified instance per confirmed pattern type (8 types $\times$ 4 languages = 32 implementations):}
+{\small\setlength{\tabcolsep}{3pt}
+\begin{longtable}{@{}P{0.16\linewidth}P{0.27\linewidth}P{0.53\linewidth}@{}}\toprule
+\textbf{Pattern} & \textbf{Instance} & \textbf{Selection reason} \\ \midrule\endhead
+Template Method & Date/Daily Setpoint Interpolation & Pure computation; all roles are real classes (the other five instances need hardware, threads or numpy). \\
+Strategy & Setpoint Schedule Calculation & Only Strategy instance; sine / duration / cascade are pure time$\rightarrow$setpoint functions. \\
+Adapter & Sensor Driver Adaptation & Only Adapter instance; Seesaw driver and weather HTTP replaced by in-memory adaptees with the same method names. \\
+Proxy & Daemon RPC Client & Only Proxy instance; Pyro5 and the daemon replaced by an in-memory remote proxy. \\
+Command & Automation/Alert Actions & Only Command instance; receivers and the out-of-scope invoker replaced by stand-ins. \\
+Plugin & Input/Output Module Loading & Only Plugin instance; importlib replaced by an in-memory module catalogue. \\
+Layer Supertype & Daemon Module Base & Only Layer Supertype instance; option parsing is pure logic. \\
+Active Record & User and Role Persistence & Only Active Record instance; in-memory session, std-lib stand-in for bcrypt (not secure). \\
+\bottomrule\end{longtable}}
+\field{Common specifications}{\texttt{Part3/\allowbreak{}test-cases/\allowbreak{}SPEC.\allowbreak{}md} defines inputs, outputs, rules and error cases per problem; \texttt{Part3/\allowbreak{}test-cases/\allowbreak{}\textless{}problem\textgreater{}\_\allowbreak{}cases.\allowbreak{}csv} holds 9--12 shared cases each (at least two ERROR cases). All runners read the same CSV and compare tokens with a numeric tolerance of 1e-9; an ERROR case passes when the production code raises.}
+\field{Implementations}{\texttt{Part3/\allowbreak{}\textless{}pattern\_\allowbreak{}problem\textgreater{}/\allowbreak{}\{java,python,javascript,cpp\}/\allowbreak{}}: one production file, one separate test runner and a README with the working folder and exact commands. Toolchains: OpenJDK 21.0.2, CPython 3.12.7, Node.js v23.11.0, MinGW g++ 6.3.0 \texttt{-std=c++14 -O2} (\texttt{Part3/\allowbreak{}evidence/\allowbreak{}toolchains.\allowbreak{}txt}).}
+\field{Actual results}{All 32 runners pass (Template Method, Strategy, Adapter, Proxy, Command, Active Record 12/12; Layer Supertype 11/11; Plugin 9/9). Logs: \texttt{Part3/\allowbreak{}evidence/\allowbreak{}tests\_\allowbreak{}*.\allowbreak{}txt}; re-run 2026-10-25: \texttt{data/\allowbreak{}test\_\allowbreak{}result/\allowbreak{}part3\_\allowbreak{}summary.\allowbreak{}txt}.}
+\field{Static and dynamic comparison}{recorded in \texttt{Part3/\allowbreak{}llm/\allowbreak{}pattern\_\allowbreak{}crosslanguage.\allowbreak{}csv} (runtime/compiler, test command and language notes per row); the measured values are:}
+{\small\setlength{\tabcolsep}{3pt}
+\begin{longtable}{@{}P{0.23\linewidth}P{0.17\linewidth}P{0.14\linewidth}P{0.12\linewidth}P{0.14\linewidth}P{0.17\linewidth}@{}}\toprule
+\textbf{Pattern} & \textbf{Language} & \textbf{Source LOC} & \textbf{Max CC} & \textbf{Tests} & \textbf{Median ms} \\ \midrule\endhead
+Template Method & Java & 77 & 7 & 12/12 & 157.771 \\
+Template Method & Python & 37 & 6 & 12/12 & 72.495 \\
+Template Method & JavaScript & 54 & 11 & 12/12 & 90.926 \\
+Template Method & C++ & 85 & 21 & 12/12 & 33.060 \\
+Strategy & Java & 106 & 9 & 12/12 & 156.784 \\
+Strategy & Python & 67 & 10 & 12/12 & 73.589 \\
+Strategy & JavaScript & 83 & 9 & 12/12 & 96.586 \\
+Strategy & C++ & 97 & 12 & 12/12 & 31.403 \\
+Adapter & Java & 108 & 7 & 12/12 & 156.345 \\
+Adapter & Python & 80 & 7 & 12/12 & 72.979 \\
+Adapter & JavaScript & 88 & 7 & 12/12 & 92.718 \\
+Adapter & C++ & 106 & 7 & 12/12 & 32.800 \\
+Proxy & Java & 111 & 7 & 12/12 & 158.345 \\
+Proxy & Python & 60 & 6 & 12/12 & 70.879 \\
+Proxy & JavaScript & 69 & 5 & 12/12 & 88.559 \\
+Proxy & C++ & 103 & 7 & 12/12 & 33.030 \\
+Command & Java & 112 & 8 & 12/12 & 173.109 \\
+Command & Python & 67 & 7 & 12/12 & 74.217 \\
+Command & JavaScript & 88 & 9 & 12/12 & 90.155 \\
+Command & C++ & 130 & 8 & 12/12 & 32.462 \\
+Plugin & Java & 87 & 9 & 9/9 & 156.021 \\
+Plugin & Python & 61 & 8 & 9/9 & 65.257 \\
+Plugin & JavaScript & 75 & 9 & 9/9 & 91.112 \\
+Plugin & C++ & 94 & 8 & 9/9 & 32.298 \\
+Layer Supertype & Java & 68 & 23 & 11/11 & 156.814 \\
+Layer Supertype & Python & 56 & 19 & 11/11 & 65.902 \\
+Layer Supertype & JavaScript & 65 & 22 & 11/11 & 94.884 \\
+Layer Supertype & C++ & 82 & 25 & 11/11 & 32.492 \\
+Active Record & Java & 113 & 14 & 12/12 & 235.049 \\
+Active Record & Python & 69 & 13 & 12/12 & 86.483 \\
+Active Record & JavaScript & 83 & 7 & 12/12 & 95.829 \\
+Active Record & C++ & 119 & 14 & 12/12 & 33.528 \\
+\bottomrule\end{longtable}}
+LOC = lizard NLOC of the production file; Max CC = highest lizard CCN of a function in it; median ms = median of 5 measured whole-process runs after compiling and one warmup (start-up + reading the CSV + all cases).\par
+\field{Comparison}{The participant structure is the same in all four languages; what moves is where the contract is checked. Java and C++ declare roles as types (abstract classes, interfaces, \texttt{final}, pure virtual functions, \texttt{override}) so a missing role method is a compile error; Python and JavaScript rely on convention and fail at run time. Inheritance is used for Template Method, Layer Supertype and the strategy/command/plugin hierarchies; composition for the Adapter adaptee, the Proxy connection, CascadeMethod's linked strategies and the Active Record session. The Proxy shows the largest contrast: Python \texttt{\_\allowbreak{}\_\allowbreak{}getattr\_\allowbreak{}\_\allowbreak{}} and the JavaScript \texttt{Proxy} object forward any method (60 and 69 NLOC) while Java and C++ repeat every method of the subject interface (111 and 103 NLOC). Active Record needs generic column access, free in Python (\texttt{getattr}) and JavaScript (\texttt{obj[column]}), but an explicit \texttt{column(name)} method in Java and C++. Static typing mainly costs size: Java 68--113 and C++ 82--130 NLOC versus Python 37--80 and JavaScript 54--88, while max CC is usually within a few points. The largest CC differences come from missing library support (hand-written date parsing: JavaScript CC 11, C++ CC 21 vs Python 6) and from Layer Supertype's option type-switch (19--25 in every language). Medians were C++ 31--34 ms, Python 65--86 ms, JavaScript 89--97 ms and Java 156--235 ms; with 9--12 tiny cases these measure runtime start-up, not pattern speed.}
+\field{Technology discussion}{The patterns keep their intent across languages, as described by Gamma et al. (Template Method, Strategy, Adapter, Proxy, Command) and Fowler (Plugin, Layer Supertype, Active Record). Java (JLS SE 21, ch. 8--9) and C++ (virtual functions, \texttt{std::unique\_\allowbreak{}ptr} ownership) enforce the roles at compile time and make ownership explicit; Python can enforce abstract methods with \texttt{abc} but the snippets follow the source and use plain base classes; ECMAScript classes have no abstract or final members (MDN ``Classes''), while its \texttt{Proxy} object (MDN ``Proxy'') and Python's data model make forwarding proxies and plugin catalogues shorter. Language pitfalls found on the way (CSV splitting, number formatting, integer division, \texttt{Number('')} = 0 in JavaScript, 32-bit FNV hashing) are recorded in \texttt{Part3/\allowbreak{}llm/\allowbreak{}output.\allowbreak{}txt}, section J.}
+\section{LLM records and human verification}
+\field{Run and model}{LLM assistants, accessed through their chat and coding interfaces. Every member ran Part 1, Part 2 and Part 3 with their own prompt (\texttt{part*\_\allowbreak{}prompt\_\allowbreak{}\textless{}name\textgreater{}.\allowbreak{}txt}); the recorded outputs are dated 2026-10-11 (Parts 1 and 2) and 2026-10-12 (Part 3). The results were compared and combined into one team result.}
+\field{Inputs and outputs}{Prompts: \texttt{Part1/\allowbreak{}llm/\allowbreak{}part1\_\allowbreak{}prompt\_\allowbreak{}\textless{}name\textgreater{}.\allowbreak{}txt}, \texttt{Part2/\allowbreak{}llm/\allowbreak{}part2\_\allowbreak{}prompt\_\allowbreak{}\textless{}name\textgreater{}.\allowbreak{}txt}, \texttt{Part3/\allowbreak{}llm/\allowbreak{}part3\_\allowbreak{}prompt\_\allowbreak{}\textless{}name\textgreater{}.\allowbreak{}txt} (one per member). Supplied code: \texttt{data/\allowbreak{}code/\allowbreak{}} at \texttt{ee70a111} (files listed in \texttt{Part2/\allowbreak{}llm/\allowbreak{}input.\allowbreak{}txt}, \texttt{Part3/\allowbreak{}llm/\allowbreak{}input.\allowbreak{}txt}). Raw outputs: \texttt{Part1/\allowbreak{}llm/\allowbreak{}output.\allowbreak{}txt}, \texttt{Part2/\allowbreak{}llm/\allowbreak{}output.\allowbreak{}txt}, \texttt{Part3/\allowbreak{}llm/\allowbreak{}output.\allowbreak{}txt} (raw records keep the folder names of the time: \texttt{Mycodo/\allowbreak{}} = \texttt{data/\allowbreak{}code/\allowbreak{}}, \texttt{Part2/\allowbreak{}work/\allowbreak{}} = \texttt{Part2/\allowbreak{}code/\allowbreak{}}).}
+\field{Claims and evaluation}{one row per output in \texttt{Part1/\allowbreak{}llm.\allowbreak{}csv}, \texttt{Part2/\allowbreak{}llm.\allowbreak{}csv} and \texttt{Part3/\allowbreak{}llm/\allowbreak{}llm.\allowbreak{}csv}; every row was verified by Team B10 against its verification\_file evidence:}
+{\small\setlength{\tabcolsep}{3pt}
+\begin{longtable}{@{}P{0.14\linewidth}P{0.25\linewidth}P{0.14\linewidth}P{0.45\linewidth}@{}}\toprule
+\textbf{Part} & \textbf{Output} & \textbf{Evaluation} & \textbf{Correction / evidence} \\ \midrule\endhead
+Pattern discovery & \texttt{Part1/\allowbreak{}llm/\allowbreak{}output.\allowbreak{}txt} & Partial & Claims: 8 pattern types / 13 instances (Template Method x6; Strategy; Adapter; Proxy; Command; Plugin; Layer Supertype; Active Record), 5 uncertain and 23 rejected candidates. All 13 instances accepted after checking each role against the source. Corrections: the section 7 sub-totals (methods 41, functions 7) were mislabelled and fixed; Command is kept although its invoker is outside scope; the six-way Template Method split and the Adapter/Template Method overlap are judgement calls explained in the report. \\
+Pattern discovery & \texttt{Part1/\allowbreak{}patterns.\allowbreak{}csv} & Correct after minor correction & 13 rows copied from section 5 of the raw output; punctuation in participant\_roles was edited in 6 rows. A script confirmed that all 112 path:line references exist and lie inside their files. \\
+Pattern discovery & \texttt{Part1/\allowbreak{}Pattern\_\allowbreak{}count.\allowbreak{}csv} & Correct & Recounting Part1/patterns.csv gives 8 types and 13 instances, matching every per\_pattern row. \\
+Evolution & not kept (first run discarded) & Cannot confirm & the output of this first run no longer exists; its CH01 design was reproduced unchanged by PROMPT 2. \\
+Evolution & \texttt{Part2/\allowbreak{}llm/\allowbreak{}output.\allowbreak{}txt} & Partial & CH01-CH03 implemented with 9 commits (characterization tests, refactoring, feature per change); 83/83 case-study tests pass and were re-run on 2026-10-25 after the folder move. Smells/refactorings: Duplicated Code / Switch Statements / Long Method with Extract Method / Replace Conditional with Polymorphism / Extract Method. Corrections: upstream Mycodo tests were not run (Windows; DB, daemon and hardware are mocked); "modified" for the Proxy and counting Strategy + Decorator separately are judgement calls. \\
+Evolution & \texttt{Part2/\allowbreak{}pattern\_\allowbreak{}evolution.\allowbreak{}csv} & Correct & 57 rows (13 baseline + 13/15/16); later ranges were computed with Python ast by Part2/tools/build\_evolution\_csv.py. Re-running the tool on 2026-10-25 reproduced the file byte for byte, and all 502 path:line references lie inside their files. \\
+Evolution & \texttt{Part2/\allowbreak{}Pattern\_\allowbreak{}count.\allowbreak{}csv} & Correct & Recounting the evolution rows (removed rows excluded; none removed) gives 13/8, 13/8, 15/9 and 16/10 instances/types for Original, Change1, Change2 and Change3. \\
+Evolution & \texttt{Part2/\allowbreak{}changes/\allowbreak{}metrics.\allowbreak{}csv} & Correct & Every value is extracted by Part2/tools/lizard\_metrics.py from the raw lizard output; test counts come from the step-c pytest logs. \\
+Cross-language analysis & \texttt{Part3/\allowbreak{}llm/\allowbreak{}output.\allowbreak{}txt} & Partial & All 8 confirmed pattern types implemented in Java, Python, JavaScript and C++; 32/32 test runners pass (re-run 2026-10-25). Corrections: Java (68-113 NLOC) and C++ (82-130) files exceed the "about 30-90" guideline; log-and-abort errors in the source became exceptions; DB, hardware, network, Pyro5 and bcrypt are replaced by stand-ins (the bcrypt stand-in is not secure); timings mostly measure process start-up. \\
+Cross-language analysis & \texttt{Part3/\allowbreak{}llm/\allowbreak{}pattern\_\allowbreak{}crosslanguage.\allowbreak{}csv} & Correct after a format correction & 32 rows (8 x 4); every number is rebuilt by Part3/tools/collect\_results.py from the raw lizard, test and timing evidence and matched the LLM file. Correction: the language column held folder names (java, cpp); it now uses Java, Python, JavaScript and C++ as the spec requires. An earlier lizard pass that skipped the .hpp files was fixed and re-measured before the CSV was built. \\
+Cross-language analysis & \texttt{Part3/\allowbreak{}test-cases/\allowbreak{}SPEC.\allowbreak{}md} & Partial & 8 problems with 9-12 cases each (at least 2 error cases); non-trivial expected values (dew point, sine, FNV hash) were computed independently from the source formulas. Cannot confirm: equivalence with Mycodo for untested edge cases (e.g. Duration modulo an empty cycle). \\
+\bottomrule\end{longtable}}
+Verification evidence for every row is in the \texttt{verification\_\allowbreak{}file} column of \texttt{Part1/\allowbreak{}llm.\allowbreak{}csv}, \texttt{Part2/\allowbreak{}llm.\allowbreak{}csv} and \texttt{Part3/\allowbreak{}llm/\allowbreak{}llm.\allowbreak{}csv}. Generated CSVs were re-created from raw tool output by \texttt{Part2/\allowbreak{}tools/\allowbreak{}build\_\allowbreak{}evolution\_\allowbreak{}csv.\allowbreak{}py} and \texttt{Part3/\allowbreak{}tools/\allowbreak{}collect\_\allowbreak{}results.\allowbreak{}py}; both reproduced the submitted values.\par
+\field{Generated code}{The Part 2 code (three modules, \texttt{bang\_\allowbreak{}bang.\allowbreak{}py} edits, 83 case-study tests) and the 64 Part 3 files were generated by the LLM and accepted only after the tests passed; mutation checks in Part 2 showed the new tests fail when the feature is disabled. All tests were re-run on 2026-10-25 after reorganising the folder.}
+\section{Findings, contributions and references}
+\textbf{Findings:}\par
+\begin{itemize}
+\item Mycodo's extensibility rests on a few base classes: 8 pattern types / 13 instances at the baseline, dominated by Template Method (6 instances) around \texttt{AbstractBaseController} and its input/output/controller subclasses, plus Plugin loading of device modules.
+\item The three agriculture changes fitted the existing structure and added Strategy, Decorator and Observer (16 instances / 10 types after CH03) while keeping all 13 baseline collaborations; the refactorings cut \texttt{bang\_\allowbreak{}bang.\allowbreak{}loop()} from CCN 14 to 5.
+\item Across Java, Python, JavaScript and C++ the same roles were reproduced with identical test results (32/32); static typing costs size and moves error detection to compile time, dynamic features shorten Proxy, Plugin and Active Record.
+\item Limitations: static analysis of 24 files only; Command's invoker and the daemon are out of scope; Part 2 tests use mocks; Part 3 timings measure process start-up; several classifications (six Template Method instances, Strategy vs Decorator) are judgement calls.
+\end{itemize}
+\textbf{Contributions:} All four members carried out Part 1, Part 2 and Part 3 independently with LLMs, each using their own prompts. The individual results were then compared, verified against the source and combined into one team result: the CSVs, code, tests and evidence in this folder.\par
+{\small\setlength{\tabcolsep}{3pt}
+\begin{longtable}{@{}P{0.19\linewidth}P{0.17\linewidth}P{0.08\linewidth}P{0.52\linewidth}@{}}\toprule
+\textbf{Roll number} & \textbf{Name} & \textbf{Batch} & \textbf{Contribution and evidence} \\ \midrule\endhead
+AM.SC.U4AIE23038 & Johan Rajesh & AIE - A & Parts 1, 2 and 3 with an LLM using own prompts (\texttt{*\_\allowbreak{}prompt\_\allowbreak{}Johan.\allowbreak{}txt}); results compared and combined into the team result. \\
+AM.SC.U4AIE23003 & Aadarsh Jayan Nair & AIE - A & Parts 1, 2 and 3 with an LLM using own prompts (\texttt{*\_\allowbreak{}prompt\_\allowbreak{}Aadarsh.\allowbreak{}txt}); results compared and combined into the team result. \\
+AM.SC.U4AIE23029 & Dano Aby Alex & AIE - A & Parts 1, 2 and 3 with an LLM using own prompts (\texttt{*\_\allowbreak{}prompt\_\allowbreak{}Dano.\allowbreak{}txt}); results compared and combined into the team result. \\
+AM.SC.U4AIE23140 & P Arya & AIE - B & Parts 1, 2 and 3 with an LLM using own prompts (\texttt{*\_\allowbreak{}prompt\_\allowbreak{}Arya.\allowbreak{}txt}); results compared and combined into the team result. \\
+\bottomrule\end{longtable}}
+\textbf{References:}\par
+\begin{itemize}
+\item Mycodo, K. Gabriel (kizniche) and contributors, \url{https://github.com/kizniche/Mycodo}, v8.17.0, commit ee70a111, GPL-3.0.
+\item E. Gamma, R. Helm, R. Johnson, J. Vlissides, \emph{Design Patterns: Elements of Reusable Object-Oriented Software}, Addison-Wesley, 1994.
+\item M. Fowler, \emph{Patterns of Enterprise Application Architecture}, Addison-Wesley, 2002.
+\item M. Fowler, \emph{Refactoring: Improving the Design of Existing Code}, 2nd ed., Addison-Wesley, 2018.
+\item The Java Language Specification, Java SE 21 Edition, Oracle; Python 3.12 documentation (\texttt{abc}, Data model); MDN Web Docs (Classes, Proxy); cppreference.com (virtual function specifier, \texttt{std::unique\_\allowbreak{}ptr}).
+\item Tools: lizard 1.24.1 (\url{https://github.com/terryyin/lizard}), pytest 9.0.2, Mermaid (diagrams), LLM assistants.
+\end{itemize}
+\section{Team folder and datasets (screenshot from the GitHub repository)}
+Team folder \texttt{B10/\allowbreak{}} in 23CSE455\_DP\_CaseStudy (structure of DP\_Csestudy.pdf):\par
+{\small\begin{verbatim}
+B10/
+|-- README.md, B10_Report.pdf, B10_Report.tex
+|-- data/code/                 original Mycodo source (ee70a111)
+|-- data/test_result/          test logs + captures, run_all_tests.py
+|-- Part1/  patterns.csv, Pattern_count.csv, pattern_architecture/ (.mmd + .png),
+|           llm/ (part1_prompt_<name>.txt, input.txt, output.txt, run_info.txt), llm.csv
+|-- Part2/  code/, changes/Change1-3/ (requirement, diffs, test_result.log), changes/commits/,
+|           pattern_evolution.csv, Pattern_count.csv, diagrams/, llm/, tools/, llm.csv
+`-- Part3/  <pattern_problem>/{java,python,javascript,cpp}/ (snippet, runner, README) x 8,
+            test-cases/, evidence/, tools/,
+            llm/ (part3_prompt_<name>.txt, llm.csv, pattern_crosslanguage.csv, B10_slide.pdf)
+\end{verbatim}}
+\begin{figure}[H]\centering
+\includegraphics[width=0.9\linewidth]{github_team_folder.png}
+\caption*{\small Team folder \texttt{B10/} in the GitHub repository 23CSE455\_DP\_CaseStudy.}
+\end{figure}
+\end{document}

@@ -1,0 +1,9 @@
+# Strategy / java
+working folder: Part3/strategy_setpoint_schedule/java
+$ javac -d out AbstractMethod.java SetpointScheduleTest.java
+
+[compile exit code: 0]
+$ java -cp out SetpointScheduleTest
+Strategy tests: 12/12 passed
+
+[exit code: 0]

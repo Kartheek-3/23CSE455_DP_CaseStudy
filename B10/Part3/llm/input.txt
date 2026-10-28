@@ -1,0 +1,38 @@
+Part 3 - files read as input
+============================
+Original source (read-only): Mycodo/ = https://github.com/kizniche/Mycodo.git at commit
+ee70a111c622e2a81026fd5c1553a948acf8161e (clean working tree). Paths below are relative to Mycodo/.
+
+1. Pattern results
+   Part1/llm_output/patterns_llm_draft.csv          (used as the verified list; Part1/patterns.csv and
+                                                     Part1/patterns_llm_draft.csv do not exist at those paths)
+
+2. Source files of the chosen instances (read in Part 1 completely, re-checked in Part 3 with grep -n / sed)
+   Template Method - Date/Daily Setpoint Interpolation
+     mycodo/utils/method.py                          (DateMethod 75-162, DailyMethod 165-196)
+   Strategy - Setpoint Schedule Calculation
+     mycodo/utils/method.py                          (AbstractMethod 22-72, DailySineMethod 220-239,
+                                                      DurationMethod 261-378, CascadeMethod 381-428,
+                                                      create_method_handler 431-441, sine_wave_y_out 458-466)
+   Adapter - Sensor Driver Adaptation
+     mycodo/inputs/base_input.py, mycodo/inputs/adafruit_i2c_soil.py,
+     mycodo/inputs/weather_openweathermap_weather.py, mycodo/controllers/controller_input.py (update_measure)
+     mycodo/inputs/sensorutils.py lines 71-92 (calculate_dewpoint; read in Part 3, outside the Part 1 scope)
+   Proxy - Daemon RPC Client
+     mycodo/mycodo_client.py
+   Command - Automation/Alert Actions
+     mycodo/actions/base_action.py, mycodo/actions/email.py, mycodo/actions/output_on_off.py,
+     mycodo/mycodo_client.py (trigger_action, output_on_off)
+     mycodo/utils/send_data.py lines 19-176 (send_email) and mycodo/utils/actions.py lines 106-129
+     (check_allowed_to_email) - read in Part 2/3 for the receiver behaviour
+   Plugin - Input/Output Module Loading
+     mycodo/utils/modules.py, mycodo/utils/inputs.py (parse_input_information),
+     mycodo/controllers/controller_input.py (initialize_variables), INPUT_INFORMATION of
+     mycodo/inputs/adafruit_i2c_soil.py and mycodo/inputs/weather_openweathermap_weather.py
+   Layer Supertype - Daemon Module Base
+     mycodo/abstract_base_controller.py, mycodo/inputs/base_input.py, mycodo/functions/base_function.py
+   Active Record - User and Role Persistence
+     mycodo/databases/__init__.py, mycodo/databases/models/user.py, mycodo/databases/models/role.py
+
+3. Environment / reference files
+   Part2 outputs were NOT read for Part 3 (only the venv created in Part 2 is reused for lizard).

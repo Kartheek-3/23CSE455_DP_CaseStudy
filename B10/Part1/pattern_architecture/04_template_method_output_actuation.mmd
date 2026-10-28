@@ -1,0 +1,20 @@
+%% Template Method - "Output Actuation (irrigation switching)"
+%% mycodo/outputs/base_output.py, pump_gpio.py, on_off_gpio.py
+classDiagram
+    class AbstractOutput {
+        +output_on_off(state, output_channel, output_type, amount, min_off, trigger_conditionals)
+        +output_switch(state, output_type, amount, duty_cycle, output_channel)
+        +is_on(output_channel)
+        +is_setup()
+        +check_triggers(output_id, amount, output_channel)
+    }
+    class pump_gpio_OutputModule["pump_gpio.OutputModule"]
+    pump_gpio_OutputModule : +output_switch(state, output_type, amount, output_channel)
+    pump_gpio_OutputModule : +is_on(output_channel)
+    pump_gpio_OutputModule : +is_setup()
+    class on_off_gpio_OutputModule["on_off_gpio.OutputModule"]
+    on_off_gpio_OutputModule : +output_switch(state, output_type, amount, output_channel)
+    on_off_gpio_OutputModule : +is_on(output_channel)
+    on_off_gpio_OutputModule : +is_setup()
+    AbstractOutput <|-- pump_gpio_OutputModule
+    AbstractOutput <|-- on_off_gpio_OutputModule

@@ -1,0 +1,21 @@
+%% Active Record - "User and Role Persistence"
+%% mycodo/databases/__init__.py (CRUDMixin), databases/models/user.py, databases/models/role.py; db.Model/UserMixin = framework
+classDiagram
+    class CRUDMixin {
+        +save()
+        +delete()
+    }
+    class db_Model["db.Model"]
+    <<framework>> db_Model
+    class UserMixin
+    <<framework>> UserMixin
+    class User {
+        +set_password(new_password)
+        +check_password(password, hashed_password)
+    }
+    class Role
+    CRUDMixin <|-- User
+    db_Model <|-- User
+    UserMixin <|-- User
+    CRUDMixin <|-- Role
+    db_Model <|-- Role

@@ -1,0 +1,30 @@
+%% Template Method - "Controller Thread Lifecycle"
+%% mycodo/controllers/base_controller.py, controller_input.py, controller_conditional.py; threading.Thread = framework (stdlib)
+classDiagram
+    class threading_Thread["threading.Thread"]
+    <<framework>> threading_Thread
+    threading_Thread : +start()
+    threading_Thread : +run()
+    class AbstractController {
+        +run()
+        +stop_controller()
+        +initialize_variables()
+        +loop()
+        +run_finally()
+        +pre_stop()
+    }
+    class InputController {
+        +initialize_variables()
+        +loop()
+        +run_finally()
+        +pre_stop()
+    }
+    class ConditionalController {
+        +initialize_variables()
+        +loop()
+        +stop_controller()
+    }
+    AbstractController <|-- InputController
+    AbstractController <|-- ConditionalController
+    threading_Thread <|-- InputController
+    threading_Thread <|-- ConditionalController
