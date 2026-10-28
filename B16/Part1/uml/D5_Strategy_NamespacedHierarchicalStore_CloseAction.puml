@@ -1,0 +1,33 @@
+@startuml D5
+!pragma layout smetana
+title D5 Strategy: NamespacedHierarchicalStore.CloseAction
+
+class "NamespacedHierarchicalStore<N>" as Store <<Context>> {
+  -parentStore : NamespacedHierarchicalStore<N>
+  -closeAction : CloseAction<N>
+  +close()
+}
+interface "NamespacedHierarchicalStore.CloseAction<N>" as CloseAction <<Strategy>> {
+  +close(N, Object, Object)
+  {static} +closeAutoCloseables() : CloseAction<N>
+}
+class "lambda from AbstractExtensionContext.createCloseAction()" as JupiterClose <<ConcreteStrategy>>
+class "lambda from CloseAction.closeAutoCloseables()" as AutoClose <<ConcreteStrategy>>
+abstract class "AbstractExtensionContext<T>" as AEC <<Client>> {
+  -valuesStore : NamespacedHierarchicalStore
+  -createCloseAction()
+}
+
+JupiterClose ..|> CloseAction
+AutoClose ..|> CloseAction
+Store o--> CloseAction : closeAction
+AEC ..> Store : new NamespacedHierarchicalStore(parent, createCloseAction())
+' aligned-with-record
+legend right
+  <b>Counted participants</b> (record in the dataset)
+  Strategy: CloseAction
+  ConcreteStrategy (lambda): AbstractExtensionContext#createCloseAction
+  Context: NamespacedHierarchicalStore#close
+  Grey classes: real, shown for context, not counted
+endlegend
+@enduml

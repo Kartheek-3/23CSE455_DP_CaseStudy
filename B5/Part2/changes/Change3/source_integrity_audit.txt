@@ -1,0 +1,6 @@
+BEFORE SHA256: 113702be8326da1e15dc7887a7a5a82b88f4b08fbabab95e84f24b05cf9abd3e
+BEFORE count: 412
+AFTER count (before final record): 429
+Modified original files: README.md; app/views/trips/_trip_panel.html.erb; config/routes.rb
+New files (before final record): SCENARIO2_CHANGE_RECORD.md; app/controllers/booking_options_controller.rb; app/services/booking_providers/atlas_adapter.rb; app/services/booking_providers/beacon_adapter.rb; app/services/booking_providers/registry.rb; app/views/booking_options/index.html.erb; config/booking_provider_fixtures/atlas_demo.json; config/booking_provider_fixtures/beacon_demo.json; evidence/isolated_provider_checks.rb; evidence/isolated_provider_checks_output.txt; evidence/ruby_version_check.log; evidence/scenario2_rails_test_attempt.log; evidence/scenario2_ruby_syntax_checks.txt; evidence/source_integrity_audit.txt; test/controllers/booking_options_controller_test.rb; test/models/scenario2_email_and_refresh_regression_test.rb; test/services/booking_providers_test.rb
+Deleted original files: 

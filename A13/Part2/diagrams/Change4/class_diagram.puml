@@ -1,0 +1,160 @@
+@startuml
+!pragma layout smetana
+skinparam style strictuml
+skinparam monochrome false
+skinparam roundcorner 8
+skinparam classAttributeIconSize 0
+skinparam defaultFontName SansSerif
+skinparam classFontStyle bold
+
+title Misskey Explainable Personalized Feed Architecture (Change 4 - CH04)
+
+package "Server / API Layer" {
+    abstract class Endpoint {
+        +meta: Object
+        +paramDef: Object
+        +{abstract} exec(params, user): Promise<any>
+    }
+
+    class ForYouEndpoint {
+        -recommendationService: RecommendationService
+        -noteEntityService: NoteEntityService
+        +exec(params, user): Promise<PackedNote[]>
+    }
+
+    class PreferencesEndpoint {
+        -recommendationService: RecommendationService
+        +exec(params, user): Promise<Object>
+    }
+
+    class PreferencesUpdateEndpoint {
+        -recommendationService: RecommendationService
+        +exec(params, user): Promise<Object>
+    }
+
+    class PreferencesResetEndpoint {
+        -recommendationService: RecommendationService
+        +exec(params, user): Promise<Object>
+    }
+
+    Endpoint <|-- ForYouEndpoint
+    Endpoint <|-- PreferencesEndpoint
+    Endpoint <|-- PreferencesUpdateEndpoint
+    Endpoint <|-- PreferencesResetEndpoint
+}
+
+package "Core Domain & Ranking Layer" {
+    class RecommendationService <<Injectable>> {
+        -recommendationPreferencesRepository: RecommendationPreferencesRepository
+        -notesRepository: NotesRepository
+        -usersRepository: UsersRepository
+        -followingsRepository: FollowingsRepository
+        -mutingsRepository: MutingsRepository
+        -blockingsRepository: BlockingsRepository
+        -noteReactionsRepository: NoteReactionsRepository
+        -noteFavoritesRepository: NoteFavoritesRepository
+        -flaggedLinksRepository: FlaggedLinksRepository
+        -personalizedStrategy: RecommendationRankingStrategy
+        -chronologicalStrategy: RecommendationRankingStrategy
+        -cache: Map<string, CacheEntry>
+        +getPreferences(userId: string): Promise<MiRecommendationPreference>
+        +updatePreferences(userId: string, update): Promise<MiRecommendationPreference>
+        +resetProfile(userId: string): Promise<MiRecommendationPreference>
+        +getRecommendations(userId: string, options): Promise<ScoredRecommendation[]>
+        +clearUserCache(userId: string): void
+    }
+
+    interface RecommendationRankingStrategy <<Strategy>> {
+        +name: string
+        +scoreCandidates(candidates: CandidateNote[], profile: RecommendationUserProfile, now?: Date): ScoredRecommendation[]
+    }
+
+    class WeightedPersonalizedRankingStrategy <<ConcreteStrategy>> {
+        +name: "weighted-personalized"
+        +scoreCandidates(candidates: CandidateNote[], profile: RecommendationUserProfile, now?: Date): ScoredRecommendation[]
+    }
+
+    class ChronologicalRankingStrategy <<ConcreteStrategy>> {
+        +name: "chronological"
+        +scoreCandidates(candidates: CandidateNote[], profile: RecommendationUserProfile, now?: Date): ScoredRecommendation[]
+    }
+
+    class CandidateNote <<ValueObject>> {
+        +note: MiNote
+        +hashtags: string[]
+        +authorFollowed: boolean
+        +userInteracted: boolean
+    }
+
+    class RecommendationUserProfile <<ValueObject>> {
+        +userId: string
+        +mutedTopics: string[]
+        +reducedAuthors: string[]
+        +preferredTopics: string[]
+        +topicWeights: Record<string, number>
+        +followingUserIds: Set<string>
+    }
+
+    class ScoredRecommendation <<ValueObject>> {
+        +note: MiNote
+        +score: number
+        +explanation: string
+        +principalReason: string
+        +scoreBreakdown: Object
+    }
+
+    RecommendationRankingStrategy <|.. WeightedPersonalizedRankingStrategy
+    RecommendationRankingStrategy <|.. ChronologicalRankingStrategy
+    RecommendationService --> RecommendationRankingStrategy : delegates scoring to
+    RecommendationRankingStrategy ..> CandidateNote : consumes
+    RecommendationRankingStrategy ..> RecommendationUserProfile : consumes
+    RecommendationRankingStrategy ..> ScoredRecommendation : produces
+}
+
+package "Persistence / Models" {
+    class MiRecommendationPreference <<Entity>> {
+        +userId: string
+        +mutedTopics: string[]
+        +reducedAuthors: string[]
+        +preferredTopics: string[]
+        +topicWeights: Record<string, number>
+        +createdAt: Date
+        +updatedAt: Date
+    }
+
+    interface RecommendationPreferencesRepository <<Repository>> {
+        +findOneBy(criteria): Promise<MiRecommendationPreference>
+        +save(entity): Promise<MiRecommendationPreference>
+    }
+
+    RecommendationService --> RecommendationPreferencesRepository : manages preferences via
+    RecommendationPreferencesRepository ..> MiRecommendationPreference : persists
+}
+
+package "Frontend UI Integration" {
+    class ForYouPage <<Vue Page>> {
+        -mode: "personalized" | "chronological"
+        -paginator: Paginator
+        +setMode(mode): void
+        +openPreferencesModal(): void
+    }
+
+    class MkNoteComponent <<Vue Component>> {
+        +appearNote: Note
+        +recommendationReason: string
+        +renderBadge(): void
+    }
+
+    ForYouPage --> ForYouEndpoint : fetches notes via
+    ForYouPage --> PreferencesEndpoint : reads controls via
+    ForYouPage --> PreferencesUpdateEndpoint : updates preferences via
+    ForYouPage --> PreferencesResetEndpoint : resets profile via
+    ForYouPage *-- MkNoteComponent : displays notes with
+}
+
+ForYouEndpoint --> RecommendationService : invokes
+PreferencesEndpoint --> RecommendationService : invokes
+PreferencesUpdateEndpoint --> RecommendationService : invokes
+PreferencesResetEndpoint --> RecommendationService : invokes
+
+@enduml

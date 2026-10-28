@@ -1,0 +1,379 @@
+# DaPlanStan — Design Pattern Discovery and Verification
+
+23CSE455 | Preliminary requirements review and source-inspection plan
+
+## 1. Important clarifications before discovery
+
+After reviewing the faculty instructions, report template and Part 1 handoff, there are three important distinctions.
+
+First, your team's Part 2 and the faculty's Part 2 are different.
+
+Your team calls your responsibility Part 2 — Design Pattern Discovery and Verification. However, the official faculty report places design-pattern discovery under Section 2: Part 1 Pattern discovery. Faculty Part 2 concerns evolution and refactoring.
+
+Therefore, your contribution belongs in the baseline pattern-discovery section of the final report, even though your team internally calls it Part 2.&#x20;
+
+DP_Csestudy.pdf
+
+
+
+Second, the baseline commit is not fully verified.
+
+The stated commit `da54d9ab8bfc118e99375fdd6c506efb20b66e5b` exists in the public GitHub repository.&#x20;
+
+[image](https://www.google.com/s2/favicons?domain=https://github.com\&sz=32)
+
+GitHub
+
+&#x20;However, the uploaded source ZIP contains no `.git` metadata, and its correspondence to that commit has not been independently established.
+
+
+
+For now, the uploaded ZIP is the actual source snapshot being inspected, while the commit remains a stated rather than verified snapshot identity.
+
+Third, Part 1's human verification is incomplete.
+
+The handoff contains an architecture diagram, source-navigation notes and a verification CSV, but the CSV has no completed verification outcomes, reviewers or dates. This means the handoff is useful for selecting files, not for accepting design-pattern evidence.
+
+No design-pattern instances are confirmed at this stage.
+
+## 2. Exactly what the faculty requires you to produce
+
+The official instructions and report template require a source-supported inventory, quantitative counts, participant mappings, diagrams, and documented verification. There is no minimum pattern quota. A small defensible inventory is preferable to a large speculative one.&#x20;
+
+DP_Csestudy.pdf
+
+
+
+### A. Required deliverables
+
+| Deliverable           | What you must prepare                                                                             |
+| --------------------- | ------------------------------------------------------------------------------------------------- |
+| Discovery methodology | Explain how source areas were selected, candidates identified and evidence checked                |
+| `patterns.csv`        | One record per confirmed collaboration in the original code                                       |
+| `pattern_counts.csv`  | Per-pattern instance counts, distinct pattern types and total instances                           |
+| Participant mappings  | Map every applicable pattern role to actual code symbols with file paths and line ranges          |
+| Pattern evidence      | Code excerpts, relationships, invocation paths, behavior and problem solved                       |
+| Diagrams              | Editable UML/component/interaction diagrams and rendered images for important confirmed instances |
+| Candidate review      | Separate rejected and uncertain candidates with reasons                                           |
+| Human verification    | Reviewer, decision, justification, source references, alternatives and available test results     |
+| LLM audit records     | Exact prompts, inputs, raw outputs, displayed model/date and human evaluation                     |
+| Report contribution   | Baseline discovery methodology, totals, inventory, detailed instance records and limitations      |
+
+These are based on faculty instructions, the report template and the team's handoff.&#x20;
+
+DP_Csestudy_instructions.pdf
+
+DP_Csestudy.pdf
+
+
+
+### B. `patterns.csv` — mandatory schema
+
+EXACT COLUMN ORDER
+
+CSV header
+
+&#x20;Copy
+
+`source_version,pattern_name,pattern_type,instance_name,participant_roles,source_locations,intent_and_evidence`
+
+For each confirmed record:
+
+1. `source_version`: `Original code`, with the precise archive identity and unverified commit relationship documented separately.
+2. `pattern_name`: Exact recognized design-pattern name, once established.
+3. `pattern_type`: Its recognized category, such as creational, structural, behavioral, GRASP or architectural.
+4. `instance_name`: A meaningful name describing the specific collaboration.
+5. `participant_roles`: Every applicable role mapped to its real class, module, interface or method.
+6. `source_locations`: Source path and line range for every participant.
+7. `intent_and_evidence`: The problem addressed and the actual interactions showing the proposed implementation.
+
+Do not invent abstract classes or interfaces simply because a textbook diagram contains them. A single code symbol may perform multiple roles.
+
+### C. `pattern_counts.csv` — mandatory schema
+
+EXACT COLUMN ORDER
+
+CSV header
+
+&#x20;Copy
+
+`source_version,summary,pattern_name,count`
+
+The faculty defines three kinds of summary rows:
+
+| `summary` value           | Meaning                                                              |
+| ------------------------- | -------------------------------------------------------------------- |
+| `per_pattern`             | Number of independent confirmed collaborations for that pattern name |
+| `total_pattern_types`     | Number of distinct confirmed pattern names                           |
+| `total_pattern_instances` | Total number of independently confirmed collaborations               |
+
+A repeated call does not automatically create another instance. Likewise, two interchangeable concrete classes taking part in one collaboration do not create two instances.
+
+The report additionally requires separate totals for concrete participant classes, unique participant symbols, rejected candidates and uncertain candidates. Concrete participant classes are classes implementing variable roles; unique participant symbols count distinct mapped symbols only once. Document the deduplication rules explicitly.&#x20;
+
+DP_Csestudy.pdf
+
+
+
+### D. Verification and supporting records
+
+The required CSVs do not have fields for reviewer, verification status or candidate rejection. Therefore, maintain separate supporting evidence records rather than changing the mandatory CSV headers.
+
+A practical verification record should capture the candidate ID, proposed classification, source snapshot, origin, all participating symbols, exact code references, alternative explanations, reviewer's name, decision, date, and evidence/test paths.
+
+For `llm.csv`, the faculty requires:
+
+`part,model_and_date,prompt_file,input_file,output_file,evaluation,verification_file`
+
+Record the real interaction and actual human correction. Never present an unperformed test or an unreviewed AI suggestion as verified.&#x20;
+
+DP_Csestudy_instructions.pdf
+
+
+
+Submission detail: The instructions specify a single team submission, not independent submissions for each teammate. The primary CSV specification uses `pattern_counts.csv`, while an illustrative folder hierarchy uses a different spelling. Use the explicitly defined CSV schema and agree on one canonical filename with the team before integration.
+
+## 3. What I verified in the uploaded source
+
+I inspected the archive's directory structure and read the application code behind the main collaboration flows identified by Part 1.
+
+Source snapshot
+
+Static inspection completed
+
+# 16
+
+Ruby controller files
+
+# 14
+
+Model and concern files
+
+# 5
+
+Background job files
+
+# 2
+
+Mailbox files
+
+# 3
+
+Mailer files
+
+# 18
+
+Stimulus controller files
+
+Counts are from the uploaded archive, including the three admin controllers and the single model concern. They are source-file counts, not design-pattern counts.&#x20;
+
+The archive includes 38 migrations. It has no `test/` or `spec/` directory. Its CI configuration contains static security, dependency and lint checks, but not an application test suite. I have not run the Rails application or its integrations.&#x20;
+
+The source specifies Ruby 3.4.2 and resolves Rails 8.1.3 in `Gemfile.lock`. These are declared versions, not confirmation of an installed runtime.
+
+For reproducibility, the uploaded archive's SHA-256 is:
+
+DAPLANSTAN-MAIN.ZIP
+
+`69af480a1a3bfecc7580b3b6b7b8f44f4df2414315d5434c8e40c67eb63475a9`
+
+This identifies the archive bytes, not the upstream Git commit.&#x20;
+
+
+
+## 4. Recommended inspection order
+
+I recommend beginning with smaller collaborations whose participating methods are relatively easy to trace, then moving to workflows spanning more components.
+
+The following is an inspection sequence, not a pattern classification or pattern ranking.
+
+01
+
+Source boundaries and request entry points
+
+`config/routes.rb` · `app/controllers/application_controller.rb` · `Gemfile.lock` · `db/structure.sql`
+
+Establish where requests enter the application, which common methods controllers inherit, how permissions are checked and which relationships belong to the current database schema.
+
+This establishes context before investigating individual collaborations.
+
+02
+
+Geocoding and reusable model behavior — first focused investigation
+
+`app/models/concerns/geocodable.rb` · `app/models/trip_item.rb` · `app/jobs/geocode_trip_items_job.rb` · `app/controllers/trips_controller.rb` · `config/initializers/geocoder.rb`
+
+Examine how shared functionality is included, how the model adapts that behavior, how geocoding is triggered, and where external lookup begins.
+
+The source explicitly contains `include Geocodable`, a model method that invokes `super`, a conditional model callback and a background job calling the model method. Investigate the exact responsibilities and behavior across these boundaries.&#x20;
+
+03
+
+Inbound email processing and confirmation
+
+`app/mailboxes/application_mailbox.rb` · `app/mailboxes/trip_mailbox.rb` · `app/jobs/parse_inbox_item_job.rb` · `app/models/inbox_item.rb` · `app/controllers/inbox_items_controller.rb` · `app/controllers/approved_senders_controller.rb`
+
+Follow how an incoming email is associated with a trip, how sender approval affects processing, how extracted information is stored, and which action creates linked itinerary or expense records.
+
+An important distinction is already visible: `ParseInboxItemJob#perform` stores parsed data and updates the parsing status. `InboxItemsController#update` separately calls the confirmation or relinking methods. These must not be collapsed into one automatic operation.&#x20;
+
+
+
+04
+
+Trip creation, membership and permissions
+
+`app/controllers/trips_controller.rb` · `app/models/trip.rb` · `app/models/trip_member.rb` · `app/models/traveler.rb` · `app/controllers/trip_members_controller.rb` · `app/models/account.rb` · `app/models/user.rb`
+
+Trace how trip creation coordinates owner membership, how travelers relate to trips and how different controller actions enforce access conditions.
+
+Inspect real association paths, decision points and method calls. Do not infer interchangeable behavioral objects merely because the membership model has multiple role values.
+
+05
+
+Itinerary import, record linking and expense handling
+
+`app/controllers/trip_items_controller.rb` · `app/models/inbox_item.rb` · `app/models/trip_item.rb` · `app/models/expense.rb` · `app/controllers/expenses_controller.rb` · `app/jobs/parse_receipt_job.rb`
+
+Compare the application-owned creation paths for manually entered items, imported items and confirmed email data.
+
+Investigate how existing records are located, how missing information is filled, how duplication is avoided, and how receipt data updates an expense. Check whether any behavior is genuinely delegated or whether it is ordinary conditional application logic.
+
+06
+
+Other external integrations and account identity
+
+`app/jobs/fetch_trip_cover_image_job.rb` · `app/controllers/sessions_controller.rb` · `app/models/user_identity.rb` · `config/initializers/omniauth.rb` · `app/mailers/trip_mailer.rb` · `app/mailers/invitation_mailer.rb`
+
+Examine what the application itself coordinates when talking to external services, which behavior is delegated to installed libraries, and how results update domain records.
+
+Treat authentication provider configuration, outbound mail delivery and cover-image retrieval as separate workflows unless shared participant relationships are actually demonstrated.
+
+07
+
+Browser-side component collaboration
+
+`app/javascript/controllers/timeline_controller.js` · `map_controller.js` · `trip_nav_controller.js` · `location_picker_controller.js` · relevant `app/views/trips/` templates
+
+Trace event producers, listeners, data attributes and component state updates.
+
+Source inspection found application-defined events such as `map:locate`, `map:reset` and `map:resize`, with handlers registered in the map controller. Determine the complete event path through the views and JavaScript before considering any classification.&#x20;
+
+
+
+08
+
+Remaining application source and coverage check
+
+Remaining controllers · helpers · frontend components · model and mailer files · application initializers · schema and migrations
+
+Search for collaborations not represented in the Part 1 handoff. Also check callers and declarations outside the initially selected files.
+
+The existing schema should establish current persistent entities. Older migrations provide historical context, not proof that deleted entities remain active participants.
+
+### Why this order?
+
+It starts with easily traceable relationships before exploring longer workflows. It also includes a later source-wide sweep so that the Part 1 handoff does not artificially determine which patterns can be discovered.
+
+The objective is to identify complete collaborations, not isolated classes with interesting names.
+
+## 5. Keeping application, framework and dependency behavior separate
+
+For every candidate, maintain an origin classification throughout the evidence record.
+
+| Origin                       | What belongs here                                                                                                                                   | How to treat it                                                                         |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Application code             | DaPlanStan's Ruby and JavaScript methods, custom concerns, controllers, jobs, mailboxes and domain rules                                            | Primary evidence for application-owned collaborations                                   |
+| Rails-provided behavior      | Active Record association machinery, callbacks, Rails routing, Active Job scheduling, Action Mailbox dispatch, Turbo and Stimulus lifecycle support | Explain its role, but do not claim Rails internals are implemented by DaPlanStan        |
+| Dependency/provider behavior | Geocoder, Nominatim, Anthropic, OmniAuth, Postmark, Pexels and Leaflet                                                                              | Distinguish the application's integration code from the behavior implemented externally |
+
+For example, `Geocodable#geocode_with_bias` is application-written Ruby code, while `Geocoder.search` comes from a library. Both are relevant to understanding the workflow, but their implementation origins differ.
+
+Similarly, an application job's `perform` method belongs to DaPlanStan, whereas background scheduling and execution infrastructure are supplied by Rails and its job backend.
+
+A candidate that exists primarily in framework or library internals should not be counted as an application-implemented instance. If the faculty accepts a framework idiom, identify its origin explicitly and keep the counting rule transparent.
+
+## 6. What counts as sufficient evidence?
+
+The standard should be stricter than finding code that resembles a textbook example.
+
+### Evidence strength
+
+Strong evidence — suitable for confirmation after review
+
+A recognizable design problem is supported by the code's structure and behavior. All necessary participants are identifiable, their interactions can be traced through actual methods or declarations, and the explanation matches the intended pattern mechanism rather than merely its appearance.
+
+Exact source lines, meaningful alternatives and an independent human decision support the claim. Tests or execution logs strengthen behavioral claims where available.
+
+Uncertain evidence — keep under investigation
+
+Some required relationships are present, but an essential participant, behavioral mechanism or actual invocation remains unclear.
+
+This also covers cases where the implementation might be ordinary application coordination rather than a particular design pattern.
+
+Weak similarity — do not confirm
+
+A familiar class name, controller inheritance, a framework macro, a simple method call, an enum, an API request or a diagram resemblance without the required collaboration.
+
+These observations may lead to investigation, but they are not independently sufficient evidence.
+
+### Verification procedure for each future candidate
+
+1. State the problem the proposed collaboration appears to solve.
+2. Locate every participating symbol, not just the most visible class.
+3. Follow the actual declarations, method calls, delegation and relevant conditional paths.
+4. Compare the observed mechanism with the recognized pattern's essential characteristics and consider simpler explanations.
+5. Record file paths, exact line ranges, source excerpts and the behavior supported by those excerpts.
+6. Separate static source confirmation from runtime confirmation. Record actual tests only when performed.
+7. Obtain an independent human review and classify the candidate as confirmed, rejected or uncertain, with reasons.
+
+Only confirmed collaborations should enter `patterns.csv`. Derive the instance counts from those records afterward, instead of estimating counts during discovery.
+
+This avoids counting the same collaboration multiple times merely because it has multiple participants, call sites or concrete implementations.
+
+## 7. Information that remains uncertain
+
+The following issues should remain visible in the discovery notes rather than being silently resolved.
+
+| Open issue                             | Current position                                                                                         |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Source ZIP versus stated commit        | Commit exists, but exact archive-to-commit correspondence is unverified                                  |
+| Part 1 human verification              | Tracker is unfilled; previous architecture claims lack recorded independent sign-off                     |
+| Application startup                    | Not executed or verified during this review                                                              |
+| Automated tests                        | No application `test/` or `spec/` suite found in the supplied snapshot                                   |
+| External integrations                  | Actual credentials, API responses and successful runtime behavior are unverified                         |
+| Full candidate coverage                | Initial file discovery and source tracing completed, but exhaustive candidate evaluation has not started |
+| Pattern acceptance boundaries          | Exact treatment of framework idioms and dependency-origin patterns must be explicit                      |
+| Concrete-class count rule              | Cross-instance deduplication must be standardized and documented                                         |
+| Faculty approval and submission naming | Approval evidence was not established; folder and filename examples contain inconsistencies              |
+| Human verification for new claims      | Student reviewer, review dates and signed/recorded decisions are still pending                           |
+
+## 8. Completion criteria for this preliminary step
+
+Current preparation checklist
+
+7 of 9
+
+Faculty deliverables and required CSV schemas identified
+
+Team-versus-faculty part numbering clarified
+
+Uploaded source archive and major source directories inspected
+
+High-priority source relationships independently traced
+
+Application/framework/dependency boundaries established
+
+Evidence acceptance and rejection criteria defined
+
+Remaining uncertainties recorded
+
+Baseline pattern claims verified by a human reviewer
+
+Final pattern inventory and counts produced
+
+The appropriate next step is the first focused investigation: tracing the geocoding collaboration from its initiating code through the model, concern, job and external library boundary.
+
+At that stage, each suspected pattern can be evaluated independently, with rejected alternatives preserved as evidence rather than removed from the record.
+
+Current conclusion: The methodology and initial inspection scope are established. No pattern names, pattern instances, participant counts or final inventory have been assigned. That is the correct boundary for this first step.

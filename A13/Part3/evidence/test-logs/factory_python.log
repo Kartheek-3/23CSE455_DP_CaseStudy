@@ -1,0 +1,14 @@
+# factory / python
+# working folder: Part3/code/pattern_factory/python
+# runtime: CPython 3.14.6
+$ python3 -B test_logging_factory.py ../../../test-cases/factory.txt
+PASS default_is_pretty
+PASS explicit_pretty
+PASS json
+PASS unknown_format
+PASS format_is_case_sensitive
+PASS empty_string_rejected
+passed 6/6
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 23.5, 25.7, 25.5, 23.9, 23.3 -> median 23.9

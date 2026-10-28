@@ -1,0 +1,55 @@
+# Timings for Proxy (proxy_daemon_rpc)
+# time.perf_counter() around subprocess.run(); 1 warmup + 5 measured runs; milliseconds
+# machine: <host>, measured with Python 3.12.7
+
+[java]
+working folder: B10\Part3\proxy_daemon_rpc\java
+compile command: javac -d out DaemonControl.java DaemonRpcTest.java
+run command: java -cp out DaemonRpcTest
+warmup_ms: 164.657
+run_1_ms: 158.345
+run_2_ms: 170.949
+run_3_ms: 156.831
+run_4_ms: 170.691
+run_5_ms: 156.505
+median_ms: 158.345
+last run exit code: 0; last line: Proxy tests: 12/12 passed
+
+[python]
+working folder: B10\Part3\proxy_daemon_rpc\python
+compile command: (none)
+run command: python test_daemon_rpc.py
+warmup_ms: 78.857
+run_1_ms: 72.109
+run_2_ms: 70.879
+run_3_ms: 68.995
+run_4_ms: 64.230
+run_5_ms: 73.395
+median_ms: 70.879
+last run exit code: 0; last line: Proxy tests: 12/12 passed
+
+[javascript]
+working folder: B10\Part3\proxy_daemon_rpc\javascript
+compile command: (none)
+run command: node test_daemon_rpc.js
+warmup_ms: 105.707
+run_1_ms: 99.485
+run_2_ms: 87.828
+run_3_ms: 88.559
+run_4_ms: 94.329
+run_5_ms: 87.173
+median_ms: 88.559
+last run exit code: 0; last line: Proxy tests: 12/12 passed
+
+[cpp]
+working folder: B10\Part3\proxy_daemon_rpc\cpp
+compile command: g++ -std=c++14 -O2 -Wall -o test_daemon_rpc.exe test_daemon_rpc.cpp
+run command: B10\Part3\proxy_daemon_rpc\cpp\test_daemon_rpc.exe
+warmup_ms: 284.010
+run_1_ms: 33.969
+run_2_ms: 33.030
+run_3_ms: 37.866
+run_4_ms: 32.057
+run_5_ms: 29.792
+median_ms: 33.030
+last run exit code: 0; last line: Proxy tests: 12/12 passed

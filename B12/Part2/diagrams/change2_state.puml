@@ -1,0 +1,60 @@
+@startuml
+' B12 Part 2 - Change 2 (EV charging) - State pattern
+' Source: Part2/code/evolved/smart-parking-backend/src/charging/
+title B12 Part 2 Change 2 - EV Charging Session State
+
+skinparam classAttributeIconSize 0
+
+interface ChargingState {
+  +name : string
+  +plugIn(session : ChargingSession) : void
+  +start(session : ChargingSession) : void
+  +complete(session : ChargingSession) : void
+  +unplug(session : ChargingSession) : void
+}
+
+class IdleState {
+  +name = "idle"
+}
+class PluggedInState {
+  +name = "plugged-in"
+}
+class ChargingActiveState {
+  +name = "charging"
+}
+class CompletedState {
+  +name = "completed"
+}
+
+class ChargingSession {
+  -state : ChargingState
+  +slotId : number
+  +energyDeliveredKwh : number
+  +history : string[]
+  +setState(state) : void
+  +plugIn() / +start() / +complete() / +unplug() : void
+  +addEnergy(kwh) : void
+  +status : string
+}
+
+class ChargingService
+class ChargingController {
+  +POST /charging/:slotId
+  +POST /charging/:slotId/:action
+}
+
+ChargingState <|.. IdleState
+ChargingState <|.. PluggedInState
+ChargingState <|.. ChargingActiveState
+ChargingState <|.. CompletedState
+ChargingSession o--> ChargingState : state
+ChargingService --> ChargingSession
+ChargingController --> ChargingService
+
+note bottom of ChargingSession
+  idle -> plugged-in -> charging -> completed -> idle;
+  unplug during charging -> idle. Illegal operations
+  throw BadRequestException (change2.diff).
+end note
+
+@enduml

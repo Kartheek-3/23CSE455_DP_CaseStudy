@@ -1,0 +1,9 @@
+{
+  "name": "adapter-listener-bridge",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/main.js ../test-data/events.txt",
+    "test": "node --test test/adapter.test.js"
+  }
+}

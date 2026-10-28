@@ -1,0 +1,6 @@
+databases
+env
+.venv
+.upgrade
+.github
+.git

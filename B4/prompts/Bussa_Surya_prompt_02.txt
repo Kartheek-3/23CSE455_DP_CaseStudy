@@ -1,0 +1,2 @@
+Audit the final datasets and contribution split. Confirm that pattern counts reconcile to pattern records, removed patterns are not counted in later totals, all source paths are relative to B4, each LLM record points to prompt/output/verification files, and each member has an equal evidence-backed allocation.
+

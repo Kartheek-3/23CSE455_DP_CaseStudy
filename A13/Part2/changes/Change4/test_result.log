@@ -1,0 +1,31 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - `__dirname` (vitest.config.ts:28:17). Use `import.meta.dirname` instead
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v4.1.11 /home/vighnesh/DP-case_study/misskey/packages/backend
+
+ ✓ test/unit/RecommendationService.test.ts (20 tests) 17ms 25 MB heap used
+
+ Test Files  1 passed (1)
+      Tests  20 passed (20)
+   Start at  16:28:05
+   Duration  481ms (transform 92ms, setup 0ms, import 282ms, tests 17ms, environment 22ms)
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - `__dirname` (vitest.config.ts:28:17). Use `import.meta.dirname` instead
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v4.1.11 /home/vighnesh/DP-case_study/misskey/packages/backend
+
+(node:21498) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node-22 --trace-deprecation ...` to show where the warning was created)
+ ✓ test/unit/LinkSafetyService.test.ts (29 tests) 26ms 23 MB heap used
+ ✓ test/unit/EventService.test.ts (21 tests) 19ms 144 MB heap used
+ ✓ test/unit/RecommendationService.test.ts (20 tests) 16ms 25 MB heap used
+ ✓ test/unit/AudioTranscriptService.test.ts (21 tests) 13ms 16 MB heap used
+
+ Test Files  4 passed (4)
+      Tests  91 passed (91)
+   Start at  16:38:14
+   Duration  2.72s (transform 531ms, setup 0ms, import 2.01s, tests 74ms, environment 53ms)
+

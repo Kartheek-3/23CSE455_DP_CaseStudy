@@ -1,0 +1,6 @@
+
+> airport_app@0.0.1 build
+> nest build
+
+
+EXIT_CODE=0

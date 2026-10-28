@@ -1,0 +1,16 @@
+# adapter / javascript
+# working folder: Part3/code/pattern_adapter/javascript
+# runtime: Node.js v24.15.0
+$ node telemetry.test.js ../../../test-cases/adapter.txt
+PASS no_adapter_runs_function
+PASS message_with_user
+PASS message_without_user
+PASS span_returns_value
+PASS span_propagates_error
+PASS shutdown_has_time_limit
+PASS two_adapters_fan_out
+PASS two_adapters_nest_spans
+passed 8/8
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 45.4, 48.4, 44.6, 43.0, 55.3 -> median 45.4

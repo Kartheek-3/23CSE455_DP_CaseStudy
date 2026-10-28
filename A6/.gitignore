@@ -1,0 +1,17 @@
+node_modules/
+build/
+*.class
+*.o
+*.out
+test_bin
+test_bin.exe
+__pycache__/
+*.pyc
+.env
+*.aux
+*.log
+*.toc
+*.nav
+*.snm
+*.out
+.DS_Store

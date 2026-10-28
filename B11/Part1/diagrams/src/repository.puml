@@ -1,0 +1,15 @@
+@startuml repository
+title Repository - Case Persistence
+skinparam shadowing false
+interface CrudRepository <<Repository>>
+interface CaseRepository {
+  +findByCaseno()
+  +findByNexthearing()
+}
+class "generated proxy" as Proxy <<ConcreteRepository>>
+class Case <<Entity>>
+CrudRepository <|-- CaseRepository
+CaseRepository <|.. Proxy
+Proxy ..> Case
+note bottom of CaseRepository : repository/CaseRepository.java:12 (+14 more)
+@enduml

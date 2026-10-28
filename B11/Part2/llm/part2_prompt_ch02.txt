@@ -1,0 +1,4 @@
+[Part 2 - CH02 (SMS channel, extends Observer) - owner: Nithilesh (Am.sc.u4cse23311)]
+Context: legalSystem @4e4ebb57. Turn the uncertain scheduler-Observer into a true
+subject-maintains-observers Observer and add a second (SMS) channel without changing
+callers. Give the subject + observer classes, a JUnit 5 test, and the pattern effect.

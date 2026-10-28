@@ -1,0 +1,77 @@
+# coding=utf-8
+"""CH03 characterization tests: lock in the behaviour (after CH02) of the code CH03 touches.
+
+CH03 extracts the missing-measurement handling from bang_bang.CustomModule.loop()
+and adds alerting there. These tests pin the current missing-measurement and
+normal-path behaviour, including the exact daemon calls.
+(The baseline crash for a None / [] result is a defect that CH03 fixes on purpose,
+so it is documented in requirement.md instead of being locked in here.)
+"""
+import datetime
+import time
+from unittest import mock
+
+from mycodo.tests.case_study.helpers import run_loop
+
+
+def test_char3_missing_value_queries_state_then_turns_off(make_bang_bang):
+    module = make_bang_bang()
+    control = run_loop(module, None, output_state='on')
+    assert control.method_calls == [
+        mock.call.output_state('out-dev', 0),
+        mock.call.output_off('out-dev', output_channel=0),
+    ]
+
+
+def test_char3_missing_value_turns_off_even_when_output_is_off(make_bang_bang):
+    control = run_loop(make_bang_bang(), None, output_state='off')
+    control.output_off.assert_called_once_with('out-dev', output_channel=0)
+
+
+def test_char3_missing_value_is_handled_every_period(make_bang_bang):
+    module = make_bang_bang()
+    for _ in range(3):
+        run_loop(module, None, output_state='off')
+    assert module.control.output_off.call_count == 3
+    assert module.logger.error.call_count == 3
+
+
+def test_char3_missing_value_skips_strategy_and_rain_reading(make_bang_bang):
+    module = make_bang_bang(irrigation_strategy='skip_if_rain', rain_measurement='rain-dev,rain-meas')
+    run_loop(module, None, output_state='on')
+    module.get_last_measurement.assert_called_once_with('meas-dev', 'meas-id', max_age=360)
+    module.control.output_off.assert_called_once_with('out-dev', output_channel=0)
+    module.control.output_on.assert_not_called()
+
+
+def test_char3_missing_value_turns_off_outside_time_window(make_bang_bang):
+    module = make_bang_bang(irrigation_strategy='time_window', irrigation_windows='05:00-06:00')
+    module._now = lambda: datetime.datetime(2024, 6, 1, 12, 0)
+    run_loop(module, None, output_state='on')
+    module.control.output_off.assert_called_once_with('out-dev', output_channel=0)
+
+
+def test_char3_valid_value_after_missing_value_is_controlled_normally(make_bang_bang):
+    module = make_bang_bang()
+    run_loop(module, None, output_state='off')
+    module.control.reset_mock()
+    run_loop(module, 48.0, output_state='off')
+    module.control.output_on.assert_called_once_with('out-dev', output_channel=0)
+    module.control.output_off.assert_not_called()
+
+
+def test_char3_very_dry_reading_only_switches_output(make_bang_bang):
+    module = make_bang_bang(crop_profile='tomato')
+    control = run_loop(module, 1.0, output_state='off')
+    assert control.method_calls == [
+        mock.call.output_state('out-dev', 0),
+        mock.call.output_on('out-dev', output_channel=0),
+    ]
+
+
+def test_char3_period_not_elapsed_does_nothing(make_bang_bang):
+    module = make_bang_bang()
+    module.timer_loop = time.time() + 100
+    module.loop()
+    assert module.control.method_calls == []
+    module.get_last_measurement.assert_not_called()

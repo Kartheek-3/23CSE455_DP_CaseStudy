@@ -1,0 +1,18 @@
+[Member 2 prompt - Part 2, change CH02]
+You are assisting with a university Design Patterns case study (course 23CSE455), Part 2 (evolution and refactoring).
+INPUT: input_ch02_source_before.txt = numbered Java source (src/main/java) of a Quarkus bank REST API.
+The existing JUnit 5 characterization tests use an in-memory EntityManager fake and a small CDI-like container (no database needed).
+
+CHANGE CH02 - Transaction events: audit log and high-value alert observers
+Business requirement: every completed deposit or withdrawal must be recorded in an audit trail that can be read per account, and transactions of 10,000.00 or more must raise an alert, without the account service depending on the audit/alert code.
+- AccountService publishes a TransactionEvent (account id, kind DEPOSIT/WITHDRAWAL, amount, balance after, timestamp) after the balance is saved.
+- TransactionAuditLog stores events per account in order; GET /api/v1/accounts/{id}/audit returns them (404 for an unknown account).
+- HighValueAlertObserver records and logs events with amount >= 10,000.00.
+- Rejected operations (400/404) publish nothing.
+
+DELIVER:
+1. The code change as a unified diff (production code and JUnit 5 tests). Keep the existing style (field @Inject, @ApplicationScoped, WebApplicationException-based errors).
+2. One test per acceptance criterion; do not weaken existing tests except where the requirement changes behaviour - say which.
+3. Pattern effects: for every pattern instance in the current code say preserved / modified / extended / replaced / removed / newly_introduced and why.
+4. The refactoring: the real code smell, the technique, and how behaviour preservation is shown.
+5. Say honestly what you could not verify.

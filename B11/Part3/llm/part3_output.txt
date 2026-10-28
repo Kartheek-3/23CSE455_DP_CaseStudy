@@ -1,0 +1,15 @@
+Model output summary (Part 3):
+- 16 implementations produced (4 patterns x 4 languages), each with a runnable
+  main and shared test cases.
+- All four language versions of every pattern compiled and ran, producing
+  byte-identical output (8/8 shared cases per language). Evidence:
+  test_result/part3_output.txt.
+- Metrics measured and recorded in data/cross_language.csv:
+    source_loc           - non-blank, non-comment production lines
+    max_function_cc      - maximum per-function cyclomatic complexity (lizard)
+    median_process_ms    - median of 5 timed runs (1 warmup first)
+- Observed ordering on the submission machine (Apple Silicon): C++ ~4.5 ms <
+  Python ~15 ms < Java ~44 ms ~ JavaScript ~45 ms. Startup cost dominates because
+  the per-snippet work is trivial.
+Verification by team: outputs diffed across languages (identical); timings
+re-measured on the submission machine with Part3/measure.py.

@@ -1,0 +1,18 @@
+%% Template Method - "Sensor Measurement Acquisition"
+%% mycodo/inputs/base_input.py, adafruit_i2c_soil.py, weather_openweathermap_weather.py, controllers/controller_input.py
+classDiagram
+    class AbstractInput {
+        +next()
+        +read()
+        +get_measurement()
+    }
+    class adafruit_i2c_soil_InputModule["adafruit_i2c_soil.InputModule"]
+    adafruit_i2c_soil_InputModule : +get_measurement()
+    class weather_openweathermap_weather_InputModule["weather_openweathermap_weather.InputModule"]
+    weather_openweathermap_weather_InputModule : +get_measurement()
+    class InputController {
+        +update_measure()
+    }
+    AbstractInput <|-- adafruit_i2c_soil_InputModule
+    AbstractInput <|-- weather_openweathermap_weather_InputModule
+    InputController --> AbstractInput : measure_input.next()

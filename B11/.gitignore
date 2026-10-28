@@ -1,0 +1,26 @@
+# Working clone of the baseline app used to apply/run Part 2 (not part of the submission)
+.run/
+
+# Build artifacts
+target/
+*.class
+*.jar
+
+# Scaffolding helper scripts (not deliverables)
+run_backend.sh
+install_mac.sh
+
+# OS / editor cruft
+.DS_Store
+*.swp
+
+# LaTeX build intermediates at the project root (keep B11_Final_Report.pdf)
+/B11_Report.aux
+/B11_Report.log
+/B11_Report.out
+/B11_Report.toc
+/B11_Report.synctex.gz
+/B11_Report.fls
+/B11_Report.fdb_latexmk
+
+# NOTE: test_result/*.log (mvn_test.log, app_startup.log) are evidence — keep them.

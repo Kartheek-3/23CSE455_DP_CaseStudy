@@ -1,0 +1,262 @@
+[
+  {
+    "pattern": "Adapter",
+    "language": "Java",
+    "samples_ms": [
+      41.615909,
+      40.822995,
+      40.442631,
+      55.237535,
+      41.199226
+    ],
+    "test_result": "PASS 3/3",
+    "host": "Linux-6.18.55-x86_64-with-glibc2.39"
+  },
+  {
+    "pattern": "Adapter",
+    "language": "Python",
+    "samples_ms": [
+      20.079297,
+      18.401008,
+      18.695351,
+      19.904393,
+      18.169219
+    ],
+    "test_result": "PASS 3/3",
+    "host": "Linux-6.18.55-x86_64-with-glibc2.39"
+  },
+  {
+    "pattern": "Adapter",
+    "language": "JavaScript",
+    "samples_ms": [
+      49.425978,
+      53.470462,
+      52.786963,
+      49.884734,
+      66.280321
+    ],
+    "test_result": "PASS 3/3",
+    "host": "Linux-6.18.55-x86_64-with-glibc2.39"
+  },
+  {
+    "pattern": "Adapter",
+    "language": "C++",
+    "samples_ms": [
+      2.13024,
+      1.793463,
+      1.708064,
+      4.434673,
+      1.965142
+    ],
+    "test_result": "PASS 3/3",
+    "host": "Linux-6.18.55-x86_64-with-glibc2.39"
+  },
+  {
+    "pattern": "Builder",
+    "language": "Java",
+    "samples_ms": [
+      45.532679,
+      38.89422,
+      39.542337,
+      37.838039,
+      41.121617
+    ],
+    "test_result": "PASS 4/4",
+    "host": "Linux-6.18.55-x86_64-with-glibc2.39"
+  },
+  {
+    "pattern": "Builder",
+    "language": "Python",
+    "samples_ms": [
+      18.026485,
+      17.972513,
+      17.78797,
+      18.606083,
+      18.974794
+    ],
+    "test_result": "PASS 4/4",
+    "host": "Linux-6.18.55-x86_64-with-glibc2.39"
+  },
+  {
+    "pattern": "Builder",
+    "language": "JavaScript",
+    "samples_ms": [
+      49.540833,
+      51.116688,
+      50.504526,
+      49.602556,
+      53.732551
+    ],
+    "test_result": "PASS 4/4",
+    "host": "Linux-6.18.55-x86_64-with-glibc2.39"
+  },
+  {
+    "pattern": "Builder",
+    "language": "C++",
+    "samples_ms": [
+      2.042758,
+      1.388562,
+      1.412528,
+      1.371166,
+      1.277244
+    ],
+    "test_result": "PASS 4/4",
+    "host": "Linux-6.18.55-x86_64-with-glibc2.39"
+  },
+  {
+    "pattern": "Service Layer",
+    "language": "Java",
+    "samples_ms": [
+      48.839343,
+      53.403505,
+      43.701255,
+      45.498473,
+      49.402542
+    ],
+    "test_result": "PASS 5/5",
+    "host": "Linux-6.18.55-x86_64-with-glibc2.39"
+  },
+  {
+    "pattern": "Service Layer",
+    "language": "Python",
+    "samples_ms": [
+      19.656889,
+      19.330918,
+      18.335974,
+      18.640688,
+      18.916564
+    ],
+    "test_result": "PASS 5/5",
+    "host": "Linux-6.18.55-x86_64-with-glibc2.39"
+  },
+  {
+    "pattern": "Service Layer",
+    "language": "JavaScript",
+    "samples_ms": [
+      55.411606,
+      55.325405,
+      60.71721,
+      56.198892,
+      64.089522
+    ],
+    "test_result": "PASS 5/5",
+    "host": "Linux-6.18.55-x86_64-with-glibc2.39"
+  },
+  {
+    "pattern": "Service Layer",
+    "language": "C++",
+    "samples_ms": [
+      1.950479,
+      1.902597,
+      1.322122,
+      1.923488,
+      1.583806
+    ],
+    "test_result": "PASS 5/5",
+    "host": "Linux-6.18.55-x86_64-with-glibc2.39"
+  },
+  {
+    "pattern": "Strategy",
+    "language": "Java",
+    "samples_ms": [
+      51.11458,
+      51.058766,
+      50.120764,
+      57.153681,
+      45.475775
+    ],
+    "test_result": "PASS 4/4",
+    "host": "Linux-6.18.55-x86_64-with-glibc2.39"
+  },
+  {
+    "pattern": "Strategy",
+    "language": "Python",
+    "samples_ms": [
+      19.586112,
+      19.389456,
+      17.705921,
+      20.921485,
+      19.161052
+    ],
+    "test_result": "PASS 4/4",
+    "host": "Linux-6.18.55-x86_64-with-glibc2.39"
+  },
+  {
+    "pattern": "Strategy",
+    "language": "JavaScript",
+    "samples_ms": [
+      50.863502,
+      52.270292,
+      50.972146,
+      51.124626,
+      53.472174
+    ],
+    "test_result": "PASS 4/4",
+    "host": "Linux-6.18.55-x86_64-with-glibc2.39"
+  },
+  {
+    "pattern": "Strategy",
+    "language": "C++",
+    "samples_ms": [
+      1.355933,
+      1.883148,
+      1.431027,
+      1.309964,
+      1.981046
+    ],
+    "test_result": "PASS 4/4",
+    "host": "Linux-6.18.55-x86_64-with-glibc2.39"
+  },
+  {
+    "pattern": "Chain of Responsibility",
+    "language": "Java",
+    "samples_ms": [
+      43.096397,
+      43.283985,
+      38.381367,
+      38.876513,
+      39.291559
+    ],
+    "test_result": "PASS 7/7",
+    "host": "Linux-6.18.55-x86_64-with-glibc2.39"
+  },
+  {
+    "pattern": "Chain of Responsibility",
+    "language": "Python",
+    "samples_ms": [
+      19.750021,
+      18.050451,
+      20.194637,
+      18.662001,
+      19.528608
+    ],
+    "test_result": "PASS 7/7",
+    "host": "Linux-6.18.55-x86_64-with-glibc2.39"
+  },
+  {
+    "pattern": "Chain of Responsibility",
+    "language": "JavaScript",
+    "samples_ms": [
+      54.372645,
+      46.070764,
+      57.863284,
+      54.214786,
+      50.527811
+    ],
+    "test_result": "PASS 7/7",
+    "host": "Linux-6.18.55-x86_64-with-glibc2.39"
+  },
+  {
+    "pattern": "Chain of Responsibility",
+    "language": "C++",
+    "samples_ms": [
+      1.588183,
+      2.282089,
+      1.508403,
+      1.584358,
+      1.421102
+    ],
+    "test_result": "PASS 7/7",
+    "host": "Linux-6.18.55-x86_64-with-glibc2.39"
+  }
+]

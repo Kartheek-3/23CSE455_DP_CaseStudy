@@ -1,0 +1,7 @@
+--- baseline/transfer-flow
++++ evolved/transfer-flow
+@@ -1,2 +1,2 @@
+- Transaction result = new TransferCommand(sender, receiver, amount).execute();
+- notifications.publishCompleted(result);
++ Money settled = factory.create(money.currency, "EUR").convert(money, "EUR");
++ Transfer draft = new Transfer(id, sender, beneficiary, settled, "PENDING", createdOn);

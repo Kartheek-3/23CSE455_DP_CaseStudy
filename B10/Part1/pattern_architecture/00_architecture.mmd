@@ -1,0 +1,29 @@
+%% Part 1 - Mycodo architecture (baseline ee70a111c622e2a81026fd5c1553a948acf8161e), scope files only
+flowchart TB
+    UI["Flask web UI (outside scope)"] --> DC
+    CLI["mycodo_client.py __main__ CLI"] --> DC
+    DC["DaemonControl (mycodo_client.py)"] -->|"Pyro5.api.Proxy RPC"| DAEMON["Daemon process (outside scope)"]
+    DAEMON --> IC["InputController"]
+    DAEMON --> CC["ConditionalController"]
+    DAEMON -.->|"loads / calls (outside scope)"| OUT
+    DAEMON -.->|"loads / calls (outside scope)"| FN
+    DAEMON -.->|"executes actions (outside scope)"| ACT
+    IC -->|"parse_input_information / load_module_from_file"| REG["utils/inputs.py + utils/modules.py"]
+    IC -->|"measure_input.next()"| IN["AbstractInput: adafruit_i2c_soil / weather_openweathermap_weather"]
+    IN --> HW["Seesaw I2C driver / OpenWeatherMap HTTP (dependencies)"]
+    IC -->|"parse_measurement"| REG
+    IC -->|"add_measurements_influxdb (outside scope)"| TSDB[("InfluxDB")]
+    IC -->|"output_on / output_off"| DC
+    CC -->|"ConditionalRun user code (outside scope)"| COND["AbstractConditional"]
+    COND -->|"trigger_action / get_condition_measurement"| DC
+    ACT["AbstractFunctionAction: email / output_on_off"] -->|"output_on_off"| DC
+    FN["AbstractFunction: bang_bang.CustomModule"] -->|"output_state / output_on / output_off"| DC
+    OUT["AbstractOutput: pump_gpio / on_off_gpio"] --> GPIO["RPi.GPIO (dependency)"]
+    OUT -->|"trigger_all_actions"| DC
+    METH["utils/method.py setpoint methods (clients outside scope)"]
+    BASE["AbstractBaseController"] -.->|"supertype of"| IN
+    BASE -.->|"supertype of"| OUT
+    BASE -.->|"supertype of"| FN
+    BASE -.->|"supertype of"| ACT
+    BASE -.->|"supertype of"| IC
+    MODELS["User / Role + CRUDMixin"] --> SQL[("SQL DB via db (outside scope)")]

@@ -1,0 +1,4 @@
+Now do the same for Area B (test engines and execution lifecycle) using the files
+from your first answer. Explain in simple steps what happens when the discovered
+tests are executed: from the launcher, to the engine, down the descriptor tree,
+until each test finishes. Use a small example test class. Just answer in chat.

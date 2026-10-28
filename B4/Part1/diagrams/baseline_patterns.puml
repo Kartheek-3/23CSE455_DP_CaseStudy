@@ -1,0 +1,28 @@
+@startuml
+class PropertyController
+class Property
+class Owner
+class Tenant
+class "properties/*.blade.php" as PropertyViews
+PropertyController --> Property
+PropertyController --> Owner
+PropertyController --> Tenant
+PropertyController --> PropertyViews
+
+class RoleMiddleware
+class SecurityHeaders
+RoleMiddleware --> PropertyController : next(request)
+SecurityHeaders --> RoleMiddleware : next(request)
+
+abstract class FormRequest
+class StorePropertyRequest
+class StoreTenantRequest
+FormRequest <|-- StorePropertyRequest
+FormRequest <|-- StoreTenantRequest
+
+class TenantController
+class "DB facade" as DB
+class "Hash facade" as Hash
+TenantController --> DB
+TenantController --> Hash
+@enduml

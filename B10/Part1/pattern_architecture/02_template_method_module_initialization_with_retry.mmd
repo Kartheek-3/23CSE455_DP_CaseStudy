@@ -1,0 +1,34 @@
+%% Template Method - "Module Initialization with Retry"
+%% mycodo/abstract_base_controller.py (try_initialize), base_input.py, base_function.py, base_action.py and concrete modules
+classDiagram
+    class AbstractBaseController {
+        +try_initialize(tries, wait_sec)
+        +initialize()
+    }
+    class AbstractInput {
+        +initialize()
+    }
+    class AbstractFunction {
+        +initialize()
+    }
+    class AbstractFunctionAction {
+        +initialize()
+    }
+    class adafruit_i2c_soil_InputModule["adafruit_i2c_soil.InputModule"]
+    adafruit_i2c_soil_InputModule : +initialize()
+    class weather_openweathermap_weather_InputModule["weather_openweathermap_weather.InputModule"]
+    weather_openweathermap_weather_InputModule : +initialize()
+    class bang_bang_CustomModule["bang_bang.CustomModule"]
+    bang_bang_CustomModule : +initialize()
+    class email_ActionModule["email.ActionModule"]
+    email_ActionModule : +initialize()
+    class output_on_off_ActionModule["output_on_off.ActionModule"]
+    output_on_off_ActionModule : +initialize()
+    AbstractBaseController <|-- AbstractInput
+    AbstractBaseController <|-- AbstractFunction
+    AbstractBaseController <|-- AbstractFunctionAction
+    AbstractInput <|-- adafruit_i2c_soil_InputModule
+    AbstractInput <|-- weather_openweathermap_weather_InputModule
+    AbstractFunction <|-- bang_bang_CustomModule
+    AbstractFunctionAction <|-- email_ActionModule
+    AbstractFunctionAction <|-- output_on_off_ActionModule

@@ -1,0 +1,32 @@
+Change Identifier: Change 1 (CH01)
+Feature Name: Native Events with RSVP and Reminder Notifications
+Preceding / Baseline Commit SHA: 5f501341d49d2bc3fa7e817ce7548a82174326eb
+Implementation Commit SHA: 608b45de20dce0a78459025320bfdeb0c4e47a78
+Commit Author: vighnesh1001 <realvighnesh@gmail.com>
+Commit Date: Sun Oct 11 13:53:10 2026 +0530
+Commit Message: feat: add native events with RSVP and reminders
+
+Relevant Changed Source Paths:
+- packages/backend/migration/1785000000000-events.js (added)
+- packages/backend/src/core/CoreModule.ts (modified)
+- packages/backend/src/core/EventService.ts (added)
+- packages/backend/src/di-symbols.ts (modified)
+- packages/backend/src/models/Event.ts (added)
+- packages/backend/src/models/EventRsvp.ts (added)
+- packages/backend/src/models/Notification.ts (modified)
+- packages/backend/src/models/RepositoryModule.ts (modified)
+- packages/backend/src/models/_.ts (modified)
+- packages/backend/src/postgres.ts (modified)
+- packages/backend/src/server/api/endpoint-list.ts (modified)
+- packages/backend/src/server/api/endpoints/events/cancel.ts (added)
+- packages/backend/src/server/api/endpoints/events/create.ts (added)
+- packages/backend/src/server/api/endpoints/events/rsvp.ts (added)
+- packages/backend/src/server/api/endpoints/events/rsvps.ts (added)
+- packages/backend/src/server/api/endpoints/events/show.ts (added)
+- packages/backend/src/server/api/endpoints/events/update.ts (added)
+- packages/backend/test/unit/EventService.test.ts (added)
+- packages/frontend/src/components/MkEventCard.vue (added)
+
+Testing Limitations:
+- Unit tests exercise all business logic, validation, state transitions, RSVP counts, and idempotency guarantees using Vitest with deterministic in-memory repository doubles.
+- Live PostgreSQL (port 54312) and Redis (port 56312) integration testing requires external container services, which are currently offline in the local environment; therefore, focused unit testing was executed in compliance with Section 6 of the Master Instruction.

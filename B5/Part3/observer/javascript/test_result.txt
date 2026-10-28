@@ -1,0 +1,15 @@
+Command: node test_main.js
+Working directory: Part3/observer/javascript
+Exit code: 0
+
+STDOUT:
+O01	LOGGED	mail-001	Travel receipt	alice@example.test
+O02	NO_NOTIFICATION
+O03	NO_NOTIFICATION
+O04	LOGGED	mail-004	Updated trip plan	dana@example.test
+O05	ERROR	INVALID_RECIPIENT
+O06	ERROR	INVALID_FLAG
+O07	NO_NOTIFICATION
+
+STDERR:
+passed=7/7 failures=0 errors=0

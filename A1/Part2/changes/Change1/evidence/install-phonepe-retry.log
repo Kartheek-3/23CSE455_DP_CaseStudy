@@ -1,0 +1,5 @@
+Looking in indexes: https://phonepe.mycloudrepo.io/public/repositories/phonepe-pg-sdk-python
+Collecting phonepe-sdk==1.1.0
+  Downloading https://phonepe.mycloudrepo.io/public/repositories/phonepe-pg-sdk-python/phonepe-sdk/phonepe_sdk-1.1.0-py3-none-any.whl (66 kB)
+Installing collected packages: phonepe-sdk
+Successfully installed phonepe-sdk-1.1.0

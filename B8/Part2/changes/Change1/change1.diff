@@ -1,0 +1,588 @@
+diff --git a/.gitignore b/.gitignore
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,3 +63,6 @@
+ 
+ # Alembic
+ alembic/versions/
++
++# Local git backup
++.git_baseline_backup/
+diff --git a/backend/app/models.py b/backend/app/models.py
+--- a/backend/app/models.py
++++ b/backend/app/models.py
+@@ -243,6 +243,7 @@
+     description = Column(Text, nullable=True)
+     exercises = Column(JSON, default=list)
+     difficulty = Column(String, default="Intermediate")
++    fitness_goal = Column(String, default="General Fitness")
+     duration_weeks = Column(Integer, default=4)
+     is_public = Column(Boolean, default=False)
+     created_at = Column(DateTime(timezone=True), server_default=func.now())
+diff --git a/backend/app/routers/plans.py b/backend/app/routers/plans.py
+--- a/backend/app/routers/plans.py
++++ b/backend/app/routers/plans.py
+@@ -7,10 +7,11 @@
+ from ..schemas.plans import (
+     WorkoutPlanCreate, WorkoutPlanUpdate, WorkoutPlanResponse,
+     DietPlanCreate, DietPlanUpdate, DietPlanResponse,
+-    PlanProgressCreate, PlanProgressResponse
++    PlanProgressCreate, PlanProgressResponse, WorkoutRecommendationResponse
+ )
+ from ..routers.auth import get_current_user, get_current_trainer
+ from ..utils.notifications import send_email
++from ..services.workout_recommendation import WorkoutRecommendationFactory, infer_goal_from_text
+ 
+ router = APIRouter()
+ 
+@@ -24,6 +25,7 @@
+         "description": plan.description,
+         "exercises": plan.exercises or [],
+         "difficulty": plan.difficulty,
++        "fitness_goal": plan.fitness_goal,
+         "duration_weeks": plan.duration_weeks,
+         "is_public": plan.is_public,
+         "created_at": plan.created_at,
+@@ -71,6 +73,7 @@
+         description=plan_data.description,
+         exercises=plan_data.exercises,
+         difficulty=plan_data.difficulty,
++        fitness_goal=plan_data.fitness_goal,
+         duration_weeks=plan_data.duration_weeks,
+         is_public=plan_data.is_public,
+     )
+@@ -108,6 +111,36 @@
+     else:
+         plans = db.query(WorkoutPlan).all()
+     return [_build_workout_response(p) for p in plans]
++
++
++@router.get("/workout/goals", response_model=List[str])
++def list_workout_goals(current_user: User = Depends(get_current_user)):
++    return WorkoutRecommendationFactory.available_goals()
++
++
++@router.get("/workout/recommendations", response_model=WorkoutRecommendationResponse)
++def recommend_workout(
++    goal: Optional[str] = None,
++    difficulty: str = "Intermediate",
++    member_id: Optional[int] = None,
++    use_member_goal: bool = False,
++    db: Session = Depends(get_db),
++    current_user: User = Depends(get_current_trainer),
++):
++    member_goal = None
++    if member_id and use_member_goal:
++        member = db.query(Member).filter(Member.id == member_id).first()
++        if not member:
++            raise HTTPException(status_code=404, detail="Member not found")
++        member_goal = infer_goal_from_text(member.fitness_goals)
++
++    strategy = WorkoutRecommendationFactory.get_strategy(member_goal or goal)
++    return {
++        "goal": strategy.goal,
++        "difficulty": difficulty,
++        "inferred_from_member": member_goal is not None,
++        "exercises": strategy.recommend(difficulty),
++    }
+ 
+ 
+ @router.get("/workout/{plan_id}", response_model=WorkoutPlanResponse)
+diff --git a/backend/app/schemas/plans.py b/backend/app/schemas/plans.py
+--- a/backend/app/schemas/plans.py
++++ b/backend/app/schemas/plans.py
+@@ -1,4 +1,4 @@
+-from pydantic import BaseModel
++from pydantic import BaseModel,Field
+ from typing import Optional, List, Any, Dict
+ from datetime import datetime
+ 
+@@ -15,8 +15,9 @@
+ class WorkoutPlanCreate(BaseModel):
+     title: str
+     description: Optional[str] = None
+-    exercises: List[Dict[str, Any]] = []
++    exercises: List[Dict[str, Any]] = Field(default_factory=list)
+     difficulty: str = "Intermediate"
++    fitness_goal: str = "General Fitness"
+     duration_weeks: int = 4
+     member_id: Optional[int] = None
+     class_id: Optional[int] = None
+@@ -30,6 +31,7 @@
+     difficulty: Optional[str] = None
+     duration_weeks: Optional[int] = None
+     is_public: Optional[bool] = None
++    fitness_goal: Optional[str] = None
+ 
+ 
+ class WorkoutPlanResponse(BaseModel):
+@@ -44,9 +46,17 @@
+     is_public: bool
+     created_at: datetime
+     trainer_name: Optional[str] = None
++    fitness_goal: str
+ 
+     class Config:
+         from_attributes = True
++
++
++class WorkoutRecommendationResponse(BaseModel):
++    goal: str
++    difficulty: str
++    inferred_from_member: bool
++    exercises: List[Dict[str, Any]]
+ 
+ 
+ class MealItem(BaseModel):
+diff --git a/backend/app/services/workout_recommendation.py b/backend/app/services/workout_recommendation.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/services/workout_recommendation.py
+@@ -0,0 +1,136 @@
++from abc import ABC, abstractmethod
++from typing import Dict, List, Optional
++
++DEFAULT_GOAL = "General Fitness"
++
++DIFFICULTY_SET_ADJUSTMENT = {"Beginner": -1, "Intermediate": 0, "Advanced": 1}
++
++
++class WorkoutRecommendationStrategy(ABC):
++    goal: str
++
++    @abstractmethod
++    def base_exercises(self) -> List[Dict]:
++        ...
++
++    def recommend(self, difficulty: str = "Intermediate") -> List[Dict]:
++        adjustment = DIFFICULTY_SET_ADJUSTMENT.get(difficulty, 0)
++        exercises = []
++        for exercise in self.base_exercises():
++            item = {"duration_seconds": None, **exercise}
++            item["sets"] = max(1, item["sets"] + adjustment)
++            exercises.append(item)
++        return exercises
++
++
++class GeneralFitnessStrategy(WorkoutRecommendationStrategy):
++    goal = "General Fitness"
++
++    def base_exercises(self) -> List[Dict]:
++        return [
++            {"name": "Jumping Jacks", "sets": 3, "reps": 20},
++            {"name": "Bodyweight Squats", "sets": 3, "reps": 15},
++            {"name": "Push-ups", "sets": 3, "reps": 10},
++            {"name": "Plank", "sets": 3, "reps": 1, "duration_seconds": 30},
++        ]
++
++
++class WeightLossStrategy(WorkoutRecommendationStrategy):
++    goal = "Weight Loss"
++
++    def base_exercises(self) -> List[Dict]:
++        return [
++            {"name": "Jumping Jacks", "sets": 3, "reps": 30},
++            {"name": "Mountain Climbers", "sets": 3, "reps": 20},
++            {"name": "High Knees", "sets": 3, "reps": 30},
++            {"name": "Burpees", "sets": 3, "reps": 10},
++        ]
++
++
++class MuscleBuildingStrategy(WorkoutRecommendationStrategy):
++    goal = "Muscle Building"
++
++    def base_exercises(self) -> List[Dict]:
++        return [
++            {"name": "Push-ups", "sets": 4, "reps": 12},
++            {"name": "Dumbbell Curls", "sets": 3, "reps": 12},
++            {"name": "Squats", "sets": 4, "reps": 12},
++            {"name": "Dumbbell Rows", "sets": 3, "reps": 12},
++        ]
++
++
++class StrengthTrainingStrategy(WorkoutRecommendationStrategy):
++    goal = "Strength Training"
++
++    def base_exercises(self) -> List[Dict]:
++        return [
++            {"name": "Squats", "sets": 4, "reps": 8},
++            {"name": "Push-ups", "sets": 4, "reps": 10},
++            {"name": "Lunges", "sets": 3, "reps": 10},
++            {"name": "Plank", "sets": 3, "reps": 1, "duration_seconds": 40},
++        ]
++
++
++class EnduranceStrategy(WorkoutRecommendationStrategy):
++    goal = "Endurance"
++
++    def base_exercises(self) -> List[Dict]:
++        return [
++            {"name": "Jogging", "sets": 3, "reps": 1, "duration_seconds": 300},
++            {"name": "Jump Rope", "sets": 3, "reps": 50},
++            {"name": "Cycling", "sets": 3, "reps": 1, "duration_seconds": 300},
++            {"name": "Mountain Climbers", "sets": 3, "reps": 20},
++        ]
++
++
++class FlexibilityStrategy(WorkoutRecommendationStrategy):
++    goal = "Flexibility"
++
++    def base_exercises(self) -> List[Dict]:
++        return [
++            {"name": "Standing Forward Bend", "sets": 3, "reps": 1, "duration_seconds": 30},
++            {"name": "Cat-Cow Stretch", "sets": 3, "reps": 10},
++            {"name": "Child Pose", "sets": 3, "reps": 1, "duration_seconds": 30},
++            {"name": "Hamstring Stretch", "sets": 3, "reps": 1, "duration_seconds": 30},
++        ]
++
++
++class WorkoutRecommendationFactory:
++    _strategies: Dict[str, WorkoutRecommendationStrategy] = {
++        strategy.goal: strategy
++        for strategy in (
++            GeneralFitnessStrategy(),
++            WeightLossStrategy(),
++            MuscleBuildingStrategy(),
++            StrengthTrainingStrategy(),
++            EnduranceStrategy(),
++            FlexibilityStrategy(),
++        )
++    }
++
++    @classmethod
++    def get_strategy(cls, goal: Optional[str]) -> WorkoutRecommendationStrategy:
++        return cls._strategies.get(goal or DEFAULT_GOAL, cls._strategies[DEFAULT_GOAL])
++
++    @classmethod
++    def available_goals(cls) -> List[str]:
++        return list(cls._strategies.keys())
++
++
++GOAL_KEYWORDS = [
++    ("Weight Loss", ("lose", "loss", "fat", "slim", "weight")),
++    ("Muscle Building", ("muscle", "bulk", "mass", "tone", "hypertrophy")),
++    ("Strength Training", ("strength", "strong", "power", "lift")),
++    ("Endurance", ("endurance", "stamina", "cardio", "run", "marathon", "cycling")),
++    ("Flexibility", ("flexib", "yoga", "stretch", "mobility")),
++]
++
++
++def infer_goal_from_text(fitness_goals: Optional[str]) -> Optional[str]:
++    if not fitness_goals:
++        return None
++    text = fitness_goals.lower()
++    for goal, keywords in GOAL_KEYWORDS:
++        if any(keyword in text for keyword in keywords):
++            return goal
++    return None
+diff --git a/backend/requirements.txt b/backend/requirements.txt
+--- a/backend/requirements.txt
++++ b/backend/requirements.txt
+@@ -2,6 +2,7 @@
+ uvicorn[standard]==0.24.0
+ python-jose[cryptography]==3.3.0
+ passlib[bcrypt]==1.7.4
++bcrypt==4.0.1
+ python-multipart==0.0.6
+ sqlalchemy==2.0.23
+ aiosqlite==0.19.0
+diff --git a/frontend/angular.json b/frontend/angular.json
+--- a/frontend/angular.json
++++ b/frontend/angular.json
+@@ -56,5 +56,8 @@
+         "test": {"builder": "@angular-devkit/build-angular:karma"}
+       }
+     }
++  },
++  "cli": {
++    "analytics": false
+   }
+ }
+\ No newline at end of file
+diff --git a/frontend/src/app/components/plans/plans.component.ts b/frontend/src/app/components/plans/plans.component.ts
+--- a/frontend/src/app/components/plans/plans.component.ts
++++ b/frontend/src/app/components/plans/plans.component.ts
+@@ -38,6 +38,7 @@
+               <div>
+                 <h3>{{ p.title }}</h3>
+                 <span class="plan-meta">{{ p.difficulty }} · {{ p.duration_weeks }} weeks</span>
++                <span class="fitness-goal-tag" *ngIf="p.fitness_goal">🎯 {{ p.fitness_goal }}</span>
+                 <span class="trainer-tag" *ngIf="p.trainer_name">by {{ p.trainer_name }}</span>
+               </div>
+               <div class="plan-item-actions">
+@@ -60,13 +61,13 @@
+                   <strong>{{ e.name }}</strong>
+                   <span *ngIf="e.sets && e.reps">{{ e.sets }} sets × {{ e.reps }} reps</span>
+                   <span *ngIf="e.duration_seconds">{{ e.duration_seconds }}s</span>
+-                  <a *ngIf="e.video_url" [href]="e.video_url" target="_blank" class="video-link">▶ Watch</a>
++                  <a *ngIf="e.video_url" [href]="e.video_url" target="_blank" rel="noopener noreferrer" class="video-link">▶ Watch</a>
+                 </div>
+                 <button class="btn btn-sm btn-outline" *ngIf="auth.isMember()" (click)="logProgress(p.id, 'workout', e.name)">
+                   ✅ Done
+                 </button>
+               </div>
+-              <div class="empty" *ngIf="p.exercises.length === 0">No exercises added yet.</div>
++              <div class="empty" *ngIf="!p.exercises || p.exercises.length === 0">No exercises added yet.</div>
+             </div>
+           </div>
+           <div class="empty-state" *ngIf="workoutPlans.length === 0">
+@@ -159,13 +160,21 @@
+               </div>
+               <div class="form-group">
+                 <label>Difficulty</label>
+-                <select [(ngModel)]="workoutForm.difficulty" class="form-control">
++                <select [(ngModel)]="workoutForm.difficulty" (ngModelChange)="generateExerciseSuggestions()" class="form-control">
+                   <option value="Beginner">Beginner</option>
+                   <option value="Intermediate">Intermediate</option>
+                   <option value="Advanced">Advanced</option>
+                 </select>
+               </div>
+             </div>
++            <div class="form-group">
++              <label>Fitness Goal *</label>
++              <select [(ngModel)]="workoutForm.fitness_goal" (ngModelChange)="onGoalChange()" class="form-control">
++                <option *ngFor="let goal of fitnessGoals" [value]="goal">{{ goal }}</option>
++              </select>
++              <small class="field-hint" *ngIf="!goalFromMember">Choose the goal this workout plan is designed for.</small>
++              <small class="field-hint goal-from-member" *ngIf="goalFromMember">Pre-filled from the selected member's fitness goals.</small>
++            </div>
+             <div class="form-row">
+               <div class="form-group">
+                 <label>Duration (weeks)</label>
+@@ -173,7 +182,7 @@
+               </div>
+               <div class="form-group">
+                 <label>Assign to Member</label>
+-                <select [(ngModel)]="workoutForm.member_id" class="form-control">
++                <select [(ngModel)]="workoutForm.member_id" (ngModelChange)="onWorkoutMemberChange()" class="form-control">
+                   <option [ngValue]="null">— All / Public —</option>
+                   <option *ngFor="let m of allMembers" [ngValue]="m.id">{{ m.full_name }}</option>
+                 </select>
+@@ -188,17 +197,36 @@
+                 <input type="checkbox" [(ngModel)]="workoutForm.is_public" /> Make this plan public
+               </label>
+             </div>
++            <div class="recommendation-section">
++              <div class="recommendation-header">
++                <div>
++                  <h4>✨ Recommended Exercises</h4>
++                  <p class="recommendation-hint">Suggestions for {{ workoutForm.fitness_goal }} at {{ workoutForm.difficulty }} level.</p>
++                </div>
++                <button class="btn btn-sm btn-outline" (click)="generateExerciseSuggestions()">Refresh Suggestions</button>
++              </div>
++              <div class="suggestion-list">
++                <div class="suggestion-item" *ngFor="let exercise of suggestedExercises">
++                  <div class="suggestion-info">
++                    <strong>{{ exercise.name }}</strong>
++                    <span *ngIf="!exercise.duration_seconds">{{ exercise.sets }} sets × {{ exercise.reps }} reps</span>
++                    <span *ngIf="exercise.duration_seconds">{{ exercise.sets }} sets × {{ exercise.duration_seconds }}s</span>
++                  </div>
++                  <button class="btn btn-sm btn-outline" (click)="addSuggestedExercise(exercise)">+ Add</button>
++                </div>
++              </div>
++            </div>
+             <div class="exercises-editor">
+               <div class="exercises-header">
+-                <h4>Exercises</h4>
+-                <button class="btn btn-sm btn-outline" (click)="addExercise()">+ Add Exercise</button>
++                <h4>Workout Exercises</h4>
++                <button class="btn btn-sm btn-outline" (click)="addExercise()">+ Add Custom Exercise</button>
+               </div>
+               <div class="exercise-row" *ngFor="let ex of workoutForm.exercises; let i = index">
+                 <input type="text" [(ngModel)]="ex.name" class="form-control ex-name" placeholder="Exercise name" />
+                 <input type="number" [(ngModel)]="ex.sets" class="form-control ex-num" placeholder="Sets" min="1" />
+                 <input type="number" [(ngModel)]="ex.reps" class="form-control ex-num" placeholder="Reps" min="1" />
+                 <input type="text" [(ngModel)]="ex.video_url" class="form-control ex-url" placeholder="Video URL" />
+-                <button class="btn-remove" (click)="workoutForm.exercises.splice(i, 1)">✕</button>
++                <button class="btn-remove" (click)="removeExercise(i)">✕</button>
+               </div>
+             </div>
+             <div class="alert alert-error" *ngIf="planError">{{ planError }}</div>
+@@ -322,6 +350,7 @@
+     .plan-item-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; }
+     .plan-item-header h3 { font-size: 1.1rem; font-weight: 700; color: #1a202c; margin: 0 0 0.25rem; }
+     .plan-meta { font-size: 0.8rem; color: #718096; margin-right: 0.5rem; }
++    .fitness-goal-tag { display: inline-block; margin: 6px 8px 0 0; padding: 5px 10px; background: #eaf3ff; color: #2563eb; border-radius: 15px; font-size: 12px; font-weight: 600; }
+     .trainer-tag { font-size: 0.8rem; color: #667eea; }
+     .plan-item-actions { display: flex; align-items: center; gap: 0.5rem; }
+     .badge.public { background: #f0fff4; color: #276749; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+@@ -354,6 +383,17 @@
+     .rating-stars span.filled { color: #f6ad55; }
+     .empty-state { text-align: center; padding: 4rem; color: #718096; }
+     .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
++    .recommendation-section { margin-top: 1.25rem; padding: 1rem; background: #f7f9ff; border: 1px solid #dbe4ff; border-radius: 10px; }
++    .recommendation-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem; }
++    .recommendation-header h4 { margin: 0; font-size: 0.95rem; font-weight: 700; color: #2d3748; }
++    .recommendation-hint { margin: 5px 0 0; font-size: 0.8rem; color: #718096; }
++    .suggestion-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.75rem; }
++    .suggestion-item { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; background: white; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; }
++    .suggestion-info { display: flex; flex-direction: column; gap: 4px; }
++    .suggestion-info strong { font-size: 0.85rem; color: #2d3748; }
++    .suggestion-info span { font-size: 0.75rem; color: #718096; }
++    .field-hint { display: block; margin-top: 5px; color: #718096; font-size: 0.78rem; }
++    .goal-from-member { color: #2563eb; font-weight: 600; }
+     .exercises-editor { margin-top: 1rem; }
+     .exercises-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+     .exercises-header h4 { font-size: 0.95rem; font-weight: 700; margin: 0; }
+@@ -393,7 +433,7 @@
+     .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; padding: 0.875rem 1.5rem; border-radius: 10px; font-weight: 600; z-index: 2000; }
+     .toast.success { background: #276749; color: white; }
+     .toast.error { background: #c53030; color: white; }
+-    @media (max-width: 640px) { .exercise-row { grid-template-columns: 1fr; } .meal-editor-row { grid-template-columns: 1fr; } }
++    @media (max-width: 640px) { .exercise-row { grid-template-columns: 1fr; } .meal-editor-row { grid-template-columns: 1fr; } .recommendation-header { align-items: flex-start; flex-direction: column; } .suggestion-list { grid-template-columns: 1fr; } }
+   `]
+ })
+ export class PlansComponent implements OnInit {
+@@ -414,8 +454,11 @@
+   toast = '';
+   toastType = 'success';
+   mealKeys = ['breakfast', 'lunch', 'dinner', 'snacks'];
+-
+-  workoutForm: any = { title: '', description: '', difficulty: 'Intermediate', duration_weeks: 4, member_id: null, is_public: false, exercises: [] };
++  fitnessGoals: string[] = ['General Fitness', 'Weight Loss', 'Muscle Building', 'Strength Training', 'Endurance', 'Flexibility'];
++  suggestedExercises: any[] = [];
++  goalFromMember = false;
++
++  workoutForm: any = { title: '', description: '', difficulty: 'Intermediate', fitness_goal: 'General Fitness', duration_weeks: 4, member_id: null, is_public: false, exercises: [] };
+   dietForm: any = { title: '', description: '', total_calories: 2000, duration_weeks: 4, member_id: null, is_public: false, macros: { protein: 150, carbs: 200, fats: 65 }, meals: { breakfast: [], lunch: [], dinner: [], snacks: [] } };
+   progressForm: any = { plan_id: 0, plan_type: 'workout', exercise_name: '', rating: 0, feedback: '' };
+ 
+@@ -429,6 +472,7 @@
+     this.loadPlans();
+     if (this.auth.isAdmin() || this.auth.isTrainer()) {
+       this.membersService.getAll().subscribe(m => this.allMembers = m);
++      this.plansService.getWorkoutGoals().subscribe(goals => this.fitnessGoals = goals);
+     }
+     if (this.auth.isMember()) {
+       this.membersService.getMe().subscribe(m => {
+@@ -442,13 +486,70 @@
+     this.plansService.getDietPlans().subscribe(p => this.dietPlans = p);
+   }
+ 
+-  openWorkoutModal() { this.editingWorkout = null; this.workoutForm = { title: '', description: '', difficulty: 'Intermediate', duration_weeks: 4, member_id: null, is_public: false, exercises: [] }; this.planError = ''; this.showWorkoutModal = true; }
++  openWorkoutModal() {
++    this.editingWorkout = null;
++    this.workoutForm = { title: '', description: '', difficulty: 'Intermediate', fitness_goal: 'General Fitness', duration_weeks: 4, member_id: null, is_public: false, exercises: [] };
++    this.suggestedExercises = [];
++    this.goalFromMember = false;
++    this.planError = '';
++    this.showWorkoutModal = true;
++    this.generateExerciseSuggestions();
++  }
+   openDietModal() { this.editingDiet = null; this.dietForm = { title: '', description: '', total_calories: 2000, duration_weeks: 4, member_id: null, is_public: false, macros: { protein: 150, carbs: 200, fats: 65 }, meals: { breakfast: [], lunch: [], dinner: [], snacks: [] } }; this.planError = ''; this.showDietModal = true; }
+ 
+-  editWorkout(p: WorkoutPlan) { this.editingWorkout = p; this.workoutForm = { ...p, exercises: [...(p.exercises || [])] }; this.planError = ''; this.showWorkoutModal = true; }
++  editWorkout(p: WorkoutPlan) {
++    this.editingWorkout = p;
++    this.workoutForm = { ...p, fitness_goal: p.fitness_goal || 'General Fitness', exercises: (p.exercises || []).map((e: any) => ({ ...e })) };
++    this.goalFromMember = false;
++    this.planError = '';
++    this.showWorkoutModal = true;
++    this.generateExerciseSuggestions();
++  }
+   editDiet(p: DietPlan) { this.editingDiet = p; this.dietForm = { ...p, macros: { ...p.macros }, meals: { ...p.meals } }; this.planError = ''; this.showDietModal = true; }
+ 
+   addExercise() { this.workoutForm.exercises.push({ name: '', sets: 3, reps: 10, duration_seconds: null, video_url: '' }); }
++
++  generateExerciseSuggestions(useMemberGoal = false) {
++    this.plansService.getWorkoutRecommendations({
++      goal: this.workoutForm.fitness_goal,
++      difficulty: this.workoutForm.difficulty,
++      member_id: this.workoutForm.member_id,
++      use_member_goal: useMemberGoal,
++    }).subscribe({
++      next: rec => {
++        this.suggestedExercises = rec.exercises;
++        if (rec.inferred_from_member) {
++          this.workoutForm.fitness_goal = rec.goal;
++          this.goalFromMember = true;
++        }
++      },
++      error: () => { this.suggestedExercises = []; this.showToast('Could not load exercise suggestions.', 'error'); }
++    });
++  }
++
++  onGoalChange() {
++    this.goalFromMember = false;
++    this.generateExerciseSuggestions();
++  }
++
++  onWorkoutMemberChange() {
++    this.goalFromMember = false;
++    this.generateExerciseSuggestions(!!this.workoutForm.member_id);
++  }
++
++  addSuggestedExercise(exercise: any) {
++    const alreadyExists = this.workoutForm.exercises.some((e: any) =>
++      (e.name || '').trim().toLowerCase() === exercise.name.toLowerCase()
++    );
++    if (alreadyExists) {
++      this.showToast('Exercise already added!', 'error');
++      return;
++    }
++    this.workoutForm.exercises.push({ ...exercise, duration_seconds: exercise.duration_seconds ?? null, video_url: '' });
++    this.showToast('Exercise added successfully!', 'success');
++  }
++
++  removeExercise(index: number) { this.workoutForm.exercises.splice(index, 1); }
+ 
+   saveWorkout() {
+     if (!this.workoutForm.title) { this.planError = 'Title is required.'; return; }
+diff --git a/frontend/src/app/models/user.model.ts b/frontend/src/app/models/user.model.ts
+--- a/frontend/src/app/models/user.model.ts
++++ b/frontend/src/app/models/user.model.ts
+@@ -126,9 +126,17 @@
+   description?: string;
+   exercises: Exercise[];
+   difficulty: string;
++  fitness_goal?: string;
+   duration_weeks: number;
+   is_public: boolean;
+   created_at: string;
++}
++
++export interface WorkoutRecommendation {
++  goal: string;
++  difficulty: string;
++  inferred_from_member: boolean;
++  exercises: Exercise[];
+ }
+ 
+ export interface Exercise {
+diff --git a/frontend/src/app/services/plans.service.ts b/frontend/src/app/services/plans.service.ts
+--- a/frontend/src/app/services/plans.service.ts
++++ b/frontend/src/app/services/plans.service.ts
+@@ -1,7 +1,7 @@
+ import { Injectable } from '@angular/core';
+-import { HttpClient } from '@angular/common/http';
++import { HttpClient, HttpParams } from '@angular/common/http';
+ import { Observable } from 'rxjs';
+-import { WorkoutPlan, DietPlan } from '../models/user.model';
++import { WorkoutPlan, DietPlan, WorkoutRecommendation } from '../models/user.model';
+ import { environment } from '../../environments/environment';
+ 
+ @Injectable({ providedIn: 'root' })
+@@ -29,6 +29,23 @@
+ 
+   deleteWorkoutPlan(id: number): Observable<any> {
+     return this.http.delete(`${this.apiUrl}/workout/${id}`);
++  }
++
++  getWorkoutGoals(): Observable<string[]> {
++    return this.http.get<string[]>(`${this.apiUrl}/workout/goals`);
++  }
++
++  getWorkoutRecommendations(options: {
++    goal?: string;
++    difficulty?: string;
++    member_id?: number | null;
++    use_member_goal?: boolean;
++  }): Observable<WorkoutRecommendation> {
++    let params = new HttpParams();
++    Object.entries(options).forEach(([k, v]) => {
++      if (v !== undefined && v !== null && v !== '') params = params.set(k, String(v));
++    });
++    return this.http.get<WorkoutRecommendation>(`${this.apiUrl}/workout/recommendations`, { params });
+   }
+ 
+   // Diet Plans

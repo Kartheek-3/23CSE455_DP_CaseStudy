@@ -1,0 +1,5 @@
+Now do the same for Area D (Jupiter extensions and resource management) using the files
+from your first answer. Explain in simple steps how an extension is registered, when its
+callbacks run during a test, how a parameter like @TempDir gets resolved, and how
+resources are cleaned up at the end. Use a small example test class with one custom
+extension and a @TempDir parameter. Just answer in chat.

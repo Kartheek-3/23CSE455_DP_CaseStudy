@@ -1,0 +1,66 @@
+CHANGE 3 - ROUTE CHANGES
+SOURCE EVIDENCE
+
+1. Route-change models
+File:
+app/models/transportation.py
+
+Evidence:
+- Lines 172-175 define ShipmentRouteChangeCreate.
+- The model contains shipment_id and new_route_id.
+- Lines 177-181 define ShipmentRouteHistoryResponse.
+- The response contains route_history_id, shipment_id,
+  previous_route_id, new_route_id and changed_at.
+
+2. Repository implementation
+File:
+app/repositories/shipment_repositories.py
+
+Evidence:
+- Lines 191-193 define change_shipment_route().
+- The method reads the shipment's current route while locking the row.
+- The method updates shipments.route_id.
+- Lines 232 onward insert the previous and new route IDs into
+  shipment_route_history.
+- Line 251 returns ShipmentRouteHistoryResponse.
+
+3. API implementation
+File:
+app/api/transportation.py
+
+Evidence:
+- Lines 132-139 define POST /shipments/change-route.
+- The endpoint accepts ShipmentRouteChangeCreate.
+- The endpoint calls TransportationRepository.change_shipment_route().
+
+4. Database evolution
+File:
+CaseStudy/Part2/Change3_RouteChanges/change3_schema.sql
+
+Evidence:
+- Lines 4-14 define shipment_route_history.
+- The table stores route_history_id, shipment_id,
+  previous_route_id, new_route_id and changed_at.
+- Lines 16-17 create an index on shipment_route_history.shipment_id.
+- Lines 19-20 create an index on shipment_route_history.changed_at.
+
+5. Runtime verification
+
+POST /api/v1/transportation/shipments/change-route:
+- HTTP 200 OK.
+- Shipment 4 was changed from route_id = 1 to route_id = 2.
+- The API returned route_history_id = 1.
+- previous_route_id = 1.
+- new_route_id = 2.
+
+Database verification:
+- Shipment 4 current_route_id = 2.
+- The corresponding route-history record contains
+  previous_route_id = 1 and new_route_id = 2.
+- changed_at was recorded successfully.
+
+Conclusion:
+The source and runtime evidence demonstrate that route changes were
+introduced as an extension to the existing shipment and repository
+architecture. The current route remains on shipments.route_id while
+route-change history is preserved separately.

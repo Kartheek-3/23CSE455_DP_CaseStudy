@@ -1,0 +1,86 @@
+[
+  {
+    "name": "sign_in_refresh_sign_out",
+    "input": {
+      "events": [
+        {"event": "SIGNED_IN", "user_id": "u1"},
+        {"event": "TOKEN_REFRESHED", "user_id": "u1"},
+        {"event": "SIGNED_OUT"}
+      ]
+    },
+    "expected": {"observed_users": ["u1", "u1", null], "final_user_id": null, "notification_count": 3}
+  },
+  {
+    "name": "empty_events",
+    "input": {"events": []},
+    "expected": {"observed_users": [], "final_user_id": null, "notification_count": 0}
+  },
+  {
+    "name": "unsubscribe_after_one",
+    "input": {
+      "events": [{"event": "SIGNED_IN", "user_id": "u1"}, {"event": "SIGNED_OUT"}],
+      "unsubscribe_after": 1
+    },
+    "expected": {"observed_users": ["u1"], "final_user_id": "u1", "notification_count": 1}
+  },
+  {
+    "name": "unsubscribe_before_events",
+    "input": {"events": [{"event": "SIGNED_IN", "user_id": "u1"}], "unsubscribe_after": 0},
+    "expected": {"observed_users": [], "final_user_id": null, "notification_count": 0}
+  },
+  {
+    "name": "unsubscribe_after_event_count",
+    "input": {"events": [{"event": "SIGNED_IN", "user_id": "u2"}], "unsubscribe_after": 2},
+    "expected": {"observed_users": ["u2"], "final_user_id": "u2", "notification_count": 1}
+  },
+  {
+    "name": "numeric_integer_unsubscribe_after",
+    "input": {"events": [{"event": "SIGNED_IN", "user_id": "u1"}, {"event": "SIGNED_OUT"}], "unsubscribe_after": 1.0},
+    "expected": {"observed_users": ["u1"], "final_user_id": "u1", "notification_count": 1}
+  },
+  {
+    "name": "input_not_object",
+    "input": null,
+    "expected": {"error": "input must be an object"}
+  },
+  {
+    "name": "missing_events",
+    "input": {},
+    "expected": {"error": "events must be an array"}
+  },
+  {
+    "name": "event_not_object",
+    "input": {"events": [null]},
+    "expected": {"error": "each event must be an object"}
+  },
+  {
+    "name": "unknown_event",
+    "input": {"events": [{"event": "PASSWORD_RESET"}]},
+    "expected": {"error": "unsupported auth event"}
+  },
+  {
+    "name": "missing_user_id",
+    "input": {"events": [{"event": "SIGNED_IN"}]},
+    "expected": {"error": "user_id must be a non-empty string"}
+  },
+  {
+    "name": "signed_out_with_user",
+    "input": {"events": [{"event": "SIGNED_OUT", "user_id": "u1"}]},
+    "expected": {"error": "SIGNED_OUT user_id must be null or absent"}
+  },
+  {
+    "name": "negative_unsubscribe_after",
+    "input": {"events": [], "unsubscribe_after": -1},
+    "expected": {"error": "unsubscribe_after must be a non-negative integer or null"}
+  },
+  {
+    "name": "boolean_unsubscribe_after",
+    "input": {"events": [], "unsubscribe_after": true},
+    "expected": {"error": "unsubscribe_after must be a non-negative integer or null"}
+  },
+  {
+    "name": "unsafe_unsubscribe_after",
+    "input": {"events": [], "unsubscribe_after": 9007199254740992},
+    "expected": {"error": "unsubscribe_after must be a non-negative integer or null"}
+  }
+]

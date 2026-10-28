@@ -1,0 +1,11 @@
+{
+  "common_specs/adapter_cases.tsv": "e5d753ee386c8d304019dc2c78df8a8c3e91f1b21a35915e555bc350afe9d209",
+  "common_specs/adapter_expected.tsv": "7157bcd97d2fe9296113d09b271fcb121b430a9c478f8c3bb2762f03ffd73293",
+  "common_specs/adapter_invalid_fixtures/atlas_invalid_category.tsv": "dee310dab911539ee6118eada728ef236736210da6df15aa3e2ff1627e258a73",
+  "common_specs/adapter_invalid_fixtures/atlas_invalid_price.tsv": "8d78ec02ea4081d42eb725ed6c4e97d6fb433b2a51b049e15ac6cbd7bf57645f",
+  "common_specs/adapter_invalid_fixtures/atlas_missing_structure.tsv": "45993de968aba956b997be26cc2269b7641f37f286593d1492a2b00e2ce88231",
+  "common_specs/adapter_invalid_fixtures/beacon_invalid_type.tsv": "14224cb0a4cdf1c3a948ea055b4522c25a728d2d59149a0d38883c6044e596cf",
+  "common_specs/adapter_invalid_fixtures/beacon_missing_structure.tsv": "fab4f36325ae3216dc4719ad13416a317145617e3eb5c3144e70ce3d7590a524",
+  "common_specs/atlas_raw.tsv": "c03ae80c9833901bb69ae46d40a4a559b38675cf76c177654df713d0ca9ce62d",
+  "common_specs/beacon_raw.tsv": "4f0ad0e9b9f40d33c7e1f150eaa076bf1b1bb73f57b46cc99ca0bf8ecf0aa027"
+}

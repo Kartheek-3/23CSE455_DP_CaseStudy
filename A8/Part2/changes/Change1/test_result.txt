@@ -1,0 +1,30 @@
+Command: npm test (jest)
+Working Directory: DP_Case_study
+Exit Status: 0
+Timestamp: 2026-10-06T11:19:35+05:30
+Environment: Node.js v24.15.0, npm 11.12.1, Jest 30.0.0, NestJS 11.1.9, TypeScript 5.9.3
+Passed Tests: 14
+Failed Tests: 0
+Total Tests: 14
+Test Suites: 10 passed, 10 total
+
+Output:
+> airport_app@0.0.1 test
+> jest
+
+PASS src/flight/flight.resolver.spec.ts
+PASS src/booking/booking.resolver.spec.ts
+PASS src/users/users.resolver.spec.ts
+PASS src/flight/flight.service.spec.ts
+PASS src/users/users.service.spec.ts
+PASS src/booking/booking.service.spec.ts
+PASS src/seat/seat.resolver.spec.ts
+PASS src/auth.service.spec.ts
+PASS src/seat/seat.service.spec.ts
+PASS src/users/google-auth/google-auth.controller.spec.ts
+
+Test Suites: 10 passed, 10 total
+Tests:       14 passed, 14 total
+Snapshots:   0 total
+Time:        1.187 s
+Ran all test suites.

@@ -1,0 +1,7 @@
+$ (cd Part3/template-method-engine/cpp) ./template_test
+PASS report matches expected-output.txt
+PASS a new engine gets the whole skeleton from one primitive
+PASS invalid input is rejected with expected-error.txt
+3 passed, 0 failed
+[exit 0]
+result: 3/3 passed

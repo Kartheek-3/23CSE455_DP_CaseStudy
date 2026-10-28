@@ -1,0 +1,34 @@
+%% Strategy - "Setpoint Schedule Calculation"
+%% mycodo/utils/method.py (AbstractMethod family, create_method_handler, load_method_handler)
+classDiagram
+    class AbstractMethod {
+        +calculate_setpoint(now, method_start_time)
+        +determine_end_time(method_start_time)
+        +get_plot(max_points_x)
+    }
+    class AbstractDailyFormulaMethod
+    class DateMethod
+    class DailyMethod
+    class DailySineMethod
+    class DailyBezierMethod
+    class DurationMethod {
+        +determine_end_time(method_start_time)
+    }
+    class CascadeMethod {
+        +calculate_setpoint(now, method_start_time, blacklist)
+    }
+    class create_method_handler
+    <<function>> create_method_handler
+    class load_method_handler
+    <<function>> load_method_handler
+    AbstractMethod <|-- DateMethod
+    DateMethod <|-- DailyMethod
+    AbstractMethod <|-- AbstractDailyFormulaMethod
+    AbstractDailyFormulaMethod <|-- DailySineMethod
+    AbstractDailyFormulaMethod <|-- DailyBezierMethod
+    AbstractMethod <|-- DurationMethod
+    AbstractMethod <|-- CascadeMethod
+    load_method_handler ..> create_method_handler : calls
+    create_method_handler ..> AbstractMethod : instantiates subclass
+    CascadeMethod ..> load_method_handler : linked_method
+    CascadeMethod --> AbstractMethod : calculate_setpoint()

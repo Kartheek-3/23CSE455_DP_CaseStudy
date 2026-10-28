@@ -1,0 +1,87 @@
+Change2 test result (sandbox harness: real main sources + Jakarta stubs + in-memory EntityManager; NOT `mvn test`)
+commit before: 6bdf74e   commit after: c755d20
+command: bash data/test_result/harness/run_tests.sh <app-dir> <out-dir> <all test classes>
+date: 2026-10-11
+
+Picked up JAVA_TOOL_OPTIONS: 
+/home/claude/work/snaps/change2/src/main/java/br/com/michaelcruz/rest/UserController.java:5: warning: extraneous semicolon
+import jakarta.inject.Inject;;
+                             ^
+1 warning
+Picked up JAVA_TOOL_OPTIONS: 
+br.com.michaelcruz.persistence.dto.AccountDTO@2e817b38
+PASS BaselineBehaviourTest.createAccountEndpointReturns201
+br.com.michaelcruz.persistence.dto.AccountDTO@685f4c2e
+PASS BaselineBehaviourTest.createAccountLinksUserAndKeepsBalance
+PASS BaselineBehaviourTest.createUserStoresAllFields
+PASS BaselineBehaviourTest.defectCreatingAnAccountForAnUnknownUserFailsWithNullPointerNotNotFound
+PASS BaselineBehaviourTest.defectUserDaoGetAllReturnsNull
+br.com.michaelcruz.persistence.dto.AccountDTO@728938a9
+PASS BaselineBehaviourTest.depositOfZeroOrNegativeIsBadRequestAndBalanceUnchanged
+br.com.michaelcruz.persistence.dto.AccountDTO@306a30c7
+PASS BaselineBehaviourTest.depositToCheckingAddsExactAmount
+br.com.michaelcruz.persistence.dto.AccountDTO@446cdf90
+PASS BaselineBehaviourTest.depositToSavingsAddsAmountPlusHalfBonus
+PASS BaselineBehaviourTest.depositToUnknownAccountIsNotFound
+PASS BaselineBehaviourTest.errorsAreCarriedAsHttpResponsesByTheCustomExceptions
+br.com.michaelcruz.persistence.dto.AccountDTO@277050dc
+br.com.michaelcruz.persistence.dto.AccountDTO@5c29bfd
+PASS BaselineBehaviourTest.listAccountsReturnsAllAccounts
+PASS BaselineBehaviourTest.withdrawFromUnknownAccountIsNotFound
+br.com.michaelcruz.persistence.dto.AccountDTO@67424e82
+PASS BaselineBehaviourTest.withdrawMoreThanBalanceOrNonPositiveIsBadRequest
+br.com.michaelcruz.persistence.dto.AccountDTO@22d8cfe0
+PASS BaselineBehaviourTest.withdrawOfExactlyTheBalanceIsAllowedAfterCh01
+br.com.michaelcruz.persistence.dto.AccountDTO@579bb367
+PASS BaselineBehaviourTest.withdrawReducesBalance
+br.com.michaelcruz.persistence.dto.AccountDTO@255316f2
+PASS Change1PolicyTest.ac1CheckingMayOverdrawUpToTheLimit
+br.com.michaelcruz.persistence.dto.AccountDTO@41906a77
+PASS Change1PolicyTest.ac2CheckingCannotOverdrawBeyondTheLimit
+br.com.michaelcruz.persistence.dto.AccountDTO@5387f9e0
+PASS Change1PolicyTest.ac3SavingsCannotOverdraw
+br.com.michaelcruz.persistence.dto.AccountDTO@2cdf8d8a
+PASS Change1PolicyTest.ac4SavingsMayWithdrawExactlyTheBalance
+br.com.michaelcruz.persistence.dto.AccountDTO@30946e09
+br.com.michaelcruz.persistence.dto.AccountDTO@5cb0d902
+PASS Change1PolicyTest.ac5SavingsDepositBonusIsPreservedAndCheckingHasNone
+br.com.michaelcruz.persistence.dto.AccountDTO@46fbb2c1
+br.com.michaelcruz.persistence.dto.AccountDTO@1698c449
+PASS Change1PolicyTest.ac6NonPositiveWithdrawalStillRejectedForBothTypes
+PASS Change1PolicyTest.policiesAreInterchangeableBehindTheInterface
+PASS Change1PolicyTest.resolverReturnsTheMatchingStrategyAndRejectsMissingType
+br.com.michaelcruz.persistence.dto.AccountDTO@5b37e0d2
+br.com.michaelcruz.persistence.dto.AccountDTO@4459eb14
+PASS Change2ObserverTest.ac1DepositPublishesOneEventWithTheResultingBalance
+br.com.michaelcruz.persistence.dto.AccountDTO@5a2e4553
+br.com.michaelcruz.persistence.dto.AccountDTO@28c97a5
+PASS Change2ObserverTest.ac2WithdrawalPublishesAWithdrawalEvent
+br.com.michaelcruz.persistence.dto.AccountDTO@6659c656
+br.com.michaelcruz.persistence.dto.AccountDTO@6d5380c2
+PASS Change2ObserverTest.ac3FailedOperationsPublishNothing
+br.com.michaelcruz.persistence.dto.AccountDTO@7a4f0f29
+br.com.michaelcruz.persistence.dto.AccountDTO@45283ce2
+PASS Change2ObserverTest.ac4AuditTrailIsPerAccountAndChronological
+br.com.michaelcruz.persistence.dto.AccountDTO@2077d4de
+br.com.michaelcruz.persistence.dto.AccountDTO@7591083d
+PASS Change2ObserverTest.ac5AuditEndpointReturnsTheTrailAndNotFoundForUnknownAccount
+br.com.michaelcruz.persistence.dto.AccountDTO@736e9adb
+br.com.michaelcruz.persistence.dto.AccountDTO@6d21714c
+Oct 11, 2026 12:54:21 PM br.com.michaelcruz.event.HighValueAlertObserver onTransaction
+WARNING: High-value DEPOSIT of 10000.0 on account 1
+PASS Change2ObserverTest.ac6HighValueTransactionsRaiseAnAlertAtTheThreshold
+br.com.michaelcruz.persistence.dto.AccountDTO@1c4af82c
+br.com.michaelcruz.persistence.dto.AccountDTO@379619aa
+PASS Change2ObserverTest.ac7AccountServiceKnowsNoConcreteObserver
+RESULT passed=30 failed=0 total=30
+
+--- git diff --stat ---
+ .../michaelcruz/event/HighValueAlertObserver.java  |  33 ++++++
+ .../com/michaelcruz/event/TransactionAuditLog.java |  29 ++++++
+ .../br/com/michaelcruz/event/TransactionEvent.java |   7 ++
+ .../br/com/michaelcruz/event/TransactionKind.java  |   6 ++
+ .../br/com/michaelcruz/rest/AccountController.java |   8 ++
+ .../br/com/michaelcruz/service/AccountService.java |  18 ++++
+ .../br/com/michaelcruz/Change2ObserverTest.java    | 112 +++++++++++++++++++++
+ .../java/br/com/michaelcruz/support/TestApp.java   |   3 +
+ 8 files changed, 216 insertions(+)

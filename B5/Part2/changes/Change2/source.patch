@@ -1,0 +1,996 @@
+--- scenario1_personalized_itinerary/README.md
++++ scenario2_multiple_booking_providers/README.md
+@@ -146,3 +146,56 @@
+ container had Ruby 3.3.8 rather than 3.4.2, and Rails 8.1.3 plus the locked gems
+ were not available. The Rails test command was attempted but could not boot;
+ no Rails tests are claimed as passed. See `SCENARIO1_CHANGE_RECORD.md`.
++
++---
++
++## Coursework AFTER source: Scenario 2 multiple booking providers
++
++Source version: `scenario2_multiple_booking_providers`. This snapshot was copied from
++`scenario1_personalized_itinerary`, not from the original application baseline.
++The frozen Scenario 1 source and pattern records were not edited.
++
++Trip owners can select **Atlas Demo** or **Beacon Demo**, pick a **Rome** or **Paris**
++sample destination, and browse clearly fictional offers. The two local JSON fixture
++formats intentionally differ; `BookingProviders::AtlasAdapter` and
++`BookingProviders::BeaconAdapter` convert them to one validated shape through a
++strictly whitelisted `BookingProviders::Registry`. Browser POSTs submit only
++`provider_code`, `destination_code`, and `offer_id`: the server resolves the offer
++again rather than accepting client-supplied prices, names, booking status, or IDs.
++
++**These offers are mock planning ideas, not live prices, inventory, or bookings.**
++Selected offers become `TripItem` records with status `idea`, optional **sample**
++amount/currency, nil dates, nil confirmation reference, and nil inbox item. No
++`Expense` or payment transaction is created. A stable, server-generated marker
++`[demo_provider_offer:CODE:ID]` in notes prevents sequential duplicate additions
++within a trip; without a database uniqueness constraint, simultaneous requests
++may still race. The existing per-record `defer_geocoding` option queues the
++existing `GeocodeTripItemsJob` after saving. No migration or new job is needed.
++The existing genuine confirmation-email flow and Scenario 1 generation remain
++unchanged. Only the route table and trip-owner action panel were edited in place.
++
++### Scenario 2 verification commands
++
++Use the repository's required Ruby 3.4.2 and install Gemfile.lock dependencies.
++Then run (with a properly configured test database and `whats.` host):
++
++```sh
++bundle install
++RAILS_ENV=test bin/rails db:test:prepare
++bin/rails test test/services/booking_providers_test.rb \
++  test/controllers/booking_options_controller_test.rb \
++  test/models/scenario2_email_and_refresh_regression_test.rb
++bin/rails test
++```
++
++Standalone validation of the local provider fixtures can run **without Rails**:
++
++```sh
++ruby evidence/isolated_provider_checks.rb
++```
++
++Do not confuse isolated Ruby validation with Rails integration. The packaging
++environment used Ruby 3.3.8 and lacked the Rails 8.1.3 locked dependencies.
++`bin/rails test` was attempted and failed before test discovery with
++`Bundler::GemNotFound`; **zero Rails tests executed**. Detailed actual command
++results and source changes are in `SCENARIO2_CHANGE_RECORD.md` and `evidence/`.
+
+--- scenario1_personalized_itinerary/app/views/trips/_trip_panel.html.erb
++++ scenario2_multiple_booking_providers/app/views/trips/_trip_panel.html.erb
+@@ -242,6 +242,15 @@
+             <% end %>
+             <div class="w-px h-6 bg-base-content/10"></div>
+           <% end %>
++
++          <%# Browse local demonstration provider offers — never a real booking %>
++          <%= link_to trip_booking_options_path(@trip),
++                class: "flex flex-col items-center justify-center gap-0.5 px-3 h-14 text-base-content/60 hover:text-base-content hover:bg-base-300/60 transition-colors",
++                data: { turbo_direction: "forward" } do %>
++            <span class="text-lg leading-none">⌕</span>
++            <span class="text-[9px] font-medium leading-none">Offers</span>
++          <% end %>
++          <div class="w-px h-6 bg-base-content/10"></div>
+ 
+           <%# Import AI ideas %>
+           <%= link_to import_trip_trip_items_path(@trip),
+
+--- scenario1_personalized_itinerary/config/routes.rb
++++ scenario2_multiple_booking_providers/config/routes.rb
+@@ -39,6 +39,7 @@
+           get   :to_expense
+         end
+       end
++      resources :booking_options, only: [ :index, :create ]
+       resources :trip_members, only: [ :create, :destroy ]
+       resources :expenses, only: [ :index, :new, :create, :show, :edit, :update, :destroy ] do
+         member { patch :confirm }
+
+--- /dev/null
++++ scenario2_multiple_booking_providers/SCENARIO2_CHANGE_RECORD.md
+@@ -0,0 +1,122 @@
++# Scenario 2 — Multiple Booking Providers: Source Change Record
++
++- **Source version:** `scenario2_multiple_booking_providers`
++- **Starting source:** the complete `scenario1_personalized_itinerary_AFTER.zip` (not the original DaPlanStan baseline)
++- **Starting ZIP SHA-256:** `113702be8326da1e15dc7887a7a5a82b88f4b08fbabab95e84f24b05cf9abd3e`
++- **Date:** 2026-10-11
++- **Status:** Source implemented and statically checked; Rails runtime/integration verification **blocked**.
++- **Pattern inventory:** P01–P09 and S1-N01 unchanged, 10 confirmed current instances / 3 distinct pattern types. No Scenario 2 pattern status or instance is claimed.
++- **Scope guard:** No Scenario 3 cancellation functionality; no live provider API; no payment, real reservation, made-up confirmation reference, Expense creation, or schema migration.
++
++## Requirement and acceptance criteria
++
++Implement a local, reproducible example of supporting two independent booking-provider inputs. Trip **owners** may browse fictional travel options for Rome/Paris from Atlas Demo and Beacon Demo, see provider and sample cost information, and add a selected option to their trip **as an idea only**. Both providers must return identical application-facing fields despite genuinely different fixture schemas. Reject invalid providers, destinations, offers and malformed fixture entries. Ignore browser-controlled offer attributes. Avoid sequential duplicate ideas for the same provider/offer ID. Use the unchanged Scenario 1 per-record deferred-geocoding behavior. Existing generated ideas, manual TripItems, JSON import, email ingestion, Trip membership and Turbo broadcasting should continue working.
++
++**Do not interpret locally generated offers as live inventory or actual reservations.** The offer saved on acceptance is not a booking transaction or payment.
++
++## Verified Scenario 2 BEFORE (Scenario 1 AFTER input)
++
++- `config/routes.rb:21–48`: existing trip resources; `:import` and `:generate` collection paths at `:30–41`; no booking-option routes.
++- `app/views/trips/_trip_panel.html.erb:178–259`: owner-only action panel, including existing Generate `:236–244` and Import `:246–255`; no provider-options entry.
++- `app/models/trip_item.rb:9–28,32–41`: `kind`/`status` enums, name validations, `defer_geocoding` and normal `geocode_from_address` override.
++- `app/models/concerns/geocodable.rb:4–19`: normal `after_save` geocoding callback.
++- `app/jobs/geocode_trip_items_job.rb:4–21`: fresh item lookup, geocoding, Turbo trip refresh.
++- `app/controllers/trip_items_controller.rb:31–70,76–85,201–253`: existing JSON import, owner-only generation and shared batch idea creation.
++- `app/services/itinerary_suggestion_generator.rb:42–153`: Anthropic suggestion generation and validation.
++- `app/mailboxes/trip_mailbox.rb:2–31`: real confirmation email ingestion.
++- `app/jobs/parse_inbox_item_job.rb:20–139`: Anthropic extraction of confirmation provider and reference data.
++- `app/models/inbox_item.rb:19–25,67–207`: real booking-email linking and associated Expense creation.
++- `app/controllers/inbox_items_controller.rb:16–35`: real confirmation review.
++- `db/structure.sql:91–104`: TripItem supports name, kind, idea, notes, address, optional amount/currency and confirmation reference; no dedicated provider field or required migration.
++- `test/test_helper.rb` and existing Scenario 1 test files were inspected and copied without modification.
++
++## Actual AFTER workflow
++
++1. Owner sees **Offers** on trip panel (`app/views/trips/_trip_panel.html.erb:246–253`) and opens nested `booking_options#index` (`config/routes.rb:42`).
++2. `BookingOptionsController#index` (`:6–16`) checks authenticated trip ownership via callbacks (`:2–4,66–72`), selects a fixed provider and destination, calls the provider's `#offers_for(destination_code:)`, and renders normalized offer cards (`app/views/booking_options/index.html.erb:1–49`). **No persistence** happens on GET.
++3. Atlas and Beacon read separate local fixtures; their adapters normalize their different raw field names and type values (`atlas_adapter.rb:14–37`, `beacon_adapter.rb:14–35`). The registry owns the strictly whitelisted provider/destination selection and common field validations (`registry.rb:11–68`).
++4. Browser submits **only** `provider_code`, `destination_code`, and `offer_id` to `booking_options#create` (`booking_options_controller.rb:18–26`). The selected provider and its offer are resolved again from trusted local fixtures, rejecting cross-provider or cross-destination IDs.
++5. A stable notes marker `[demo_provider_offer:CODE:ID]` allows the controller to detect an existing **idea** for that same provider/offer ID (`:28–34`). A new entry (`:36–46`) has `status: idea`, `added_by: current_user`, provider-prefixed name, explanatory demo notes, sample amount/currency and optional address. The stored dates, `confirmation_ref`, and `inbox_item_id` are `nil`. There is no Expense or InboxItem created.
++6. A new item's instance-only `defer_geocoding` flag skips synchronous geocoding; unchanged `GeocodeTripItemsJob.perform_later` (`:48–57`) later loads it afresh and uses the existing Turbo trip refresh (`geocode_trip_items_job.rb:4–21`). A failed enqueue produces a warning, not a false claim that geocoding succeeded.
++7. The existing trip timeline and map display the saved idea without new rendering code.
++
++## Production files modified (relative to Scenario 1 input)
++
++| File | AFTER line(s) | Type | Actual modification |
++|---|---|---|---|
++| `config/routes.rb` | 42 | Feature | Add `resources :booking_options, only: [ :index, :create ]` inside existing trip scope; original trip-item and inbox declarations remain. |
++| `app/views/trips/_trip_panel.html.erb` | 246–253 | UI | Add an **Offers** owner-only link within the existing owner section; retain Generate and Import links. |
++| `README.md` | 155–201 | Documentation | Explain sample-only provider workflow, test commands, remaining concurrency limits and blocked Rails tests. |
++
++## Newly added production files
++
++| File | AFTER line(s) | Responsibility |
++|---|---|---|
++| `app/controllers/booking_options_controller.rb` | 1–77 | Trip-owner authorization; GET provider comparison; POST server-side relookup, duplicate check, idea save and job enqueue. `index:6–16`, `create:18–62`. |
++| `app/services/booking_providers/registry.rb` | 1–68 | Approved provider/destination whitelist, provider lookup, normalized offer-field/kind/price validation and controlled error classes. |
++| `app/services/booking_providers/atlas_adapter.rb` | 1–37 | Read Atlas's `destinations → offers`, map `title`, `category`, `location`, nested `price` to normalized output. |
++| `app/services/booking_providers/beacon_adapter.rb` | 1–35 | Read Beacon's flat `results`, map `label`, `type`, `address`, `amount` and `currency` to normalized output. |
++| `app/views/booking_options/index.html.erb` | 1–49 | Provider and destination selector, fictional offer cards, sample amounts and Add as idea forms; clear no-booking/no-payment disclaimer. |
++| `config/booking_provider_fixtures/atlas_demo.json` | Entire file | Local fictional Atlas data: Rome and Paris, 5 stable offers overall. |
++| `config/booking_provider_fixtures/beacon_demo.json` | Entire file | Different local Beacon data shape: Rome and Paris, 5 stable offers overall. |
++
++### Normalized offer contract
++
++Both adapters return frozen offer hashes containing **exactly** `provider_code`, `provider_name`, `offer_id`, `name`, `kind`, `address`, `description`, `sample_amount`, and `currency`. `Registry.validate_offer!` rejects extra/missing normalized keys, incorrect provider identity, malformed IDs, missing/oversized text, invalid kinds, invalid amounts and currencies. A currency must be a three-letter uppercase code; a non-nil amount must be non-negative, finite, at most 100,000 and have at most two decimal places. Provider outputs carry no confirmation reference or reservation status. Separate fixture schemas, not a fabricated common upstream schema, are normalized by the adapters.
++
++## Newly added test and evidence files
++
++| File | AFTER line(s) | Purpose |
++|---|---|---|
++| `test/services/booking_providers_test.rb` | 1–130 | Provider whitelist, normalization, different raw shapes, supported destinations, invalid fixtures and kinds/amounts, isolation and frozen results. **Written, not executed under Rails.** |
++| `test/controllers/booking_options_controller_test.rb` | 1–161 | Owner/non-owner/unrelated access; both providers; persistence as idea; tampering; invalid/cross-provider IDs; duplicate checks; no Expense or InboxItem; deferred geocoding. **Written, not executed under Rails.** |
++| `test/models/scenario2_email_and_refresh_regression_test.rb` | 1–59 | Existing real confirmation email linking/expense flow stays distinct from mock ideas; fresh-object geocoding job/Turbo refresh. **Written, not executed under Rails.** |
++| `evidence/isolated_provider_checks.rb` | Entire file | Standalone Minitest tests of fixture normalization and provider validation without Rails or network calls. |
++| `evidence/isolated_provider_checks_output.txt` | Entire file | Actual results of standalone test run. |
++| `evidence/scenario2_ruby_syntax_checks.txt` | Entire file | Actual `ruby -c` result for nine Scenario 2 Ruby files. |
++| `evidence/scenario2_rails_test_attempt.log` | Entire file | Actual `bin/rails test` boot failure. |
++| `evidence/ruby_version_check.log` | Entire file | Actual required-versus-active Ruby comparison. |
++| `evidence/source_integrity_audit.txt` | Entire file | Scenario 1 input SHA-256 and file-level delta. |
++
++The original Scenario 1 `evidence/rails_test_attempt.log` and `evidence/ruby_syntax_checks.txt` were **restored unchanged** after the new test runs; Scenario 2 gets separately named log files. All original Scenario 1 tests, generator, import, callback, geocoding, email-ingestion and schema files remain byte-identical to the input snapshot.
++
++## Actual test and environment results
++
++| Type | Command | Result | Executed / pass / failure / error / skip |
++|---|---|---|---|
++| Ruby syntax | `ruby -c` on nine relevant Ruby source/test files | Exit 0 for each; all `Syntax OK` | 9 files checked |
++| Isolated provider validation | `ruby evidence/isolated_provider_checks.rb` | Exit 0 | 10 runs / 10 passes / 0 failures / 0 errors / 0 skips; 67 assertions |
++| Rails suite | `bin/rails test` | Exit 1, `Bundler::GemNotFound`, beginning with `rails-8.1.3` | **0 Rails tests executed**; pass/failure/error/skip counts not available |
++| Ruby environment | `ruby -v`; compare against `.ruby-version` | Active Ruby **3.3.8**, required **3.4.2** | Mismatch |
++| Real booking-provider network | No command; intentionally not used | No external provider APIs in this feature | N/A |
++| Anthropic live integration | Not run | Scenario 1 generation preserved at source level | Unverified at runtime |
++| Geocoder/Turbo live | Not run | Existing job unchanged; tests written but Rails blocked | Unverified at runtime |
++
++The Rails test command failed **before test discovery**. The isolated provider checks are real executions but do not test Rails authorization, persistence, routing or callbacks. No Rails regression is represented as passed.
++
++## Source safety and regression record
++
++1. `app/services/itinerary_suggestion_generator.rb` and original Scenario 1 generation/controller/import code are untouched.
++2. `app/models/trip_item.rb` still uses instance-scoped `defer_geocoding`; no `skip_callback` or `set_callback` introduced.
++3. `app/models/concerns/geocodable.rb` and `app/jobs/geocode_trip_items_job.rb` are untouched.
++4. `app/mailboxes/trip_mailbox.rb`, `app/jobs/parse_inbox_item_job.rb`, `app/models/inbox_item.rb`, `app/controllers/inbox_items_controller.rb`, and `app/models/expense.rb` are untouched.
++5. `db/structure.sql` is untouched; no new migration.
++6. Existing Scenario 1 tests for generating, importing, manual saving and deferred callbacks are byte-identical. Two extra Scenario 2 regression cases were added for inbox linking and Turbo.
++7. Fixture rows are clearly fictional and include no real inventory or live prices. No payment/booking execution code or created confirmation references.
++8. The only original source modifications are `config/routes.rb`, `app/views/trips/_trip_panel.html.erb`, and `README.md`.
++
++## Differences from design and remaining limitations
++
++- Implementation follows the approved Scenario 2 design. A small **controlled notes marker** makes sequential deduplication provider+offer-specific without changing the schema. A separate test verifies real booking emails remain conceptually distinct from demo ideas.
++- The mock destinations are a fixed Rome/Paris selector because Trip has no reliable destination attribute.
++- Prices are hypothetical estimates only. TripItem may show them, but no expense is created automatically.
++- Without a uniqueness constraint, concurrent POST requests can still insert duplicate ideas; sequential requests are checked.
++- No real provider API, pricing, availability, settlement, cancellation or confirmation behavior is implemented.
++- Saved provider identity and offer ID live in notes, not relational columns. Future live integrations would need a stronger schema.
++- Rails integration tests, UI routing, database writes, email regression and Turbo delivery remain unverified until compatible Ruby, gems and database setup are available.
++
++## Pattern-verification handoff — candidates only
++
++Inspect the **proposed Adapter (GoF)** collaboration across `Registry`, `AtlasAdapter`, `BeaconAdapter` and the controller, focusing on whether the adapters genuinely adapt distinct interfaces rather than ordinary fixture parsing. Inspect the **proposed Controller (GRASP)** collaboration around `BookingOptionsController#index/#create` and its collaborators, comparing its distinct user events to P05 and S1-N01. Consider a possible Strategy classification only if source-level algorithm interchange (not merely same method names) supports it; do not double-count a single provider-normalization collaboration. `Registry.find` alone does not justify Factory. Check P01 and P09 for behavioral interaction, but do not assign evolution statuses here.
++
++**Pattern counts remain the Scenario 1 verified counts:** Controller 7, Information Expert 1, Observer 2; total instances 10, distinct types 3. No `patterns_evolution.csv` has been created.
+
+--- /dev/null
++++ scenario2_multiple_booking_providers/app/controllers/booking_options_controller.rb
+@@ -0,0 +1,77 @@
++class BookingOptionsController < ApplicationController
++  before_action :authenticate_user!
++  before_action :set_trip
++  before_action :require_owner!
++
++  def index
++    @providers = BookingProviders::Registry.available
++    @destinations = BookingProviders::Registry.destinations
++    @provider_code = params[:provider_code].presence || "atlas_demo"
++    @destination_code = params[:destination_code].presence || "rome"
++    @offers = BookingProviders::Registry.find(@provider_code).offers_for(destination_code: @destination_code)
++  rescue BookingProviders::Registry::Error => e
++    @offers = []
++    @provider_error = e.message
++    render :index, status: :unprocessable_entity
++  end
++
++  def create
++    provider_code = params[:provider_code]
++    destination_code = params[:destination_code]
++    offer_id = params[:offer_id]
++
++    # Never accept name, amount, status, kind or booking data from the browser.
++    provider = BookingProviders::Registry.find(provider_code)
++    offer = provider.offers_for(destination_code: destination_code).find { |result| result[:offer_id] == offer_id }
++    raise BookingProviders::Registry::ProviderDataError, "Unknown offer for the selected provider and destination." unless offer
++
++    # The marker is constructed only from validated server-owned fixture data.
++    marker = offer_marker(offer)
++    already_added = @trip.trip_items.idea.where("notes LIKE ?", "%#{ActiveRecord::Base.sanitize_sql_like(marker)}%").exists?
++    if already_added
++      return redirect_to trip_booking_options_path(@trip, provider_code: provider_code, destination_code: destination_code),
++                         alert: "This demo offer is already in your itinerary."
++    end
++
++    item = @trip.trip_items.new(
++      name: "[#{offer[:provider_name]}] #{offer[:name]}",
++      kind: offer[:kind], status: :idea, added_by: current_user,
++      address: offer[:address],
++      notes: [ "Demo provider: #{offer[:provider_name]}", "Sample offer ID: #{offer[:offer_id]}",
++               offer[:description], "Demonstration offer only. No reservation or payment was made.", marker ].join("\n"),
++      amount: offer[:sample_amount], currency: offer[:currency],
++      starts_at: nil, ends_at: nil, confirmation_ref: nil, inbox_item_id: nil
++    )
++    item.defer_geocoding = true
++    item.save!
++
++    # Existing job loads a fresh TripItem so its callback deferral is not retained.
++    warning = nil
++    begin
++      queued = GeocodeTripItemsJob.perform_later([ item.id ], @trip.id)
++      warning = "The sample idea was saved, but its map update could not be queued." unless queued
++    rescue StandardError => e
++      Rails.logger.warn "[BookingOptions#create] Geocoding enqueue failed for #{item.id}: #{e.class}"
++      warning = "The sample idea was saved, but its map update could not be queued."
++    end
++    redirect_to trip_path(@trip, tab: "itinerary"), notice: warning || "Sample offer added as an itinerary idea. No booking was made."
++  rescue BookingProviders::Registry::Error => e
++    redirect_to trip_booking_options_path(@trip), alert: e.message
++  rescue ActiveRecord::RecordInvalid => e
++    redirect_to trip_booking_options_path(@trip), alert: "Unable to save the demo offer: #{e.record.errors.full_messages.to_sentence}"
++  end
++
++  private
++
++  def set_trip
++    @trip = current_user.trips.find(params[:trip_id])
++  end
++
++  def require_owner!
++    head :forbidden unless current_member_for(@trip)&.owner?
++  end
++
++  def offer_marker(offer)
++    "[demo_provider_offer:#{offer.fetch(:provider_code)}:#{offer.fetch(:offer_id)}]"
++  end
++end
+
+--- /dev/null
++++ scenario2_multiple_booking_providers/app/services/booking_providers/atlas_adapter.rb
+@@ -0,0 +1,37 @@
++require "json"
++
++module BookingProviders
++  class AtlasAdapter
++    PROVIDER_CODE = "atlas_demo"
++    PROVIDER_NAME = "Atlas Demo"
++    CATEGORY_KINDS = { "activity" => "do", "dining" => "eat", "accommodation" => "stay", "retail" => "shop", "other" => "other" }.freeze
++    DEFAULT_FIXTURE = File.expand_path("../../../config/booking_provider_fixtures/atlas_demo.json", __dir__).freeze
++
++    def initialize(fixture_path: DEFAULT_FIXTURE)
++      @fixture_path = fixture_path
++    end
++
++    def offers_for(destination_code:)
++      Registry.validate_destination!(destination_code)
++      source = JSON.parse(File.read(@fixture_path))
++      Registry.invalid_data! unless source.is_a?(Hash) && source["provider"] == PROVIDER_NAME && source["destinations"].is_a?(Hash)
++      location = source["destinations"][destination_code]
++      Registry.invalid_data! unless location.is_a?(Hash) && location["offers"].is_a?(Array)
++
++      offers = location["offers"].map do |raw|
++        Registry.invalid_data! unless raw.is_a?(Hash) && raw["price"].is_a?(Hash)
++        mapped = {
++          provider_code: PROVIDER_CODE, provider_name: PROVIDER_NAME,
++          offer_id: raw["id"], name: raw["title"], kind: CATEGORY_KINDS[raw["category"]],
++          address: raw["location"], description: raw["details"],
++          sample_amount: raw["price"]["value"], currency: raw["price"]["currency"]
++        }
++        Registry.validate_offer!(mapped, provider_code: PROVIDER_CODE, provider_name: PROVIDER_NAME)
++      end
++      Registry.invalid_data! if offers.map { |offer| offer[:offer_id] }.uniq.length != offers.length
++      offers.freeze
++    rescue JSON::ParserError, SystemCallError, IOError, EncodingError
++      Registry.invalid_data!
++    end
++  end
++end
+
+--- /dev/null
++++ scenario2_multiple_booking_providers/app/services/booking_providers/beacon_adapter.rb
+@@ -0,0 +1,35 @@
++require "json"
++
++module BookingProviders
++  class BeaconAdapter
++    PROVIDER_CODE = "beacon_demo"
++    PROVIDER_NAME = "Beacon Demo"
++    TYPE_KINDS = { "experience" => "do", "meal" => "eat", "room" => "stay", "market" => "shop", "other" => "other" }.freeze
++    DEFAULT_FIXTURE = File.expand_path("../../../config/booking_provider_fixtures/beacon_demo.json", __dir__).freeze
++
++    def initialize(fixture_path: DEFAULT_FIXTURE)
++      @fixture_path = fixture_path
++    end
++
++    def offers_for(destination_code:)
++      Registry.validate_destination!(destination_code)
++      source = JSON.parse(File.read(@fixture_path))
++      Registry.invalid_data! unless source.is_a?(Hash) && source["agency"] == PROVIDER_NAME && source["results"].is_a?(Array)
++      Registry.invalid_data! unless source["results"].all? { |entry| entry.is_a?(Hash) && Registry::DESTINATIONS.key?(entry["destination"]) }
++
++      offers = source["results"].select { |entry| entry["destination"] == destination_code }.map do |raw|
++        mapped = {
++          provider_code: PROVIDER_CODE, provider_name: PROVIDER_NAME,
++          offer_id: raw["code"], name: raw["label"], kind: TYPE_KINDS[raw["type"]],
++          address: raw["address"], description: raw["summary"],
++          sample_amount: raw["amount"], currency: raw["currency"]
++        }
++        Registry.validate_offer!(mapped, provider_code: PROVIDER_CODE, provider_name: PROVIDER_NAME)
++      end
++      Registry.invalid_data! if offers.map { |offer| offer[:offer_id] }.uniq.length != offers.length
++      offers.freeze
++    rescue JSON::ParserError, SystemCallError, IOError, EncodingError
++      Registry.invalid_data!
++    end
++  end
++end
+
+--- /dev/null
++++ scenario2_multiple_booking_providers/app/services/booking_providers/registry.rb
+@@ -0,0 +1,68 @@
++require "bigdecimal"
++
++module BookingProviders
++  # A fixed whitelist, not a dynamic class lookup on user-supplied input.
++  class Registry
++    class Error < StandardError; end
++    class UnknownProvider < Error; end
++    class UnsupportedDestination < Error; end
++    class ProviderDataError < Error; end
++
++    PROVIDERS = { "atlas_demo" => "Atlas Demo", "beacon_demo" => "Beacon Demo" }.freeze
++    DESTINATIONS = { "rome" => "Rome, Italy", "paris" => "Paris, France" }.freeze
++    KINDS = %w[stay eat do shop other].freeze
++    OFFER_FIELDS = %i[provider_code provider_name offer_id name kind address description sample_amount currency].freeze
++
++    def self.available
++      PROVIDERS.map { |code, name| { code: code, name: name } }
++    end
++
++    def self.destinations
++      DESTINATIONS.dup
++    end
++
++    def self.find(code)
++      case code
++      when "atlas_demo" then BookingProviders::AtlasAdapter.new
++      when "beacon_demo" then BookingProviders::BeaconAdapter.new
++      else raise UnknownProvider, "Unknown demo provider."
++      end
++    end
++
++    def self.validate_destination!(code)
++      raise UnsupportedDestination, "Unsupported demo destination." unless DESTINATIONS.key?(code)
++      code
++    end
++
++    # The shared offer contract is checked after each source-specific mapping.
++    def self.validate_offer!(offer, provider_code:, provider_name:)
++      invalid_data! unless offer.is_a?(Hash) && offer.keys.sort == OFFER_FIELDS.sort
++      invalid_data! unless offer[:provider_code] == provider_code && offer[:provider_name] == provider_name
++      invalid_data! unless offer[:offer_id].is_a?(String) && offer[:offer_id].match?(/\A[a-z0-9][a-z0-9_-]{2,63}\z/)
++      { name: 120, address: 200, description: 500 }.each do |field, max_length|
++        value = offer[field]
++        invalid_data! unless value.is_a?(String) && !value.strip.empty? && value.length <= max_length
++      end
++      invalid_data! unless KINDS.include?(offer[:kind])
++      amount, currency = normalize_amount!(offer[:sample_amount], offer[:currency])
++      offer.merge(sample_amount: amount, currency: currency).freeze
++    end
++
++    def self.normalize_amount!(amount, currency)
++      return [ nil, nil ] if amount.nil? && currency.nil?
++      invalid_data! if amount.nil? || currency.nil?
++      invalid_data! unless currency.is_a?(String) && currency.match?(/\A[A-Z]{3}\z/)
++      invalid_data! unless (amount.is_a?(Numeric) && !amount.is_a?(Complex)) ||
++                           (amount.is_a?(String) && amount.match?(/\A\d+(?:\.\d{1,2})?\z/))
++      value = BigDecimal(amount.to_s)
++      invalid_data! unless value.finite? && value >= 0 && value <= 100_000 && (value * 100).frac.zero?
++      [ value, currency ]
++    rescue ArgumentError
++      invalid_data!
++    end
++
++    def self.invalid_data!
++      raise ProviderDataError, "The selected demo provider returned invalid sample data."
++    end
++  end
++end
+
+--- /dev/null
++++ scenario2_multiple_booking_providers/app/views/booking_options/index.html.erb
+@@ -0,0 +1,49 @@
++<% content_for :hide_navbar, true %>
++<% content_for :main_class, "flex flex-col overflow-hidden" %>
++<div class="h-14 shrink-0 max-w-sm mx-auto w-full px-4 flex items-center justify-between">
++  <%= link_to trip_path(@trip, tab: "itinerary"), class: "btn btn-sm btn-ghost" do %>← Back to trip<% end %>
++  <span class="text-xs font-medium text-base-content/50">Sample booking options</span>
++</div>
++<div class="flex-1 min-h-0 overflow-y-auto px-4 pb-8">
++  <div class="max-w-sm mx-auto space-y-4">
++    <div class="bg-base-200 border border-base-content/10 rounded-3xl p-5 space-y-4">
++      <h1 class="text-xl font-bold text-base-content">Browse sample offers</h1>
++      <p class="text-xs text-base-content/60">Compare two fictional provider catalogues for <%= @trip.title %>.</p>
++      <div role="note" class="p-3 rounded-xl bg-warning/10 border border-warning/20 text-xs text-base-content/80">
++        Demonstration offers only. Adding an offer to your itinerary does not make a reservation or process a payment.
++        Prices are invented examples and are not live availability or quotes.
++      </div>
++      <% if @provider_error.present? %>
++        <div role="alert" class="p-3 rounded-xl bg-error/10 border border-error/20 text-xs text-error"><%= @provider_error %></div>
++      <% end %>
++      <%= form_with url: trip_booking_options_path(@trip), method: :get, data: { turbo: false }, class: "space-y-3" do %>
++        <div>
++          <%= label_tag :provider_code, "Provider", class: "dp-label block mb-1.5" %>
++          <%= select_tag :provider_code, options_for_select(@providers.map { |p| [ p[:name], p[:code] ] }, @provider_code), class: "select w-full bg-base-300/20 border-base-content/10" %>
++        </div>
++        <div>
++          <%= label_tag :destination_code, "Sample destination", class: "dp-label block mb-1.5" %>
++          <%= select_tag :destination_code, options_for_select(@destinations.map { |code, label| [ label, code ] }, @destination_code), class: "select w-full bg-base-300/20 border-base-content/10" %>
++        </div>
++        <%= submit_tag "Browse sample offers", class: "btn btn-primary w-full" %>
++      <% end %>
++    </div>
++    <% if @offers.empty? && @provider_error.blank? %>
++      <div class="bg-base-200 rounded-2xl p-5 text-sm text-base-content/60">No sample offers are available for this demo selection.</div>
++    <% end %>
++    <% @offers.each do |offer| %>
++      <div class="bg-base-200 border border-base-content/10 rounded-2xl p-4 space-y-2">
++        <p class="text-[10px] uppercase tracking-wide font-semibold text-primary"><%= offer[:provider_name] %> · fictional</p>
++        <h2 class="text-base font-bold text-base-content"><%= offer[:name] %></h2>
++        <p class="text-xs text-base-content/60"><%= offer[:address] %> · <%= offer[:kind].humanize %></p>
++        <p class="text-sm text-base-content/70"><%= offer[:description] %></p>
++        <% if offer[:sample_amount] %>
++          <p class="text-xs font-semibold text-base-content/70">Sample estimate: <%= number_with_precision(offer[:sample_amount], precision: 2) %> <%= offer[:currency] %> (not a quote)</p>
++        <% end %>
++        <%= button_to "Add as idea", trip_booking_options_path(@trip), method: :post,
++              params: { provider_code: offer[:provider_code], destination_code: @destination_code, offer_id: offer[:offer_id] },
++              class: "btn btn-primary btn-sm w-full", form: { data: { turbo: false } } %>
++      </div>
++    <% end %>
++  </div>
++</div>
+
+--- /dev/null
++++ scenario2_multiple_booking_providers/config/booking_provider_fixtures/atlas_demo.json
+@@ -0,0 +1,69 @@
++{
++  "provider": "Atlas Demo",
++  "notice": "Fictional sample catalogue. Not real prices, inventory, or reservations.",
++  "destinations": {
++    "rome": {
++      "offers": [
++        {
++          "id": "atlas-rome-walk-01",
++          "title": "Ancient Rome Walking Sampler",
++          "category": "activity",
++          "location": "Rome, Italy",
++          "details": "Fictional guided walk concept around historic landmarks.",
++          "price": {
++            "value": "24.00",
++            "currency": "EUR"
++          }
++        },
++        {
++          "id": "atlas-rome-cafe-02",
++          "title": "Roman Cafe Tasting Idea",
++          "category": "dining",
++          "location": "Rome, Italy",
++          "details": "Fictional food-tasting idea. No table or ticket is reserved.",
++          "price": {
++            "value": "18.50",
++            "currency": "EUR"
++          }
++        },
++        {
++          "id": "atlas-rome-stay-03",
++          "title": "Old Town Stay Example",
++          "category": "accommodation",
++          "location": "Rome, Italy",
++          "details": "Fictional overnight-stay idea for itinerary planning.",
++          "price": {
++            "value": "85.00",
++            "currency": "EUR"
++          }
++        }
++      ]
++    },
++    "paris": {
++      "offers": [
++        {
++          "id": "atlas-paris-walk-01",
++          "title": "Paris Neighbourhood Walk Idea",
++          "category": "activity",
++          "location": "Paris, France",
++          "details": "Fictional walking itinerary; not an actual bookable tour.",
++          "price": {
++            "value": "22.00",
++            "currency": "EUR"
++          }
++        },
++        {
++          "id": "atlas-paris-market-02",
++          "title": "Paris Market Browsing Idea",
++          "category": "retail",
++          "location": "Paris, France",
++          "details": "Fictional shopping-area suggestion.",
++          "price": {
++            "value": "0.00",
++            "currency": "EUR"
++          }
++        }
++      ]
++    }
++  }
++}
+
+--- /dev/null
++++ scenario2_multiple_booking_providers/config/booking_provider_fixtures/beacon_demo.json
+@@ -0,0 +1,56 @@
++{
++  "agency": "Beacon Demo",
++  "disclaimer": "Local synthetic examples only; no external booking service.",
++  "results": [
++    {
++      "code": "beacon-rm-museum-01",
++      "destination": "rome",
++      "label": "Museum Exploration Sample",
++      "type": "experience",
++      "address": "Rome, Italy",
++      "summary": "Fictional museum visit idea; no ticket is supplied.",
++      "amount": 16.0,
++      "currency": "EUR"
++    },
++    {
++      "code": "beacon-rm-dinner-02",
++      "destination": "rome",
++      "label": "Neighbourhood Dinner Concept",
++      "type": "meal",
++      "address": "Rome, Italy",
++      "summary": "Fictional restaurant idea; no booking is made.",
++      "amount": 30.0,
++      "currency": "EUR"
++    },
++    {
++      "code": "beacon-rm-hotel-03",
++      "destination": "rome",
++      "label": "Riverside Stay Concept",
++      "type": "room",
++      "address": "Rome, Italy",
++      "summary": "Fictional hotel idea without availability information.",
++      "amount": 94.0,
++      "currency": "EUR"
++    },
++    {
++      "code": "beacon-par-arts-01",
++      "destination": "paris",
++      "label": "Creative Quarter Discovery",
++      "type": "experience",
++      "address": "Paris, France",
++      "summary": "Fictional arts walk idea.",
++      "amount": 20.0,
++      "currency": "EUR"
++    },
++    {
++      "code": "beacon-par-snack-02",
++      "destination": "paris",
++      "label": "Paris Pastry Stop Idea",
++      "type": "meal",
++      "address": "Paris, France",
++      "summary": "Fictional cafe visit idea without a reservation.",
++      "amount": 12.5,
++      "currency": "EUR"
++    }
++  ]
++}
+
+--- /dev/null
++++ scenario2_multiple_booking_providers/test/controllers/booking_options_controller_test.rb
+@@ -0,0 +1,161 @@
++require "test_helper"
++
++class BookingOptionsControllerTest < ActionController::TestCase
++  tests BookingOptionsController
++
++  setup do
++    @owner, @trip = make_trip_fixture
++    @request.host = "whats.example.com"
++    @request.session[:user_id] = @owner.id
++  end
++
++  test "owner can browse Atlas and Beacon without persistence" do
++    assert_no_difference([ "TripItem.count", "Expense.count", "InboxItem.count" ]) do
++      get :index, params: { trip_id: @trip.id, provider_code: "atlas_demo", destination_code: "rome" }
++      assert_response :success
++      assert_select "select[name='provider_code']"
++      assert_select "select[name='destination_code']"
++      assert_select "form[action='#{trip_booking_options_path(@trip)}']"
++      get :index, params: { trip_id: @trip.id, provider_code: "beacon_demo", destination_code: "paris" }
++      assert_response :success
++    end
++  end
++
++  test "owner can save one locally normalized offer only as an idea" do
++    queued = []
++    assert_difference "TripItem.count", +1 do
++      assert_no_difference([ "Expense.count", "InboxItem.count" ]) do
++        GeocodeTripItemsJob.stub(:perform_later, ->(*args) { queued << args; Object.new }) do
++          post :create, params: { trip_id: @trip.id, provider_code: "atlas_demo", destination_code: "rome", offer_id: "atlas-rome-walk-01" }
++        end
++      end
++    end
++    assert_response :redirect
++    item = @trip.trip_items.order(created_at: :desc).first
++    assert item.idea?
++    assert_equal @owner.id, item.added_by_id
++    assert_match(/Atlas Demo/, item.name)
++    assert_includes item.notes, "[demo_provider_offer:atlas_demo:atlas-rome-walk-01]"
++    assert_includes item.notes, "No reservation or payment was made"
++    assert_equal "do", item.kind
++    assert_nil item.confirmation_ref
++    assert_nil item.inbox_item_id
++    assert_nil item.starts_at
++    assert_nil item.ends_at
++    assert_equal BigDecimal("24.00"), item.amount
++    assert_equal "EUR", item.currency
++    assert_equal 1, queued.size
++    assert_equal [ [ item.id ], @trip.id ], queued.first
++  end
++
++  test "beacon selection saves its own normalized fields and not a booking" do
++    GeocodeTripItemsJob.stub(:perform_later, Object.new) do
++      post :create, params: { trip_id: @trip.id, provider_code: "beacon_demo", destination_code: "paris", offer_id: "beacon-par-arts-01" }
++    end
++    assert_response :redirect
++    item = @trip.trip_items.last
++    assert item.idea?
++    assert_match(/Beacon Demo/, item.name)
++    assert_equal "Paris, France", item.address
++    assert_nil item.confirmation_ref
++    assert_nil item.expense
++  end
++
++  test "non-owner trip member cannot browse or create" do
++    member = User.create!(name: "Viewer", email: "viewer-#{SecureRandom.hex(4)}@example.test")
++    traveler = Traveler.create!(account: @trip.account, name: member.name, user: member)
++    TripMember.create!(trip: @trip, traveler: traveler, role: :viewer)
++    @request.session[:user_id] = member.id
++    get :index, params: { trip_id: @trip.id }
++    assert_response :forbidden
++    assert_no_difference "TripItem.count" do
++      post :create, params: { trip_id: @trip.id, provider_code: "atlas_demo", destination_code: "rome", offer_id: "atlas-rome-walk-01" }
++    end
++    assert_response :forbidden
++  end
++
++  test "unrelated user has no trip scope" do
++    stranger = User.create!(name: "Other", email: "other-#{SecureRandom.hex(4)}@example.test")
++    @request.session[:user_id] = stranger.id
++    assert_raises(ActiveRecord::RecordNotFound) { get :index, params: { trip_id: @trip.id } }
++    assert_raises(ActiveRecord::RecordNotFound) do
++      post :create, params: { trip_id: @trip.id, provider_code: "atlas_demo", destination_code: "rome", offer_id: "atlas-rome-walk-01" }
++    end
++  end
++
++  test "unknown provider or unsupported destination cannot create" do
++    [ [ "not_real", "rome" ], [ "atlas_demo", "tokyo" ] ].each do |provider, destination|
++      assert_no_difference "TripItem.count" do
++        post :create, params: { trip_id: @trip.id, provider_code: provider, destination_code: destination, offer_id: "atlas-rome-walk-01" }
++      end
++      assert_response :redirect
++    end
++    get :index, params: { trip_id: @trip.id, provider_code: "not_real", destination_code: "rome" }
++    assert_response :unprocessable_entity
++    assert_select "[role=alert]"
++  end
++
++  test "unknown, mismatched and cross-provider offer IDs are rejected" do
++    [ [ "atlas_demo", "rome", "unknown" ], [ "atlas_demo", "rome", "beacon-rm-museum-01" ],
++      [ "beacon_demo", "rome", "atlas-rome-walk-01" ], [ "atlas_demo", "paris", "atlas-rome-walk-01" ] ].each do |provider, destination, offer_id|
++      assert_no_difference "TripItem.count" do
++        post :create, params: { trip_id: @trip.id, provider_code: provider, destination_code: destination, offer_id: offer_id }
++      end
++      assert_response :redirect
++    end
++  end
++
++  test "tampered client attributes cannot create confirmed items, expenses or fake references" do
++    assert_difference "TripItem.count", +1 do
++      assert_no_difference([ "Expense.count", "InboxItem.count" ]) do
++        GeocodeTripItemsJob.stub(:perform_later, Object.new) do
++          post :create, params: { trip_id: @trip.id, provider_code: "atlas_demo", destination_code: "rome",
++                                  offer_id: "atlas-rome-walk-01", name: "Injected", kind: "flight",
++                                  amount: "0", currency: "USD", description: "Fake", address: "Somewhere",
++                                  status: "confirmed", confirmation_ref: "FAKE123", inbox_item_id: SecureRandom.uuid }
++        end
++      end
++    end
++    item = @trip.trip_items.last
++    assert item.idea?
++    assert_match(/Atlas Demo/, item.name)
++    refute_equal "Injected", item.name
++    refute_equal "flight", item.kind
++    refute_equal "USD", item.currency
++    assert_nil item.confirmation_ref
++    assert_nil item.inbox_item_id
++  end
++
++  test "duplicate provider offer is not added twice, including if names collide across providers" do
++    GeocodeTripItemsJob.stub(:perform_later, Object.new) do
++      post :create, params: { trip_id: @trip.id, provider_code: "atlas_demo", destination_code: "rome", offer_id: "atlas-rome-walk-01" }
++      assert_response :redirect
++      assert_no_difference "TripItem.count" do
++        post :create, params: { trip_id: @trip.id, provider_code: "atlas_demo", destination_code: "rome", offer_id: "atlas-rome-walk-01" }
++      end
++      post :create, params: { trip_id: @trip.id, provider_code: "beacon_demo", destination_code: "rome", offer_id: "beacon-rm-museum-01" }
++      assert_response :redirect
++    end
++    assert_equal 2, @trip.trip_items.count
++  end
++
++  test "provider errors are controlled, and no synchronous geocoding occurs" do
++    fake = Object.new
++    fake.define_singleton_method(:offers_for) { |destination_code:| raise BookingProviders::Registry::ProviderDataError, "Fixture unavailable" }
++    BookingProviders::Registry.stub(:find, fake) do
++      get :index, params: { trip_id: @trip.id, provider_code: "atlas_demo", destination_code: "rome" }
++      assert_response :unprocessable_entity
++      assert_select "[role=alert]", /Fixture unavailable/
++      assert_no_difference "TripItem.count" do
++        post :create, params: { trip_id: @trip.id, provider_code: "atlas_demo", destination_code: "rome", offer_id: "atlas-rome-walk-01" }
++      end
++    end
++    Geocoder.stub(:search, ->(*) { raise "Unexpected synchronous geocoding" }) do
++      GeocodeTripItemsJob.stub(:perform_later, Object.new) do
++        post :create, params: { trip_id: @trip.id, provider_code: "beacon_demo", destination_code: "rome", offer_id: "beacon-rm-museum-01" }
++      end
++    end
++    assert_response :redirect
++    assert_equal 1, @trip.trip_items.count
++  end
++end
+
+--- /dev/null
++++ scenario2_multiple_booking_providers/test/models/scenario2_email_and_refresh_regression_test.rb
+@@ -0,0 +1,59 @@
++require "test_helper"
++
++class Scenario2EmailAndRefreshRegressionTest < ActiveSupport::TestCase
++  setup do
++    @owner, @trip = make_trip_fixture
++  end
++
++  test "genuine confirmation email still creates a distinct confirmed item and expense" do
++    demo_item = @trip.trip_items.new(name: "[Atlas Demo] Sample idea", kind: :do, status: :idea,
++                                     added_by: @owner, notes: "[demo_provider_offer:atlas_demo:atlas-rome-walk-01]")
++    demo_item.defer_geocoding = true
++    demo_item.save!
++    inbox = @trip.inbox_items.create!(
++      from_email: @owner.email, subject: "Actual reservation confirmation",
++      received_at: Time.current, sender_status: :approved, parse_status: :parsed,
++      parsed_data_json: { "bookings" => [ {
++        "booking_type" => "tour", "provider" => "Atlas Demo", "location" => "Rome, Italy",
++        "datetime" => "2026-11-16T10:00", "confirmation_reference" => "REAL-EMAIL-ONLY-123",
++        "total_price" => 75, "currency" => "EUR"
++      } ] }.to_json
++    )
++
++    Geocoder.stub(:search, ->(*) { [] }) do
++      inbox.confirm_and_create_items!(@owner)
++    end
++
++    demo = @trip.trip_items.find_by!(name: "[Atlas Demo] Sample idea")
++    confirmation = @trip.trip_items.find_by!(name: "Atlas Demo")
++    assert demo.idea?
++    assert_nil demo.confirmation_ref
++    assert confirmation.confirmed?
++    assert_equal "REAL-EMAIL-ONLY-123", confirmation.confirmation_ref
++    assert_equal inbox.id, confirmation.inbox_item_id
++    assert_equal 2, @trip.trip_items.count
++    assert_equal 1, @trip.expenses.where(inbox_item: inbox).count
++  end
++
++  test "original GeocodeTripItemsJob reloads item and broadcasts the trip refresh" do
++    item = @trip.trip_items.new(name: "Unlocated idea", kind: :do, status: :idea,
++                                address: "Rome, Italy", added_by: @owner)
++    item.defer_geocoding = true
++    item.save!
++    assert_not item.geocoded?
++
++    searches = 0
++    broadcasts = []
++    Geocoder.stub(:search, ->(*) { searches += 1; [] }) do
++      Turbo::StreamsChannel.stub(:broadcast_refresh_to, ->(trip) { broadcasts << trip }) do
++        job = GeocodeTripItemsJob.new
++        job.stub(:sleep, nil) do
++          # The job's own find_by obtains a fresh object without the transient defer flag.
++          job.perform([ item.id ], @trip.id)
++        end
++      end
++    end
++    assert_operator searches, :>, 0
++    assert_equal [ @trip.id ], broadcasts.map(&:id)
++  end
++end
+
+--- /dev/null
++++ scenario2_multiple_booking_providers/test/services/booking_providers_test.rb
+@@ -0,0 +1,130 @@
++require "test_helper"
++require "tempfile"
++
++class BookingProvidersTest < ActiveSupport::TestCase
++  REGISTRY = BookingProviders::Registry
++  EXPECTED_KEYS = %i[provider_code provider_name offer_id name kind address description sample_amount currency].sort.freeze
++
++  test "both provider fixtures normalize into the same approved fields" do
++    [ "atlas_demo", "beacon_demo" ].each do |code|
++      offers = REGISTRY.find(code).offers_for(destination_code: "rome")
++      assert_operator offers.length, :>=, 2
++      offers.each do |offer|
++        assert_equal EXPECTED_KEYS, offer.keys.sort
++        assert_equal code, offer[:provider_code]
++        assert_includes REGISTRY::KINDS, offer[:kind]
++        assert_instance_of BigDecimal, offer[:sample_amount]
++        assert_equal "EUR", offer[:currency]
++      end
++    end
++  end
++
++  test "providers actually read distinct raw field structures" do
++    atlas = JSON.parse(File.read(BookingProviders::AtlasAdapter::DEFAULT_FIXTURE))
++    beacon = JSON.parse(File.read(BookingProviders::BeaconAdapter::DEFAULT_FIXTURE))
++    assert atlas.dig("destinations", "rome", "offers").first.key?("title")
++    assert beacon.fetch("results").first.key?("label")
++    refute beacon.key?("destinations")
++    refute atlas.key?("results")
++  end
++
++  test "registry allows exactly the two explicit provider codes" do
++    assert_equal %w[atlas_demo beacon_demo], REGISTRY.available.map { |p| p[:code] }
++    assert_instance_of BookingProviders::AtlasAdapter, REGISTRY.find("atlas_demo")
++    assert_instance_of BookingProviders::BeaconAdapter, REGISTRY.find("beacon_demo")
++    assert_raises(REGISTRY::UnknownProvider) { REGISTRY.find("other") }
++    assert_raises(REGISTRY::UnknownProvider) { REGISTRY.find("::Object") }
++  end
++
++  test "unsupported destination is rejected and destination offers are separated" do
++    [ "atlas_demo", "beacon_demo" ].each do |code|
++      provider = REGISTRY.find(code)
++      assert_raises(REGISTRY::UnsupportedDestination) { provider.offers_for(destination_code: "london") }
++      rome = provider.offers_for(destination_code: "rome")
++      paris = provider.offers_for(destination_code: "paris")
++      assert_empty rome.map { |o| o[:offer_id] } & paris.map { |o| o[:offer_id] }
++    end
++  end
++
++  test "missing file and malformed JSON are controlled errors" do
++    assert_raises(REGISTRY::ProviderDataError) do
++      BookingProviders::AtlasAdapter.new(fixture_path: "/nonexistent/catalogue.json").offers_for(destination_code: "rome")
++    end
++    Tempfile.create([ "invalid-provider", ".json" ]) do |file|
++      file.write("{ invalid")
++      file.flush
++      assert_raises(REGISTRY::ProviderDataError) do
++        BookingProviders::BeaconAdapter.new(fixture_path: file.path).offers_for(destination_code: "paris")
++      end
++    end
++  end
++
++  test "invalid atlas kind or malformed price cannot become a valid offer" do
++    base = JSON.parse(File.read(BookingProviders::AtlasAdapter::DEFAULT_FIXTURE))
++    [ [ "category", "unsupported_kind" ], [ "price", { "value" => "-1", "currency" => "EUR" } ],
++      [ "price", { "value" => "10.124", "currency" => "EUR" } ],
++      [ "price", { "value" => "10.00", "currency" => "euros" } ] ].each do |key, value|
++      raw = Marshal.load(Marshal.dump(base))
++      raw["destinations"]["rome"]["offers"].first[key] = value
++      with_fixture(raw) do |path|
++        assert_raises(REGISTRY::ProviderDataError) do
++          BookingProviders::AtlasAdapter.new(fixture_path: path).offers_for(destination_code: "rome")
++        end
++      end
++    end
++  end
++
++  test "invalid beacon type and amount are rejected" do
++    base = JSON.parse(File.read(BookingProviders::BeaconAdapter::DEFAULT_FIXTURE))
++    [ [ "type", "unsupported_type" ], [ "amount", -4 ], [ "amount", "invalid" ], [ "currency", "eu" ] ].each do |key, value|
++      raw = Marshal.load(Marshal.dump(base))
++      raw["results"].first[key] = value
++      with_fixture(raw) do |path|
++        assert_raises(REGISTRY::ProviderDataError) do
++          BookingProviders::BeaconAdapter.new(fixture_path: path).offers_for(destination_code: "rome")
++        end
++      end
++    end
++  end
++
++  test "duplicate IDs and malformed rows fail rather than being silently dropped" do
++    raw = JSON.parse(File.read(BookingProviders::AtlasAdapter::DEFAULT_FIXTURE))
++    raw["destinations"]["rome"]["offers"] << raw["destinations"]["rome"]["offers"].first
++    with_fixture(raw) do |path|
++      assert_raises(REGISTRY::ProviderDataError) do
++        BookingProviders::AtlasAdapter.new(fixture_path: path).offers_for(destination_code: "rome")
++      end
++    end
++    malformed = JSON.parse(File.read(BookingProviders::BeaconAdapter::DEFAULT_FIXTURE))
++    malformed["results"] << 1
++    with_fixture(malformed) do |path|
++      assert_raises(REGISTRY::ProviderDataError) do
++        BookingProviders::BeaconAdapter.new(fixture_path: path).offers_for(destination_code: "rome")
++      end
++    end
++  end
++
++  test "providers and returned offers do not share mutable request state" do
++    provider_a = REGISTRY.find("atlas_demo")
++    provider_b = REGISTRY.find("beacon_demo")
++    refute_same provider_a, REGISTRY.find("atlas_demo")
++    atlas = provider_a.offers_for(destination_code: "rome")
++    beacon = provider_b.offers_for(destination_code: "rome")
++    assert atlas.all?(&:frozen?)
++    assert beacon.all?(&:frozen?)
++    assert atlas.all? { |offer| offer[:provider_code] == "atlas_demo" }
++    assert beacon.all? { |offer| offer[:provider_code] == "beacon_demo" }
++    assert_raises(FrozenError) { atlas.first[:name] = "Changed" }
++    assert_equal atlas.first[:name], REGISTRY.find("atlas_demo").offers_for(destination_code: "rome").first[:name]
++  end
++
++  private
++
++  def with_fixture(data)
++    Tempfile.create([ "provider-test", ".json" ]) do |file|
++      file.write(JSON.generate(data))
++      file.flush
++      yield file.path
++    end
++  end
++end

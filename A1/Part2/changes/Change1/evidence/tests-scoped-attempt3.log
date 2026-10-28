@@ -1,0 +1,142 @@
+Creating test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...
+Found 37 test(s).
+Operations to perform:
+  Synchronize unmigrated apps: allauth, channels, corsheaders, google, messages, staticfiles
+  Apply all migrations: account, admin, auth, canteenapp, contenttypes, sessions, sites, social_django, socialaccount
+Synchronizing apps without migrations:
+  Creating tables...
+    Running deferred SQL...
+Running migrations:
+  Applying contenttypes.0001_initial... OK
+  Applying contenttypes.0002_remove_content_type_name... OK
+  Applying auth.0001_initial... OK
+  Applying auth.0002_alter_permission_name_max_length... OK
+  Applying auth.0003_alter_user_email_max_length... OK
+  Applying auth.0004_alter_user_username_opts... OK
+  Applying auth.0005_alter_user_last_login_null... OK
+  Applying auth.0006_require_contenttypes_0002... OK
+  Applying auth.0007_alter_validators_add_error_messages... OK
+  Applying auth.0008_alter_user_username_max_length... OK
+  Applying auth.0009_alter_user_last_name_max_length... OK
+  Applying auth.0010_alter_group_name_max_length... OK
+  Applying auth.0011_update_proxy_permissions... OK
+  Applying auth.0012_alter_user_first_name_max_length... OK
+  Applying canteenapp.0001_initial... OK
+  Applying account.0001_initial... OK
+  Applying account.0002_email_max_length... OK
+  Applying account.0003_alter_emailaddress_create_unique_verified_email... OK
+  Applying account.0004_alter_emailaddress_drop_unique_email... OK
+  Applying account.0005_emailaddress_idx_upper_email... OK
+  Applying account.0006_emailaddress_lower... OK
+  Applying account.0007_emailaddress_idx_email... OK
+  Applying account.0008_emailaddress_unique_primary_email_fixup... OK
+  Applying account.0009_emailaddress_unique_primary_email... OK
+  Applying admin.0001_initial... OK
+  Applying admin.0002_logentry_remove_auto_add... OK
+  Applying admin.0003_logentry_add_action_flag_choices... OK
+  Applying canteenapp.0002_remove_payment_created_at_payment_initiated_at... OK
+  Applying canteenapp.0003_rename_initiated_at_payment_created_at_and_more... OK
+  Applying canteenapp.0004_device... OK
+  Applying canteenapp.0005_delete_device... OK
+  Applying canteenapp.0006_userfcmtoken... OK
+  Applying canteenapp.0007_delete_userfcmtoken... OK
+  Applying canteenapp.0008_userdevicetoken... OK
+  Applying canteenapp.0009_adminnotification_deliverypersonnotification_and_more... OK
+  Applying canteenapp.0010_item_count... OK
+  Applying canteenapp.0011_alter_item_count... OK
+  Applying canteenapp.0012_alter_order_customer_status... OK
+  Applying canteenapp.0013_alter_order_delivery_type... OK
+  Applying canteenapp.0014_restaurant_restaurant_description... OK
+  Applying canteenapp.0015_order_order_pin... OK
+  Applying canteenapp.0016_alter_order_order_pin... OK
+  Applying sessions.0001_initial... OK
+  Applying sites.0001_initial... OK
+  Applying sites.0002_alter_domain_unique... OK
+  Applying social_django.0001_initial... OK
+  Applying social_django.0002_add_related_name... OK
+  Applying social_django.0003_alter_email_max_length... OK
+  Applying social_django.0004_auto_20160423_0400... OK
+  Applying social_django.0005_auto_20160727_2333... OK
+  Applying social_django.0006_partial... OK
+  Applying social_django.0007_code_timestamp... OK
+  Applying social_django.0008_partial_timestamp... OK
+  Applying social_django.0009_auto_20191118_0520... OK
+  Applying social_django.0010_uid_db_index... OK
+  Applying social_django.0011_alter_id_fields... OK
+  Applying social_django.0012_usersocialauth_extra_data_new... OK
+  Applying social_django.0013_migrate_extra_data... OK
+  Applying social_django.0014_remove_usersocialauth_extra_data... OK
+  Applying social_django.0015_rename_extra_data_new_usersocialauth_extra_data... OK
+  Applying social_django.0016_alter_usersocialauth_extra_data... OK
+  Applying social_django.0017_usersocialauth_user_social_auth_uid_required... OK
+  Applying socialaccount.0001_initial... OK
+  Applying socialaccount.0002_token_max_lengths... OK
+  Applying socialaccount.0003_extra_data_default_dict... OK
+  Applying socialaccount.0004_app_provider_id_settings... OK
+  Applying socialaccount.0005_socialtoken_nullable_app... OK
+  Applying socialaccount.0006_alter_socialaccount_extra_data.../workspace/scratch/ac905c27eac1/ch01/venv/lib/python3.12/site-packages/payu_sdk/payuClient.py:3: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  import pkg_resources
+System check identified some issues:
+
+WARNINGS:
+?: settings.ACCOUNT_EMAIL_REQUIRED is deprecated, use: settings.ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
+
+System check identified 1 issue (0 silenced).
+test_actual_inmemory_channel_receives_preserved_event (canteenapp.test_delivery_assignment.AssignmentEndpointTests.test_actual_inmemory_channel_receives_preserved_event) ... ok
+test_admin_template_contains_both_policies (canteenapp.test_delivery_assignment.AssignmentEndpointTests.test_admin_template_contains_both_policies) ... /workspace/scratch/ac905c27eac1/ch01/venv/lib/python3.12/site-packages/django/core/handlers/base.py:62: UserWarning: No directory at: /workspace/scratch/ac905c27eac1/ch01/working/staticfiles/
+  mw_instance = middleware(adapted_handler)
+ok
+test_anonymous_cannot_assign (canteenapp.test_delivery_assignment.AssignmentEndpointTests.test_anonymous_cannot_assign) ... ok
+test_assignment_dropdown_filters_without_changing_general_personnel_list (canteenapp.test_delivery_assignment.AssignmentEndpointTests.test_assignment_dropdown_filters_without_changing_general_personnel_list) ... ok
+test_automatic_does_not_use_stale_manual_selection (canteenapp.test_delivery_assignment.AssignmentEndpointTests.test_automatic_does_not_use_stale_manual_selection) ... ok
+test_automatic_payload_does_not_require_email (canteenapp.test_delivery_assignment.AssignmentEndpointTests.test_automatic_payload_does_not_require_email) ... ok
+test_csrf_is_enforced (canteenapp.test_delivery_assignment.AssignmentEndpointTests.test_csrf_is_enforced) ... ok
+test_database_failure_is_retryable_and_does_not_expose_details (canteenapp.test_delivery_assignment.AssignmentEndpointTests.test_database_failure_is_retryable_and_does_not_expose_details) ... ok
+test_get_not_allowed (canteenapp.test_delivery_assignment.AssignmentEndpointTests.test_get_not_allowed) ... ok
+test_inactive_manual_selection (canteenapp.test_delivery_assignment.AssignmentEndpointTests.test_inactive_manual_selection) ... ok
+test_invalid_json_and_non_object_bodies (canteenapp.test_delivery_assignment.AssignmentEndpointTests.test_invalid_json_and_non_object_bodies) ... ok
+test_invalid_or_missing_manual_selection (canteenapp.test_delivery_assignment.AssignmentEndpointTests.test_invalid_or_missing_manual_selection) ... ok
+test_invalid_order_id (canteenapp.test_delivery_assignment.AssignmentEndpointTests.test_invalid_order_id) ... ok
+test_invalid_policy (canteenapp.test_delivery_assignment.AssignmentEndpointTests.test_invalid_policy) ... ok
+test_legacy_manual_payload_and_existing_event (canteenapp.test_delivery_assignment.AssignmentEndpointTests.test_legacy_manual_payload_and_existing_event) ... ok
+test_missing_order (canteenapp.test_delivery_assignment.AssignmentEndpointTests.test_missing_order) ... ok
+test_no_candidates_returns_conflict_without_notification (canteenapp.test_delivery_assignment.AssignmentEndpointTests.test_no_candidates_returns_conflict_without_notification) ... ok
+test_non_admin_cannot_assign (canteenapp.test_delivery_assignment.AssignmentEndpointTests.test_non_admin_cannot_assign) ... ok
+test_notification_failure_does_not_claim_assignment_failed (canteenapp.test_delivery_assignment.AssignmentEndpointTests.test_notification_failure_does_not_claim_assignment_failed) ... FAIL
+test_all_nonterminal_delivery_statuses_count (canteenapp.test_delivery_assignment.PolicyTests.test_all_nonterminal_delivery_statuses_count) ... ok
+test_automatic_chooses_fewer_unfinished_orders (canteenapp.test_delivery_assignment.PolicyTests.test_automatic_chooses_fewer_unfinished_orders) ... ok
+test_automatic_excludes_each_ineligible_account (canteenapp.test_delivery_assignment.PolicyTests.test_automatic_excludes_each_ineligible_account) ... ok
+test_context_delegates_to_supplied_strategy (canteenapp.test_delivery_assignment.PolicyTests.test_context_delegates_to_supplied_strategy) ... ok
+test_group_permission_is_eligible (canteenapp.test_delivery_assignment.PolicyTests.test_group_permission_is_eligible) ... ok
+test_ineligible_orders_are_not_changed (canteenapp.test_delivery_assignment.PolicyTests.test_ineligible_orders_are_not_changed) ... ok
+test_manual_honours_selection_even_with_higher_workload (canteenapp.test_delivery_assignment.PolicyTests.test_manual_honours_selection_even_with_higher_workload) ... ok
+test_manual_rejects_ineligible_accounts_without_mutating_order (canteenapp.test_delivery_assignment.PolicyTests.test_manual_rejects_ineligible_accounts_without_mutating_order) ... ok
+test_multiple_permission_paths_do_not_inflate_load (canteenapp.test_delivery_assignment.PolicyTests.test_multiple_permission_paths_do_not_inflate_load) ... ok
+test_next_assignment_uses_updated_workload (canteenapp.test_delivery_assignment.PolicyTests.test_next_assignment_uses_updated_workload) ... ok
+test_no_eligible_candidates (canteenapp.test_delivery_assignment.PolicyTests.test_no_eligible_candidates) ... ok
+test_nonzero_load_tie_uses_lowest_primary_key (canteenapp.test_delivery_assignment.PolicyTests.test_nonzero_load_tie_uses_lowest_primary_key) ... ok
+test_permission_from_another_app_does_not_qualify (canteenapp.test_delivery_assignment.PolicyTests.test_permission_from_another_app_does_not_qualify) ... ok
+test_registry_returns_interchangeable_policies (canteenapp.test_delivery_assignment.PolicyTests.test_registry_returns_interchangeable_policies) ... ok
+test_regular_user_is_not_a_delivery_candidate (canteenapp.test_delivery_assignment.PolicyTests.test_regular_user_is_not_a_delivery_candidate) ... ok
+test_repeated_assignment_cannot_overwrite_first_assignment (canteenapp.test_delivery_assignment.PolicyTests.test_repeated_assignment_cannot_overwrite_first_assignment) ... ok
+test_terminal_orders_and_non_delivery_orders_do_not_count (canteenapp.test_delivery_assignment.PolicyTests.test_terminal_orders_and_non_delivery_orders_do_not_count) ... ok
+test_zero_load_tie_uses_lowest_primary_key (canteenapp.test_delivery_assignment.PolicyTests.test_zero_load_tie_uses_lowest_primary_key) ... ok
+
+======================================================================
+FAIL: test_notification_failure_does_not_claim_assignment_failed (canteenapp.test_delivery_assignment.AssignmentEndpointTests.test_notification_failure_does_not_claim_assignment_failed)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/ac905c27eac1/ch01/working/canteenapp/test_delivery_assignment.py", line 276, in test_notification_failure_does_not_claim_assignment_failed
+    with self.assertLogs('django.db.backends.base', level='ERROR'):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/_log.py", line 84, in __exit__
+    self._raiseFailure(
+AssertionError: no logs of level ERROR or higher triggered on django.db.backends.base
+
+----------------------------------------------------------------------
+Ran 37 tests in 0.288s
+
+FAILED (failures=1)
+Destroying test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...
+ OK
+Failed to initialize Firebase: [Errno 2] No such file or directory: 'foodhub-c60e4-firebase-adminsdk-oxz22-3e6b763fd3.json'

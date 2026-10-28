@@ -1,0 +1,73 @@
+# Source diff archive
+
+Application repository: https://github.com/nivedita-rmsh/nextjs-blog-cms
+Commit: e7dfd1c
+Commit URL: https://github.com/nivedita-rmsh/nextjs-blog-cms/commit/e7dfd1ca86e0dbd67d68f778c47b503d490b0dd5
+
+This is the commit diff returned by GitHub for the referenced change. Preserve the original commit as the source of truth.
+
+```diff
+@@ -35,6 +35,31 @@ describe('AVAILABLE_MODELS', () => {
+   })
+ })
+ 
++
++describe('inferProviderFromModel', () => {
++  it('infers Gemini from a Gemini model ID', async () => {
++    const { inferProviderFromModel } = await import(
++      '@/features/ai-assistant/llmService'
++    )
++    expect(inferProviderFromModel('gemini-2.5-flash')).toBe('gemini')
++  })
++
++  it('infers OpenAI from a GPT model ID', async () => {
++    const { inferProviderFromModel } = await import(
++      '@/features/ai-assistant/llmService'
++    )
++    expect(inferProviderFromModel('gpt-4o')).toBe('openai')
++  })
++
++  it('defaults to Claude for other model IDs', async () => {
++    const { inferProviderFromModel } = await import(
++      '@/features/ai-assistant/llmService'
++    )
++    expect(inferProviderFromModel('claude-sonnet-4-6')).toBe('claude')
++  })
++})
++
++
+ // ─── buildSystemPrompt ────────────────────────────────────────────────────────
+ 
+ describe('buildSystemPrompt', () => {
+@@ -124,6 +124,17 @@ function resolveGeminiModel(model: string): string {
+   return model
+ }
+ 
++/**
++ * Resolves the provider from a model ID.
++ * Preserves the existing prefix-based selection behavior.
++ */
++export function inferProviderFromModel(model: string): LLMProvider {
++  if (model.startsWith('gemini')) return 'gemini'
++  if (model.startsWith('gpt')) return 'openai'
++  return 'claude'
++}
++
++
+ // ─── Gemini streaming ─────────────────────────────────────────────────────────
+ 
+ async function* streamGemini(params: SendMessageParams): AsyncGenerator<string> {
+@@ -157,11 +168,7 @@ export function sendMessage(params: SendMessageParams): AsyncGenerator<string> {
+ export async function generateBlogPost(
+   params: GenerateBlogPostParams
+ ): Promise<GeneratedPostData> {
+-  const provider: LLMProvider = params.model.startsWith('gemini')
+-    ? 'gemini'
+-    : params.model.startsWith('gpt')
+-      ? 'openai'
+-      : 'claude'
++  const provider = inferProviderFromModel(params.model)
+ 
+   const historyText = params.messages
+     .map((m) => `${m.role.toUpperCase()}: ${m.content}`)
+```

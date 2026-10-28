@@ -1,0 +1,27 @@
+diff --git a/junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java b/junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java
+index f37e90e..aba5378 100644
+--- a/junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java
++++ b/junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java
+@@ -177,15 +177,18 @@ public class EngineDiscoveryOrchestrator {
+ 
+ 		engineFilterer.performSanityChecks();
+ 
+-		List<PostDiscoveryFilter> filters = new ArrayList<>(postDiscoveryFilters);
+-		filters.addAll(request.getPostDiscoveryFilters());
+-
+-		applyPostDiscoveryFilters(testEngineDescriptors, filters);
++		applyPostDiscoveryFilters(testEngineDescriptors, collectPostDiscoveryFilters(request));
+ 		prune(testEngineDescriptors);
+ 
+ 		return testEngineDescriptors;
+ 	}
+ 
++	private List<PostDiscoveryFilter> collectPostDiscoveryFilters(LauncherDiscoveryRequest request) {
++		List<PostDiscoveryFilter> filters = new ArrayList<>(postDiscoveryFilters);
++		filters.addAll(request.getPostDiscoveryFilters());
++		return filters;
++	}
++
+ 	private EngineResultInfo discoverEngineRoot(TestEngine testEngine, LauncherDiscoveryRequest request,
+ 			DiscoveryIssueCollector issueCollector, Function<String, UniqueId> uniqueIdCreator) {
+ 		UniqueId uniqueEngineId = uniqueIdCreator.apply(testEngine.getId());

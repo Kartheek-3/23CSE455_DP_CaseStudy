@@ -1,0 +1,21 @@
+%% Layer Supertype - "Daemon Module Base"
+%% mycodo/abstract_base_controller.py and its five layer members
+classDiagram
+    class AbstractBaseController {
+        +try_initialize(tries, wait_sec)
+        +setup_custom_options(custom_options, custom_controller)
+        +setup_device_measurement(unique_id)
+        +setup_custom_channel_options_json(custom_options, custom_controller_channels)
+        #_set_custom_option(controller, unique_id, option, value)
+        +get_last_measurement(device_id, measurement_id, max_age)
+    }
+    class AbstractInput
+    class AbstractOutput
+    class AbstractController
+    class AbstractFunction
+    class AbstractFunctionAction
+    AbstractBaseController <|-- AbstractInput
+    AbstractBaseController <|-- AbstractOutput
+    AbstractBaseController <|-- AbstractController
+    AbstractBaseController <|-- AbstractFunction
+    AbstractBaseController <|-- AbstractFunctionAction

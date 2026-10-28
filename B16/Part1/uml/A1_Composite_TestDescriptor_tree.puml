@@ -1,0 +1,64 @@
+@startuml A1
+!pragma layout smetana
+title A1 Composite: TestDescriptor tree
+
+interface TestDescriptor <<Component>> {
+  +getChildren() : Set<TestDescriptor>
+  +addChild(TestDescriptor)
+  +removeChild(TestDescriptor)
+  +getDescendants()
+  +accept(Visitor)
+  +prune()
+  +getType() : Type
+}
+abstract class AbstractTestDescriptor <<Component>> {
+  #children : Set<TestDescriptor>
+  +addChild(TestDescriptor)
+  +findByUniqueId(UniqueId)
+}
+class EngineDescriptor <<Composite>>
+class JupiterEngineDescriptor <<Composite>>
+abstract class JupiterTestDescriptor <<Component>>
+abstract class ClassBasedTestDescriptor <<Composite, not counted>> #E6E6E6
+class ClassTestDescriptor <<Composite>>
+abstract class MethodBasedTestDescriptor <<Component>>
+class TestMethodTestDescriptor <<Leaf>>
+class EngineDiscoveryOrchestrator <<Client>>
+
+AbstractTestDescriptor ..|> TestDescriptor
+AbstractTestDescriptor o--> "0..*" TestDescriptor : children
+EngineDescriptor --|> AbstractTestDescriptor
+JupiterEngineDescriptor --|> EngineDescriptor
+JupiterTestDescriptor --|> AbstractTestDescriptor
+ClassBasedTestDescriptor --|> JupiterTestDescriptor
+ClassTestDescriptor --|> ClassBasedTestDescriptor
+MethodBasedTestDescriptor --|> JupiterTestDescriptor
+TestMethodTestDescriptor --|> MethodBasedTestDescriptor
+EngineDiscoveryOrchestrator ..> TestDescriptor : prune(), accept(visitor)
+
+note bottom of TestMethodTestDescriptor
+  Leaf vs container is decided by getType()
+  (TEST / CONTAINER), not by the class tree.
+end note
+' aligned-with-record
+legend right
+  <b>Counted participants</b> (record in the dataset)
+  Component: TestDescriptor
+  Composite (base): AbstractTestDescriptor
+  Composite: EngineDescriptor
+  Composite: JupiterEngineDescriptor
+  Composite: ClassTestDescriptor
+  Composite: NestedClassTestDescriptor (not drawn)
+  Composite: ClassTemplateTestDescriptor (not drawn)
+  Composite: ClassTemplateInvocationTestDescriptor (not drawn)
+  Composite: TestTemplateTestDescriptor (not drawn)
+  Composite: TestFactoryTestDescriptor (not drawn)
+  Composite: DynamicContainerTestDescriptor (not drawn)
+  Leaf: TestMethodTestDescriptor
+  Leaf: TestTemplateInvocationTestDescriptor (not drawn)
+  Leaf: DynamicTestTestDescriptor (not drawn)
+  Client: EngineDiscoveryOrchestrator#applyPostDiscoveryFilters
+  Client: NodeTestTask#executeRecursively (not drawn)
+  Grey classes: real, shown for context, not counted
+endlegend
+@enduml

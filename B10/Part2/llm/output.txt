@@ -1,0 +1,345 @@
+Part 2 - Evolution and Refactoring - LLM explanation log
+=======================================================
+
+SET-UP DECISIONS (ambiguities resolved without asking, as instructed)
+--------------------------------------------------------------------
+D1. Verified Part 1 files missing. Part1/patterns.csv and Part1/Pattern_count.csv do not exist anywhere
+    under the parent folder of the team folder; Part1/ contains only llm_output/. Decision: use the instance names, roles
+    and locations of the Part 1 LLM drafts (Part1/llm_output/patterns_llm_draft.csv and
+    pattern_counts_llm_draft.csv) as the baseline. Reason: they are the only Part 1 results in the
+    workspace. If the verified CSVs rename or drop instances, rename the rows in the "Pattern effects"
+    tables, the .mmd headers and the evolution CSVs. No code depends on the names.
+D2. data/code = Mycodo/. The task names data/code/, which does not exist; the prompt also says
+    "Original source (read-only): Mycodo/". Mycodo/ is at ee70a111c622e2a81026fd5c1553a948acf8161e with a
+    clean tree and is never modified. The "original" lizard run used Mycodo/.
+D3. Work repository. Part2/work is a local `git clone Mycodo Part2/work` (no network) on branch
+    `case-study`. This matches the task's path Part2/work/install/requirements.txt. All nine commits are
+    made there.
+D4. Previous partial run. An earlier run had produced Part2/, but Part2/ was missing at the start of this
+    run. Everything in Part2/ was regenerated from scratch in this run (fresh clone, fresh commits). The
+    venv ../.venv-mycodo still existed with exactly the needed packages and was reused; its contents
+    are recorded in run_info.txt.
+D5. Environment. Python 3.12.7 venv at <venv> (outside the team folder).
+    Installed with the requirements.txt pins: Flask, Flask_Babel, Flask_Login, Flask_Marshmallow,
+    Flask_SQLAlchemy, SQLAlchemy, marshmallow_sqlalchemy, bcrypt, pyro5, requests. These are only what
+    is needed to import mycodo.functions.bang_bang. Dev tools: pytest 9.0.2, lizard 1.24.1. No
+    dependency was added to the application.
+D6. Windows blocker. mycodo.functions.bang_bang → mycodo.mycodo_client →
+    mycodo.utils.widget_generate_html / system_pi import the POSIX-only stdlib modules grp and pwd.
+    The test conftest.py and the demo scripts register empty stand-in modules for them (a test-only
+    shim). The settings DB and the daemon are replaced with unittest.mock. New logic is placed in
+    plain-Python modules (mycodo/utils/crop_profiles.py, irrigation_strategies.py, sensor_alerts.py)
+    that import nothing from Flask or the DB.
+D7. "Full test suite" = mycodo/tests/case_study, i.e. all case-study tests. The upstream
+    mycodo/tests/software_tests needs a complete Linux Mycodo installation and was not run.
+    pytest is run with -p no:cacheprovider so no .pytest_cache ends up in the repository.
+D8. Automation helpers in Part2/tools/. They only run tools and copy their output:
+    - run_tests.sh saves the raw pytest output;
+    - assemble_test_log.sh builds test_result.log and takes the header counts from pytest's summary lines;
+    - snapshot.sh does step f: copy, lizard, metrics row;
+    - lizard_metrics.py reads one metrics.csv row from lizard's printed tables.
+D9. Source files counted in metrics_files.txt are the 24 Part 1 scope files plus each new application
+    source file. Test files are not counted.
+
+CHANGE 1 (CH01) - Add new crop types
+------------------------------------
+Starting point check. The suggestion fits. bang_bang.CustomModule (mycodo/functions/bang_bang.py) is
+an on/off hysteresis controller. With direction 'raise' and a soil-moisture measurement it switches an
+irrigation output on when the soil is dry, and its setpoint and hysteresis are exactly what a crop
+profile should supply. Caveat: bang_bang.py:17 has the TODO "Remove this at next major version
+(obsolete because a On/Off Raise/Lower/Both Bang-Bang exists)", which points to
+functions/bang_bang_on_off.py. We still use bang_bang.py because it is the Part 1 scope file and the
+suggested starting point (see Risks).
+
+Step a (commit dee5d7d76). test_bang_bang_characterization.py has 25 tests, one of them parametrised
+over 15 decision cases. They build the real CustomModule (DB and daemon mocked) and lock in:
+- option parsing and the output-channel lookup;
+- get_last_measurement(device, measurement, max_age=...);
+- every on/off decision for 'raise' and 'lower', including the non-inclusive band edges, output_on
+  being re-sent while the output is already on, and output_off only when the output is on;
+- [ts, None] → output off with the exact error text;
+- unknown direction → error only;
+- missing output channel → early return;
+- the timer gate and whole-period timer advance;
+- stop_function.
+All 25 passed on the unchanged code.
+
+Step b (commit d454803d0)
+- Smell: Duplicated Code. loop() computed the band edges four times: `self.setpoint + self.hysteresis`
+  at bang_bang.py:188 and :205, and `self.setpoint - self.hysteresis` at :194 and :199 (baseline lines,
+  checked with grep -n).
+- Fowler technique: Extract Method → `_lower_threshold()`, `_upper_threshold()`.
+- The 25 tests passed unchanged.
+- Why this smell: CH01 changes where setpoint and hysteresis come from, so the band calculation should
+  exist in exactly one place.
+
+Step c (commit bdc43f9a3)
+- New plain-Python mycodo/utils/crop_profiles.py: a frozen dataclass `CropProfile` (id, display name,
+  target moisture %, tolerance %) with validation; one registration point `register_crop_profile()`;
+  one lookup point `get_crop_profile()`, which raises `UnknownCropProfileError`;
+  `crop_profile_choices()` for the UI; the reserved id 'custom'. Built-in crops: tomato 65±5,
+  rice 85±5, wheat 50±5 (illustrative values).
+- The module lives in mycodo/utils/ because utils/functions.py parse_function_information would load
+  every file in functions/ as a Function plugin.
+- bang_bang.py:
+  - a new select option 'crop_profile' (default 'custom', not required, so stored configurations
+    without the option keep working);
+  - initialize() calls the new `_apply_crop_profile()`;
+  - an unknown crop logs an error and keeps the configured values.
+- Tests named after AC1-AC7 (test_ch01_crop_profiles.py) bring the total to 42/42.
+
+Pattern effects (CH01)
+- Module Initialization with Retry (Template Method): modified. The concrete step
+  CustomModule.initialize changed.
+- Daemon RPC Client (Proxy): modified. The client CustomModule.loop changed and moved; the Proxy calls
+  are identical. "Preserved" could also be argued, but the strict rule says lines moved = modified.
+- The other 11 instances: preserved.
+- No new instance: the crop catalogue is a value type plus one lookup point. It is not a Factory, and
+  calling a module-level dict a Registry (PoEAA) would over-claim.
+
+Metrics (metrics.csv, read from lizard): original 24 files / 4024 NLOC / 240 functions / max CCN 51 /
+avg CCN 3.6; Change1 25 / 4098 / 248 / 51 / 3.5. loop() keeps CCN 14, because Extract Method removes
+repetition, not branches; the branching is the CH02 target.
+
+Unsure / noted (CH01)
+- Units: profiles are in percent, but the Adafruit soil sensor reports unitless raw capacitance. Users
+  must rescale the measurement to percent with the existing rescaling, otherwise the crop targets are
+  meaningless. This is documented in requirement.md and in the option phrase.
+- Baseline defect, not changed in CH01: loop() logs last_measurement[1] (baseline line 179) before the
+  guard `if not last_measurement or ...` (line 182). If get_last_measurement returned None or [], loop()
+  would raise instead of switching the output off. read_influxdb_single normally returns [None, None]
+  (utils/influx.py:398), which is handled. This is left for CH03 (missing-reading handling).
+
+CHANGE 2 (CH02) - Add different irrigation strategies
+-----------------------------------------------------
+Starting point check. The suggestion fits. After CH01, loop() switched on self.direction with mirrored
+'raise' / 'lower' branches (bang_bang.py:220-243 in Part2/changes/Change1/code). Any new irrigation
+policy would have added more branches there.
+
+Step a (commit fb1794585). test_ch02_characterization.py adds 6 tests (48 in total). They pin what CH02
+must keep:
+- the existing options (id, type, default, relative order); new options may be added;
+- the direction values;
+- the 'lower' direction combined with a crop band;
+- a 7-step 'raise' sequence driven by the reported output state;
+- the missing value for 'lower';
+- an unknown direction still reading the measurement and the output state.
+All passed on the unchanged code.
+
+Step b (commit c18ecb1e5)
+- Smell: Switch Statements (type code self.direction, mirrored branches 221-230 / 232-241).
+- Fowler technique: Replace Conditional with Polymorphism.
+  - New plain module mycodo/utils/irrigation_strategies.py with IrrigationContext (a parameter object),
+    IrrigationStrategy.decide(), RaiseHysteresisStrategy and LowerHysteresisStrategy, and
+    DIRECTION_STRATEGIES.
+  - loop() looks up the strategy, logs the unchanged "Unknown controller direction" error if there is
+    none, and passes the decision to the extracted _apply_decision().
+- All 48 tests passed unchanged.
+- One subtle point checked: the original computed a threshold only inside the branch that needed it,
+  while the refactored code computes both up front. This has no side effects (pure arithmetic), so the
+  behaviour is identical.
+
+Step c (commit 9e3d56e8d)
+- New strategies:
+  - TimeWindowStrategy: irrigate only inside HH:MM-HH:MM windows; windows may cross midnight; start
+    inclusive, end exclusive; a running pump is switched off outside the windows.
+  - RainSkipStrategy: skip while the rain indicator is at or above the threshold; a running pump is
+    switched off; a missing reading falls back to the band with a warning.
+  - Both derive from IrrigationRestriction, which holds `inner` and delegates. That makes them stackable
+    decorators around either direction.
+- Single creation point: build_irrigation_strategy(name, direction, ...), plus parse_time_windows and
+  in_time_windows.
+- bang_bang.py:
+  - five new optional options;
+  - initialize() builds self.strategy through _build_irrigation_strategy(). An unknown strategy,
+    invalid windows, or skip_if_rain without a rain measurement is logged and falls back to
+    'hysteresis', so the crop is never left unwatered by a configuration error;
+  - loop() passes `now` (from _now(), which tests can override) and the rain indicator (read by
+    _read_rain_indicator() only if strategy.needs_rain_indicator()).
+- Tests AC1-AC9 (test_ch02_irrigation_strategies.py): 64/64.
+- Mutation check: bypassing the time-window test made AC2, AC3 and AC8 fail (file restored before the
+  commit).
+
+Pattern effects (CH02)
+- newly_introduced: Strategy "Irrigation Decision Strategy" (Context = bang_bang.CustomModule).
+- newly_introduced: Decorator "Irrigation Restriction Decorators" (IrrigationRestriction → TimeWindowStrategy,
+  RainSkipStrategy).
+- modified: Module Initialization with Retry (CustomModule.initialize builds the strategy).
+- modified: Daemon RPC Client (client loop restructured; the output_on/off calls moved into
+  _apply_decision).
+- The other 11 Part 1 instances: preserved.
+- Totals: 15 instances, 9 pattern types.
+
+Metrics: Change2 has 26 files / 4298 NLOC / 268 functions / max CCN 51 (base_output.output_on_off, not
+touched) / avg CCN 3.5. bang_bang.loop() CCN went from 14 to 7. Most of the drop comes from the
+refactoring; the time-window and rain logic lives in small strategy methods (CCN ≤ 6).
+
+Unsure / decisions (CH02)
+- Strategy and Decorator are both reported. One could argue the restrictions are "just more
+  strategies". I count the Decorator separately because the defining relation is different (wrapper
+  holds a component of the same interface and adds behaviour). It also genuinely enables stacking (AC8).
+  If the team prefers one instance, merge it into "Irrigation Decision Strategy" as "extended".
+- Strategy status is reported per change as newly_introduced, although its first two concrete
+  strategies already appear in the step-b commit. The step-c additions are new participants of the same
+  collaboration, not a second instance.
+- Rain data: no bundled Mycodo weather Input provides precipitation (checked
+  weather_openweathermap_weather.py and weather_openweathermap_onecall.py measurement dicts). The
+  strategy therefore accepts any selected measurement plus a threshold, and the UI phrase says so.
+- Fail-safe choices: on invalid configuration or a missing rain reading, the controller keeps
+  irrigating by the band rather than stopping. This is a domain decision the team may want to reverse.
+- The UI only offers one strategy at a time (a select). Stacking is available at the API level (AC8)
+  but is not exposed as a UI option, to keep the option set small.
+
+CHANGE 3 (CH03) - Add sensor-based alerts
+-----------------------------------------
+Starting point check. The suggestion fits. After CH02, loop() (bang_bang.py:284-320 in
+Part2/changes/Change2/code) mixed timer gating, reading the measurement, the inlined missing-measurement
+handling (302-308) and strategy evaluation. Alerting has to hook in exactly at the missing-measurement
+point.
+
+Step a (commit 1146fe42a). test_ch03_characterization.py adds 8 tests (72 in total). They pin:
+- the exact daemon calls on a missing value (output_state, then output_off);
+- off is sent even when the output is already off, and on every period;
+- a missing value skips the strategy and the rain reading, and turns off outside a time window;
+- recovery to normal control;
+- a very dry reading only switches the output (exact call list);
+- the timer gate.
+The baseline crash for a None / [] result (TypeError / IndexError at the debug log) was deliberately
+NOT pinned, because CH03 fixes it on purpose (AC2). All 8 passed on the unchanged code.
+
+Step b (commit 349ed087c)
+- Smell: Long Method (loop() 284-320, five concerns; missing-measurement handling inlined at 302-308).
+- Fowler technique: Extract Method → _period_elapsed(), _read_measurement(), _handle_missing_measurement().
+- The debug log deliberately stays before the guard, so the refactoring is purely structural (defect
+  included).
+- All 72 tests passed unchanged.
+
+Step c (commit bce41febb)
+- New plain module mycodo/utils/sensor_alerts.py:
+  - SensorAlert (an event value object);
+  - AlertListener (on_alert);
+  - SensorAlertNotifier: the subject; attach/detach, raise_alert delivers once per episode, clear
+    re-arms, and _notify isolates failing listeners;
+  - LogAlertListener;
+  - EmailAlertListener, with an injected send function;
+  - parse_recipients.
+- bang_bang.py:
+  - options alert_critical_moisture (0 = off) and alert_email;
+  - _setup_alert_listeners() in initialize(): the log listener is always attached; the e-mail listener
+    is attached when recipients are given, and it sends with DaemonControl.send_email, Mycodo's
+    existing path to utils/send_data.send_email;
+  - loop() now gets the value through _measurement_value(), which is safe for None / [] / [ts, None]
+    and fixes the baseline defect;
+  - _handle_missing_measurement() raises missing_measurement after switching off;
+  - a valid value clears it, and _check_critically_dry() raises/clears critically_dry.
+- Tests AC1-AC9 (test_ch03_sensor_alerts.py): 83/83.
+- Mutation check: disabling _notify made 7 AC tests fail (file restored before the commit).
+
+Pattern effects (CH03)
+- newly_introduced: Observer "Sensor Alert Notification".
+- modified: Module Initialization with Retry (initialize attaches listeners); Daemon RPC Client (client
+  loop restructured, output_off moved into _handle_missing_measurement); Irrigation Decision Strategy
+  (its Context code, loop, changed and moved).
+- preserved: Irrigation Restriction Decorators (irrigation_strategies.py byte-identical) and the other
+  11 Part 1 instances.
+- Totals: 16 instances, 10 pattern types.
+
+Metrics: Change3 has 27 files / 4426 NLOC / 288 functions / max CCN 51 (unchanged base_output) / avg CCN
+3.3. bang_bang.loop() is CCN 5 (14 in the original); its NLOC went 43 → 29 → 25.
+
+Unsure / decisions (CH03)
+- Alerts are edge-triggered (once per episode) rather than repeated every update period (default 5 s).
+  Reason: e-mail flooding. Mycodo's hourly e-mail limit (utils/actions.check_allowed_to_email) was not
+  reused, because importing mycodo.utils.actions pulls in mycodo.devices.camera and DB writes, which
+  would add heavy imports to bang_bang. Edge-triggering plus the existing SMTP settings is the lighter
+  choice. Risk: a restart re-arms the alerts, because the active state is in memory only.
+- "Critically dry" uses `measurement < alert_critical_moisture` for both directions. That is meaningful
+  for irrigation ('raise'); for a 'lower' controller the alert is simply "below the critical level".
+- DaemonControl.send_email is a static method that runs locally (SMTP from the settings DB), not through
+  the daemon. That is why the Proxy instance gains no participant.
+- Part 1 had "Observer - Output trigger notification" as UNCERTAIN (base_output.check_triggers). That
+  candidate is unaffected; the new Observer is a separate, newly introduced collaboration.
+
+AFTER CH03 - evolution outputs
+------------------------------
+- Part2/llm/patterns_evolution_llm_draft.csv (57 rows: 13 baseline, then 13 / 15 / 16), generated by
+  Part2/tools/build_evolution_csv.py.
+  - Baseline rows are copied verbatim from the Part 1 draft.
+  - For later versions, every location is computed from the snapshot with the Python ast module (class
+    or def line to last line) or from the call-site text, then re-pointed to Part2/changes/ChangeN/code
+    (Change3: Part2/code).
+  - Rows whose evidence cites bang_bang.py lines (Module Initialization with Retry, Daemon RPC Client,
+    Daemon Module Base) get the line numbers of each version.
+  - All 502 locations were checked to lie inside their files.
+- Part2/llm/pattern_counts_llm_draft.csv: Original 13 instances / 8 types; Change1 13 / 8; Change2 15 / 9;
+  Change3 16 / 10. No instance was removed or replaced.
+- Part2/diagrams/evolved_architecture.mmd: flowchart after all changes.
+
+RISKS AND LIMITATIONS
+---------------------
+1. Baseline names. The verified Part1/patterns.csv and Part1/Pattern_count.csv were not available, so
+   the unverified Part 1 LLM draft is the baseline (D1). If the team's verified list differs (renamed,
+   merged, rejected or added instances), all "Pattern effects" tables, .mmd headers and both
+   *_llm_draft.csv files need the same correction. The Part 1 draft itself flags the Command instance
+   and the six-way Template Method split as debatable.
+2. Test environment. All tests run on Windows without a Mycodo installation:
+   - grp/pwd are stubbed;
+   - the settings DB, the daemon (DaemonControl) and InfluxDB reads (get_last_measurement) are
+     replaced by unittest.mock.
+   The tests therefore prove the decision logic and the wiring inside bang_bang.py, not the end-to-end
+   behaviour in a running daemon (option forms in the web UI, the real Pyro5 calls, real SMTP). The
+   upstream suite mycodo/tests/software_tests was not run.
+3. UI integration not verified. The new options use only existing option types (select, text, float,
+   integer, select_measurement), but the rendering in the Flask Function page was not checked. The
+   crop and strategy choices are computed when bang_bang.py is imported; a crop registered later at run
+   time is usable by id but does not appear in the UI list until restart.
+4. The module is marked obsolete. bang_bang.py:17 says the module will be removed at the next major
+   version in favour of functions/bang_bang_on_off.py. The features would then have to be ported. The
+   new plain modules (crop_profiles, irrigation_strategies, sensor_alerts) are independent of bang_bang
+   and can be reused by bang_bang_on_off.py.
+5. Domain assumptions.
+   - Crop values are illustrative.
+   - Crop targets assume a percent moisture measurement, which needs rescaling for raw sensors.
+   - No bundled weather Input provides rain or precipitation, so skip_if_rain relies on a user-selected
+     indicator.
+   - Fail-safe fallbacks keep irrigating by the band on configuration errors or a missing rain reading.
+   - The "critically dry" comparison is `<` for both directions.
+6. Alert delivery.
+   - Alerts are edge-triggered with the state held in memory, so a daemon restart re-arms them.
+   - Mycodo's hourly e-mail cap (check_allowed_to_email) is not applied.
+   - E-mail is sent synchronously inside loop(). A slow SMTP server delays that control period;
+     failures are caught and logged.
+7. Pattern-status judgement calls.
+   - "modified" is used whenever code inside a role changed or moved (strict rule), e.g. the Proxy
+     client. A reader could call some of these "preserved".
+   - Strategy and Decorator are counted as two instances over the same classes. They could be merged
+     ("extended").
+   - The crop catalogue is not counted as any pattern.
+8. Behaviour changes that are intended, not refactorings.
+   - CH03 fixes the baseline defect: a None / [] measurement now turns the output off instead of
+     raising.
+   - The initialize() log line gained the crop and strategy.
+   - output_on is still re-sent every period while the measurement is below the band (characterized
+     original behaviour, kept on purpose).
+9. Metrics. lizard counts only the files in metrics_files.txt (24 scope files + 3 new modules; tests
+   excluded). Max CCN stays at 51 (base_output.output_on_off, untouched). Averages move only slightly,
+   because the changed file is 1 of 27.
+10. Line endings. Part2/work uses core.autocrlf=true (system setting in C:/Program Files/Git/etc/gitconfig). Git
+    warned about LF→CRLF on new files; the diffs are unaffected.
+
+FINAL SELF-CHECK
+----------------
+- All required files exist:
+  - Part2/llm: run_info.txt, input.txt, output.txt, patterns_evolution_llm_draft.csv,
+    pattern_counts_llm_draft.csv;
+  - Part2/changes: metrics_files.txt, metrics.log, metrics.csv;
+  - Part2/changes/Change1..3: requirement.md (each with a Pattern effects section), the three diffs,
+    test_result.log, demo.py (+ demo_output.txt), code/ (25 / 26 / 27 files);
+  - Part2/code: 27 files;
+  - Part2/diagrams: 10 per-change .mmd + evolved_architecture.mmd.
+  Nothing is missing.
+- Final full test run on Part2/work: 83 passed (raw output in Part2/llm/final_test_run.log).
+- git log in Part2/work: the baseline ee70a111c plus exactly 9 commits in order (CH01 a/b/c, CH02 a/b/c,
+  CH03 a/b/c); the working tree is clean.
+- data/code (Mycodo/): no changes, HEAD ee70a111c622e2a81026fd5c1553a948acf8161e. Part1/: no file
+  modified during this run (only llm_output/ with the three Part 1 drafts).

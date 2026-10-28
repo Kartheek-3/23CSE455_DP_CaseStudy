@@ -1,0 +1,11 @@
+Part 2 — Evolution changes: LLM usage
+=====================================
+
+No new LLM prompt was issued for Part 2. The three changes (Strategy slot
+allocation, State EV charging, Observer occupancy monitoring) were designed from the
+existing research artifact referenced in B12/LLM_RESEARCH_REFERENCES.md and from
+direct reading of the baseline source. Recording this honestly rather than
+inventing a prompt/response log.
+
+If a future revision uses an LLM, append the exact prompt and the exact response
+here without editing prior entries.

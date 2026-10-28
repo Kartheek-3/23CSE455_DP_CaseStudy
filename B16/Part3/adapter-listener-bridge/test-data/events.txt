@@ -1,0 +1,9 @@
+# started <unique-id> | finished <unique-id> SUCCESSFUL|FAILED|ABORTED
+started  [engine:junit-jupiter]
+started  [engine:junit-jupiter]/[class:CalcTests]
+started  [engine:junit-jupiter]/[class:CalcTests]/[method:add]
+finished [engine:junit-jupiter]/[class:CalcTests]/[method:add] SUCCESSFUL
+started  [engine:junit-jupiter]/[class:CalcTests]/[method:div]
+finished [engine:junit-jupiter]/[class:CalcTests]/[method:div] FAILED
+finished [engine:junit-jupiter]/[class:CalcTests] SUCCESSFUL
+finished [engine:junit-jupiter] SUCCESSFUL

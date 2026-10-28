@@ -1,0 +1,44 @@
+@startuml D11
+!pragma layout smetana
+title D11 Command: MethodInvocation and ConstructorInvocation
+
+interface "InvocationInterceptor.Invocation<T>" as Invocation <<Command>> {
+  +proceed() : T
+  +skip()
+}
+class "MethodInvocation<T>" as MethodInvocation <<ConcreteCommand>> {
+  -method : Method
+  -target : Optional<Object>
+  -arguments : Object[]
+  +proceed() : T
+}
+class "ConstructorInvocation<T>" as ConstructorInvocation <<ConcreteCommand>> {
+  +proceed() : T
+}
+class "java.lang.reflect.Method / Constructor" as Reflective <<Receiver>>
+class InterceptingExecutableInvoker <<Client>> {
+  +invoke(Method, Object, ...)
+  +invoke(Constructor, Optional, ...)
+}
+class InvocationInterceptorChain <<Invoker>> {
+  +invoke(Invocation, ExtensionRegistry, InterceptorCall)
+}
+
+MethodInvocation ..|> Invocation
+ConstructorInvocation ..|> Invocation
+MethodInvocation o--> Reflective : method
+ConstructorInvocation o--> Reflective : constructor
+InterceptingExecutableInvoker ..> MethodInvocation : creates with resolved arguments
+InterceptingExecutableInvoker ..> ConstructorInvocation : creates with resolved arguments
+InterceptingExecutableInvoker ..> InvocationInterceptorChain : invoke(invocation, ...)
+InvocationInterceptorChain ..> Invocation : proceed()
+' aligned-with-record
+legend right
+  <b>Counted participants</b> (record in the dataset)
+  Command: Invocation
+  ConcreteCommand: MethodInvocation
+  ConcreteCommand: ConstructorInvocation
+  Client: InterceptingExecutableInvoker
+  Grey classes: real, shown for context, not counted
+endlegend
+@enduml

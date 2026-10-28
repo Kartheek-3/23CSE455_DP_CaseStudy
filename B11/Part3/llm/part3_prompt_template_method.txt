@@ -1,0 +1,3 @@
+[Part 3 - Template Method - owner: Sai Tharun (Am.sc.u4cse23249)]
+Context: Design Patterns case study, app github.com/vikash0439/legalSystem @4e4ebb57. Implement ONE representative instance of my pattern in Java, Python, JavaScript and C++ with identical inputs/outputs; compile and run all four; confirm identical output; then measure source LOC, max per-function cyclomatic complexity (lizard), and median process time (compile once, 1 warmup, 5 measured runs, median).
+Pattern: Template Method (case-report generator; fixed generate(), overridable header/body/footer).

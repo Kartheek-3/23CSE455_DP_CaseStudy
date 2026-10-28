@@ -1,0 +1,32 @@
+Pattern: Memento
+Instance: Hearth Config History & Edit Transaction
+Language: C++
+Compiler/Runtime: g++ MinGW GCC 6.3.0 (-O2 -std=c++14)
+Warmup + 5 Runs Raw Output:
+--- Run 1 ---
+RESULT: 6/6 passed
+TIME_MS: 0.0226
+
+
+--- Run 2 ---
+RESULT: 6/6 passed
+TIME_MS: 0.0247
+
+
+--- Run 3 ---
+RESULT: 6/6 passed
+TIME_MS: 0.0392
+
+
+--- Run 4 ---
+RESULT: 6/6 passed
+TIME_MS: 0.0284
+
+
+--- Run 5 ---
+RESULT: 6/6 passed
+TIME_MS: 0.0267
+
+
+Measured Milliseconds: [0.0226, 0.0247, 0.0392, 0.0284, 0.0267]
+Computed Median Milliseconds: 0.027

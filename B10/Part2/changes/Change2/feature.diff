@@ -1,0 +1,514 @@
+diff --git a/mycodo/functions/bang_bang.py b/mycodo/functions/bang_bang.py
+index bb910400b..cded5d1b1 100644
+--- a/mycodo/functions/bang_bang.py
++++ b/mycodo/functions/bang_bang.py
+@@ -4,6 +4,7 @@
+ #
+ #  Copyright (C) 2015-2020 Rob Bultman <rob@firstbuild.com>
+ #
++import datetime
+ import time
+ 
+ from flask_babel import lazy_gettext
+@@ -17,10 +18,14 @@ from mycodo.utils.crop_profiles import UnknownCropProfileError
+ from mycodo.utils.crop_profiles import crop_profile_choices
+ from mycodo.utils.crop_profiles import get_crop_profile
+ from mycodo.utils.database import db_retrieve_table_daemon
++from mycodo.utils.irrigation_strategies import DEFAULT_IRRIGATION_STRATEGY
+ from mycodo.utils.irrigation_strategies import DIRECTION_STRATEGIES
++from mycodo.utils.irrigation_strategies import IRRIGATION_STRATEGY_CHOICES
+ from mycodo.utils.irrigation_strategies import TURN_OFF
+ from mycodo.utils.irrigation_strategies import TURN_ON
+ from mycodo.utils.irrigation_strategies import IrrigationContext
++from mycodo.utils.irrigation_strategies import UnknownIrrigationStrategyError
++from mycodo.utils.irrigation_strategies import build_irrigation_strategy
+ 
+ # TODO: Remove this at next major version (obsolete because a On/Off Raise/Lower/Both Bang-Bang exists
+ FUNCTION_INFORMATION = {
+@@ -114,6 +119,54 @@ FUNCTION_INFORMATION = {
+             'name': lazy_gettext('Direction'),
+             'phrase': 'Raise means the measurement will increase when the control is on (heating). Lower means the measurement will decrease when the output is on (cooling)'
+         },
++        {
++            'id': 'irrigation_strategy',
++            'type': 'select',
++            'default_value': DEFAULT_IRRIGATION_STRATEGY,
++            'required': False,
++            'options_select': IRRIGATION_STRATEGY_CHOICES,
++            'name': 'Irrigation Strategy',
++            'phrase': 'Hysteresis band only, band only inside the time windows, or band unless rain is expected'
++        },
++        {
++            'id': 'irrigation_windows',
++            'type': 'text',
++            'default_value': '05:00-09:00,18:00-21:00',
++            'required': False,
++            'name': 'Irrigation Time Windows',
++            'phrase': 'For the Time windows strategy: allowed periods HH:MM-HH:MM, separated by commas '
++                      '(a window may cross midnight, e.g. 22:00-02:00)'
++        },
++        {
++            'id': 'rain_measurement',
++            'type': 'select_measurement',
++            'default_value': '',
++            'required': False,
++            'options_select': [
++                'Input',
++                'Function'
++            ],
++            'name': 'Rain Indicator Measurement',
++            'phrase': 'For the Skip when rain strategy: a measurement that indicates expected rain '
++                      '(e.g. precipitation probability, %)'
++        },
++        {
++            'id': 'rain_threshold',
++            'type': 'float',
++            'default_value': 60.0,
++            'required': False,
++            'name': 'Rain Indicator Threshold',
++            'phrase': 'For the Skip when rain strategy: skip irrigation while the rain indicator is at or above this value'
++        },
++        {
++            'id': 'rain_max_age',
++            'type': 'integer',
++            'default_value': 3600,
++            'required': False,
++            'constraints_pass': constraints_pass_positive_value,
++            'name': 'Rain Indicator Max Age (Seconds)',
++            'phrase': 'The maximum age of the rain indicator measurement to use'
++        },
+         {
+             'id': 'update_period',
+             'type': 'float',
+@@ -150,8 +203,15 @@ class CustomModule(AbstractFunction):
+         self.setpoint = None
+         self.hysteresis = None
+         self.direction = None
++        self.irrigation_strategy = None
++        self.irrigation_windows = None
++        self.rain_measurement_device_id = None
++        self.rain_measurement_measurement_id = None
++        self.rain_threshold = None
++        self.rain_max_age = None
+         self.output_channel = None
+         self.update_period = None
++        self.strategy = None
+ 
+         # Set custom options
+         custom_function = db_retrieve_table_daemon(
+@@ -165,12 +225,13 @@ class CustomModule(AbstractFunction):
+     def initialize(self):
+         self.output_channel = self.get_output_channel_from_channel_id(self.output_channel_id)
+         self._apply_crop_profile()
++        self.strategy = self._build_irrigation_strategy()
+ 
+         self.logger.info(
+             "Bang-Bang controller started with options: "
+             "Measurement Device: {}, Measurement: {}, Output: {}, "
+             "Output_Channel: {}, Crop Profile: {}, Setpoint: {}, Hysteresis: {}, "
+-            "Direction: {}, Period: {}".format(
++            "Direction: {}, Irrigation Strategy: {}, Period: {}".format(
+                 self.measurement_device_id,
+                 self.measurement_measurement_id,
+                 self.output_device_id,
+@@ -179,8 +240,33 @@ class CustomModule(AbstractFunction):
+                 self.setpoint,
+                 self.hysteresis,
+                 self.direction,
++                type(self.strategy).__name__,
+                 self.update_period))
+ 
++    def _build_irrigation_strategy(self):
++        """Create the configured irrigation strategy (None if the direction is unknown).
++
++        An invalid strategy configuration is logged and replaced by the plain
++        hysteresis band of the configured direction.
++        """
++        if self.direction not in DIRECTION_STRATEGIES:
++            return None  # reported by loop()
++        name = self.irrigation_strategy or DEFAULT_IRRIGATION_STRATEGY
++        try:
++            if name == 'skip_if_rain' and not (
++                    self.rain_measurement_device_id and self.rain_measurement_measurement_id):
++                raise ValueError("No rain indicator measurement selected")
++            return build_irrigation_strategy(
++                name,
++                self.direction,
++                time_windows=self.irrigation_windows,
++                rain_threshold=self.rain_threshold)
++        except (UnknownIrrigationStrategyError, ValueError) as err:
++            self.logger.error(
++                f"Irrigation strategy '{name}' cannot be used: {err}. "
++                f"Using the '{DEFAULT_IRRIGATION_STRATEGY}' strategy.")
++            return build_irrigation_strategy(DEFAULT_IRRIGATION_STRATEGY, self.direction)
++
+     def _apply_crop_profile(self):
+         """Use the selected crop's target moisture and tolerance as setpoint and hysteresis."""
+         if not self.crop_profile or self.crop_profile == CUSTOM_CROP_PROFILE:
+@@ -221,16 +307,36 @@ class CustomModule(AbstractFunction):
+             self.control.output_off(self.output_device_id, output_channel=self.output_channel)
+             return
+ 
+-        strategy = DIRECTION_STRATEGIES.get(self.direction)
+-        if strategy is None:
++        if self.strategy is None:
+             self.logger.error("Unknown controller direction: '{}'".format(self.direction))
+             return
+ 
+-        self._apply_decision(strategy.decide(IrrigationContext(
++        self._apply_decision(self.strategy.decide(IrrigationContext(
+             measurement=last_measurement[1],
+             output_state=output_state,
+             lower_threshold=self._lower_threshold(),
+-            upper_threshold=self._upper_threshold())))
++            upper_threshold=self._upper_threshold(),
++            now=self._now(),
++            rain_indicator=self._read_rain_indicator())))
++
++    @staticmethod
++    def _now():
++        """Local time used by time-based irrigation strategies."""
++        return datetime.datetime.now()
++
++    def _read_rain_indicator(self):
++        """Latest rain indicator value if the strategy needs it, else None."""
++        if not self.strategy.needs_rain_indicator():
++            return None
++        rain = self.get_last_measurement(
++            self.rain_measurement_device_id,
++            self.rain_measurement_measurement_id,
++            max_age=self.rain_max_age)
++        if not rain or rain[1] is None:
++            self.logger.warning(
++                "No rain indicator measurement available. Irrigating by the soil moisture band only.")
++            return None
++        return rain[1]
+ 
+     def _apply_decision(self, decision):
+         """Send the strategy's decision to the output."""
+diff --git a/mycodo/tests/case_study/test_ch02_irrigation_strategies.py b/mycodo/tests/case_study/test_ch02_irrigation_strategies.py
+new file mode 100644
+index 000000000..6c5d5e121
+--- /dev/null
++++ b/mycodo/tests/case_study/test_ch02_irrigation_strategies.py
+@@ -0,0 +1,160 @@
++# coding=utf-8
++"""CH02 - Add different irrigation strategies: one test (or group) per acceptance criterion."""
++import datetime
++import logging
++import time
++
++import pytest
++
++from mycodo.utils.irrigation_strategies import IRRIGATION_STRATEGY_CHOICES
++from mycodo.utils.irrigation_strategies import TURN_OFF
++from mycodo.utils.irrigation_strategies import TURN_ON
++from mycodo.utils.irrigation_strategies import IrrigationContext
++from mycodo.utils.irrigation_strategies import LowerHysteresisStrategy
++from mycodo.utils.irrigation_strategies import RainSkipStrategy
++from mycodo.utils.irrigation_strategies import RaiseHysteresisStrategy
++from mycodo.utils.irrigation_strategies import TimeWindowStrategy
++from mycodo.utils.irrigation_strategies import UnknownIrrigationStrategyError
++from mycodo.utils.irrigation_strategies import build_irrigation_strategy
++from mycodo.utils.irrigation_strategies import parse_time_windows
++
++RAIN = dict(rain_measurement='rain-dev,rain-meas', rain_threshold=60, rain_max_age=1800)
++
++
++def run(module, moisture, state='off', at='12:00', rain=None):
++    """One loop() iteration at local time `at` with soil moisture and (optionally) a rain reading."""
++    hour, minute = map(int, at.split(':'))
++    module._now = lambda: datetime.datetime(2024, 6, 1, hour, minute)
++    module.get_last_measurement.side_effect = (
++        lambda device, measurement, max_age=None:
++        [1700000000.0, rain] if device == 'rain-dev' else [1700000000.0, moisture])
++    module.control.reset_mock()
++    module.control.output_state.return_value = state
++    module.timer_loop = time.time() - 0.001
++    module.loop()
++    if module.control.output_on.called:
++        module.control.output_on.assert_called_once_with('out-dev', output_channel=0)
++        return 'on'
++    if module.control.output_off.called:
++        module.control.output_off.assert_called_once_with('out-dev', output_channel=0)
++        return 'off'
++    return None
++
++
++@pytest.mark.parametrize("overrides", [{}, {"irrigation_strategy": "hysteresis"}],
++                         ids=["option-absent-in-stored-config", "hysteresis-selected"])
++def test_ac1_hysteresis_strategy_is_default_and_unchanged(make_bang_bang, overrides):
++    module = make_bang_bang(crop_profile='tomato', **overrides)
++    assert isinstance(module.strategy, RaiseHysteresisStrategy)
++    assert run(module, 59, 'off') == 'on'
++    assert run(module, 71, 'on') == 'off'
++    assert run(module, 65, 'on') is None
++
++
++def test_ac2_time_window_irrigates_only_inside_windows(make_bang_bang):
++    module = make_bang_bang(crop_profile='tomato', irrigation_strategy='time_window',
++                            irrigation_windows='05:00-09:00,18:00-21:00')
++    assert isinstance(module.strategy, TimeWindowStrategy)
++    assert run(module, 55, 'off', at='06:30') == 'on'
++    assert run(module, 55, 'off', at='12:00') is None
++    assert run(module, 55, 'on', at='12:00') == 'off'   # window closed: stop the pump
++    assert run(module, 71, 'on', at='20:00') == 'off'   # wet inside a window
++
++
++def test_ac3_time_window_crossing_midnight_end_exclusive(make_bang_bang):
++    module = make_bang_bang(crop_profile='tomato', irrigation_strategy='time_window',
++                            irrigation_windows='22:00-02:00')
++    assert run(module, 55, 'off', at='23:30') == 'on'
++    assert run(module, 55, 'off', at='01:59') == 'on'
++    assert run(module, 55, 'off', at='02:00') is None
++    assert run(module, 55, 'off', at='22:00') == 'on'   # start inclusive
++
++
++def test_ac4_skip_if_rain_uses_rain_indicator_and_threshold(make_bang_bang):
++    module = make_bang_bang(crop_profile='tomato', irrigation_strategy='skip_if_rain', **RAIN)
++    assert isinstance(module.strategy, RainSkipStrategy)
++    assert run(module, 55, 'off', rain=80) is None
++    module.get_last_measurement.assert_any_call('rain-dev', 'rain-meas', max_age=1800)
++    module.get_last_measurement.assert_any_call('meas-dev', 'meas-id', max_age=360)
++    assert run(module, 55, 'on', rain=80) == 'off'
++    assert run(module, 55, 'off', rain=60) is None      # at the threshold: skip
++    assert run(module, 55, 'off', rain=20) == 'on'
++
++
++def test_ac5_missing_rain_reading_falls_back_to_band(make_bang_bang):
++    module = make_bang_bang(crop_profile='tomato', irrigation_strategy='skip_if_rain', **RAIN)
++    assert run(module, 55, 'off', rain=None) == 'on'
++    module.logger.warning.assert_called_once_with(
++        "No rain indicator measurement available. Irrigating by the soil moisture band only.")
++
++
++@pytest.mark.parametrize("text", ['25:00-26:00', 'abc', '', '06:00-06:00', '06:00-07:00,'])
++def test_ac6_invalid_time_windows_rejected(text):
++    with pytest.raises(ValueError):
++        parse_time_windows(text)
++
++
++def test_ac6_invalid_windows_in_config_fall_back_to_hysteresis(make_bang_bang, caplog):
++    with caplog.at_level(logging.ERROR):
++        module = make_bang_bang(crop_profile='tomato', irrigation_strategy='time_window',
++                                irrigation_windows='abc')
++    assert "Irrigation strategy 'time_window' cannot be used" in caplog.text
++    assert isinstance(module.strategy, RaiseHysteresisStrategy)
++    assert run(module, 55, 'off', at='12:00') == 'on'
++
++
++def test_ac7_unknown_strategy_falls_back_to_hysteresis(make_bang_bang, caplog):
++    with caplog.at_level(logging.ERROR):
++        module = make_bang_bang(irrigation_strategy='flood')
++    assert "Unknown irrigation strategy 'flood'" in caplog.text
++    assert isinstance(module.strategy, RaiseHysteresisStrategy)
++    assert run(module, 48.9) == 'on'
++
++
++def test_ac7_skip_if_rain_without_rain_measurement_falls_back(make_bang_bang, caplog):
++    with caplog.at_level(logging.ERROR):
++        module = make_bang_bang(irrigation_strategy='skip_if_rain')
++    assert "No rain indicator measurement selected" in caplog.text
++    assert isinstance(module.strategy, RaiseHysteresisStrategy)
++    assert run(module, 48.9) == 'on'
++    module.get_last_measurement.assert_called_once_with('meas-dev', 'meas-id', max_age=360)
++
++
++def _context(measurement, state='off', at=(12, 0), rain=None):
++    return IrrigationContext(measurement=measurement, output_state=state,
++                             lower_threshold=60, upper_threshold=70,
++                             now=datetime.datetime(2024, 6, 1, *at), rain_indicator=rain)
++
++
++def test_ac8_strategies_compose_and_work_with_either_direction():
++    composed = RainSkipStrategy(
++        TimeWindowStrategy(LowerHysteresisStrategy(), parse_time_windows('06:00-18:00')), 60)
++    assert composed.needs_rain_indicator()
++    assert composed.decide(_context(71)) == TURN_ON                    # lower: above band -> on
++    assert composed.decide(_context(59, 'on')) == TURN_OFF             # lower: below band -> off
++    assert composed.decide(_context(71, 'on', at=(19, 0))) == TURN_OFF  # outside window
++    assert composed.decide(_context(71, rain=75)) is None               # rain expected
++
++    built = build_irrigation_strategy('time_window', 'lower', time_windows='06:00-18:00')
++    assert isinstance(built, TimeWindowStrategy)
++    assert isinstance(built.inner, LowerHysteresisStrategy)
++    assert not built.needs_rain_indicator()
++    with pytest.raises(UnknownIrrigationStrategyError):
++        build_irrigation_strategy('flood', 'raise')
++
++
++def test_ac9_function_information_offers_strategy_options():
++    from mycodo.functions.bang_bang import FUNCTION_INFORMATION
++    options = {o['id']: o for o in FUNCTION_INFORMATION['custom_options']}
++    strategy = options['irrigation_strategy']
++    assert strategy['type'] == 'select'
++    assert strategy['default_value'] == 'hysteresis'
++    assert strategy['options_select'] == IRRIGATION_STRATEGY_CHOICES
++    assert [v for v, _label in IRRIGATION_STRATEGY_CHOICES] == ['hysteresis', 'time_window', 'skip_if_rain']
++    assert options['irrigation_windows']['type'] == 'text'
++    assert options['rain_measurement']['type'] == 'select_measurement'
++    assert options['rain_threshold']['type'] == 'float'
++    assert options['rain_max_age']['type'] == 'integer'
++    for option_id in ('irrigation_strategy', 'irrigation_windows', 'rain_measurement',
++                      'rain_threshold', 'rain_max_age'):
++        assert not options[option_id]['required']
+diff --git a/mycodo/utils/irrigation_strategies.py b/mycodo/utils/irrigation_strategies.py
+index ab0d3c3db..f8d248b2e 100644
+--- a/mycodo/utils/irrigation_strategies.py
++++ b/mycodo/utils/irrigation_strategies.py
+@@ -4,7 +4,15 @@
+ A strategy looks at the current situation (an IrrigationContext) and decides
+ whether the irrigation output should be switched on, switched off, or left as
+ it is. Plain Python (no Flask/database imports) so it can be tested in isolation.
++
++Strategies:
++  RaiseHysteresisStrategy / LowerHysteresisStrategy - the on/off band (per direction)
++  TimeWindowStrategy - only irrigate inside allowed time windows (wraps another strategy)
++  RainSkipStrategy   - skip irrigation while rain is expected (wraps another strategy)
++The wrapping strategies derive from IrrigationRestriction and can be stacked.
++build_irrigation_strategy() is the single creation point used by the bang-bang Function.
+ """
++import datetime
+ from abc import ABC
+ from abc import abstractmethod
+ from dataclasses import dataclass
+@@ -12,6 +20,17 @@ from dataclasses import dataclass
+ TURN_ON = 'on'
+ TURN_OFF = 'off'
+ 
++DEFAULT_IRRIGATION_STRATEGY = 'hysteresis'
++IRRIGATION_STRATEGY_CHOICES = [
++    ('hysteresis', 'Hysteresis band (default)'),
++    ('time_window', 'Time windows: irrigate only in allowed hours'),
++    ('skip_if_rain', 'Skip irrigation when rain is expected'),
++]
++
++
++class UnknownIrrigationStrategyError(LookupError):
++    """Raised when an irrigation strategy id is not known."""
++
+ 
+ @dataclass(frozen=True)
+ class IrrigationContext:
+@@ -19,6 +38,8 @@ class IrrigationContext:
+     output_state: str  # output state reported by the daemon ('on' / 'off' / ...)
+     lower_threshold: float  # setpoint - hysteresis
+     upper_threshold: float  # setpoint + hysteresis
++    now: datetime.datetime = None  # local time of the decision
++    rain_indicator: float = None  # latest rain indicator value, None if not read or missing
+ 
+ 
+ class IrrigationStrategy(ABC):
+@@ -28,6 +49,10 @@ class IrrigationStrategy(ABC):
+     def decide(self, context):
+         """Return TURN_ON, TURN_OFF or None (send no command)."""
+ 
++    def needs_rain_indicator(self):
++        """True if decide() uses context.rain_indicator."""
++        return False
++
+ 
+ class RaiseHysteresisStrategy(IrrigationStrategy):
+     """Output raises the measurement (e.g. irrigation raises soil moisture)."""
+@@ -56,3 +81,101 @@ DIRECTION_STRATEGIES = {
+     'raise': RaiseHysteresisStrategy(),
+     'lower': LowerHysteresisStrategy(),
+ }
++
++
++class IrrigationRestriction(IrrigationStrategy):
++    """Wraps another strategy and delegates to it; subclasses add a restriction."""
++
++    def __init__(self, inner):
++        self.inner = inner
++
++    def decide(self, context):
++        return self.inner.decide(context)
++
++    def needs_rain_indicator(self):
++        return self.inner.needs_rain_indicator()
++
++    @staticmethod
++    def _stop(context):
++        """Keep the output off: switch it off if it is on, otherwise send nothing."""
++        return TURN_OFF if context.output_state == 'on' else None
++
++
++class TimeWindowStrategy(IrrigationRestriction):
++    """Irrigate only inside the allowed time windows; outside them the output is kept off."""
++
++    def __init__(self, inner, windows):
++        super().__init__(inner)
++        self.windows = tuple(windows)
++
++    def decide(self, context):
++        if in_time_windows(self.windows, context.now.time()):
++            return self.inner.decide(context)
++        return self._stop(context)
++
++
++class RainSkipStrategy(IrrigationRestriction):
++    """Skip irrigation while the rain indicator is at or above the threshold."""
++
++    def __init__(self, inner, threshold):
++        super().__init__(inner)
++        self.threshold = threshold
++
++    def decide(self, context):
++        if context.rain_indicator is not None and context.rain_indicator >= self.threshold:
++            return self._stop(context)
++        return self.inner.decide(context)
++
++    def needs_rain_indicator(self):
++        return True
++
++
++def parse_time_windows(text):
++    """Parse 'HH:MM-HH:MM[,HH:MM-HH:MM...]' into a tuple of (start, end) datetime.time pairs.
++
++    A window whose end is earlier than its start crosses midnight. Raises ValueError
++    for an empty text, a malformed or out-of-range time, or a zero-length window.
++    """
++    if not text or not text.strip():
++        raise ValueError("No irrigation time window given")
++    windows = []
++    for part in text.split(','):
++        try:
++            start_text, end_text = part.strip().split('-')
++            start = datetime.datetime.strptime(start_text.strip(), '%H:%M').time()
++            end = datetime.datetime.strptime(end_text.strip(), '%H:%M').time()
++        except ValueError:
++            raise ValueError(f"Invalid irrigation time window '{part.strip()}' (expected HH:MM-HH:MM)") from None
++        if start == end:
++            raise ValueError(f"Irrigation time window '{part.strip()}' has zero length")
++        windows.append((start, end))
++    return tuple(windows)
++
++
++def in_time_windows(windows, time_of_day):
++    """True if time_of_day is inside one of the windows (start inclusive, end exclusive)."""
++    for start, end in windows:
++        if start < end:
++            if start <= time_of_day < end:
++                return True
++        elif time_of_day >= start or time_of_day < end:  # window crosses midnight
++            return True
++    return False
++
++
++def build_irrigation_strategy(name, direction, time_windows='', rain_threshold=None):
++    """Single creation point: the strategy for a strategy id and a direction ('raise'/'lower').
++
++    Raises UnknownIrrigationStrategyError for an unknown strategy id, KeyError for an
++    unknown direction and ValueError for invalid time windows or a missing threshold.
++    """
++    band = DIRECTION_STRATEGIES[direction]
++    if name == 'hysteresis':
++        return band
++    if name == 'time_window':
++        return TimeWindowStrategy(band, parse_time_windows(time_windows))
++    if name == 'skip_if_rain':
++        if rain_threshold is None:
++            raise ValueError("No rain threshold given")
++        return RainSkipStrategy(band, rain_threshold)
++    raise UnknownIrrigationStrategyError(f"Unknown irrigation strategy '{name}'")

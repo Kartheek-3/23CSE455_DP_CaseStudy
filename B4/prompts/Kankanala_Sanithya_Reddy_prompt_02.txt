@@ -1,0 +1,2 @@
+Measure the pricing implementations consistently. Count production physical LOC excluding blank lines, comments, and tests. Record maximum function cyclomatic complexity using 1 plus decision points. Compile first, run one warmup and five measured test processes, and report the median without estimating missing values.
+

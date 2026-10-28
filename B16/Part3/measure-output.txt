@@ -1,0 +1,40 @@
+observer-test-listeners  java       loc=211 maxCC= 7 tests=3/3 passed   median=   36.0 ms
+observer-test-listeners  python     loc=125 maxCC= 8 tests=3/3 passed   median=   21.8 ms
+observer-test-listeners  javascript loc=151 maxCC= 8 tests=3/3 passed   median=   93.2 ms
+observer-test-listeners  cpp        loc=236 maxCC=10 tests=3/3 passed   median=    5.1 ms
+composite-test-tree      java       loc=228 maxCC=22 tests=3/3 passed   median=   34.0 ms
+composite-test-tree      python     loc=141 maxCC=22 tests=3/3 passed   median=   21.7 ms
+composite-test-tree      javascript loc=135 maxCC=17 tests=3/3 passed   median=   92.2 ms
+composite-test-tree      cpp        loc=207 maxCC=24 tests=3/3 passed   median=    5.1 ms
+strategy-test-filters    java       loc=104 maxCC= 6 tests=3/3 passed   median=   32.8 ms
+strategy-test-filters    python     loc= 77 maxCC= 7 tests=3/3 passed   median=   21.2 ms
+strategy-test-filters    javascript loc=108 maxCC= 5 tests=3/3 passed   median=   92.8 ms
+strategy-test-filters    cpp        loc=122 maxCC= 7 tests=3/3 passed   median=    5.1 ms
+adapter-listener-bridge  java       loc=128 maxCC=10 tests=3/3 passed   median=   33.6 ms
+adapter-listener-bridge  python     loc= 82 maxCC=10 tests=3/3 passed   median=   21.1 ms
+adapter-listener-bridge  javascript loc= 97 maxCC= 9 tests=3/3 passed   median=   92.4 ms
+adapter-listener-bridge  cpp        loc=124 maxCC=12 tests=3/3 passed   median=    5.9 ms
+decorator-timeout-invocation java       loc=128 maxCC= 7 tests=3/3 passed   median=   34.9 ms
+decorator-timeout-invocation python     loc= 88 maxCC= 7 tests=3/3 passed   median=   21.2 ms
+decorator-timeout-invocation javascript loc= 98 maxCC= 6 tests=3/3 passed   median=   92.7 ms
+decorator-timeout-invocation cpp        loc=132 maxCC= 7 tests=3/3 passed   median=    5.0 ms
+template-method-engine   java       loc=113 maxCC= 6 tests=3/3 passed   median=   36.8 ms
+template-method-engine   python     loc= 70 maxCC= 6 tests=3/3 passed   median=   21.5 ms
+template-method-engine   javascript loc= 96 maxCC= 5 tests=3/3 passed   median=   92.3 ms
+template-method-engine   cpp        loc=114 maxCC= 6 tests=3/3 passed   median=    5.1 ms
+command-task-queue       java       loc=104 maxCC=11 tests=3/3 passed   median=   34.2 ms
+command-task-queue       python     loc= 69 maxCC=10 tests=3/3 passed   median=   21.2 ms
+command-task-queue       javascript loc= 83 maxCC=10 tests=3/3 passed   median=   92.6 ms
+command-task-queue       cpp        loc=120 maxCC=12 tests=3/3 passed   median=    5.6 ms
+null-object-listener     java       loc= 98 maxCC= 6 tests=3/3 passed   median=   32.1 ms
+null-object-listener     python     loc= 57 maxCC= 6 tests=3/3 passed   median=   21.0 ms
+null-object-listener     javascript loc= 70 maxCC= 5 tests=3/3 passed   median=   91.7 ms
+null-object-listener     cpp        loc=110 maxCC= 6 tests=3/3 passed   median=    5.4 ms
+chain-of-responsibility-interceptors java       loc=142 maxCC=10 tests=3/3 passed   median=   32.0 ms
+chain-of-responsibility-interceptors python     loc= 82 maxCC= 9 tests=3/3 passed   median=   21.5 ms
+chain-of-responsibility-interceptors javascript loc= 87 maxCC= 9 tests=3/3 passed   median=   91.4 ms
+chain-of-responsibility-interceptors cpp        loc=128 maxCC=10 tests=3/3 passed   median=    5.6 ms
+factory-method-executors java       loc=124 maxCC= 6 tests=3/3 passed   median=   34.4 ms
+factory-method-executors python     loc= 74 maxCC= 6 tests=3/3 passed   median=   21.5 ms
+factory-method-executors javascript loc= 95 maxCC= 5 tests=3/3 passed   median=   92.8 ms
+factory-method-executors cpp        loc=128 maxCC= 6 tests=3/3 passed   median=    4.8 ms

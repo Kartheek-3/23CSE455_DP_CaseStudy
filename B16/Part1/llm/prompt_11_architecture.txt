@@ -1,0 +1,4 @@
+Write one PlantUML component diagram of the JUnit 6.1.3 architecture for my report:
+the 4 modules (platform-launcher, platform-engine, jupiter-api, jupiter-engine), their
+main components, and numbered arrows for one test run (request -> discovery -> filter ->
+execution -> events -> listeners). Use "!pragma layout smetana".

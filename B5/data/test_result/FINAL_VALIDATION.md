@@ -1,0 +1,73 @@
+# Final B5 validation
+
+Passed: **69/69** checks.
+
+- PASS - root contains only required main items - ['B5_Report.pdf', 'B5_Report.tex', 'Part1', 'Part2', 'Part3', 'README.md', 'data']
+- PASS - no top-level Part5
+- PASS - no top-level evidence
+- PASS - dir:data/code/original
+- PASS - dir:data/test_result/rails
+- PASS - dir:data/test_result/human_verification
+- PASS - dir:Part1/pattern_architecture
+- PASS - dir:Part1/code
+- PASS - dir:Part1/evidence
+- PASS - dir:Part1/llm
+- PASS - dir:Part2/code/final
+- PASS - dir:Part2/code/snapshots
+- PASS - dir:Part2/changes/Change1
+- PASS - dir:Part2/changes/Change2
+- PASS - dir:Part2/changes/Change3
+- PASS - dir:Part2/diagrams
+- PASS - dir:Part2/evidence
+- PASS - dir:Part2/llm
+- PASS - dir:Part3/controller
+- PASS - dir:Part3/information_expert
+- PASS - dir:Part3/observer
+- PASS - dir:Part3/adapter
+- PASS - dir:Part3/strategy
+- PASS - dir:Part3/common_specs
+- PASS - dir:Part3/evidence
+- PASS - dir:Part3/llm
+- PASS - pdf:Part1/Part1_prompt.pdf - 8590396
+- PASS - pdf:Part1/llm/Architecture_Chat_ShreyaER.pdf - 8159101
+- PASS - pdf:Part2/Part2_prompt.pdf - 3119878
+- PASS - pdf:Part3/llm/part3_prompt.pdf - 1859037
+- PASS - pdf:Part3/llm/Final_Documentation_Chat_MTanmayi.pdf - 1598235
+- PASS - pdf:Part3/llm/B5_slide.pdf - 213117
+- PASS - patterns.csv header - ['source_version', 'pattern_name', 'pattern_type', 'instance_name', 'participant_roles', 'source_locations', 'intent_and_evidence']
+- PASS - pattern_counts.csv header - ['source_version', 'summary', 'pattern_name', 'count']
+- PASS - patterns_evolution.csv header - ['source_version', 'pattern_name', 'pattern_type', 'instance_name', 'participant_roles', 'source_locations', 'intent_and_evidence', 'status_after_change', 'change_description']
+- PASS - cross_language.csv header - ['pattern_name', 'instance_name', 'language', 'snippet_path', 'source_loc', 'max_function_cc', 'runtime_compiler', 'test_command', 'test_result', 'median_process_ms', 'language_notes']
+- PASS - llm.csv header - ['part', 'model_and_date', 'prompt_file', 'input_file', 'output_file', 'evaluation', 'verification_file']
+- PASS - patterns.csv rows - 9
+- PASS - pattern_counts.csv rows - 23
+- PASS - patterns_evolution.csv rows - 45
+- PASS - cross_language.csv rows - 20
+- PASS - llm.csv rows - 29
+- PASS - baseline pattern types - 3
+- PASS - baseline pattern instances - 9
+- PASS - scenario1_personalized_itinerary pattern types - 3
+- PASS - scenario1_personalized_itinerary pattern instances - 10
+- PASS - scenario2_multiple_booking_providers pattern types - 4
+- PASS - scenario2_multiple_booking_providers pattern instances - 12
+- PASS - scenario3_cancellation_policies pattern types - 5
+- PASS - scenario3_cancellation_policies pattern instances - 14
+- PASS - all pattern/evolution source paths resolve - []
+- PASS - all cross-language snippet paths resolve - []
+- PASS - all llm.csv paths resolve - []
+- PASS - Rails final result 59/359 all green
+- PASS - final duplicate marker fix present
+- PASS - two compatible Minitest stubs present
+- PASS - cross-language 192/192 - 192/192
+- PASS - human verification 148 rows - 148
+- PASS - human verification verdict totals - Counter({'verified': 143, 'partially verified': 3, 'cannot confirm': 2})
+- PASS - baseline concrete role audit 8 rows
+- PASS - baseline unique symbol audit 76 rows
+- PASS - rejected candidates file exists
+- PASS - evolution metrics exists
+- PASS - no secret files in tree or saved ZIPs - []
+- PASS - no compiled binaries/caches in tree or saved ZIPs - []
+- PASS - report placeholders removed
+- PASS - report contains honest GitHub screenshot pending box
+- PASS - report does not reference top-level Part5
+- PASS - report PDF exists and nontrivial - 251418

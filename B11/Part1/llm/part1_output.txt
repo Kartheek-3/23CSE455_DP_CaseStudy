@@ -1,0 +1,8 @@
+Model output summary (Part 1):
+Confirmed: Adapter (CustomUserDetails:10), Template Method (SecurityConfiguration:23),
+Strategy (SecurityConfiguration:57-77, stubbed), Repository (CaseRepository:12 + 14 others),
+Copy Constructor (Users:38). Framework idiom: Dependency Injection (CaseService:18-21).
+Uncertain: Observer (LegalAppApplication:25,45,81,88 scheduler-driven, no subject-observer
+registration). Rejected: Singleton (Spring bean scope, not GoF getInstance), Factory, Builder,
+Decorator - none hand-written in app code.
+Totals: 7 pattern types / 7 instances; 5 confirmed, 1 uncertain, 1 framework idiom, 3 rejected.

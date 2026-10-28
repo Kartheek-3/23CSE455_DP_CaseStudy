@@ -1,0 +1,61 @@
+From d454803d0181212c2e4ac25465a16efdc98a252e Mon Sep 17 00:00:00 2001
+From: JohanR7 <143104864+JohanR7@users.noreply.github.com>
+Date: Sun, 11 Oct 2026 20:02:49 +0530
+Subject: [PATCH 2/9] CH01 refactoring: Extract Method
+
+Smell: Duplicated Code - loop() computed the control band edges
+setpoint +/- hysteresis four times (bang_bang.py:188, 194, 199, 205).
+Extract Method: _lower_threshold() and _upper_threshold().
+Behaviour unchanged; characterization tests pass unchanged.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ mycodo/functions/bang_bang.py | 16 ++++++++++++----
+ 1 file changed, 12 insertions(+), 4 deletions(-)
+
+diff --git a/mycodo/functions/bang_bang.py b/mycodo/functions/bang_bang.py
+index defae32fe..b75dfb4c0 100644
+--- a/mycodo/functions/bang_bang.py
++++ b/mycodo/functions/bang_bang.py
+@@ -185,29 +185,37 @@ class CustomModule(AbstractFunction):
+             return
+ 
+         if self.direction == 'raise':
+-            if last_measurement[1] > self.setpoint + self.hysteresis:
++            if last_measurement[1] > self._upper_threshold():
+                 if output_state == 'on':
+                     self.control.output_off(
+                         self.output_device_id,
+                         output_channel=self.output_channel)
+             else:
+-                if last_measurement[1] < self.setpoint - self.hysteresis:
++                if last_measurement[1] < self._lower_threshold():
+                     self.control.output_on(
+                         self.output_device_id,
+                         output_channel=self.output_channel)
+         elif self.direction == 'lower':
+-            if last_measurement[1] < self.setpoint - self.hysteresis:
++            if last_measurement[1] < self._lower_threshold():
+                 if output_state == 'on':
+                     self.control.output_off(
+                         self.output_device_id,
+                         output_channel=self.output_channel)
+             else:
+-                if last_measurement[1] > self.setpoint + self.hysteresis:
++                if last_measurement[1] > self._upper_threshold():
+                     self.control.output_on(
+                         self.output_device_id,
+                         output_channel=self.output_channel)
+         else:
+             self.logger.error("Unknown controller direction: '{}'".format(self.direction))
+ 
++    def _lower_threshold(self):
++        """Lower edge of the control band (setpoint - hysteresis)."""
++        return self.setpoint - self.hysteresis
++
++    def _upper_threshold(self):
++        """Upper edge of the control band (setpoint + hysteresis)."""
++        return self.setpoint + self.hysteresis
++
+     def stop_function(self):
+         self.control.output_off(self.output_device_id, self.output_channel)

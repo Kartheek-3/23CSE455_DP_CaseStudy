@@ -1,0 +1,21 @@
+source_version,summary,pattern_name,count
+Original,per_pattern,Dynamic Guard Factory,1
+Original,per_pattern,Batch Loader,3
+Original,per_pattern,Producer-Consumer,1
+Original,total_pattern_types,,3
+Original,total_pattern_instances,,5
+Change1,per_pattern,Dynamic Guard Factory,1
+Change1,per_pattern,Batch Loader,3
+Change1,per_pattern,Producer-Consumer,1
+Change1,total_pattern_types,,3
+Change1,total_pattern_instances,,5
+Change2,per_pattern,Dynamic Guard Factory,1
+Change2,per_pattern,Batch Loader,3
+Change2,per_pattern,Producer-Consumer,1
+Change2,total_pattern_types,,3
+Change2,total_pattern_instances,,5
+Change3,per_pattern,Dynamic Guard Factory,1
+Change3,per_pattern,Batch Loader,3
+Change3,per_pattern,Producer-Consumer,1
+Change3,total_pattern_types,,3
+Change3,total_pattern_instances,,5

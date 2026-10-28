@@ -1,0 +1,12 @@
+Final Rails Test Result
+Command used for the successful run:
+set "RAILS_ENV=test" && bundle exec ruby -I"C:/Ruby34-x64/lib/ruby/gems/3.4.0/gems/minitest-mock-5.27.0/lib" -e "require './config/environment'; ActiveJob::Base.queue_adapter = :test; load 'bin/rails'" test
+
+Final result:
+Finished in 1.687034s, 34.9726 runs/s, 212.7995 assertions/s.
+59 runs, 359 assertions, 0 failures, 0 errors, 0 skips
+
+Notes:
+- The :test Active Job adapter was applied only for the verification process because the supplied test database did not contain Solid Queue job tables.
+- The Minitest mock compatibility path was supplied to the test process without changing the application dependency lock.
+- This file records the terminal result reported during the verification session; retain any full raw terminal log saved on the local machine as additional evidence.

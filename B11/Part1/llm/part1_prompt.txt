@@ -1,0 +1,6 @@
+Prompt used (Part 1, pattern discovery), Claude Opus 4.8, 2026-10-10:
+
+"Clone github.com/vikash0439/legalSystem at its latest commit and identify the
+design patterns actually present in the Java source. For each, give the exact
+class/interface/method and file:line evidence. Distinguish true GoF patterns from
+framework idioms, and flag any uncertain candidates with reasons."

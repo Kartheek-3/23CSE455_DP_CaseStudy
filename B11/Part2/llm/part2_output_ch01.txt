@@ -1,0 +1,7 @@
+[Model: Claude Opus 4.8 | 2026-10-10 | CH01 | owner: Rakshann]
+Code: strategy/{FinePolicy, RegularFine, AdvocateFine, FineService}.java.
+Pattern effect: Overdue Fine Strategy = newly_introduced; Password Strategy = preserved.
+Test: FineServiceTest -> 3 run, 0 fail (mvn test on submission machine).
+Integration finding: two FinePolicy beans caused NoUniqueBeanDefinitionException at
+startup; fixed by marking RegularFine @Primary (default injected strategy). Verified
+by running the full app to a successful boot. See test_result/mvn_test.log.

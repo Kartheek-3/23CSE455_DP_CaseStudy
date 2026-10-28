@@ -1,0 +1,56 @@
+{
+  "agency": "Beacon Demo",
+  "disclaimer": "Local synthetic examples only; no external booking service.",
+  "results": [
+    {
+      "code": "beacon-rm-museum-01",
+      "destination": "rome",
+      "label": "Museum Exploration Sample",
+      "type": "experience",
+      "address": "Rome, Italy",
+      "summary": "Fictional museum visit idea; no ticket is supplied.",
+      "amount": 16.0,
+      "currency": "EUR"
+    },
+    {
+      "code": "beacon-rm-dinner-02",
+      "destination": "rome",
+      "label": "Neighbourhood Dinner Concept",
+      "type": "meal",
+      "address": "Rome, Italy",
+      "summary": "Fictional restaurant idea; no booking is made.",
+      "amount": 30.0,
+      "currency": "EUR"
+    },
+    {
+      "code": "beacon-rm-hotel-03",
+      "destination": "rome",
+      "label": "Riverside Stay Concept",
+      "type": "room",
+      "address": "Rome, Italy",
+      "summary": "Fictional hotel idea without availability information.",
+      "amount": 94.0,
+      "currency": "EUR"
+    },
+    {
+      "code": "beacon-par-arts-01",
+      "destination": "paris",
+      "label": "Creative Quarter Discovery",
+      "type": "experience",
+      "address": "Paris, France",
+      "summary": "Fictional arts walk idea.",
+      "amount": 20.0,
+      "currency": "EUR"
+    },
+    {
+      "code": "beacon-par-snack-02",
+      "destination": "paris",
+      "label": "Paris Pastry Stop Idea",
+      "type": "meal",
+      "address": "Paris, France",
+      "summary": "Fictional cafe visit idea without a reservation.",
+      "amount": 12.5,
+      "currency": "EUR"
+    }
+  ]
+}

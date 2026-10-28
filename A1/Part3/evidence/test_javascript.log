@@ -1,0 +1,10 @@
+PASS OBS-1 [JavaScript] line 2: 'Admin notified: Order O101 is Shipped'
+PASS OBS-2 [JavaScript] line 3: 'Restaurant notified: Order O101 is Shipped'
+PASS OBS-3 [JavaScript] line 4: 'Delivery Partner notified: Order O101 is Shipped'
+PASS STR-1 [JavaScript] line 7: 'Assigned to: Partner A'
+PASS STR-2 [JavaScript] line 8: 'Assigned to: Partner C'
+PASS FULL [JavaScript] complete output
+SUMMARY JavaScript Observer: 3/3 passed
+SUMMARY JavaScript Strategy: 2/2 passed
+SUMMARY JavaScript full-output: 1/1 passed
+exit=0

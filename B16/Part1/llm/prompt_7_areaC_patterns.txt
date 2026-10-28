@@ -1,0 +1,19 @@
+Using the Area C files (JUnit 6.1.3, commit f59f60d), check which design patterns are
+actually used in execution listeners and result reporting.
+
+Focus on TestExecutionListener, EngineExecutionListener, CompositeTestExecutionListener,
+CompositeEngineExecutionListener, ListenerRegistry, LauncherListenerRegistry,
+SummaryGeneratingListener, TestExecutionSummary / MutableTestExecutionSummary,
+LoggingListener, UniqueIdTrackingListener, StreamInterceptingTestExecutionListener,
+LauncherSessionListener, FlightRecordingExecutionListener, ReportEntry / TestReporter.
+
+Check Composite, Strategy, Template Method, Observer and Adapter (others only with strong
+evidence). For each pattern: explain how it is used, map the roles to the actual classes
+or methods, give the file path, line numbers and a small code snippet, and a verdict
+(confirmed, uncertain or rejected) with a reason. Also list classes that look like a
+pattern by name but are not, and why.
+
+These were already counted in Areas A and B, so do not count them again unless the same
+classes play a new role: the discovery listeners (LauncherDiscoveryListener), the
+execution events pushed by NodeTestTask to EngineExecutionListener, ExecutionListenerAdapter,
+and the engine-listener wrappers (StackTracePruning / OutcomeDelaying / MemoryCleanup).

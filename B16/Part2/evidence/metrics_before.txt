@@ -1,0 +1,46 @@
+# lizard 1.24.1 on baseline f59f60d (B16/data/code), files Part 2 will touch
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       2      1      5      0       3 SummaryGeneratingListener::SummaryGeneratingListener@42-44@junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/SummaryGeneratingListener.java
+       3      1     10      0       3 SummaryGeneratingListener::getSummary@49-51@junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/SummaryGeneratingListener.java
+       3      1     17      0       3 SummaryGeneratingListener::getMutableSummary@53-55@junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/SummaryGeneratingListener.java
+       4      1     23      1       4 SummaryGeneratingListener::testPlanExecutionStarted@58-61@junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/SummaryGeneratingListener.java
+       5      1     34      1       5 SummaryGeneratingListener::testPlanExecutionFinished@64-68@junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/SummaryGeneratingListener.java
+       9      3     50      1       9 SummaryGeneratingListener::dynamicTestRegistered@71-79@junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/SummaryGeneratingListener.java
+      12      1    115      2      14 SummaryGeneratingListener::executionSkipped@82-95@junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/SummaryGeneratingListener.java
+       9      3     50      1       9 SummaryGeneratingListener::executionStarted@98-106@junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/SummaryGeneratingListener.java
+      33     10    185      2      38 SummaryGeneratingListener::executionFinished@109-146@junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/SummaryGeneratingListener.java
+       4      1     29      2       4 EngineDiscoveryOrchestrator::EngineDiscoveryOrchestrator@59-62@junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java
+       6      1     45      3       6 EngineDiscoveryOrchestrator::EngineDiscoveryOrchestrator@64-69@junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java
+       3      1     23      1       3 EngineDiscoveryOrchestrator::discover@79-81@junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java
+       3      1     27      2       3 EngineDiscoveryOrchestrator::discover@83-85@junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java
+       4      1     38      2       4 EngineDiscoveryOrchestrator::discover@101-104@junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java
+       3      1      8      0       3 (anonymous)::getDiscoveryListener@112-114@junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java
+      24      2    140      3      26 EngineDiscoveryOrchestrator::discover@106-131@junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java
+       6      1     42      2       6 EngineDiscoveryOrchestrator::shouldReportDiscoveryIssues@133-138@junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java
+      15      4     86      1      15 EngineDiscoveryOrchestrator::reportDiscoveryIssues@140-154@junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java
+      24      3    216      4      32 EngineDiscoveryOrchestrator::discoverSafely@156-187@junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java
+      26      4    216      4      26 EngineDiscoveryOrchestrator::discoverEngineRoot@189-214@junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java
+       8      1     45      2       8 EngineDiscoveryOrchestrator::getLauncherDiscoveryListener@216-223@junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java
+      14      3    116      2      14 EngineDiscoveryOrchestrator::applyPostDiscoveryFilters@225-238@junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java
+       5      1     50      3       5 EngineDiscoveryOrchestrator::populateExclusionReasonInMap@240-244@junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java
+      11      1    129      1      11 EngineDiscoveryOrchestrator::logTestDescriptorExclusionReasons@246-256@junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java
+       3      1     21      1       3 EngineDiscoveryOrchestrator::prune@265-267@junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java
+       3      2     27      2       3 EngineDiscoveryOrchestrator::isExcluded@269-271@junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java
+       4      1     39      2       4 EngineDiscoveryOrchestrator::acceptInAllTestEngines@273-276@junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java
+       2      1      5      0       3 LauncherConstants::LauncherConstants@321-323@junit-platform-launcher/src/main/java/org/junit/platform/launcher/LauncherConstants.java
+3 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+    104       8.9     2.4       54.3         9     junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/SummaryGeneratingListener.java
+    202       9.2     1.7       72.1        18     junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java
+     40       2.0     1.0        5.0         1     junit-platform-launcher/src/main/java/org/junit/platform/launcher/LauncherConstants.java
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+       346       8.9     1.9       64.0       28            0      0.00    0.00

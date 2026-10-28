@@ -1,0 +1,189 @@
+> Task :base:dsl-extensions:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :base:dsl-extensions:generateExternalPluginSpecBuilders UP-TO-DATE
+> Task :base:dsl-extensions:extractPrecompiledScriptPluginPlugins UP-TO-DATE
+> Task :base:dsl-extensions:compilePluginsBlocks UP-TO-DATE
+> Task :base:dsl-extensions:generatePrecompiledScriptPluginAccessors UP-TO-DATE
+> Task :base:dsl-extensions:generateScriptPluginAdapters UP-TO-DATE
+> Task :base:dsl-extensions:compileKotlin UP-TO-DATE
+> Task :base:dsl-extensions:compileJava NO-SOURCE
+> Task :base:dsl-extensions:pluginDescriptors UP-TO-DATE
+> Task :base:dsl-extensions:processResources UP-TO-DATE
+> Task :base:dsl-extensions:classes UP-TO-DATE
+> Task :base:dsl-extensions:jar UP-TO-DATE
+Type-safe project accessors is an incubating feature.
+> Task :plugins:common:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :plugins:backward-compatibility:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :plugins:publishing:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :plugins:common:extractPrecompiledScriptPluginPlugins UP-TO-DATE
+> Task :plugins:build-parameters:generatePluginCode UP-TO-DATE
+> Task :plugins:publishing:extractPrecompiledScriptPluginPlugins UP-TO-DATE
+> Task :plugins:common:generateScriptPluginAdapters UP-TO-DATE
+> Task :plugins:common:pluginDescriptors UP-TO-DATE
+> Task :plugins:publishing:generateScriptPluginAdapters UP-TO-DATE
+> Task :plugins:common:processResources UP-TO-DATE
+> Task :plugins:publishing:pluginDescriptors UP-TO-DATE
+> Task :plugins:build-parameters:compileJava UP-TO-DATE
+> Task :plugins:build-parameters:pluginDescriptors UP-TO-DATE
+> Task :plugins:build-parameters:processResources UP-TO-DATE
+> Task :plugins:build-parameters:classes UP-TO-DATE
+> Task :plugins:build-parameters:jar UP-TO-DATE
+> Task :plugins:publishing:generateExternalPluginSpecBuilders UP-TO-DATE
+> Task :plugins:backward-compatibility:generateExternalPluginSpecBuilders UP-TO-DATE
+> Task :plugins:backward-compatibility:extractPrecompiledScriptPluginPlugins UP-TO-DATE
+> Task :plugins:publishing:compilePluginsBlocks UP-TO-DATE
+> Task :plugins:publishing:generatePrecompiledScriptPluginAccessors UP-TO-DATE
+> Task :plugins:backward-compatibility:compilePluginsBlocks UP-TO-DATE
+> Task :plugins:backward-compatibility:generatePrecompiledScriptPluginAccessors UP-TO-DATE
+> Task :plugins:backward-compatibility:generateScriptPluginAdapters UP-TO-DATE
+> Task :plugins:publishing:compileKotlin UP-TO-DATE
+> Task :plugins:publishing:compileJava NO-SOURCE
+> Task :plugins:publishing:processResources UP-TO-DATE
+> Task :plugins:publishing:classes UP-TO-DATE
+> Task :plugins:backward-compatibility:compileKotlin UP-TO-DATE
+> Task :plugins:backward-compatibility:compileJava NO-SOURCE
+> Task :plugins:publishing:jar UP-TO-DATE
+> Task :plugins:backward-compatibility:pluginDescriptors UP-TO-DATE
+> Task :plugins:backward-compatibility:processResources UP-TO-DATE
+> Task :plugins:backward-compatibility:classes UP-TO-DATE
+> Task :plugins:backward-compatibility:jar UP-TO-DATE
+> Task :plugins:common:generateExternalPluginSpecBuilders UP-TO-DATE
+> Task :plugins:common:compilePluginsBlocks UP-TO-DATE
+> Task :plugins:common:generatePrecompiledScriptPluginAccessors UP-TO-DATE
+> Task :plugins:common:compileKotlin UP-TO-DATE
+> Task :plugins:common:compileJava NO-SOURCE
+> Task :plugins:common:classes UP-TO-DATE
+> Task :plugins:common:jar UP-TO-DATE
+> Task :plugins:antora:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :plugins:antora:generateExternalPluginSpecBuilders UP-TO-DATE
+> Task :plugins:antora:extractPrecompiledScriptPluginPlugins UP-TO-DATE
+> Task :plugins:antora:compilePluginsBlocks UP-TO-DATE
+> Task :plugins:antora:generatePrecompiledScriptPluginAccessors UP-TO-DATE
+> Task :plugins:antora:generateScriptPluginAdapters UP-TO-DATE
+> Task :plugins:antora:compileKotlin UP-TO-DATE
+> Task :plugins:antora:compileJava NO-SOURCE
+> Task :plugins:antora:pluginDescriptors UP-TO-DATE
+> Task :plugins:antora:processResources UP-TO-DATE
+> Task :plugins:antora:classes UP-TO-DATE
+> Task :plugins:antora:jar UP-TO-DATE
+> Task :plugins:code-generator:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :base:code-generator-model:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :plugins:code-generator:extractPrecompiledScriptPluginPlugins UP-TO-DATE
+> Task :plugins:code-generator:generateScriptPluginAdapters UP-TO-DATE
+> Task :plugins:code-generator:pluginDescriptors UP-TO-DATE
+> Task :plugins:code-generator:processResources UP-TO-DATE
+> Task :base:code-generator-model:compileKotlin UP-TO-DATE
+> Task :base:code-generator-model:compileJava NO-SOURCE
+> Task :base:code-generator-model:pluginDescriptors UP-TO-DATE
+> Task :base:code-generator-model:processResources UP-TO-DATE
+> Task :base:code-generator-model:classes UP-TO-DATE
+> Task :base:code-generator-model:jar UP-TO-DATE
+> Task :plugins:code-generator:generateExternalPluginSpecBuilders UP-TO-DATE
+> Task :plugins:code-generator:compilePluginsBlocks UP-TO-DATE
+> Task :plugins:code-generator:generatePrecompiledScriptPluginAccessors UP-TO-DATE
+> Task :plugins:code-generator:compileKotlin UP-TO-DATE
+> Task :plugins:code-generator:compileJava NO-SOURCE
+> Task :plugins:code-generator:classes UP-TO-DATE
+> Task :plugins:code-generator:jar UP-TO-DATE
+> Task :junit-jupiter-api:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :junit-platform-commons:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :junit-jupiter:processResources NO-SOURCE
+> Task :junit-platform-launcher:processResources UP-TO-DATE
+> Task :jupiter-tests:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :junit-jupiter-params:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :junit-jupiter-migrationsupport:processResources NO-SOURCE
+> Task :junit-platform-engine:processResources UP-TO-DATE
+> Task :junit-platform-launcher:processTestFixturesResources NO-SOURCE
+> Task :junit-jupiter-params:processResources NO-SOURCE
+> Task :junit-platform-commons:compileKotlin NO-SOURCE
+> Task :junit-jupiter-engine:processResources UP-TO-DATE
+> Task :junit-jupiter-api:generateJreRelatedSourceCode UP-TO-DATE
+> Task :junit-platform-suite-api:processResources NO-SOURCE
+> Task :junit-platform-suite-engine:processResources UP-TO-DATE
+> Task :junit-jupiter-engine:processTestFixturesResources NO-SOURCE
+> Task :junit-platform-reporting:processResources UP-TO-DATE
+> Task :junit-jupiter-api:processResources NO-SOURCE
+> Task :junit-platform-testkit:processResources NO-SOURCE
+> Task :junit-platform-reporting:processTestFixturesResources NO-SOURCE
+> Task :junit-jupiter-api:generateJreRelatedTestFixturesSourceCode UP-TO-DATE
+> Task :junit-jupiter-api:generateJreTestDouble UP-TO-DATE
+> Task :junit-jupiter-api:processTestFixturesResources NO-SOURCE
+> Task :jupiter-tests:generateJreRelatedSourceCode NO-SOURCE
+> Task :junit-platform-commons:compileJava UP-TO-DATE
+> Task :junit-platform-commons:processResources NO-SOURCE
+> Task :junit-platform-commons:classes UP-TO-DATE
+> Task :jupiter-tests:compileKotlin NO-SOURCE
+> Task :junit-jupiter-params:extractFastCSVLicense UP-TO-DATE
+> Task :jupiter-tests:compileJava NO-SOURCE
+> Task :jupiter-tests:compileGroovy NO-SOURCE
+> Task :jupiter-tests:processResources NO-SOURCE
+> Task :jupiter-tests:classes UP-TO-DATE
+> Task :jupiter-tests:jar
+> Task :junit-platform-commons:jar
+> Task :junit-platform-commons:compileTestFixturesKotlin NO-SOURCE
+> Task :junit-platform-commons:compileTestFixturesJava UP-TO-DATE
+> Task :junit-platform-commons:processTestFixturesResources NO-SOURCE
+> Task :junit-platform-commons:testFixturesClasses UP-TO-DATE
+> Task :junit-platform-suite-api:compileJava UP-TO-DATE
+> Task :junit-platform-suite-api:classes UP-TO-DATE
+> Task :junit-platform-engine:compileJava UP-TO-DATE
+> Task :junit-platform-engine:classes UP-TO-DATE
+> Task :junit-platform-commons:testFixturesJar UP-TO-DATE
+> Task :junit-jupiter-api:compileKotlin UP-TO-DATE
+> Task :junit-jupiter-api:compileJava UP-TO-DATE
+> Task :junit-jupiter-api:classes UP-TO-DATE
+> Task :junit-platform-suite-api:jar
+> Task :junit-platform-engine:jar
+> Task :junit-platform-launcher:compileJava UP-TO-DATE
+> Task :junit-platform-launcher:classes UP-TO-DATE
+> Task :junit-jupiter-api:jar
+> Task :junit-jupiter-api:compileTestFixturesKotlin NO-SOURCE
+> Task :junit-jupiter-api:compileTestFixturesJava UP-TO-DATE
+> Task :junit-jupiter-api:testFixturesClasses UP-TO-DATE
+> Task :junit-jupiter-engine:compileJava UP-TO-DATE
+> Task :junit-jupiter-engine:classes UP-TO-DATE
+> Task :junit-jupiter-api:testFixturesJar UP-TO-DATE
+> Task :junit-jupiter-migrationsupport:compileJava UP-TO-DATE
+> Task :junit-jupiter-migrationsupport:classes UP-TO-DATE
+> Task :junit-jupiter-params:compileKotlin UP-TO-DATE
+> Task :junit-jupiter-params:compileJava UP-TO-DATE
+> Task :junit-jupiter-params:classes UP-TO-DATE
+> Task :junit-jupiter-migrationsupport:jar
+> Task :junit-platform-launcher:jar
+> Task :junit-platform-launcher:compileTestFixturesJava UP-TO-DATE
+> Task :junit-platform-launcher:testFixturesClasses UP-TO-DATE
+> Task :junit-platform-launcher:testFixturesJar UP-TO-DATE
+> Task :junit-platform-suite-engine:compileJava UP-TO-DATE
+> Task :junit-platform-suite-engine:classes UP-TO-DATE
+> Task :junit-platform-testkit:compileJava UP-TO-DATE
+> Task :junit-platform-testkit:classes UP-TO-DATE
+> Task :junit-platform-reporting:compileJava UP-TO-DATE
+> Task :junit-platform-reporting:classes UP-TO-DATE
+> Task :junit-jupiter-engine:jar
+> Task :junit-jupiter-engine:compileTestFixturesJava UP-TO-DATE
+> Task :junit-jupiter-engine:testFixturesClasses UP-TO-DATE
+> Task :junit-jupiter-engine:testFixturesJar UP-TO-DATE
+> Task :junit-platform-suite-engine:jar
+> Task :junit-platform-testkit:jar
+> Task :junit-jupiter-params:shadowJar
+> Task :junit-jupiter:compileJava UP-TO-DATE
+> Task :junit-jupiter:classes UP-TO-DATE
+> Task :junit-platform-reporting:shadowJar
+> Task :junit-platform-reporting:compileTestFixturesJava UP-TO-DATE
+> Task :junit-platform-reporting:testFixturesClasses UP-TO-DATE
+> Task :junit-platform-reporting:testFixturesJar UP-TO-DATE
+> Task :junit-jupiter:jar
+> Task :jupiter-tests:generateJreRelatedTestSourceCode
+> Task :jupiter-tests:processTestResources
+> Task :jupiter-tests:compileTestKotlin
+> Task :jupiter-tests:compileTestJava
+> Task :jupiter-tests:compileTestGroovy
+> Task :jupiter-tests:testClasses
+
+> Task :jupiter-tests:test
+Predictive Test Selection: 231 of 231 test classes selected with profile 'Standard' (saving 0s serial time)
+
+> Task :jupiter-tests:generateOpenTestHtmlReport
+
+BUILD SUCCESSFUL in 29s
+116 actionable tasks: 20 executed, 96 up-to-date
+exit 0

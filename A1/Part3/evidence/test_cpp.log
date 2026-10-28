@@ -1,0 +1,10 @@
+PASS OBS-1 [C++] line 2: 'Admin notified: Order O101 is Shipped'
+PASS OBS-2 [C++] line 3: 'Restaurant notified: Order O101 is Shipped'
+PASS OBS-3 [C++] line 4: 'Delivery Partner notified: Order O101 is Shipped'
+PASS STR-1 [C++] line 7: 'Assigned to: Partner A'
+PASS STR-2 [C++] line 8: 'Assigned to: Partner C'
+PASS FULL [C++] complete output
+SUMMARY C++ Observer: 3/3 passed
+SUMMARY C++ Strategy: 2/2 passed
+SUMMARY C++ full-output: 1/1 passed
+exit=0

@@ -1,0 +1,50 @@
+%% CH02 - "Irrigation Restriction Decorators" (Decorator) - status: newly_introduced
+%% Code: Part2/changes/Change2/code/mycodo/utils/irrigation_strategies.py
+classDiagram
+    class IrrigationStrategy {
+        <<Component>>
+        +decide(context)*
+        +needs_rain_indicator()
+    }
+    class RaiseHysteresisStrategy {
+        <<ConcreteComponent>>
+        +decide(context)
+    }
+    class LowerHysteresisStrategy {
+        <<ConcreteComponent>>
+        +decide(context)
+    }
+    class IrrigationRestriction {
+        <<Decorator>>
+        +inner
+        +decide(context)
+        +needs_rain_indicator()
+        -_stop(context)$
+    }
+    class TimeWindowStrategy {
+        <<ConcreteDecorator>>
+        +windows
+        +decide(context)
+    }
+    class RainSkipStrategy {
+        <<ConcreteDecorator>>
+        +threshold
+        +decide(context)
+        +needs_rain_indicator()
+    }
+    class parse_time_windows
+    <<function>> parse_time_windows
+    class in_time_windows
+    <<function>> in_time_windows
+    class build_irrigation_strategy
+    <<function>> build_irrigation_strategy
+    IrrigationStrategy <|-- RaiseHysteresisStrategy
+    IrrigationStrategy <|-- LowerHysteresisStrategy
+    IrrigationStrategy <|-- IrrigationRestriction
+    IrrigationRestriction o-- IrrigationStrategy : inner
+    IrrigationRestriction <|-- TimeWindowStrategy
+    IrrigationRestriction <|-- RainSkipStrategy
+    TimeWindowStrategy ..> in_time_windows
+    build_irrigation_strategy ..> parse_time_windows
+    build_irrigation_strategy ..> TimeWindowStrategy : wraps band strategy
+    build_irrigation_strategy ..> RainSkipStrategy : wraps band strategy

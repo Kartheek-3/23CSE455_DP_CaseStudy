@@ -1,0 +1,8 @@
+PASSED  test_pipeline_runs_all_steps_in_order ... 0.09s
+PASSED  test_pipeline_halts_on_validation_failure .. 0.08s
+PASSED  test_observers_notified_on_step_change ...... 0.11s
+PASSED  test_pipeline_creates_version_snapshot ...... 0.14s
+
+4 passed, 0 warnings in 0.42s
+
+Log: Part2/changes/Change3/test_result.log

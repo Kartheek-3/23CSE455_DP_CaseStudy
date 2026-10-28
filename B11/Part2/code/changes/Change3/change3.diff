@@ -1,0 +1,39 @@
+--- getPasswordEncoder.before.java	2026-10-10 08:26:53.086658752 +0000
++++ getPasswordEncoder.after.java	2026-10-10 08:26:46.015856121 +0000
+@@ -1,24 +1,13 @@
+-// CH03 - BEFORE: the stubbed encoder from config/SecurityConfiguration.java:57-77.
+-// encode() returns plaintext; matches() compares plaintext. Insecure - the
+-// concrete Strategy defeats its own purpose.
+-    private PasswordEncoder getPasswordEncoder() {
+-        return new BCryptPasswordEncoder() {
+-            @Override
+-            public String encode(CharSequence charSequence) {
+-            	System.out.println("Encode: "+charSequence);
+-                return charSequence.toString();
+-            }
++// CH03 - AFTER: real BCrypt. Replaces the stubbed anonymous encoder at
++// config/SecurityConfiguration.java:57-77. The Strategy STRUCTURE and the
++// wiring at line 31 (auth...passwordEncoder(getPasswordEncoder())) are unchanged;
++// only the concrete strategy's behaviour is corrected.
+ 
+-            @Override
+-            public boolean matches(CharSequence charSequence, String s) {
+-            	System.out.println("Matches: "+charSequence);
+-            	System.out.println("Matches: "+s);
+-//            	PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+-//            	String hashedPassword = passwordEncoder.encode(charSequence);
+-//            	System.out.println("Matches: "+hashedPassword);
+-            	if(charSequence.equals(s))
+-                    return true;
+-            	else
+-            		return false;
+-            }
+-        };
++private PasswordEncoder getPasswordEncoder() {
++    return new BCryptPasswordEncoder();   // real hashing + matching
++}
++
++// MIGRATION NOTE: existing rows store plaintext passwords (the old stub never
++// hashed). Before enabling this, re-hash existing passwords once, e.g. on next
++// successful login re-encode, or run a one-off migration that BCrypts each stored
++// value. Document whichever you choose in test_result/.

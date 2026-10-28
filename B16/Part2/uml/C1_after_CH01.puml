@@ -1,0 +1,76 @@
+@startuml C1
+!pragma layout smetana
+title C1 Observer: TestExecutionListener (after Change1 - extended)
+
+interface TestExecutionListener <<Observer>> {
+  +testPlanExecutionStarted(TestPlan)
+  +executionSkipped(...)
+  +executionStarted(TestIdentifier)
+  +executionFinished(TestIdentifier, TestExecutionResult)
+  +reportingEntryPublished(...)
+  +testPlanExecutionFinished(TestPlan)
+}
+interface "CompositeTestExecutionListener.EagerTestExecutionListener" as Eager <<PriorityObserver>> {
+  +executionJustStarted(TestIdentifier)
+  +executionJustFinished(...)
+}
+class SummaryGeneratingListener <<ConcreteObserver, refactored in CH01a>>
+class LoggingListener <<ConcreteObserver>>
+class UniqueIdTrackingListener <<ConcreteObserver>>
+class FlightRecordingExecutionListener <<ConcreteObserver>>
+class StreamInterceptingTestExecutionListener <<ConcreteObserver>>
+class CompositeTestExecutionListener <<Notifier>> {
+  -testExecutionListeners : List<TestExecutionListener>
+  -eagerTestExecutionListeners : List<EagerTestExecutionListener>
+  -notifyEach(...)
+}
+class "ListenerRegistry<TestExecutionListener>" as ListenerRegistry <<Registry>> {
+  +addAll(...)
+  +getCompositeListener()
+}
+class DefaultLauncher <<Registration>> {
+  +registerTestExecutionListeners(...)
+}
+class EngineExecutionOrchestrator <<Subject>>
+
+Eager --|> TestExecutionListener
+SummaryGeneratingListener ..|> TestExecutionListener
+LoggingListener ..|> TestExecutionListener
+UniqueIdTrackingListener ..|> TestExecutionListener
+FlightRecordingExecutionListener ..|> TestExecutionListener
+StreamInterceptingTestExecutionListener ..|> Eager
+CompositeTestExecutionListener ..|> TestExecutionListener
+CompositeTestExecutionListener o--> "0..*" TestExecutionListener : testExecutionListeners
+CompositeTestExecutionListener o--> "0..*" Eager : eagerTestExecutionListeners
+DefaultLauncher ..> ListenerRegistry : addAll(listeners)
+ListenerRegistry ..> CompositeTestExecutionListener : getCompositeListener() creates
+EngineExecutionOrchestrator ..> TestExecutionListener : testPlanExecutionStarted() / Finished()
+class ClassSummaryListener <<ConcreteObserver, new in CH01>> #C8F7C5 {
+  -rows : Map<String, Row>
+  -timings : Queue<Timing>
+  +testPlanExecutionStarted(TestPlan)
+  +executionSkipped(...)
+  +executionStarted(TestIdentifier)
+  +executionFinished(TestIdentifier, TestExecutionResult)
+  +testPlanExecutionFinished(TestPlan)
+}
+ClassSummaryListener ..|> TestExecutionListener
+note bottom of SummaryGeneratingListener
+  CH01a: Extract Method count(id, containers, tests);
+  role unchanged
+end note
+' aligned-with-record
+legend right
+  <b>Counted participants</b> (record in the dataset)
+  Observer: TestExecutionListener
+  ConcreteObserver: SummaryGeneratingListener
+  ConcreteObserver: LoggingListener
+  ConcreteObserver: UniqueIdTrackingListener
+  ConcreteObserver: FlightRecordingExecutionListener
+  ConcreteObserver: StreamInterceptingTestExecutionListener
+  Subject (attach): DefaultLauncher#registerTestExecutionListeners
+  Subject (notify): CompositeTestExecutionListener#notifyEach
+  ConcreteObserver: ClassSummaryListener
+  Grey classes: real, shown for context, not counted
+endlegend
+@enduml

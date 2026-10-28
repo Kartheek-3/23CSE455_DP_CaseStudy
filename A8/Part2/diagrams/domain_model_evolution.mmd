@@ -1,0 +1,80 @@
+classDiagram
+    direction LR
+
+    class Flight {
+        +string id
+        +number flightNumber
+        +string departureAirport
+        +string destinationAirport
+        +string date
+        +string departureTime
+        +string arrivalTime
+        +string airLine
+        +number availableSeats
+        +FlightStatus status
+        +User responsibleBy
+        +Booking[] bookings
+    }
+
+    class FlightStatus {
+        <<enumeration>>
+        ACTIVE
+        CANCELLED
+    }
+
+    class Seat {
+        +string id
+        +number seatNo
+        +number rowNo
+        +boolean isAvailable
+        +SeatClass seatClass
+        +string flightId
+        +Booking booking
+    }
+
+    class SeatClass {
+        <<enumeration>>
+        FIRST
+        BUSINESS
+        ECONOMY
+    }
+
+    class Booking {
+        +string id
+        +string userId
+        +string flightId
+        +string[] seatId
+        +Date createdAt
+        +User user
+        +Flight flight
+        +Seat[] seat
+    }
+
+    class User {
+        +string id
+        +string name
+        +string email
+        +string role
+        +Booking[] bookedFlights
+    }
+
+    class FlightService {
+        +cancelFlight(id) Promise~Flight~
+    }
+
+    class BookingService {
+        +createBooking(userId, flightId)
+        +cancelBooking(userId, bookingId)
+        +modifyBooking(userId, updateInput) Promise~Booking~
+    }
+
+    Flight --> FlightStatus : status
+    Seat --> SeatClass : seatClass
+    Booking "*" --> "1" User : belongs to
+    Booking "*" --> "1" Flight : reserves
+    Booking "1" --> "*" Seat : contains
+
+    FlightService ..> Flight : cancels
+    BookingService ..> Booking : creates and modifies
+    BookingService ..> Flight : validates flight
+    BookingService ..> Seat : updates seats

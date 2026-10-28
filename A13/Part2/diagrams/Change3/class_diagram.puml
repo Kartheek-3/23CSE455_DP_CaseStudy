@@ -1,0 +1,167 @@
+@startuml
+!pragma layout smetana
+skinparam style strictuml
+skinparam monochrome false
+skinparam roundcorner 8
+skinparam classAttributeIconSize 0
+skinparam defaultFontName SansSerif
+skinparam classFontStyle bold
+
+title Misskey Context-Aware Link Safety and Spam Protection Architecture (Change 3 - CH03)
+
+package "Server / API Layer" {
+    abstract class Endpoint {
+        +meta: Object
+        +paramDef: Object
+        +{abstract} exec(params, user): Promise<any>
+    }
+
+    class LinksCheckEndpoint {
+        +exec(params, user): Promise<Object>
+    }
+    class AdminLinksFlaggedEndpoint {
+        +exec(params, user): Promise<Object>
+    }
+    class AdminLinksRulesUpdateEndpoint {
+        +exec(params, user): Promise<Object>
+    }
+
+    Endpoint <|-- LinksCheckEndpoint
+    Endpoint <|-- AdminLinksFlaggedEndpoint
+    Endpoint <|-- AdminLinksRulesUpdateEndpoint
+}
+
+package "Core Security Domain Layer" {
+    class LinkSafetyService <<Injectable>> {
+        -flaggedLinksRepository: MiRepository<MiFlaggedLink>
+        -abuseUserReportsRepository: MiRepository<MiAbuseUserReport>
+        -idService: IdService
+        -provider: LinkReputationProvider
+        -cache: Map<string, CacheEntry>
+        -postingHistory: PostingEvent[]
+        +setProvider(provider: LinkReputationProvider): void
+        +getProvider(): LinkReputationProvider
+        +normalizeUrl(raw: string): NormalizedUrl
+        +validateDestinationSafety(rawOrHost: string): Object
+        +detectHomographs(target: NormalizedUrl): Object
+        +recordPostingActivity(userId, ip, canonicalUrl, domain): void
+        +analyzeSpamFrequency(userId, ip, canonicalUrl, domain): Object
+        +checkAbuseReportsForDomain(domain: string): Promise<Object>
+        +checkUrl(rawUrl: string, context?): Promise<LinkRiskAssessment>
+        +checkText(text: string, context?): Promise<LinkRiskAssessment[]>
+        +getFlaggedLinks(options?): Promise<MiFlaggedLink[]>
+        +resolveFlaggedLink(id: string, resolved?: boolean): Promise<boolean>
+        +updateDomainRule(domain: string, action: string): void
+    }
+
+    class NormalizedUrl <<ValueObject>> {
+        +raw: string
+        +canonical: string
+        +protocol: string
+        +hostname: string
+        +port: string
+        +pathname: string
+        +hasUserInfo: boolean
+        +isIp: boolean
+        +isPunycode: boolean
+        +unicodeHostname: string
+    }
+
+    class LinkRiskAssessment <<ValueObject>> {
+        +url: string
+        +canonicalUrl: string
+        +domain: string
+        +category: LinkRiskCategory
+        +threatType: LinkThreatType
+        +reason: string
+        +confidence: number
+        +provider: string
+        +checkedAt: string
+    }
+}
+
+package "Strategy Pattern: Reputation Intelligence" {
+    interface LinkReputationProvider <<Strategy>> {
+        +name: string
+        +{abstract} classify(target: NormalizedUrl): Promise<LinkReputationResult>
+    }
+
+    class LocalListReputationProvider implements LinkReputationProvider {
+        -blockedDomains: Set<string>
+        -allowedDomains: Set<string>
+        -knownShorteners: Set<string>
+        +blockDomain(domain: string): void
+        +allowDomain(domain: string): void
+        +removeDomain(domain: string): void
+        +classify(target: NormalizedUrl): Promise<LinkReputationResult>
+    }
+
+    class MockReputationProvider implements LinkReputationProvider {
+        -verdicts: Map<string, LinkReputationResult>
+        -shouldThrow: boolean
+        +setVerdict(urlOrDomain: string, verdict: Object): void
+        +setShouldThrow(shouldThrow: boolean, error?: Error): void
+        +classify(target: NormalizedUrl): Promise<LinkReputationResult>
+    }
+
+    class DisabledReputationProvider implements LinkReputationProvider {
+        +classify(target: NormalizedUrl): Promise<LinkReputationResult>
+    }
+}
+
+package "Persistence / Repository Layer" {
+    class MiFlaggedLink <<Entity>> {
+        +id: string
+        +url: string
+        +canonicalUrl: string
+        +domain: string
+        +riskCategory: LinkRiskCategory
+        +reason: string
+        +threatType: LinkThreatType
+        +source: LinkFlagSource
+        +userId: string
+        +noteId: string
+        +resolved: boolean
+        +createdAt: Date
+        +updatedAt: Date
+    }
+
+    interface FlaggedLinksRepository <<Repository>> {
+        +findOne(options): Promise<MiFlaggedLink>
+        +save(entity): Promise<MiFlaggedLink>
+        +createQueryBuilder(alias): SelectQueryBuilder
+    }
+
+    FlaggedLinksRepository ..> MiFlaggedLink : persists
+}
+
+package "Frontend UI Components" {
+    class MkPostForm <<Vue Component>> {
+        -text: Ref<string>
+        -linkSafetyWarning: Ref<string | null>
+        -lastCheckedText: string
+        +checkDraftLinks(): void
+    }
+
+    class MkUrl <<Vue Component>> {
+        +url: string
+        +isSuspicious: Computed<boolean>
+        +suspicionReason: Computed<string>
+        +onClick(ev: MouseEvent): Promise<void>
+    }
+}
+
+' Relationships & Collaborations
+LinksCheckEndpoint --> LinkSafetyService : delegates URL check
+AdminLinksFlaggedEndpoint --> LinkSafetyService : queries flagged links
+AdminLinksRulesUpdateEndpoint --> LinkSafetyService : updates domain rules
+
+LinkSafetyService o--> LinkReputationProvider : Strategy delegation
+LinkSafetyService --> NormalizedUrl : creates & normalizes
+LinkSafetyService --> LinkRiskAssessment : produces assessment
+LinkSafetyService --> FlaggedLinksRepository : records audit flags
+
+MkPostForm ..> LinksCheckEndpoint : API calls debounced
+MkUrl ..> NormalizedUrl : displays and warns
+
+@enduml

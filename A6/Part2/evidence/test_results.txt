@@ -1,0 +1,49 @@
+# Final evolved snapshot test run
+# commit: a12c878a4977787b8d2c5349dfebd7b3f605824c
+# command (from Part2/code after npm install): npm test
+# node v22.18.0, 2026-10-11T15:24:24Z
+
+ok 1 - BookDriver broadcasts only to drivers within 20 km road distance and saves a PENDING trip
+ok 2 - BookDriver refuses the request when no driver is within 20 km by road
+ok 3 - rider cancelling a PENDING trip sets CANCELLED and stores the reason
+ok 4 - rider cancelling a CONFIRMED trip notifies the assigned driver
+ok 5 - driver completing a trip stores finalFare = estimatedFare + finalKm * 10
+ok 6 - completing a trip without finalKm is rejected
+ok 7 - CH02 trip state fixtures T1-T8
+ok 8 - CH02 rider policy: PENDING is free even close to the ride
+ok 9 - CH02 rider policy: CONFIRMED before the 9 PM IST cutoff is free
+ok 10 - CH02 rider policy: CONFIRMED after the cutoff pays 10% of the fare, minimum Rs 50
+ok 11 - CH02 cutoff is 21:00 IST (15:30 UTC) on the previous day
+ok 12 - CH02 driver policy never charges the rider, even one hour before the ride
+ok 13 - CH02 (fixes baseline defect) a COMPLETED trip cannot be cancelled and nothing is saved
+ok 14 - CH02 only the rider or the assigned driver of the trip may cancel it
+ok 15 - CH02 late rider cancellation stores fee and actor, and notifies the driver
+ok 16 - CH02 driver cancellation is free for the rider and notifies the rider
+ok 17 - CH02 cancelling an unaccepted broadcast request dismisses the drivers' popups
+ok 18 - CH02 driver status update follows the trip state (cannot complete a PENDING ride)
+ok 19 - CH01 state table: allowed admin transitions
+ok 20 - CH01 state table: illegal admin transitions are refused
+ok 21 - CH01 suspending requires a reason
+ok 22 - CH01 only approved drivers can receive rides
+ok 23 - CH01 admin suspends an approved driver: saved and driver notified
+ok 24 - CH01 (fixes baseline defect) a rejected driver cannot jump straight to approved; nothing saved or sent
+ok 25 - CH01 a suspended driver cannot accept a booking
+ok 26 - CH01 an approved driver accepts a PENDING booking through the repository (refactored)
+ok 27 - CH01 a rider cannot request a suspended driver directly
+ok 28 - ONE_WAY below the minimum is charged Rs 450
+ok 29 - ONE_WAY is Rs 10 per km above the minimum
+ok 30 - ONE_WAY without km is rejected
+ok 31 - ROUND_TRIP (range of dates) is Rs 1000 per calendar day, inclusive
+ok 32 - ROUND_TRIP without end date is rejected
+ok 33 - unknown booking type is rejected
+ok 34 - CH03 ride-type strategies S1-S8
+ok 35 - CH03 peak hours add 25% through the calculator (08:00 IST)
+ok 36 - CH03 peak boundary check by IST hour
+ok 37 - CH03 fewer than 3 nearby drivers adds 20%; unknown supply adds nothing
+ok 38 - CH03 decorators stack: peak + low supply
+ok 39 - CH03 a new ride type is added by registering a strategy, without editing existing ones
+ok 40 - CH03 final fare uses the ride type's extra-km rate (baseline Rs 10, outstation Rs 12)
+ok 41 - CH03 BookDriver applies the low-supply surcharge when only one driver is in range
+# tests 41
+# pass 41
+# fail 0

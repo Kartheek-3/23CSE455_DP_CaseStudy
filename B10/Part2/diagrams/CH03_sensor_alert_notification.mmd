@@ -1,0 +1,54 @@
+%% CH03 - "Sensor Alert Notification" (Observer) - status: newly_introduced
+%% Code: Part2/code/mycodo/utils/sensor_alerts.py and mycodo/functions/bang_bang.py
+classDiagram
+    class SensorAlertNotifier {
+        <<Subject>>
+        -_listeners
+        -_active_kinds
+        +listeners
+        +attach(listener)
+        +detach(listener)
+        +is_active(kind)
+        +raise_alert(alert)
+        +clear(kind)
+        -_notify(alert)
+    }
+    class AlertListener {
+        <<Observer>>
+        +on_alert(alert)*
+    }
+    class LogAlertListener {
+        <<ConcreteObserver>>
+        +logger
+        +on_alert(alert)
+    }
+    class EmailAlertListener {
+        <<ConcreteObserver>>
+        +recipients
+        +send
+        +on_alert(alert)
+    }
+    class SensorAlert {
+        <<dataclass>>
+        +kind
+        +source
+        +message
+        +value
+        +timestamp
+    }
+    class bang_bang_CustomModule["bang_bang.CustomModule"]
+    bang_bang_CustomModule : +alerts
+    bang_bang_CustomModule : +loop()
+    bang_bang_CustomModule : -_setup_alert_listeners()
+    bang_bang_CustomModule : -_handle_missing_measurement()
+    bang_bang_CustomModule : -_check_critically_dry(value)
+    class DaemonControl {
+        +send_email(recipients, message, subject)$
+    }
+    AlertListener <|-- LogAlertListener
+    AlertListener <|-- EmailAlertListener
+    SensorAlertNotifier o-- AlertListener : _listeners
+    SensorAlertNotifier ..> SensorAlert : notifies with
+    bang_bang_CustomModule --> SensorAlertNotifier : alerts
+    bang_bang_CustomModule ..> SensorAlert : creates
+    EmailAlertListener ..> DaemonControl : send = control.send_email

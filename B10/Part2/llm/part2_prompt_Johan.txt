@@ -1,0 +1,127 @@
+You are a software design and refactoring expert helping with a university Design Patterns
+case study (Part 2: Evolution and Refactoring). Complete the WHOLE task in one continuous run: setup, CH01, CH02, CH03 and the
+final outputs. Do not stop to ask for confirmation. If something is ambiguous or blocked,
+choose the most reasonable option, record the decision and the reason in
+Part2/llm/output.txt, and carry on. Finish each change completely (all three commits and
+all its files) before starting the next, so every diff contains only its own step.
+
+APPLICATION
+- Name: Mycodo (Flask-based environmental monitoring and regulation system, used as an
+  agriculture management application)
+- Repository: https://github.com/kizniche/Mycodo.git
+- Baseline commit: ee70a111c622e2a81026fd5c1553a948acf8161e
+- Original source (read-only): Mycodo/
+- Our VERIFIED Part 1 results: Part1/patterns.csv and Part1/Pattern_count.csv
+  (use the paths where our team actually stored them). Treat their instance names as fixed.
+
+THE THREE CHANGES REQUIRED BY OUR CASE STUDY (cumulative: CH02 builds on CH01, CH03 on CH02)
+- CH01: Add new crop types.
+- CH02: Add different irrigation strategies.
+- CH03: Add sensor-based alerts.
+
+SUGGESTED STARTING POINT (verify it against the code; propose something better if it does
+not fit, and say why)
+- Area: data/code/mycodo/functions/bang_bang.py (on/off hysteresis controller that can
+  drive an irrigation pump), class CustomModule, method loop().
+- CH01: smell = setpoint +/- hysteresis computed four times in loop() (Duplicated Code)
+  -> Extract Method; feature = crop profiles (e.g. tomato, rice, wheat) that supply the
+  target moisture and tolerance, obtained through one creation/lookup point.
+- CH02: smell = if/elif on self.direction with mirrored branches (Switch Statements)
+  -> Replace Conditional with Polymorphism; feature = additional irrigation strategies
+  (e.g. time-window irrigation, skip when rain is expected).
+- CH03: smell = missing-measurement handling inlined in loop() (Long Method) -> Extract
+  Method; feature = alert listeners notified on missing readings or critically dry soil
+  (e.g. an email listener reusing Mycodo's existing send_email, and a log listener).
+
+ONE-TIME SETUP (do this first)
+1. Create a Python virtual environment OUTSIDE the team folder (e.g. ../.venv-mycodo).
+   Install pytest, lizard and only the packages from Part2/work/install/requirements.txt
+   that are needed to import the modules you touch. If a module cannot be imported on
+   this machine, keep new logic in plain-Python modules that can be tested without it,
+   and test loop() with unittest.mock (patch measurement retrieval and output control).
+   Record `python --version` and package versions in Part2/llm/run_info.txt.
+2. Write Part2/changes/metrics_files.txt: the Part 1 scope files (relative to the code
+   root) plus, later, every new source file you create. Run
+   `lizard <files from metrics_files.txt>` on data/code and save the raw output to
+   Part2/changes/metrics.log under the heading "original".
+3. Write Part2/llm/input.txt listing every file you read as input (paths + commit).
+
+FOR EACH CHANGE (CH01, then CH02, then CH03, without pausing between them)
+Step 0 - Write Part2/changes/ChangeN/requirement.md: requirement (case-study wording),
+         numbered acceptance criteria (input -> expected result, at least one edge or
+         error case), expected pattern effect.
+Step a - Write characterization tests that lock in the CURRENT behaviour of the code you
+         will touch. Run them on the unchanged code; they must pass. Commit
+         "CHxx: characterization tests" and save `git diff HEAD~1 HEAD` to
+         Part2/changes/ChangeN/characterization_tests.diff.
+Step b - Behaviour-preserving refactoring of a REAL smell. Name the smell (with
+         file:line from the code before the change) and the Fowler technique. Run ALL
+         tests; they must pass unchanged. Commit "CHxx refactoring: <technique>" and save
+         the diff to refactoring.diff. If there is no real smell, say so in
+         requirement.md instead of inventing one.
+Step c - Implement the feature, using or extending a pattern only where it genuinely
+         fits. Add tests for every acceptance criterion (name each test after its
+         criterion number). Run the FULL test suite. Commit "CHxx: <feature>" and save
+         the diff to feature.diff.
+Step d - Save the real, unedited test output to Part2/changes/ChangeN/test_result.log,
+         with a header listing the command and pass counts before the change, after
+         step a, after step b and after step c.
+Step e - Write Part2/changes/ChangeN/demo.py, a short script that shows the feature
+         working in the terminal (we will screenshot it), and run it once.
+Step f - Copy the files listed in metrics_files.txt (current versions, same relative
+         paths) to Part2/changes/ChangeN/code/. After CH03, also copy them to Part2/code/.
+         Run lizard on those copies, append the raw output to metrics.log and add a row
+         to Part2/changes/metrics.csv:
+         version,folder,source_files,nloc,functions,max_ccn,avg_ccn,tests_passed,tests_total
+Step g - Append to requirement.md a "Pattern effects" table with one row for EVERY
+         pattern instance alive after this change (not only the ones you touched):
+         | Instance name | Pattern | Status | Participants added/changed/removed | Reason |
+Step h - Write Mermaid class diagrams (.mmd) in Part2/diagrams/ for every instance that is
+         extended, modified, replaced or newly introduced in this change, using the real
+         class and method names after the change.
+Step i - Append your explanation of this change (design, smell, technique, pattern
+         effects, anything you were unsure about) to Part2/llm/output.txt, then go
+         straight on to the next change.
+
+AFTER CH03 (continue immediately)
+- Part2/llm/patterns_evolution_llm_draft.csv with header exactly:
+  source_version,pattern_name,pattern_type,instance_name,participant_roles,source_locations,intent_and_evidence,status_after_change,change_description
+  First the Part 1 rows with source_version "Original code", status "baseline",
+  change_description "Original collaboration."; then one row per instance for
+  "Code after Change1", "Code after Change2", "Code after Change3". Locations for later
+  versions point into Part2/changes/ChangeN/code/... (Change3 may use Part2/code/...).
+  Keep a row with status "removed" for any instance that disappears.
+- Part2/llm/pattern_counts_llm_draft.csv with header source_version,summary,pattern_name,count
+  and a block per version: per_pattern rows, then total_pattern_types and
+  total_pattern_instances (pattern_name blank). Removed instances are not counted;
+  extending an instance does not add to the count.
+- Part2/diagrams/evolved_architecture.mmd (Mermaid flowchart after all changes).
+- A "Risks and limitations" section appended to Part2/llm/output.txt.
+
+FINAL SELF-CHECK (last step of the run)
+- Confirm every file listed above exists, and list any that are missing and why.
+- Run the full test suite one last time on Part2/work and report the pass count.
+- Confirm `git log --oneline` in Part2/work shows the baseline commit plus nine commits
+  (three per change), in order.
+- Confirm data/code/ and Part1/ were not modified.
+- End with a short summary: per change, the smell, the technique, the feature and the
+  pattern statuses; then the final instance count per version.
+
+STRICT RULES
+1. Refer only to classes, functions and lines that exist in the code. Before writing any
+   file:line, confirm it with the Read tool or `grep -n`.
+2. Pattern status must be one of: preserved, modified, extended, replaced, removed,
+   newly_introduced.
+   - extended = new participant added to the same collaboration (NOT a new instance)
+   - modified = same roles, code inside them changed or lines moved
+   - replaced = old collaboration swapped for a different one (name both)
+   - removed = collaboration no longer exists
+   - newly_introduced = a collaboration that did not exist before
+3. Keep the EXACT instance names from Part1/patterns.csv for continuing collaborations;
+   give a new meaningful name only to a newly introduced collaboration.
+4. Never edit or summarise test output or metrics by hand: save what the tools printed.
+   If a test fails, report it and fix the code; do not delete or weaken the test.
+5. Do not add dependencies to the application unless unavoidable; if you do, name the
+   package and why. pytest and lizard are dev tools only.
+6. Never modify data/code/ or Part1/. Write CSVs only as *_llm_draft.csv files; we will
+   create the final CSVs ourselves after verification.

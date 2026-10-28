@@ -1,0 +1,7 @@
+# user <id> registers a user; open <userId> <balance> prints the new account id or NO_USER; balance <accountId> prints the balance or NOT_FOUND
+user 1;user 2;open 1 100;open 2 50;balance 2 => 50.00
+open 9 5 => NO_USER
+user 1;open 1 10;balance 7 => NOT_FOUND
+user 1;open 1 10;open 1 20;balance 2 => 20.00
+user 1;open 1 10;open 1 20 => 2
+user 1;open 2 5;balance 1 => NOT_FOUND

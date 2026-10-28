@@ -1,0 +1,8 @@
+﻿   1: 'use client'
+   2: 
+   3: import { useAuth } from '../context/AuthContext'
+   4: 
+   5: export function useSession() {
+   6:   const { session, user, loading } = useAuth()
+   7:   return { session, user, loading }
+   8: }

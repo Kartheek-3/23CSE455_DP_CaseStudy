@@ -1,0 +1,10 @@
+PATTERN/SUITE   : LayeredArchitecture_java
+RUNTIME/COMPILER: javac 17.0.18 / openjdk version "17.0.18" 2026-01-20 
+WORKDIR         : C:\Users\eswar\OneDrive\Documents\Visual Studio Code\23CSE455_DP_Submission\B12\Part3\LayeredArchitecture\java
+BUILD COMMAND   : javac ReservationRepository.java LayeredArchitectureTest.java
+BUILD OUTPUT    : 
+RUN COMMAND     : java LayeredArchitectureTest
+PROGRAM OUTPUT  : LAYERED_ARCHITECTURE_JAVA PASS 8/8
+TIME INCLUDES   : whole process wall time (runtime startup + program execution), after 1 unmeasured warm-up
+TIMING SAMPLES  : 5 measured runs (ms): 135.9237, 153.8017, 150.0002, 126.5294, 148.0512
+MEDIAN_MS       : 148.051

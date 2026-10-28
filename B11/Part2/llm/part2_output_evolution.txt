@@ -1,0 +1,8 @@
+[Model: Claude Opus 4.8 | 2026-10-10 | Part 2 evolution | owner: Lokesh]
+Per-snapshot totals (full rows in data/patterns_evolution.csv):
+  baseline   : 5 confirmed types, 7 instances, 1 uncertain (Observer)
+  after CH01 : 5 types, 8 instances (+Overdue Fine Strategy = newly_introduced)
+  after CH02 : 6 types, 8 instances (Observer -> confirmed; uncertain = 0)
+  after CH03 : 6 types, 8 instances (Password Strategy concrete class modified)
+Verified: instance names preserved for continuing collaborations; removed rows (none)
+would be retained with status removed.

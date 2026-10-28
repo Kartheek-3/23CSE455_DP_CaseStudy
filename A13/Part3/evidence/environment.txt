@@ -1,0 +1,9 @@
+Measured: 2026-10-10T18:42:03
+Machine: Linux-7.1.2-zen3-1-zen-x86_64-with-glibc2.43, x86_64, Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz
+Cores: 12
+java: OpenJDK 17.0.19 (javac 17.0.19)
+python: CPython 3.14.6
+javascript: Node.js v24.15.0
+cpp: g++ 16.1.1 20260625, -std=c++17
+lizard: 1.24.1
+Source: Misskey 53ac6808ae4921305e761c545863ee6593edd1f4

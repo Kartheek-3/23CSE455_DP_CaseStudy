@@ -1,0 +1,14 @@
+# job_queue / javascript
+# working folder: Part3/code/pattern_job_queue/javascript
+# runtime: Node.js v24.15.0
+$ node jobQueue.test.js ../../../test-cases/job_queue.txt
+PASS delivers
+PASS fifo_order
+PASS blocked_host_skipped
+PASS retries_until_success
+PASS gives_up_after_max_attempts
+PASS empty_queue
+passed 6/6
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 46.2, 41.3, 46.7, 46.9, 43.3 -> median 46.2

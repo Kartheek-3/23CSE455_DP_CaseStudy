@@ -1,0 +1,12 @@
+case_id,member,option_defs,stored,persist,expected
+LS01,input,period:float:5:true|city:text:Paris:false,period=30,-,city=Paris|period=30
+LS02,function,period:float:5:true|city:text:Paris:false,period=30,-,city=Paris|period=30
+LS03,input,measurement:select_measurement::true,measurement=dev1;meas1,-,measurement_device_id=dev1|measurement_measurement_id=meas1
+LS04,function,measurement:select_measurement::true,measurement=dev1,-,measurement_device_id=None|measurement_measurement_id=None
+LS05,input,setpoint:float:50:true,,-,setpoint=50|errors=1
+LS06,function,!:new_line:!:false|note:message:hello:false|hysteresis:float:1:false,,-,hysteresis=1
+LS07,input,output:select_device::false,output=pump1,-,output_id=pump1
+LS08,function,x:fancy:1:false|max_age:integer:360:false,max_age=600,-,max_age=600|errors=1
+LS09,input,enabled:bool:false:false|max_age:integer:360:false,enabled=true,last_run=42,enabled=true|max_age=360|stored=42|other_table=None
+LS10,input,period:!:5:true,,-,ERROR
+LS11,function,!:float:5:true,,-,ERROR

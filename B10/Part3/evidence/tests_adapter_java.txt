@@ -1,0 +1,9 @@
+# Adapter / java
+working folder: Part3/adapter_sensor_driver/java
+$ javac -d out AbstractInput.java SensorDriverTest.java
+
+[compile exit code: 0]
+$ java -cp out SensorDriverTest
+Adapter tests: 12/12 passed
+
+[exit code: 0]

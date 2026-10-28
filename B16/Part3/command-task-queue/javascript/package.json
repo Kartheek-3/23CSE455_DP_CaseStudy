@@ -1,0 +1,9 @@
+{
+  "name": "command-task-queue",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/main.js ../test-data/tasks.txt",
+    "test": "node --test test/command.test.js"
+  }
+}

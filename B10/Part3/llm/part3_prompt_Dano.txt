@@ -1,0 +1,48 @@
+I'm doing Part 3 (Cross-Language Comparison) of a university design-patterns project. The app is Mycodo v8.17.0 (https://github.com/kizniche/Mycodo.git). I've attached PART3_GUIDE.md (the full spec), my patterns.csv, and pattern_counts.csv. The guide's Library app is only an example; the pattern types and instances must come from my real confirmed patterns.
+
+My confirmed pattern types and chosen representative instances are:
+- [Pattern type 1] - instance: [instance_name] - folder: [e.g. strategy_xxx]
+- [Pattern type 2] - instance: [instance_name] - folder: [...]
+- [Pattern type 3] - instance: [instance_name] - folder: [...]
+(Add all types. Use the exact instance_name values from patterns.csv. Do not skip any type.)
+
+For EACH pattern type, produce the following by following the guide's Steps 2-13.
+
+A. Instance choice
+- A one-sentence justification for the chosen instance, based only on the roles and evidence in patterns.csv.
+
+B. SPEC.md section and shared test cases
+- The spec section (role table with the same role names in every language, inputs, outputs, rules, error cases), written BEFORE the code.
+- A CSV of shared test cases (at least 6-8 cases, including at least 2 ERROR cases) that all four languages must pass, in the same format as the guide's overdue_fine_cases.csv.
+
+C. Production code and test runner in Java 21, Python 3.11+, JavaScript (Node LTS) and C++17
+- Standard library only, 30-90 lines of production code each, same role names in every language.
+- Production code and test runner in separate files, using the exact file names and folder layout from the guide.
+- Each test runner reads the shared CSV from ../../test-cases/ and prints exactly "<Pattern> tests: X/Y passed" in all four languages.
+- Exit code 0 only if all cases pass.
+
+D. A README.md for every language folder with the compile/run commands from the guide and the expected output line.
+
+E. Evidence templates (not fake results)
+- The exact commands to run each test and save its output to evidence/test_results/<pattern>_<language>.log, using the guide's log header format with TODO for runtime versions and date.
+- The cloc and lizard commands for LOC and max CCN.
+- The time_runs.py commands for every pattern x language (compile first for Java and C++; 1 warmup, 5 measured runs, median in ms).
+- A blank metrics.md table and a cross_language.csv with the exact 11-column header from the guide, one row per pattern x language (all of it for the whole project, not just one pattern), with every measured value filled as TODO. Fill in only language_notes, snippet_path and test_command, since those can be written without running anything.
+
+F. cross_language_analysis.md
+- A draft per pattern comparing the four languages on: participant structure, abstraction enforcement, inheritance vs composition, memory/ownership, static vs dynamic typing, LOC/complexity, and timing. Make every point specific to the code you wrote for that pattern.
+- Leave the LOC, CC and timing explanations as placeholders referencing my measured numbers, to be finalised once I fill in the real values.
+- Include the reminder that the timings only compare these small programs on this machine and do not prove a language is faster in general.
+- A short technology discussion citing real sources only (Gamma et al. 1994 GoF, the Java Language Specification, Python abc docs, cppreference). Do not invent page numbers, quotes or URLs.
+
+G. LLM records
+- Part3/llm/part3_prompt.txt (this prompt, as I sent it), a template for run_info.txt (model, date, steps, with TODO), and a verification.md skeleton with the table columns: AI claim / code, Verdict (Correct / Partially correct / Incorrect / Cannot confirm), Evidence. Pre-fill rows for each language's code as "Cannot confirm - not yet run".
+- The data/llm.csv row template for "Cross-language analysis".
+
+Strict rules:
+- You cannot run or compile code. Never fabricate test logs, screenshots, LOC, CCN, timing numbers, compiler versions or dates. Mark every such value as TODO and tell me the command to get it.
+- Mentally compile each program before giving it to me and check for common errors, such as missing includes like <fstream>, <string> and <sstream> in C++, missing imports in Java, and CSV parsing differences (trailing newline, Windows line endings, negative numbers, the string ERROR). List any residual risks per file.
+- All four languages must behave identically on every shared case, including the ERROR cases.
+- Do not claim anything about Mycodo's internals that is not in my attached files. The four-language programs are small standalone re-implementations of the pattern, not ports of Mycodo.
+- Output everything as clearly labelled sections, one per file with its full path, so I can copy each into its own file.
+- If any pattern type cannot be fairly reduced to a small deterministic program with checkable outputs, tell me which one and why, and propose a deterministic reduction instead of skipping it.

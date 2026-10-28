@@ -1,0 +1,15 @@
+== include-tag fast ==
+CalcTests#add
+CalcTests#sub
+StringTests#concat
+selected 3 of 6
+== exclude-tag flaky ==
+CalcTests#add
+CalcTests#sub
+StringTests#concat
+SlowTests#bigSum
+selected 4 of 6
+== name-contains String ==
+StringTests#concat
+StringTests#upper
+selected 2 of 6

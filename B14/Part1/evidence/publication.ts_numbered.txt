@@ -1,0 +1,135 @@
+﻿   1: import { isCoverImageAllowed, COVER_IMAGE_ERROR } from '@/lib/cover-images'
+   2: import slugify from 'slugify'
+   3: import sanitizeHtml from 'sanitize-html'
+   4: import { z } from 'zod'
+   5: import type { createServiceClient } from '@/lib/supabase/service'
+   6: 
+   7: export const PUBLICATION_LIMITS = { titleMin: 10, titleMax: 160, bodyWords: 200, excerptMin: 40, excerptMax: 500 } as const
+   8: export type FieldErrors = Record<string, string[]>
+   9: export type PublicationInput = {
+  10:   title?: unknown
+  11:   slug?: unknown
+  12:   content?: unknown
+  13:   excerpt?: unknown
+  14:   author_id?: unknown
+  15:   seo_title?: unknown
+  16:   seo_description?: unknown
+  17:   cover_image?: unknown
+  18: }
+  19: 
+  20: // The parser decodes HTML entities and drops non-readable subtrees. Keep block
+  21: // boundaries so adjacent paragraphs count as separate words, but inline markup
+  22: // cannot inflate counts or conceal placeholder phrases.
+  23: export function readableText(value: unknown): string {
+  24:   if (typeof value !== 'string') return ''
+  25:   return sanitizeHtml(value, {
+  26:     allowedTags: ['p', 'br', 'div', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'pre', 'blockquote', 'td', 'th'],
+  27:     allowedAttributes: { '*': ['hidden', 'aria-hidden', 'style', 'class'] },
+  28:     // Keep boolean attributes such as `hidden` visible to the text filter.
+  29:     nonBooleanAttributes: [],
+  30:     exclusiveFilter: frame => 'hidden' in frame.attribs || frame.attribs['aria-hidden'] === 'true' ||
+  31:       /(?:display\s*:\s*none|visibility\s*:\s*hidden|opacity\s*:\s*0(?:[;\s]|$))/i.test(frame.attribs.style ?? '') ||
+  32:       /(?:^|\s)hidden(?:\s|$)/.test(frame.attribs.class ?? ''),
+  33:     nonTextTags: ['script', 'style', 'textarea', 'option', 'template', 'svg', 'math', 'noscript'],
+  34:   }).replace(/<[^>]*>/g, ' ')
+  35:     .replace(/&(amp|lt|gt|quot|apos|#39);/g, (_, entity: string) => ({ amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", '#39': "'" })[entity]!)
+  36:     .replace(/[\u200B-\u200D\uFEFF]/g, '')
+  37:     .replace(/\s+/g, ' ').trim()
+  38: }
+  39: 
+  40: export function readableArticleText(value: unknown): string {
+  41:   if (typeof value !== 'string') return ''
+  42:   try {
+  43:     const doc: unknown = JSON.parse(value)
+  44:     if (!doc || typeof doc !== 'object' || !('type' in doc) || doc.type !== 'doc') return ''
+  45:     const walk = (node: unknown, depth = 0): string => {
+  46:       if (depth > 64 || !node || typeof node !== 'object') return ''
+  47:       const item = node as { type?: string; text?: unknown; content?: unknown[] }
+  48:       if (item.type === 'text') return typeof item.text === 'string' ? item.text : ''
+  49:       const text = Array.isArray(item.content) ? item.content.map(child => walk(child, depth + 1)).join('') : ''
+  50:       return /^(paragraph|heading|listItem|taskItem|blockquote|codeBlock|tableCell|tableHeader|hardBreak)$/.test(item.type ?? '') ? text + ' ' : text
+  51:     }
+  52:     return walk(doc).replace(/[\u200B-\u200D\uFEFF]/g, '').replace(/\s+/g, ' ').trim()
+  53:   } catch {
+  54:     return readableText(value)
+  55:   }
+  56: }
+  57: 
+  58: function isPlaceholderImage(value: unknown): boolean {
+  59:   if (typeof value !== 'string') return false
+  60:   try { return /(?:^|\.)(?:placehold\.co|placeholder\.com)$/.test(new URL(value).hostname) } catch { return false }
+  61: }
+  62: 
+  63: function hasPlaceholderImage(value: unknown): boolean {
+  64:   if (typeof value !== 'string') return false
+  65:   try {
+  66:     const walk = (node: unknown, depth = 0): boolean => {
+  67:       if (depth > 64 || !node || typeof node !== 'object') return false
+  68:       const item = node as { type?: string; attrs?: { src?: unknown }; content?: unknown[] }
+  69:       return (item.type === 'image' && isPlaceholderImage(item.attrs?.src)) ||
+  70:         (Array.isArray(item.content) && item.content.some(child => walk(child, depth + 1)))
+  71:     }
+  72:     return walk(JSON.parse(value))
+  73:   } catch {
+  74:     let found = false
+  75:     sanitizeHtml(value, { allowedTags: ['img'], allowedAttributes: { img: ['src'] },
+  76:       exclusiveFilter: frame => { if (frame.tag === 'img' && isPlaceholderImage(frame.attribs.src)) found = true; return false },
+  77:     })
+  78:     return found
+  79:   }
+  80: }
+  81: 
+  82: const placeholderTitle = /^(?:hello this is for test|test(?: post| article)?|e2e(?: .*)?|untitled(?: post| article)?|sample(?: post| article)?|placeholder(?: .*)?)[.!]*$/i
+  83: const filler = /hello this is for test|\blorem ipsum\b|\b(?:insert|add|write) (?:your )?(?:title|content|text|excerpt) here\b|\[(?:insert|add|your) [^\]]+\]/i
+  84: 
+  85: export function publicationErrors(input: PublicationInput, authorName: unknown, editorialReviewed: unknown): FieldErrors {
+  86:   const errors: FieldErrors = {}
+  87:   const add = (field: string, message: string) => { (errors[field] ??= []).push(message) }
+  88:   const title = readableText(input.title)
+  89:   const content = readableArticleText(input.content)
+  90:   const excerpt = readableText(input.excerpt)
+  91:   if (title.length < PUBLICATION_LIMITS.titleMin || title.length > PUBLICATION_LIMITS.titleMax) add('title', 'Use a descriptive title of 10–160 readable characters.')
+  92:   if (placeholderTitle.test(title) || filler.test(title)) add('title', 'Replace the test or placeholder title with a meaningful engineering topic.')
+  93:   if (typeof input.slug !== 'string' || input.slug.length > 200 || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(input.slug)) add('slug', 'Use a unique slug of up to 200 lowercase letters, numbers and hyphens.')
+  94:   const words = content.match(/[\p{L}\p{N}]+(?:['’_-][\p{L}\p{N}]+)*/gu)?.length ?? 0
+  95:   if (words < PUBLICATION_LIMITS.bodyWords) add('content', `Write at least 200 readable words; this article has ${words}. Include practical examples and useful takeaways.`)
+  96:   if (excerpt.length < PUBLICATION_LIMITS.excerptMin || excerpt.length > PUBLICATION_LIMITS.excerptMax) add('excerpt', 'Write an accurate excerpt of 40–500 readable characters.')
+  97:   for (const field of ['title', 'content', 'excerpt', 'seo_title', 'seo_description'] as const) {
+  98:     const text = field === 'content' ? content : readableText(input[field])
+  99:     if (field !== 'title' && filler.test(text)) add(field, 'Remove filler or unfinished template text before publishing.')
+ 100:   }
+ 101:   if (typeof authorName !== 'string' || !authorName.trim() || !input.author_id) add('author_id', 'Assign an author with a display name in their profile.')
+ 102:   if (!isCoverImageAllowed(input.cover_image)) add('cover_image', COVER_IMAGE_ERROR)
+ 103:   if (isPlaceholderImage(input.cover_image)) add('cover_image', 'Replace the placeholder cover image or remove it.')
+ 104:   if (hasPlaceholderImage(input.content)) add('content', 'Replace placeholder article images or remove them before publishing.')
+ 105:   if (editorialReviewed !== true) add('editorial_reviewed', 'A human editor must confirm accuracy, usefulness, attribution, taxonomy and SEO metadata before publishing.')
+ 106:   return errors
+ 107: }
+ 108: 
+ 109: export async function validatePublication(
+ 110:   client: ReturnType<typeof createServiceClient>, input: PublicationInput, editorialReviewed: unknown, excludeId?: string, automaticSlug = false
+ 111: ): Promise<FieldErrors> {
+ 112:   const { data: author, error: authorError } = await client.from('profiles').select('full_name').eq('id', input.author_id).maybeSingle()
+ 113:   const errors = publicationErrors(input, authorError ? null : author?.full_name, editorialReviewed)
+ 114:   if (!errors.slug && !automaticSlug) {
+ 115:     let query = client.from('posts').select('id').eq('slug', input.slug)
+ 116:     if (excludeId) query = query.neq('id', excludeId)
+ 117:     const { data: conflict, error } = await query.maybeSingle()
+ 118:     if (error) errors.slug = ['Could not verify slug uniqueness. Try again.']
+ 119:     else if (conflict) errors.slug = ['This slug is already in use. Choose another.']
+ 120:   }
+ 121:   return errors
+ 122: }
+ 123: 
+ 124: // Draft fields may be empty. Validate JSON types before any mutation instead of
+ 125: // trusting a TypeScript cast or letting malformed input throw a server error.
+ 126: export const postApiSchema = z.object({
+ 127:   title: z.string().optional(), content: z.string().optional(), slug: z.string().optional(),
+ 128:   excerpt: z.string().nullable().optional(), meta_title: z.string().nullable().optional(),
+ 129:   meta_description: z.string().nullable().optional(), image_url: z.string().nullable().optional(), image_alt: z.string().max(1000).optional(),
+ 130:   status: z.enum(['draft', 'published']).optional(), category: z.string().nullable().optional(),
+ 131:   confirm_slug_change: z.boolean().optional(),
+ 132:   tags: z.array(z.string().refine(name => !name.trim() || Boolean(slugify(name.trim(), { lower: true, strict: true })), 'Tag names must contain letters or numbers.')).optional(), editorial_reviewed: z.boolean().optional(),
+ 133: })
+ 134: 
+ 135: export type PostApiBody = z.infer<typeof postApiSchema>

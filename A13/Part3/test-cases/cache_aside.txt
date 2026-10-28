@@ -1,0 +1,8 @@
+# case|commands: fetch <host>; lookup <host>; dropcache|expected (<host>#<id>@<cache|db|insert>, or none@<cache|db>)
+register_on_first_fetch|fetch Example.com|example.com#1@insert
+second_fetch_from_cache|fetch example.com;fetch EXAMPLE.com|example.com#1@insert~example.com#1@cache
+cache_reloaded_from_db|fetch a.test;dropcache;fetch a.test|a.test#1@insert~a.test#1@db
+ids_are_sequential|fetch a.test;fetch b.test|a.test#1@insert~b.test#2@insert
+lookup_unknown_caches_negative|lookup x.test;lookup x.test|none@db~none@cache
+lookup_known_after_cache_drop|fetch a.test;dropcache;lookup a.test;lookup a.test|a.test#1@insert~a.test#1@db~a.test#1@cache
+register_after_negative_lookup|lookup n.test;fetch n.test|none@db~n.test#1@insert

@@ -1,0 +1,6 @@
+For the .tex file I've made casestudy.tex, complete the remaining stuff make this ready for the submission. I've need everything checked and the thing is, submission date is extended so don't worry for that.
+
+Use the Part 1–3 task specifications stored in their respective part folders.
+Distinguish these task specifications from historical model prompt records and
+label reconstructed reference prompts clearly; do not present them as recovered
+transcripts.

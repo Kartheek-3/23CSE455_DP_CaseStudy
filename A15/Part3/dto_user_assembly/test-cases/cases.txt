@@ -1,0 +1,6 @@
+# toDto: entity(id 7) -> DTO text; toEntity: DTO -> entity text (id not set = 0); roundtrip: DTO -> entity -> DTO
+toDto Ana 30 555 RuaA => Ana|30|555|RuaA
+toEntity Bob 41 111 RuaB => User#0:Bob|41|111|RuaB
+roundtrip Cy 22 9 Z => Cy|22|9|Z
+toDto Eve 99 7 W => Eve|99|7|W
+toEntity Zed 1 2 Y => User#0:Zed|1|2|Y

@@ -1,0 +1,168 @@
+```mermaid
+flowchart TB
+
+    %% MAIN TITLE
+    A["GYM MANAGEMENT SYSTEM<br/>DESIGN PATTERN ARCHITECTURE"]
+
+    %% =================================================
+    %% 1. ROOT-PROVIDED SERVICES (SINGLETON-STYLE)
+    %% =================================================
+
+    subgraph S["1. ROOT-PROVIDED SERVICES (SINGLETON-STYLE) - ANGULAR"]
+        direction TB
+
+        RI["Angular Root Injector"]
+
+        subgraph SERVICES["Root-Provided Services"]
+            direction LR
+            AS["AuthService"]
+            ATS["AttendanceService"]
+            CS["ClassesService"]
+            MS["MembersService"]
+            NS["NotificationsService"]
+            PS["PaymentsService"]
+            PLS["PlansService"]
+            TS["TrainersService"]
+        end
+
+        RI --> AS
+        RI --> ATS
+        RI --> CS
+        RI --> MS
+        RI --> NS
+        RI --> PS
+        RI --> PLS
+        RI --> TS
+
+        subgraph CLIENTS["Actual Service Consumers"]
+            direction LR
+            C1["Authentication Components"]
+            C2["Attendance Component"]
+            C3["Classes Component"]
+            C4["Dashboard Component"]
+            C5["Members Component"]
+            C6["Payments Component"]
+            C7["Plans Component"]
+            C8["Trainers Component"]
+            C9["Route Guards"]
+            C10["HTTP Interceptor"]
+        end
+
+        %% AuthService consumers
+        AS -.-> C1
+        AS -.-> C2
+        AS -.-> C3
+        AS -.-> C4
+        AS -.-> C5
+        AS -.-> C6
+        AS -.-> C7
+        AS -.-> C8
+        AS -.-> C9
+        AS -.-> C10
+
+        %% AttendanceService consumers
+        ATS -.-> C2
+        ATS -.-> C4
+
+        %% ClassesService consumers
+        CS -.-> C2
+        CS -.-> C3
+        CS -.-> C4
+
+        %% MembersService consumers
+        MS -.-> C2
+        MS -.-> C4
+        MS -.-> C5
+        MS -.-> C6
+        MS -.-> C7
+
+        %% PaymentsService consumers
+        PS -.-> C4
+        PS -.-> C6
+
+        %% PlansService consumers
+        PLS -.-> C7
+
+        %% TrainersService consumers
+        TS -.-> C3
+        TS -.-> C4
+        TS -.-> C7
+        TS -.-> C8
+
+        %% NotificationsService has no confirmed direct consumer
+    end
+
+    %% =================================================
+    %% 2. DEPENDENCY INJECTION
+    %% =================================================
+
+    subgraph D["2. DEPENDENCY INJECTION"]
+        direction TB
+
+        %% BACKEND
+        subgraph BACKEND["FastAPI Backend"]
+            direction TB
+
+            R["API Route Functions"]
+            DEP["FastAPI Depends()"]
+            DB["get_db()"]
+            SESSION["SQLAlchemy Database Session"]
+
+            AUTH["Authentication Dependencies"]
+            TOKEN["OAuth2 Token Scheme"]
+            USER["Authenticated User"]
+
+            R --> DEP
+            DEP --> DB
+            DB --> SESSION
+
+            R --> AUTH
+            AUTH --> TOKEN
+            AUTH --> USER
+        end
+
+        %% FRONTEND
+        subgraph FRONTEND["Angular Frontend"]
+            direction TB
+
+            COMP["Angular Components"]
+            INJ["Angular Dependency Injector"]
+            HTTP["HttpClient"]
+            ROUTER["Angular Router"]
+            GUARD["Route Guards"]
+            INTER["HTTP Interceptor"]
+            AUTH_SERVICE["AuthService"]
+
+            COMP --> INJ
+            INJ --> HTTP
+            INJ --> ROUTER
+
+            GUARD --> INJ
+            INTER --> INJ
+            INJ --> AUTH_SERVICE
+        end
+    end
+
+    %% MAIN CONNECTIONS
+    A --> S
+    A --> D
+
+    %% =================================================
+    %% COLOR STYLING
+    %% =================================================
+
+    classDef title fill:#172554,color:#ffffff,stroke:#1e40af,stroke-width:2px
+    classDef manager fill:#dbeafe,color:#1e3a8a,stroke:#2563eb,stroke-width:2px
+    classDef service fill:#dcfce7,color:#14532d,stroke:#16a34a,stroke-width:1px
+    classDef client fill:#fef3c7,color:#78350f,stroke:#d97706,stroke-width:1px
+    classDef backend fill:#ede9fe,color:#4c1d95,stroke:#7c3aed,stroke-width:1px
+    classDef frontend fill:#fce7f3,color:#831843,stroke:#db2777,stroke-width:1px
+    classDef legend fill:#ffffff,color:#333333,stroke:#64748b,stroke-width:1px
+
+    class A title
+    class RI manager
+    class AS,ATS,CS,MS,NS,PS,PLS,TS service
+    class C1,C2,C3,C4,C5,C6,C7,C8,C9,C10 client
+    class R,DEP,DB,SESSION,AUTH,TOKEN,USER backend
+    class COMP,INJ,HTTP,ROUTER,GUARD,INTER,AUTH_SERVICE frontend
+```

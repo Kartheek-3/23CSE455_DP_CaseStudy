@@ -1,0 +1,158 @@
+Context: Sarathi is an open-source Node.js/Express/TypeScript ride-sharing backend (github.com/AkhilMM2000/sarathi-backend, commit c8766f4) using MongoDB/Mongoose, tsyringe DI, Socket.IO, Redis, Stripe and the Google Distance Matrix API. Source lines are numbered on the left.
+
+Change request CH02 - ride cancellation: the rider or the assigned driver can cancel a ride. Only PENDING or CONFIRMED rides can be cancelled. A rider cancelling a CONFIRMED ride after 9:00 PM IST on the day before the ride pays 10% of the estimated fare (minimum Rs 50); otherwise free. Driver cancellation is free and the rider is notified. Only the booking's own rider or driver may cancel it.
+
+Answer in this order, concisely:
+1. Code smells or defects in the current code that make this change risky (cite file:line).
+2. The design pattern(s) you would introduce, with every participant role mapped to a class name.
+3. Effect on the patterns already in this code: preserved / modified / extended / replaced / removed, with a reason.
+4. The key TypeScript changes (only the new/changed parts).
+
+--- src/domain/models/Booking.ts (lines 8-15) ---
+   8 export enum BookingStatus {
+   9   PENDING = "PENDING", 
+  10   CONFIRMED = "CONFIRMED",
+  11   COMPLETED = "COMPLETED",          
+  12   CANCELLED = "CANCELLED",
+  13   REJECTED= "REJECTED",
+  14   EXPIRED = "EXPIRED",
+  15     }
+
+--- src/application/use_cases/User/CancelBooking.ts (lines 11-56) ---
+  11 interface CancelBookingInput {
+  12   bookingId: string;
+  13   status: BookingStatus;
+  14   reason: string;
+  15 }
+  16 
+  17 @injectable()
+  18 export class CancelBookingInputUseCase  implements ICancelBookingUseCase{
+  19   constructor(
+  20      @inject(TOKENS.NOTIFICATION_SERVICE)
+  21         private _notificationService: INotificationService,
+  22     @inject(TOKENS.IBOOKING_REPO)
+  23     private _bookingRepo: IBookingRepository
+  24   ) {}
+  25 
+  26   async execute(input: CancelBookingInput): Promise<void> {
+  27     const { bookingId, status, reason } = input;
+  28 
+  29     const booking = await this._bookingRepo.findBookingById(bookingId);
+  30     if (!booking) {
+  31       throw new AuthError(ERROR_MESSAGES.BOOKING_NOT_FOUND, HTTP_STATUS_CODES.NOT_FOUND);
+  32     }
+  33 
+  34     // Only restrict cancellation if the booking is already CONFIRMED (assigned to a driver)
+  35     if (booking.status === BookingStatus.CONFIRMED) {
+  36       const IST_OFFSET = 5.5 * 60 * 60 * 1000;
+  37       const startIST = new Date(new Date(booking.startDate).getTime() + IST_OFFSET);
+  38       const cutoffIST = new Date(startIST);
+  39       cutoffIST.setUTCDate(cutoffIST.getUTCDate() - 1);
+  40       cutoffIST.setUTCHours(21, 0, 0, 0); // 9:00 PM IST
+  41       const cutoffTime = cutoffIST.getTime() - IST_OFFSET;
+  42 
+  43       if (Date.now() > cutoffTime) {
+  44         throw new AuthError("Bookings can only be cancelled before 9:00 PM of the day before the ride.", HTTP_STATUS_CODES.BAD_REQUEST);
+  45       }
+  46     }
+  47 
+  48     await this._bookingRepo.updateBooking(bookingId, {
+  49       status,
+  50       reason
+  51     });
+  52     if (booking.driverId) {
+  53       await this._notificationService.cancelBookingNotification(booking.driverId.toString(), { status, reason, startDate: booking.startDate, bookingId })
+  54     }
+  55   }
+  56 }
+
+--- src/application/use_cases/Driver/UpdateBookingstatus.ts (lines 26-67) ---
+  26   async execute(input: UpdateBookingStatusInput): Promise<void> {
+  27     const { bookingId, status, reason, finalKm } = input;
+  28     let finalFare: number | undefined = undefined;
+  29 
+  30     const booking = await this._bookingRepo.findBookingById(bookingId);
+  31     
+  32     if (!booking) {
+  33       throw new AuthError(ERROR_MESSAGES.BOOKING_NOT_FOUND, HTTP_STATUS_CODES.NOT_FOUND);
+  34     }
+  35 
+  36     if (status === "REJECTED" && !reason) {
+  37       throw new AuthError(
+  38         "Reason is required when rejecting a booking.",
+  39         HTTP_STATUS_CODES.BAD_REQUEST
+  40       );
+  41     }
+  42 
+  43     // If ride is completed and finalKm is provided, calculate final fare
+  44     if (status === "COMPLETED") {
+  45       if (finalKm === undefined || finalKm === null) {
+  46         
+  47         throw new AuthError("Final KM is required to complete the ride", HTTP_STATUS_CODES.BAD_REQUEST);
+  48       }
+  49 
+  50       const estimated = booking.estimatedFare || 0;
+  51       const ratePerKm = 10;
+  52 
+  53       finalFare = estimated + finalKm * ratePerKm;
+  54     }
+  55     if (status === "REJECTED" && reason){
+  56       this._notificationService.rejectBookingNotification(booking.userId.toString(),{status,startDate:booking.startDate,bookingId,reason})
+  57     }
+  58     // Always update status, and optionally finalFare and reason
+  59     await this._bookingRepo.updateBooking(bookingId, {
+  60       status,
+  61       ...(reason && { reason }),
+  62       ...(finalFare !== undefined && { finalFare }),
+  63     });
+  64     this._notificationService.sendBookingConfirmation(booking.userId.toString(),{status,startDate:booking.startDate,bookingId});
+  65 
+  66     
+  67   }
+
+--- src/infrastructure/services/CronScheduler.ts (lines 13-43) ---
+  13     setInterval(async () => {
+  14       try {
+  15         const limitMinutes = parseInt(process.env.BOOKING_EXPIRATION_LIMIT_MINUTES || "3", 10);
+  16         const expirationTime = new Date(Date.now() - limitMinutes * 60 * 1000);
+  17         
+  18         // Find all pending bookings created more than the limit time ago
+  19         const expiredBookings = await BookingModel.find({
+  20           status: BookingStatus.PENDING,
+  21           createdAt: { $lt: expirationTime }
+  22         });
+  23 
+  24         if (expiredBookings.length === 0) return;
+  25 
+  26         const notificationService = container.resolve<INotificationService>(TOKENS.NOTIFICATION_SERVICE);
+  27 
+  28         for (const booking of expiredBookings) {
+  29           booking.status = BookingStatus.EXPIRED;
+  30           booking.reason = `No driver accepted the request within ${limitMinutes} minutes.`;
+  31           await booking.save();
+  32 
+  33           // 1. Notify the user
+  34           notificationService.rejectBookingNotification(booking.userId.toString(), {
+  35             bookingId: (booking._id as Types.ObjectId).toString(),
+  36             status: BookingStatus.EXPIRED,
+  37             startDate: booking.startDate,
+  38             reason: booking.reason
+  39           });
+  40 
+  41           // 2. Dismiss request popup for all online drivers
+  42           notificationService.bookingAssignedNotification((booking._id as Types.ObjectId).toString());
+  43         }
+
+--- src/presentation/controllers/BookingController.ts (lines 193-204) ---
+ 193   cancelBooking = catchAsync(async (req: Request, res: Response) => {
+ 194     // 1. DTO Validation
+ 195     const validatedData = ZodHelper.validate(CancelBookingSchema, req.body);
+ 196 
+ 197     // 2. Execute
+ 198     await this._cancelBookingUseCase.execute({ 
+ 199       ...validatedData, 
+ 200       status: BookingStatus.CANCELLED 
+ 201     });
+ 202 
+ 203     res.status(HTTP_STATUS_CODES.OK).json({ message: "Booking cancelled successfully" });
+ 204   });

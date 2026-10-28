@@ -1,0 +1,9 @@
+{
+  "name": "decorator-timeout-invocation",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/main.js ../test-data/invocations.txt",
+    "test": "node --test test/decorator.test.js"
+  }
+}

@@ -1,0 +1,20 @@
+# job_queue / cpp
+# working folder: Part3/code/pattern_job_queue/cpp
+# runtime: g++ 16.1.1 20260625, -std=c++17
+$ mkdir -p build
+
+
+$ g++ -std=c++17 -Wall -Wextra -o build/test job_queue.test.cpp
+
+
+$ build/test ../../../test-cases/job_queue.txt
+PASS delivers
+PASS fifo_order
+PASS blocked_host_skipped
+PASS retries_until_success
+PASS gives_up_after_max_attempts
+PASS empty_queue
+passed 6/6
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 3.4, 3.3, 3.5, 3.3, 3.4 -> median 3.4

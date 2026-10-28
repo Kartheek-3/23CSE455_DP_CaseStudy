@@ -1,0 +1,2 @@
+Role: architecture and baseline discovery lead.
+Inspect the public Laravel property-management source in Part1/code at upstream commit f127b4e218018715586a52cede08e182ca45c983. Map the request flow and identify only patterns supported by class relationships, calls, or framework lifecycles. Cover property, owner, tenant, search, lease, payment, notification, and authentication, including honest absences. For each candidate, list roles, qualified symbols, file ranges, and verification evidence. Reject names that are merely framework vocabulary without collaboration evidence.

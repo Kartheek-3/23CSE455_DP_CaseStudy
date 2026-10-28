@@ -1,0 +1,61 @@
+@startuml C1
+!pragma layout smetana
+title C1 Observer: TestExecutionListener
+
+interface TestExecutionListener <<Observer>> {
+  +testPlanExecutionStarted(TestPlan)
+  +executionSkipped(...)
+  +executionStarted(TestIdentifier)
+  +executionFinished(TestIdentifier, TestExecutionResult)
+  +reportingEntryPublished(...)
+  +testPlanExecutionFinished(TestPlan)
+}
+interface "CompositeTestExecutionListener.EagerTestExecutionListener" as Eager <<PriorityObserver>> {
+  +executionJustStarted(TestIdentifier)
+  +executionJustFinished(...)
+}
+class SummaryGeneratingListener <<ConcreteObserver>>
+class LoggingListener <<ConcreteObserver>>
+class UniqueIdTrackingListener <<ConcreteObserver>>
+class FlightRecordingExecutionListener <<ConcreteObserver>>
+class StreamInterceptingTestExecutionListener <<ConcreteObserver>>
+class CompositeTestExecutionListener <<Notifier>> {
+  -testExecutionListeners : List<TestExecutionListener>
+  -eagerTestExecutionListeners : List<EagerTestExecutionListener>
+  -notifyEach(...)
+}
+class "ListenerRegistry<TestExecutionListener>" as ListenerRegistry <<Registry>> {
+  +addAll(...)
+  +getCompositeListener()
+}
+class DefaultLauncher <<Registration>> {
+  +registerTestExecutionListeners(...)
+}
+class EngineExecutionOrchestrator <<Subject>>
+
+Eager --|> TestExecutionListener
+SummaryGeneratingListener ..|> TestExecutionListener
+LoggingListener ..|> TestExecutionListener
+UniqueIdTrackingListener ..|> TestExecutionListener
+FlightRecordingExecutionListener ..|> TestExecutionListener
+StreamInterceptingTestExecutionListener ..|> Eager
+CompositeTestExecutionListener ..|> TestExecutionListener
+CompositeTestExecutionListener o--> "0..*" TestExecutionListener : testExecutionListeners
+CompositeTestExecutionListener o--> "0..*" Eager : eagerTestExecutionListeners
+DefaultLauncher ..> ListenerRegistry : addAll(listeners)
+ListenerRegistry ..> CompositeTestExecutionListener : getCompositeListener() creates
+EngineExecutionOrchestrator ..> TestExecutionListener : testPlanExecutionStarted() / Finished()
+' aligned-with-record
+legend right
+  <b>Counted participants</b> (record in the dataset)
+  Observer: TestExecutionListener
+  ConcreteObserver: SummaryGeneratingListener
+  ConcreteObserver: LoggingListener
+  ConcreteObserver: UniqueIdTrackingListener
+  ConcreteObserver: FlightRecordingExecutionListener
+  ConcreteObserver: StreamInterceptingTestExecutionListener
+  Subject (attach): DefaultLauncher#registerTestExecutionListeners
+  Subject (notify): CompositeTestExecutionListener#notifyEach
+  Grey classes: real, shown for context, not counted
+endlegend
+@enduml

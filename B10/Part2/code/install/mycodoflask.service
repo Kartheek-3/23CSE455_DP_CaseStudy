@@ -1,0 +1,25 @@
+[Unit]
+Description=Mycodo web user interface
+After=network.target
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Restart=on-failure
+RestartSec=20
+User=root
+Group=mycodo
+WorkingDirectory=/opt/Mycodo/mycodo
+ExecStart=/opt/Mycodo/env/bin/python -m gunicorn \
+--workers 1 \
+--worker-class gthread \
+--threads 2 \
+--timeout 300 \
+--pid /var/run/mycodoflask.pid \
+--bind unix:/usr/local/mycodoflask.sock start_flask_ui:app
+
+ExecReload=/bin/kill -s HUP $MAINPID
+ExecStop=/bin/kill -s TERM $MAINPID
+
+[Install]
+WantedBy=multi-user.target

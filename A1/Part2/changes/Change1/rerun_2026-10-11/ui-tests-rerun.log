@@ -1,0 +1,11 @@
+PASS manual_posts_selected_order_and_email
+PASS automatic_posts_without_manual_email
+PASS policy_toggle_disables_and_reenables_manual_selection
+PASS empty_manual_selection_is_blocked
+PASS no_order_is_blocked
+PASS server_error_is_displayed_and_button_restored
+PASS network_failure_requests_reload_before_retry
+PASS non_json_response_restores_button
+PASS concurrent_click_is_ignored_while_pending
+9 UI script tests passed (VM/DOM doubles; no browser).
+exit=0

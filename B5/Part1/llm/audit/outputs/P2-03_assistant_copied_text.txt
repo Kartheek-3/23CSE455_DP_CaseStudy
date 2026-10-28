@@ -1,0 +1,259 @@
+# Geocoding Investigation — Final Candidate Review
+
+DaPlanStan | Original source snapshot | 23CSE455
+
+Re-examining the four classifications against their defining mechanisms produces the following preliminary decisions:
+
+Template Method
+
+REJECTED
+
+Strategy
+
+REJECTED
+
+Adapter
+
+REJECTED
+
+Observer
+
+UNCERTAIN
+
+These are source-review assessments, not completed human verification decisions. Observer remains uncertain only as a framework-mediated Turbo Streams collaboration, not as a custom observer implementation.
+
+One important detail deserves attention: the source contains both `turbo_stream_from @trip` in the trip view and `Turbo::StreamsChannel.broadcast_refresh_to(trip)` in the geocoding job. Unlike a callback alone, that pair provides concrete evidence of an intended publish-subscribe relationship. It merits further checking before dismissing Observer entirely.&#x20;
+
+
+
+## 1. Template Method — REJECTED
+
+Essential mechanism: A superclass or inherited implementation defines the fixed structure of an algorithm and delegates selected steps to overridable operations, allowing subclasses or specialized implementations to vary those steps without replacing the algorithm's overall structure.
+
+Supporting source evidence:
+
+`TripItem` includes `Geocodable` at `app/models/trip_item.rb:2` and defines its own `geocode_from_address` method at lines 34–37.
+
+```
+
+def geocode_from_address
+  return if TRANSPORT_KINDS.include?(kind.to_s) && address.blank?
+  super
+end
+
+```
+
+The use of `super` superficially resembles overriding within an inherited algorithm.
+
+Also, `Geocodable#geocode_from_address` at lines 13–23 defines a fixed sequence that invokes `geocode_with_bias` and `geocode_fallback`.
+
+Evidence against the classification:
+
+- `TripItem` overrides the entry method itself, not a designated algorithm step invoked by the concern's main method.
+- Neither `geocode_with_bias` nor `geocode_fallback` is overridden by `TripItem`.
+- The inspected source contains no other class including `Geocodable` or alternate implementation of those lookup steps.
+- No explicit specialization protocol or customizable algorithm skeleton is demonstrated.&#x20;
+
+
+
+Better explanation: Ruby module inclusion, method overriding and a guard clause around reused functionality.
+
+Final decision: REJECTED. The source demonstrates inherited method reuse, not the defining Template Method collaboration.
+
+## 2. Strategy — REJECTED
+
+Essential mechanism: A family of alternative algorithms is encapsulated behind a common behavioral contract. A context delegates to a selected implementation, allowing the algorithm to vary independently from the context.
+
+Supporting source evidence:
+
+At `app/models/concerns/geocodable.rb:13–14`:
+
+```
+
+def geocode_from_address
+  result = geocode_with_bias || geocode_fallback
+
+```
+
+Two different lookup approaches exist:
+
+- `geocode_with_bias` — lines 27–44.
+- `geocode_fallback` — lines 46–66.
+
+The first attempts an address lookup with geographic context; the second tries alternative search queries.&#x20;
+
+Evidence against the classification:
+
+- Both algorithms are methods of the same `Geocodable` module.
+- There are no separate strategy objects or classes.
+- No common interchangeable strategy contract is defined.
+- The application does not select an algorithm implementation through configuration or composition.
+- The `||` operator creates a fixed sequence: attempt the first method, then the second if needed.
+
+Better explanation: Ordinary conditional fallback logic implemented through private methods.
+
+Final decision: REJECTED. Having two different approaches is not sufficient to establish Strategy. The defining interchangeable algorithm collaboration is absent.
+
+## 3. Adapter — REJECTED
+
+Essential mechanism: An adapter translates an existing component's interface into a different interface expected by its client, allowing otherwise incompatible interfaces to collaborate.
+
+Supporting source evidence:
+
+At `app/models/concerns/geocodable.rb:32–35`, the application calls:
+
+```
+
+ref = Geocoder.search(city_hint).first
+return Geocoder.search(address).first unless ref
+
+result = Geocoder.search(
+  address,
+  params: { lat: ref.latitude, lon: ref.longitude }
+).first
+
+```
+
+The application exposes a domain-oriented method, `geocode_from_address`, and internally calls the Geocoder API. It subsequently stores returned latitude and longitude values using Active Record.
+
+The initializer at `config/initializers/geocoder.rb:1–7` configures Geocoder to use Nominatim.&#x20;
+
+
+
+Evidence against the classification:
+
+- No incompatible client/adaptee interfaces are shown.
+- No explicit target interface is defined that the wrapper is required to satisfy.
+- `Geocodable` does not primarily translate between interface contracts.
+- Its main responsibility is implementing application-specific lookup rules and persistence decisions.
+- It directly uses the Geocoder gem's existing API.
+
+The Geocoder gem may itself abstract different lookup providers, but that is dependency-supplied behavior, not evidence that DaPlanStan implements an Adapter.
+
+Better explanation: Third-party API integration encapsulated in a reusable model concern.
+
+Final decision: REJECTED. Wrapping an API call does not automatically create an Adapter pattern.
+
+## 4. Observer — UNCERTAIN
+
+Essential mechanism: A subject maintains or uses a notification relationship with one or more observers. When a relevant event occurs, subscribed observers are notified and can update their state or behavior.
+
+This can be implemented directly through application objects or indirectly through a framework's subscription and event-delivery infrastructure.
+
+### Supporting source evidence
+
+There are two mechanisms that initially resemble Observer.
+
+A. Active Record callback
+
+At `app/models/concerns/geocodable.rb:4–7`:
+
+```
+
+included do
+  after_save :geocode_from_address,
+    if: -> {
+      (saved_change_to_address? || saved_change_to_name?) &&
+        !geocoded?
+    }
+end
+
+```
+
+A save event triggers application-defined behavior when the callback condition is satisfied.
+
+However, this is a Rails lifecycle callback. The source does not demonstrate an application-owned subject managing observers or notifying registered observer objects.
+
+B. Turbo Streams subscription and refresh
+
+At `app/views/trips/show.html.erb:2`:
+
+```
+
+<%= turbo_stream_from @trip %>
+
+```
+
+At `app/jobs/geocode_trip_items_job.rb:20–21`:
+
+```
+
+# Broadcast a page refresh so map pins appear without the user doing anything
+Turbo::StreamsChannel.broadcast_refresh_to(trip)
+
+```
+
+The job retrieves the `Trip` using its ID at lines 4–6, so its broadcast refers to the same logical trip resource used by the trip view.
+
+This is stronger evidence than a generic callback: the application declares a stream subscription and requests a broadcast for the corresponding resource.&#x20;
+
+
+
+### Evidence against confirmation
+
+- Rails supplies the callback mechanism.
+- Turbo supplies stream subscriptions, broadcasting and client-side stream handling.
+- No independently implemented application-level observer interface, observer registry or notification dispatcher has been identified.
+- The source alone does not verify that an active browser subscription actually receives and processes the broadcast.
+- The application's use of a framework-supported publish-subscribe mechanism does not necessarily mean it should be counted as an application-implemented GoF Observer instance.
+
+### Better explanation
+
+A framework-mediated reactive update mechanism using Rails callbacks and Turbo Streams.
+
+This could be described as an Observer-like framework idiom, but that classification requires a more explicit decision about origin and evidence.
+
+### Exactly what remains to be checked
+
+1. Framework implementation: Inspect the relevant installed Turbo Rails version's `turbo_stream_from` subscription handling and `broadcast_refresh_to` delivery path to establish how subscribers are registered and notified.
+2. Runtime behavior: With an active trip page, execute the geocoding job and verify that the client receives and processes a refresh for the matching trip stream. Preserve the result as runtime evidence rather than assume success from method names.
+3. Origin and classification: Determine whether the faculty's permitted framework-idiom category includes application-configured subscriptions whose implementation is supplied by Turbo, while keeping them separate from application-owned pattern instances.
+
+Final decision: UNCERTAIN.
+
+The Active Record callback alone is insufficient for Observer. The explicit Turbo subscription/broadcast pair supports further examination of a framework-mediated Observer collaboration, but not its confirmation as an application-implemented GoF pattern.
+
+## 5. Final comparison table
+
+| Candidate       | Required mechanism                                                              | What the source actually does                                             | Final decision | Reason                                                                                                                             |
+| --------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Template Method | Fixed algorithm structure with overridable algorithm steps                      | `TripItem` adds a guard and calls `super` into the shared concern         | REJECTED       | No demonstrated overriding of designated algorithm steps                                                                           |
+| Strategy        | Interchangeable algorithm implementations behind a shared contract              | Two private lookup methods are called in a fixed fallback sequence        | REJECTED       | No independently selectable strategies or strategy contract                                                                        |
+| Adapter         | Translation between incompatible interfaces                                     | Application methods invoke Geocoder and persist returned results          | REJECTED       | Ordinary third-party integration without demonstrated interface incompatibility                                                    |
+| Observer        | Registered or subscribed observers receive notifications when a subject changes | Active Record callback plus Turbo trip subscription and refresh broadcast | UNCERTAIN      | Framework-mediated subscription is visible, but its implementation, runtime delivery and classification boundary remain unverified |
+
+## 6. Final geocoding conclusion for the candidate-review record
+
+### Geocoding Collaboration — Candidate Review
+
+**Source:** DaPlanStan original source archive\
+**Scope:** Geocodable concern, TripItem model, GeocodeTripItemsJob, TripsController, related import controller, Turbo trip view and Geocoder configuration.
+
+**Review status:** Static source analysis completed; independent human verification pending.
+
+**Observed collaboration:**
+
+The geocoding functionality is implemented through a shared `Geocodable` concern included in the `TripItem` model. The model adds a transport-specific guard before delegating to the concern's implementation. The concern performs a primary location lookup followed by fallback queries when necessary and persists the resulting coordinates.
+
+Geocoding can be triggered through an Active Record save callback or through an application-defined background job initiated by controller actions. The application calls the Geocoder dependency for location searches and uses Turbo Streams to request a page refresh following job processing.
+
+**Candidate decisions:**
+
+1. Template Method — REJECTED. The implementation demonstrates Ruby method overriding and module reuse but not a fixed template algorithm with specialized algorithm steps.
+2. Strategy — REJECTED. The lookup methods form a fixed conditional fallback sequence rather than interchangeable strategy implementations.
+3. Adapter — REJECTED. The concern integrates an external API without demonstrating the incompatible-interface translation required by Adapter.
+4. Observer — UNCERTAIN. Rails callbacks alone do not establish an application-owned Observer. However, the trip view's Turbo stream subscription and the job's matching refresh broadcast provide evidence of a possible framework-mediated Observer idiom. Framework behavior, runtime notification and classification boundaries require further verification.
+
+**Strongest alternative explanation:**
+
+The implementation is best understood as reusable Ruby model behavior combined with Rails lifecycle callbacks, background-job orchestration, sequential geocoding fallback logic, Geocoder dependency integration and Turbo-based UI refreshing.
+
+**Conclusion:**
+
+No application-implemented GoF pattern has been established in the geocoding collaboration. Three proposed classifications are rejected on structural grounds. One framework-mediated Observer classification remains uncertain pending targeted verification.
+
+No geocoding instance should be entered in the confirmed `patterns.csv` inventory or included in confirmed pattern counts at this stage. Preserve these decisions in the rejected/uncertain candidate-review evidence and record any subsequent human verification separately.
+
+**Limitations:** Findings are based on static inspection of the supplied source archive. Archive-to-commit correspondence and runtime behavior remain unverified.
+
+The geocoding investigation is now sufficiently assessed to close the three rejected hypotheses and retain only the specific Turbo-mediated Observer question as unresolved. There is no need to reopen the rejected candidates unless new source evidence materially changes their structural assessment.

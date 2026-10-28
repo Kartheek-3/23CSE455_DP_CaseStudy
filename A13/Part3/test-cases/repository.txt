@@ -1,0 +1,7 @@
+# case|commands: insert <name>; find <name>; findorfail <name>; count|expected
+insert_one_returns_stored_entity|insert alice|{id=1,name=alice}
+ids_increase|insert alice;insert bob|{id=1,name=alice}~{id=2,name=bob}
+find_existing|insert alice;insert bob;find bob|{id=1,name=alice}~{id=2,name=bob}~{id=2,name=bob}
+find_missing_is_none|find zed|none
+find_or_fail_missing_raises|findorfail zed|ERR:EntityNotFound
+count_rows|insert a;insert b;count|{id=1,name=a}~{id=2,name=b}~2

@@ -1,0 +1,65 @@
+name: Mycodo
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          sudo bash mycodo/scripts/upgrade_commands.sh update-apt
+          sudo apt install -y curl libboost-python-dev gawk git libffi-dev libi2c-dev nginx python3-dev sqlite3 swig
+          sudo bash mycodo/scripts/upgrade_commands.sh update-packages
+          git clone --recursive https://github.com/WiringPi/WiringPi-Python.git && cd WiringPi-Python && git submodule update --init && cd WiringPi && ./build && cd ../..
+          sudo bash mycodo/scripts/upgrade_commands.sh build-pigpiod
+          sudo bash mycodo/scripts/upgrade_commands.sh update-influxdb-2
+          sleep 3
+          sudo bash mycodo/scripts/upgrade_commands.sh update-influxdb-2-db-user
+          sudo useradd -M mycodo
+          export PATH=/usr/bin:$PATH
+      - name: Test setup components
+        run: |
+          sudo bash mycodo/scripts/upgrade_commands.sh setup-virtualenv
+          sudo bash mycodo/scripts/upgrade_commands.sh update-pip3
+          sudo bash mycodo/scripts/upgrade_commands.sh update-pip3-packages
+          sudo bash mycodo/scripts/upgrade_commands.sh ssl-certs-generate
+          sudo bash mycodo/scripts/upgrade_commands.sh compile-translations
+          sudo bash mycodo/scripts/upgrade_commands.sh generate-widget-html
+          sudo bash mycodo/scripts/generate_translations_pybabel.sh
+          printf "\n#### Generating Docs\n"
+          env/bin/python mycodo/scripts/generate_manual_actions.py
+          env/bin/python mycodo/scripts/generate_manual_functions.py
+          env/bin/python mycodo/scripts/generate_manual_inputs_by_measure.py
+          env/bin/python mycodo/scripts/generate_manual_inputs.py
+          env/bin/python mycodo/scripts/generate_manual_outputs.py
+          env/bin/python mycodo/scripts/generate_manual_widgets.py
+          printf "\n#### Starting Flask Frontend\n"
+          sudo env/bin/python mycodo/start_flask_ui.py &
+          sleep 10
+          wget --no-check-certificate -p https://127.0.0.1 -O /dev/null
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Generate API documentation
+        run: |
+          printf "\n# Installing redoc-cli\n"
+          sudo npm install -g redoc-cli
+          printf "\n# Generating API Manual\n"
+          sudo bash mycodo/scripts/generate_manual_api.sh
+      - name: Test with pytest
+        run: |
+          cd mycodo && ../env/bin/pytest -W ignore::DeprecationWarning -s tests/software_tests

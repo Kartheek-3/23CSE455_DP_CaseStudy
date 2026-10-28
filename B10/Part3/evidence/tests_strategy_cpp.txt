@@ -1,0 +1,9 @@
+# Strategy / cpp
+working folder: Part3/strategy_setpoint_schedule/cpp
+$ g++ -std=c++14 -O2 -Wall -o test_setpoint_schedule.exe test_setpoint_schedule.cpp
+
+[compile exit code: 0]
+$ test_setpoint_schedule.exe
+Strategy tests: 12/12 passed
+
+[exit code: 0]

@@ -1,0 +1,269 @@
+# DaPlanStan — Scenario 2 Implementation Complete
+
+AFTER source created and packaged
+
+Scenario 2 — Multiple Booking Providers has been implemented in a separate Rails source copy.
+
+The implementation uses Atlas Demo and Beacon Demo, two fictional providers with different local data formats. Users can compare sample offers and save a selected offer as a `TripItem` with status `idea`.
+
+No real reservations, payments, expenses or confirmation references are created.
+
+## 1. Download the completed files
+
+Scenario 2 AFTER Source
+
+Complete Rails project · ZIP · 23 MB
+
+Download Scenario 2 Complete Source
+
+Scenario 1 → Scenario 2 Source Patch
+
+Unified patch · 53 KB · Patch dry-run successful
+
+Download Source Diff
+
+The ZIP passed archive integrity verification and contains `SCENARIO2_CHANGE_RECORD.md`, the implementation, test files and execution evidence.
+
+## 2. Implementation summary
+
+| Requirement                           | Result                       |
+| ------------------------------------- | ---------------------------- |
+| Start from Scenario 1 AFTER           |                              |
+| Separate Scenario 2 version           |                              |
+| Atlas and Beacon fixtures             |                              |
+| Provider registry and normalization   |                              |
+| Owner-only offer browsing             |                              |
+| Server-side offer validation          |                              |
+| Save selected offer as `idea`         |                              |
+| Provider-specific duplicate detection |                              |
+| Reuse existing geocoding              |                              |
+| Automated test files added            |                              |
+| Full Rails integration tests          | &#x20;Blocked by environment |
+
+## 3. Exact source changes
+
+The file comparison against the Scenario 1 ZIP confirmed:
+
+# 3
+
+Modified files
+
+# 17
+
+New files
+
+# 0
+
+Deleted files
+
+### Modified existing files
+
+| File                                   | AFTER lines | Change                                                    |
+| -------------------------------------- | ----------- | --------------------------------------------------------- |
+| `config/routes.rb`                     | 42          | Added nested booking-option routes                        |
+| `app/views/trips/_trip_panel.html.erb` | 246–253     | Added owner-only Offers link                              |
+| `README.md`                            | 155–201     | Added Scenario 2 usage, limitations and test instructions |
+
+The route added is:
+
+```
+resources :booking_options, only: [ :index, :create ]
+```
+
+### New production files
+
+| File                                                | AFTER lines | Purpose                                   |
+| --------------------------------------------------- | ----------- | ----------------------------------------- |
+| `app/controllers/booking_options_controller.rb`     | 1–77        | Browse and save selected offers           |
+| `app/services/booking_providers/registry.rb`        | 1–68        | Whitelist and normalized-offer validation |
+| `app/services/booking_providers/atlas_adapter.rb`   | 1–37        | Atlas format normalization                |
+| `app/services/booking_providers/beacon_adapter.rb`  | 1–35        | Beacon format normalization               |
+| `app/views/booking_options/index.html.erb`          | 1–49        | Selection and offer interface             |
+| `config/booking_provider_fixtures/atlas_demo.json`  | Entire file | Fictional Atlas offers                    |
+| `config/booking_provider_fixtures/beacon_demo.json` | Entire file | Fictional Beacon offers                   |
+
+The other ten new files are three Rails test files, five evidence files, a standalone validation test script and `SCENARIO2_CHANGE_RECORD.md`.
+
+## 4. Final provider collaboration
+
+Trip owner opens Browse sample offers
+
+BookingOptionsController#index
+
+Authorization and provider/destination selection
+
+BookingProviders::Registry
+
+Select an approved implementation
+
+AtlasAdapter
+
+Atlas local fixture
+
+BeaconAdapter
+
+Beacon local fixture
+
+Validated normalized offers → UI
+
+User selects Add as idea
+
+BookingOptionsController#create re-fetches the trusted offer
+
+TripItem saved as idea
+
+Existing GeocodeTripItemsJob → Turbo refresh → Timeline/Map
+
+## 5. Atlas and Beacon normalization
+
+Both providers have different source representations but return the same nine-field offer contract.
+
+| Information   | Atlas source            | Beacon source |
+| ------------- | ----------------------- | ------------- |
+| Collection    | `destinations → offers` | `results`     |
+| Offer ID      | `id`                    | `code`        |
+| Name          | `title`                 | `label`       |
+| Category      | `category`              | `type`        |
+| Location      | `location`              | `address`     |
+| Description   | `details`               | `summary`     |
+| Sample amount | `price.value`           | `amount`      |
+| Currency      | `price.currency`        | `currency`    |
+
+The normalized structure contains `provider_code`, `provider_name`, `offer_id`, `name`, `kind`, `address`, `description`, `sample_amount` and `currency`.
+
+Both fixtures support Rome and Paris, with five fictional offers per provider.
+
+Invalid kinds, amounts, currencies, offer IDs and malformed fixture structures result in controlled errors.
+
+## 6. Authorization, tampering and persistence
+
+The controller requires an authenticated user with an owner role for the selected trip.
+
+On POST, it accepts only the three identifying parameters: `provider_code`, `destination_code` and `offer_id`.
+
+It retrieves the selected offer again from the server-owned fixture. Browser-supplied prices, names, kinds, status values and confirmation references are ignored.
+
+The saved item has:
+
+| Field                   | Value                                                        |
+| ----------------------- | ------------------------------------------------------------ |
+| `status`                | `idea`                                                       |
+| `added_by`              | Current authenticated user                                   |
+| `name`                  | Provider-prefixed offer name                                 |
+| `notes`                 | Provider identity, offer ID, description and demo disclaimer |
+| `amount` / `currency`   | Validated fictional estimate                                 |
+| `starts_at` / `ends_at` | `nil`                                                        |
+| `confirmation_ref`      | `nil`                                                        |
+| `inbox_item_id`         | `nil`                                                        |
+
+A controlled marker, such as `[demo_provider_offer:atlas_demo:atlas-rome-walk-01]`, is placed in the notes. It is used to identify an already-added idea from the same provider and offer ID.
+
+No Expense or InboxItem is created.
+
+## 7. Geocoding reuse
+
+The new controller sets `defer_geocoding = true` on the specific new TripItem before saving it.
+
+After saving, it calls the existing `GeocodeTripItemsJob.perform_later`.
+
+The existing job then loads a fresh record and performs geocoding normally, followed by the existing Turbo refresh.
+
+No global callback manipulation was introduced, and the existing `TripItem`, `Geocodable` and geocoding job source files remain unchanged.
+
+## 8. Tests added and actual results
+
+### New Rails tests
+
+| File                                                         | Coverage                                                              |
+| ------------------------------------------------------------ | --------------------------------------------------------------------- |
+| `test/services/booking_providers_test.rb`                    | Fixture formats, normalized output, invalid data, registry, isolation |
+| `test/controllers/booking_options_controller_test.rb`        | Authorization, offer selection, tampering, duplicates, persistence    |
+| `test/models/scenario2_email_and_refresh_regression_test.rb` | Genuine confirmation-email linking and existing geocoding/Turbo path  |
+
+### Verification executed
+
+Standalone checks
+
+# 10/10
+
+67 assertions · 0 failures/errors/skips
+
+Ruby syntax checks
+
+# 9/9
+
+All Syntax OK
+
+Full Rails verification remains blocked.
+
+| Detail                             | Actual result                     |
+| ---------------------------------- | --------------------------------- |
+| Command                            | `bin/rails test`                  |
+| Exit code                          | 1                                 |
+| Available Ruby                     | 3.3.8                             |
+| Required Ruby                      | 3.4.2                             |
+| Primary error                      | `Bundler::GemNotFound`            |
+| Missing dependency                 | Rails 8.1.3 and other locked gems |
+| Rails tests executed               | 0                                 |
+| Rails passes/failures/errors/skips | Not available                     |
+
+The provider validation checks were executed using standalone Ruby, not Rails. They do not establish that database persistence, authorization or rendering has passed integration tests.
+
+No live booking-provider requests were made. Live Anthropic and geocoding functionality were not retested.
+
+## 9. Regression status
+
+The source comparison confirms that the following original areas were not modified:
+
+- Scenario 1 personalized generation and preview/confirmation.
+- Existing external JSON import and `bulk_create_items`.
+- Manual TripItem creation.
+- Instance-scoped callback deferral.
+- Existing geocoding and Turbo broadcasting.
+- TripMailbox, ParseInboxItemJob, InboxItem and InboxItemsController.
+- Authentication, membership and Expense models.
+- Database schema and migrations.
+
+The existing Scenario 1 tests remain unchanged, and additional email-linking and refresh regression tests were written.
+
+Regression preservation is established at the source-diff level, not yet by a successful Rails test run.
+
+## 10. Implementation differences and remaining limitations
+
+The feature follows the approved design. The principal implementation detail added is a controlled provider-and-offer marker in `TripItem.notes` to support deduplication without a migration.
+
+Remaining limitations include sequential rather than concurrency-safe duplicate prevention, provider metadata being stored as text rather than relational fields, fixed demo destinations and invented costs, and the unavailable Rails integration environment.
+
+The Source ZIP contains the complete change record and logs needed to continue verification in a compatible Rails environment.
+
+## 11. Tentative pattern candidates for the next step
+
+No design pattern has been newly confirmed or counted.
+
+| Candidate          | Source collaboration to inspect                                                                                                  |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| Adapter (GoF)      | Registry, AtlasAdapter, BeaconAdapter and their normalized interface                                                             |
+| Controller (GRASP) | BookingOptionsController coordinating the provider browsing and offer-addition system events                                     |
+| Strategy (GoF)     | Consider only if the implemented behaviors demonstrate genuine interchangeable algorithms, not merely different fixture mappings |
+
+There is no present justification to count the registry as a Factory simply because it selects a provider.
+
+The previously confirmed pattern counts remain:
+
+| Pattern                    | Count |
+| -------------------------- | ----- |
+| Controller (GRASP)         | 7     |
+| Information Expert (GRASP) | 1     |
+| Observer (GoF)             | 2     |
+| Total                      | 10    |
+| Distinct types             | 3     |
+
+## 12. Final handoff
+
+Scenario 2 now has a complete separate AFTER source snapshot and an applicable source patch. The patch also passed a dry-run against the Scenario 1 input source.
+
+The next step is Scenario 2 AFTER source and pattern-evolution verification, including determining whether the Adapter and Controller candidates constitute distinct confirmed collaborations.
+
+The team should also complete the blocked Rails tests using Ruby 3.4.2 and the locked dependencies before claiming end-to-end runtime verification.
+
+Scenario 3 has not been started.

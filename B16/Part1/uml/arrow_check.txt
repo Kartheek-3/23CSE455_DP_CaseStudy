@@ -1,0 +1,110 @@
+A1: AbstractTestDescriptor ..|> TestDescriptor  -> OK
+A1: EngineDescriptor --|> AbstractTestDescriptor  -> OK
+A1: JupiterEngineDescriptor --|> EngineDescriptor  -> OK
+A1: JupiterTestDescriptor --|> AbstractTestDescriptor  -> OK
+A1: ClassBasedTestDescriptor --|> JupiterTestDescriptor  -> OK
+A1: ClassTestDescriptor --|> ClassBasedTestDescriptor  -> OK
+A1: MethodBasedTestDescriptor --|> JupiterTestDescriptor  -> OK
+A1: TestMethodTestDescriptor --|> MethodBasedTestDescriptor  -> OK
+A2: CompositeFilter ..|> Filter  -> OK
+A2: PostDiscoveryFilter --|> Filter  -> OK
+A2: EngineFilter ..|> Filter  -> OK
+A3: PostDiscoveryFilter --|> Filter  -> OK
+A3: DiscoveryFilter --|> Filter  -> OK
+A3: MethodFilter --|> PostDiscoveryFilter  -> OK
+A3: ClassNameFilter --|> DiscoveryFilter  -> OK
+A3: AbstractMethodFilter ..|> MethodFilter  -> OK
+A3: AbstractClassNameFilter ..|> ClassNameFilter  -> OK
+A3: IncludeMethodFilter --|> AbstractMethodFilter  -> OK
+A3: ExcludeMethodFilter --|> AbstractMethodFilter  -> OK
+A3: IncludeClassNameFilter --|> AbstractClassNameFilter  -> OK
+A3: ExcludeClassNameFilter --|> AbstractClassNameFilter  -> OK
+A3: EngineFilter ..|> Filter  -> OK
+A3: TagLambda ..|> PostDiscoveryFilter  -> not checkable (lambda/JDK)
+A4: ClassBasedTestDescriptor --|> JupiterTestDescriptor  -> OK
+A4: MethodBasedTestDescriptor --|> JupiterTestDescriptor  -> OK
+A4: DynamicNodeTestDescriptor --|> JupiterTestDescriptor  -> OK
+A4: ClassTestDescriptor --|> ClassBasedTestDescriptor  -> OK
+A4: TestMethodTestDescriptor --|> MethodBasedTestDescriptor  -> OK
+A4: DynamicContainerTestDescriptor --|> DynamicNodeTestDescriptor  -> OK
+A5: ClassOrderingVisitor --|> AbstractOrderingVisitor  -> OK
+A5: MethodOrderingVisitor --|> AbstractOrderingVisitor  -> OK
+A6: LauncherDiscoveryListener --|> EngineDiscoveryListener  -> OK
+A6: DiscoveryIssueCollector ..|> LauncherDiscoveryListener  -> OK
+A6: LoggingLauncherDiscoveryListener ..|> LauncherDiscoveryListener  -> OK
+A6: AbortOnFailureLauncherDiscoveryListener ..|> LauncherDiscoveryListener  -> OK
+A6: FlightRecordingDiscoveryListener ..|> LauncherDiscoveryListener  -> OK
+A6: CompositeLauncherDiscoveryListener ..|> LauncherDiscoveryListener  -> OK
+A7: DefaultClassDescriptor --|> Wrapper  -> OK
+A7: DefaultMethodDescriptor --|> Wrapper  -> OK
+A7: DefaultClassDescriptor ..|> ClassDescriptor  -> OK
+A7: DefaultMethodDescriptor ..|> MethodDescriptor  -> OK
+B1: HierarchicalTestEngine ..|> TestEngine  -> OK
+B1: JupiterTestEngine --|> HierarchicalTestEngine  -> OK
+B2: JupiterTestEngine --|> HierarchicalTestEngine  -> OK
+B2: SameThreadHierarchicalTestExecutorService ..|> HierarchicalTestExecutorService  -> OK
+B2: JupiterEngineExecutionContext ..|> EngineExecutionContext  -> OK
+B3: SameThreadHierarchicalTestExecutorService ..|> HierarchicalTestExecutorService  -> OK
+B3: ForkJoinPoolHierarchicalTestExecutorService ..|> HierarchicalTestExecutorService  -> OK
+B3: WorkerThreadPoolHierarchicalTestExecutorService ..|> HierarchicalTestExecutorService  -> OK
+B4: DefaultParallelExecutionConfigurationStrategy ..|> ParallelExecutionConfigurationStrategy  -> OK
+B5: DefaultLauncher ..|> Launcher  -> OK
+B5: DelegatingLauncher ..|> Launcher  -> OK
+B5: InterceptingLauncher --|> DelegatingLauncher  -> OK
+B6: DelegatingEngineExecutionListener ..|> EngineExecutionListener  -> OK
+B6: StackTracePruningEngineExecutionListener --|> DelegatingEngineExecutionListener  -> OK
+B6: OutcomeDelayingEngineExecutionListener --|> DelegatingEngineExecutionListener  -> OK
+B6: MemoryCleanupListener --|> DelegatingEngineExecutionListener  -> OK
+B7: ExecutionListenerAdapter ..|> EngineExecutionListener  -> OK
+B8: ExecutionListenerAdapter ..|> EngineExecutionListener  -> OK
+B8: CompositeEngineExecutionListener ..|> EngineExecutionListener  -> OK
+B8: DelegatingEngineExecutionListener ..|> EngineExecutionListener  -> OK
+B9: SKIPPED (not a confirmed B16 instance)
+B9: NodeTestTask ..|> TestTask  -> OK
+B9: ForkJoinPoolHierarchicalTestExecutorService ..|> HierarchicalTestExecutorService  -> OK
+B10: NoOpNode ..|> Node  -> not checkable (lambda/JDK)
+B10: JupiterTestDescriptor ..|> Node  -> OK
+C1: Eager --|> TestExecutionListener  -> OK
+C1: SummaryGeneratingListener ..|> TestExecutionListener  -> OK
+C1: LoggingListener ..|> TestExecutionListener  -> OK
+C1: UniqueIdTrackingListener ..|> TestExecutionListener  -> OK
+C1: FlightRecordingExecutionListener ..|> TestExecutionListener  -> OK
+C1: StreamInterceptingTestExecutionListener ..|> Eager  -> OK
+C1: CompositeTestExecutionListener ..|> TestExecutionListener  -> OK
+C2: CompositeLauncherSessionListener ..|> LauncherSessionListener  -> OK
+C4: JulLambda ..|> BiConsumer  -> not checkable (lambda/JDK)
+C4: UserLambda ..|> BiConsumer  -> not checkable (lambda/JDK)
+C5: SKIPPED (not a confirmed B16 instance)
+C5: DefaultTestReporter ..|> TestReporter  -> OK
+C6: StreamInterceptor --|> PrintStream  -> OK
+C7: EelNoop ..|> EngineExecutionListener  -> not checkable (lambda/JDK)
+C7: LslNoop ..|> LauncherSessionListener  -> not checkable (lambda/JDK)
+D1: Standard ..|> TempDirFactory  -> OK
+D2: Standard ..|> TempDirDeletionStrategy  -> OK
+D2: IgnoreFailures ..|> TempDirDeletionStrategy  -> OK
+D3: TempDirectory ..|> ParameterResolver  -> OK
+D3: TestInfoParameterResolver ..|> ParameterResolver  -> OK
+D3: TestReporterParameterResolver ..|> ParameterResolver  -> OK
+D3: RepetitionExtension ..|> ParameterResolver  -> OK
+D4: DisabledCondition ..|> ExecutionCondition  -> OK
+D4: OsBased ..|> ExecutionCondition  -> OK
+D4: EnabledOnOsCondition --|> OsBased  -> OK
+D4: DisabledOnOsCondition --|> OsBased  -> OK
+D5: JupiterClose ..|> CloseAction  -> not checkable (lambda/JDK)
+D5: AutoClose ..|> CloseAction  -> not checkable (lambda/JDK)
+D6: NamespaceAwareStore ..|> JStore  -> OK
+D7: BeforeEachMethodAdapter --|> Extension  -> OK
+D7: AfterEachMethodAdapter --|> Extension  -> OK
+D7: BeforeLambda ..|> BeforeEachMethodAdapter  -> not checkable (lambda/JDK)
+D7: AfterLambda ..|> AfterEachMethodAdapter  -> not checkable (lambda/JDK)
+D8: RepetitionExtension ..|> TestWatcher  -> OK
+D8: TestMethodTestDescriptor --|> MethodBasedTestDescriptor  -> OK
+D9: TimeoutExtension ..|> InvocationInterceptor  -> OK
+D9: Link ..|> Invocation  -> OK
+D10: MethodInvocation ..|> Invocation  -> OK
+D10: ConstructorInvocation ..|> Invocation  -> OK
+D10: SameThread ..|> Invocation  -> OK
+D10: SeparateThread ..|> Invocation  -> OK
+D10: Validating ..|> Invocation  -> OK
+D11: MethodInvocation ..|> Invocation  -> OK
+D11: ConstructorInvocation ..|> Invocation  -> OK

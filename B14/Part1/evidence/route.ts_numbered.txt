@@ -1,0 +1,77 @@
+﻿   1: import { timingSafeEqual } from 'crypto'
+   2: import { NextRequest, NextResponse } from 'next/server'
+   3: import { sendAdminEmail, sendSlackNotification, type NotificationProfile } from '@/lib/notifications/user-confirmed'
+   4: 
+   5: interface WebhookPayload {
+   6:   type: string
+   7:   table: string
+   8:   record: {
+   9:     id: string
+  10:     email: string
+  11:     full_name: string | null
+  12:     confirmed_at: string | null
+  13:   }
+  14:   old_record: {
+  15:     confirmed_at: string | null
+  16:   } | null
+  17: }
+  18: 
+  19: function secureCompare(a: string, b: string): boolean {
+  20:   const bufA = Buffer.from(a)
+  21:   const bufB = Buffer.from(b)
+  22:   if (bufA.length !== bufB.length) return false
+  23:   return timingSafeEqual(bufA, bufB)
+  24: }
+  25: 
+  26: export async function POST(req: NextRequest) {
+  27:   const secret = req.headers.get('x-webhook-secret')
+  28:   const envSecret = process.env.WEBHOOK_SECRET
+  29: 
+  30:   if (!envSecret) {
+  31:     console.error('[webhook] WEBHOOK_SECRET is not configured')
+  32:     return NextResponse.json({ error: 'Server misconfiguration' }, { status: 500 })
+  33:   }
+  34: 
+  35:   if (!secret || !secureCompare(secret, envSecret)) {
+  36:     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  37:   }
+  38: 
+  39:   let body: WebhookPayload
+  40:   try {
+  41:     body = await req.json()
+  42:   } catch {
+  43:     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+  44:   }
+  45: 
+  46:   if (body?.type !== 'UPDATE' || body?.table !== 'profiles') {
+  47:     return NextResponse.json({ error: 'Invalid webhook event' }, { status: 400 })
+  48:   }
+  49: 
+  50:   if (!body?.record?.id || !body.record.email) {
+  51:     return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
+  52:   }
+  53: 
+  54:   const { id, email, full_name, confirmed_at } = body.record
+  55: 
+  56:   if (!confirmed_at) {
+  57:     return NextResponse.json({ error: 'Missing confirmed_at' }, { status: 400 })
+  58:   }
+  59: 
+  60:   // Skip if old_record is absent or already had confirmed_at set (prevents duplicate notifications)
+  61:   if (body.old_record == null || body.old_record.confirmed_at !== null) {
+  62:     return NextResponse.json({ success: true, skipped: true })
+  63:   }
+  64: 
+  65:   const profile: NotificationProfile = { id, email, full_name, confirmed_at }
+  66: 
+  67:   await Promise.all([
+  68:     sendAdminEmail(profile).catch((err) =>
+  69:       console.error('[webhook] sendAdminEmail failed:', err)
+  70:     ),
+  71:     sendSlackNotification(profile).catch((err) =>
+  72:       console.error('[webhook] sendSlackNotification failed:', err)
+  73:     ),
+  74:   ])
+  75: 
+  76:   return NextResponse.json({ success: true })
+  77: }

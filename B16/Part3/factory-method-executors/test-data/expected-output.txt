@@ -1,0 +1,10 @@
+== same-thread engine ==
+executor: same thread
+[main] add -> PASS
+[main] div -> FAIL
+[main] sub -> PASS
+== pooled engine ==
+executor: pool of 2 workers
+[worker-1] add -> PASS
+[worker-2] div -> FAIL
+[worker-1] sub -> PASS

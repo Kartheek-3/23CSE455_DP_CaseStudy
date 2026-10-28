@@ -1,0 +1,750 @@
+# CH03 IMPLEMENTATION PROMPT — Context-Aware Link Safety and Spam Protection in Misskey
+
+## 1. Objective
+
+Implement **Change 3 (CH03): Context-Aware Link Safety and Spam Protection** in the actual Misskey application.
+
+You have already received the master instruction, repository architecture context, baseline information, and Part 2 evidence requirements. Follow those instructions and inspect the real source before making implementation decisions.
+
+Changes already in scope:
+- CH01: Native Events, RSVP and Reminder Notifications.
+- CH02: First-Class Audio Posts with Transcription.
+
+Your current task is link safety and spam protection only.
+
+Do not reimplement the Events or Audio features. Do not implement the personalized recommendation feed. Do not add unrelated moderation functionality that Misskey already provides.
+
+The two deliverables are:
+
+1. A working, integrated link-safety and spam-protection feature.
+2. A complete, accurate Part 2 evidence package documenting the implementation, automated tests, commit, metrics, pattern evolution and verification.
+
+Do not return only a proposal or standalone demonstration. Implement the feature in the actual Misskey repository.
+
+## 2. Repository and source-version requirements
+
+Misskey repository:
+
+`/home/vighnesh/DP-case_study/misskey`
+
+Evidence directory:
+
+`/home/vighnesh/DP-case_study/A1/Part2`
+
+Original baseline:
+
+`5f501341d49d2bc3fa7e817ce7548a82174326eb`
+
+The earlier reports identify the following implementation commits:
+
+- CH01: `608b45de20dce0a78459025320bfdeb0c4e47a78`
+- CH02: `9a4398a103e392a0ea634eaf521470985985145d`
+
+These are historical references, not assumptions about the current state. A subsequent corrective commit may have changed the effective source.
+
+Before making changes:
+
+1. Inspect the current branch, `git status`, `HEAD` and recent commit history.
+2. Identify the actual latest verified CH02 source snapshot.
+3. Confirm the existing CH01 and CH02 changes remain intact.
+4. Preserve all uncommitted user changes.
+5. Identify the precise source scope affected by CH03.
+
+Use the actual preceding verified commit as the comparison point for CH03. Record the actual Git SHAs in the evidence.
+
+Do not reset the repository or rewrite existing commits.
+
+## 3. Feature specification
+
+Add a security layer that helps prevent users from interacting with known malicious or suspicious links and helps identify repeated spam-like posting behaviour.
+
+The feature must complement Misskey's existing moderation, reporting, blocking and administrative mechanisms.
+
+It must include:
+
+- URL parsing, canonicalisation and risk analysis.
+- Configurable domain-reputation checks.
+- Detection or identification of suspicious redirect patterns.
+- Detection of repeated promotional or spam-like posting behaviour.
+- Appropriate consideration of repeated reports associated with a URL or domain.
+- Safety warnings in the post composer.
+- Safety indicators when readers encounter relevant links in posts.
+- Configurable instance-level policy and reputation sources.
+- An administrative mechanism for reviewing flagged links or activity.
+- Focused automated tests and CLI-verifiable evidence.
+
+Do not duplicate an existing Misskey capability without first inspecting its implementation.
+
+The contribution should be proactive safety analysis that operates with the existing moderation system—not another report button or a replacement moderation dashboard.
+
+## 4. Inspect the existing architecture first
+
+Before implementation, trace the relevant existing source code.
+
+Investigate:
+
+- URL extraction, parsing and display.
+- Existing link-preview and URL-fetching mechanisms.
+- `HttpRequestService` and its SSRF protections.
+- The post composer and note-rendering components.
+- Backend endpoint definitions and validation.
+- Core services and dependency injection.
+- Existing moderation, reporting and administrative endpoints.
+- Configuration loading and administrator-controlled settings.
+- Redis/cache conventions and background queues.
+- Existing notification and event mechanisms.
+- API response packing and SDK types.
+- Frontend localisation and accessibility conventions.
+
+Inspect the existing URL-fetching and security checks before creating another URL-analysis service. Reuse suitable infrastructure where it genuinely fits.
+
+The existing link-preview or metadata-fetching workflow must not be assumed to be safe enough to serve as a threat-intelligence engine. Establish exactly which operations it performs and how remote URLs are handled.
+
+Document the actual relevant source paths in the CH03 context and requirement files.
+
+## 5. URL analysis and canonicalisation
+
+Create a reusable URL-analysis service with explicit, testable responsibilities.
+
+It should extract and evaluate relevant URLs from post content using Misskey's existing parsing conventions where appropriate.
+
+Analyse at least the following characteristics.
+
+### 5.1 URL syntax and normalisation
+
+Handle:
+
+- HTTP and HTTPS URLs.
+- Hostname normalisation.
+- Hostnames with trailing dots.
+- Internationalised domain names and Punycode representations.
+- Explicit ports.
+- Encoded characters where they affect parsing.
+- URLs containing user-information components before the hostname.
+- IP-address-based destinations.
+- Malformed and unsupported URL schemes.
+- Hostnames that become ambiguous after normalisation.
+
+Use standard URL parsing and domain-normalisation facilities where appropriate. Do not implement URL interpretation through fragile regular expressions alone.
+
+Treat a URL's canonical form as an analysis aid, not proof that it is safe.
+
+### 5.2 Misleading domains
+
+Identify suspicious representations where feasible, including:
+
+- Unicode/Punycode hostnames that may resemble trusted domains.
+- Misleading subdomains.
+- Hostname/user-information combinations that visually imitate a trusted site.
+- Known deceptive or abusive domains from configured reputation sources.
+
+Any heuristic for homograph or confusable-domain detection must be described as a risk signal, not a guarantee of malicious intent.
+
+Do not block a legitimate internationalised domain solely because it contains non-ASCII characters.
+
+### 5.3 Suspicious redirects
+
+Investigate how to identify risky redirection patterns, such as:
+
+- Known malicious redirector domains.
+- Known URL-shortening services when relevant to the configured policy.
+- Open-redirect patterns supported by reliable reputation evidence.
+- Redirect destinations already identified as malicious by a configured source.
+- URLs that obscure their actual hostname or destination.
+
+Do not claim that an arbitrary redirect chain has been verified unless it was actually inspected.
+
+Prefer reputation-based analysis or a narrowly scoped, controlled mechanism when redirect-chain verification is needed. Treat unknown redirect behaviour as uncertain rather than automatically malicious.
+
+## 6. Threat-intelligence and reputation integration
+
+Implement a configurable reputation layer that can determine whether a URL or domain is:
+
+- Known malicious or associated with phishing.
+- Suspicious according to available evidence.
+- Known benign according to a configured source.
+- Unknown or not yet evaluated.
+
+The precise result representation can follow Misskey's conventions, but it must distinguish a positive risk finding from the absence of evidence.
+
+### 6.1 Provider abstraction
+
+Decouple URL analysis from any specific external reputation provider.
+
+Use the existing dependency-injection and configuration mechanisms to register the provider and configure its behaviour.
+
+Where appropriate, support:
+
+- A configurable, administrator-maintained domain list.
+- An optional external reputation provider.
+- A deterministic local provider or fixture for automated tests.
+- A cache for recently obtained reputation results.
+
+Do not require a paid external service for basic local operation or automated testing.
+
+If no reputation source is configured, the application must behave predictably and explain that it cannot perform that particular check. Do not interpret an unavailable provider as evidence that a URL is malicious—or that it is safe.
+
+Provider timeouts, rate limits, malformed responses and network failures must be handled explicitly.
+
+### 6.2 Caching
+
+Use the repository's existing caching infrastructure where appropriate.
+
+Implement reasonable expiration rules so that stale results do not remain authoritative indefinitely.
+
+Different result categories may require different cache policies. A temporary provider failure should not permanently cache an unknown result as a known-benign verdict.
+
+Deduplicate concurrent lookups for the same canonical URL or domain where practical.
+
+Avoid retaining entire post bodies in a reputation cache when storing a canonical URL or domain result is sufficient.
+
+### 6.3 Reputation provenance
+
+Preserve enough information to explain why a warning was generated.
+
+Depending on the provider, this may include:
+
+- The canonical hostname or relevant URL identifier.
+- The risk category.
+- The provider or local rule responsible.
+- The observation time.
+- A concise explanation that can be displayed to users or moderators.
+
+Do not expose API credentials, internal configuration secrets or private report information in a public warning.
+
+## 7. Redirect fetching and SSRF safety
+
+**Security requirement: do not introduce an unrestricted server-side URL-fetching mechanism.**
+
+Analysing a user's URL can expose the server to Server-Side Request Forgery (SSRF), DNS rebinding, unsafe redirects and resource-exhaustion attacks.
+
+If your implementation needs to fetch a redirect chain or consult a remote provider, follow these restrictions.
+
+1. Prefer a provider API that analyses a submitted URL without causing Misskey to fetch arbitrary destination content.
+2. Use existing secure HTTP request infrastructure where appropriate.
+3. Restrict permitted schemes to those genuinely required by the implementation.
+4. Reject loopback, private, link-local, multicast, reserved and otherwise prohibited network destinations.
+5. Apply equivalent protections to IPv4 and IPv6 representations.
+6. Resolve and validate DNS results and protect against redirects to prohibited destinations.
+7. Revalidate every redirect hop; do not treat validation of the first URL as sufficient.
+8. Avoid DNS-rebinding vulnerabilities and verify that the actual connection cannot silently reach a forbidden destination.
+9. Apply redirect-count limits, connection and response timeouts, and strict resource limits.
+10. Do not download or process arbitrary response bodies when a destination check is sufficient.
+11. Prevent accidental access to cloud metadata endpoints or internal administrative services.
+12. Fail safely if destination validation cannot be performed reliably.
+
+If a robust implementation cannot be achieved within the feature's scope, do not add redirect fetching. Implement reputation-based and canonicalisation-based checks instead, and document precisely which redirect risks are not directly verified.
+
+Add deterministic security tests for prohibited destinations, invalid URL forms, unsafe schemes and redirect-validation behaviour where applicable.
+
+## 8. Spam and repeated promotional-pattern analysis
+
+Implement a small, explainable spam-analysis mechanism that complements Misskey's existing moderation and reporting facilities.
+
+Investigate the current codebase before deciding which behavioural signals are already available.
+
+Potential signals include:
+
+- Repeated posting of the same or substantially similar URLs.
+- Repeatedly posting links to the same domain within a bounded interval.
+- Repetitive promotional content patterns.
+- Previously flagged domains.
+- Multiple independent reports associated with a URL or domain.
+
+Use only signals that can be implemented from real, available data.
+
+### 8.1 Scoring and explainability
+
+Use a deterministic, configurable rule-based scoring approach for the first implementation. A trained machine-learning model is not required.
+
+Each risk decision should be explainable through its contributing signals.
+
+Keep these concerns distinct:
+
+- URL reputation.
+- Suspicious URL structure.
+- Posting-frequency or repetition signals.
+- User-reported concerns.
+- The final advisory risk assessment.
+
+Avoid treating a high score or a large number of reports as conclusive proof of malicious intent.
+
+### 8.2 Abuse resistance
+
+Repeated reports can be useful evidence, but they can also be manipulated.
+
+Before using report information, inspect Misskey's current report storage and moderation workflows.
+
+Use suitable safeguards, such as deduplicating reports, limiting their influence and distinguishing independent reports from repeated reports by the same reporter.
+
+Do not allow a coordinated reporting attack to silently suppress a legitimate domain.
+
+Do not invent report counts or infer reports that do not exist.
+
+### 8.3 Policy behaviour
+
+A suspicious-pattern result must not automatically delete normal posts or impose irreversible sanctions solely because a heuristic produced a high score.
+
+The default outcome should be an advisory warning or reviewable flag, unless an existing explicitly configured and authorised moderation policy governs a stronger action.
+
+Any automatic restriction must respect the existing moderation model and must be clearly configurable.
+
+## 9. Composer warnings
+
+Integrate the safety checks into the actual post-composition workflow.
+
+Before publication, users should be able to see a relevant advisory when a URL is identified as malicious or suspicious.
+
+An illustrative warning is:
+
+"This destination has been reported for phishing."
+
+The actual message should accurately reflect the evidence. Do not present an unknown URL as confirmed phishing.
+
+The composer should support:
+
+- Detecting relevant links in the current draft.
+- Showing a concise warning and reason.
+- Distinguishing confirmed risk findings from uncertainty.
+- Allowing the user to inspect the explanation.
+- Dismissing or acknowledging an advisory where policy permits.
+- Updating the result when the draft changes.
+- Avoiding unnecessary repeated checks for unchanged URLs.
+- Handling an unavailable reputation provider without breaking ordinary post creation.
+
+Existing post-creation, validation, visibility and submission logic must remain intact.
+
+Client-side analysis is not a substitute for backend enforcement or security checks. Where relevant, the final publication path should use the backend's authoritative analysis or policy result.
+
+Do not automatically cancel publication or delete an otherwise valid post merely because an advisory heuristic scores it as risky.
+
+## 10. Reader-facing link warnings
+
+Add risk indicators to the appropriate existing post or link-rendering components.
+
+When users encounter a link that has been positively identified as malicious or suspicious, present a clear and accessible explanation.
+
+Where applicable, show:
+
+- The destination hostname.
+- The risk category.
+- A concise reason.
+- The source or type of evidence, without revealing confidential provider details.
+- An appropriate action to inspect or dismiss the advisory.
+
+Unknown results should not be labelled malicious.
+
+Do not render arbitrary HTML received from an external reputation provider.
+
+Do not introduce a new post renderer if the existing URL or MFM rendering system provides a suitable integration point.
+
+Ensure that the frontend does not break existing links, link previews, note rendering or accessibility features.
+
+## 11. Administrative configuration and review
+
+Instance administrators need a suitable way to configure the link-safety behaviour and review flagged activity.
+
+Inspect the existing Misskey administrative settings, role checks, moderation APIs and review interfaces. Extend those facilities where practical rather than creating a parallel administration subsystem.
+
+Support the smallest reasonable set of configuration options, such as:
+
+- Enabling or disabling link-safety analysis.
+- Enabling or disabling available reputation providers.
+- Managing administrator-maintained known-malicious or trusted-domain entries when appropriate.
+- Configuring warning or flagging thresholds.
+- Configuring cache lifetime where useful.
+- Selecting advisory-only or explicitly supported moderation policy behaviour.
+
+Use existing configuration mechanisms where suitable. Avoid duplicate sources of truth for administrator settings.
+
+Provide a review mechanism for flagged URL or domain activity. The reviewing administrator should be able to see relevant evidence, the associated risk reason and any available provenance.
+
+Where the implementation stores flagging records, apply appropriate persistence, privacy and retention rules.
+
+Do not expose private reports or sensitive moderation data to ordinary users.
+
+Do not implement a second reporting dashboard or duplicate existing moderation workflows unnecessarily.
+
+## 12. Background work and persistence
+
+Use Misskey's existing database, queue, caching and service abstractions where appropriate.
+
+Depending on the verified architecture, use asynchronous execution for slower reputation lookups, cache refreshes or expensive repeated-content analysis. Composer warnings should still be useful within the actual posting workflow.
+
+Avoid adding a queue solely to satisfy an architectural preference when a lightweight operation is sufficient.
+
+If a new database entity or migration is needed for cached reputation data or reviewable flags:
+
+- Follow current migration conventions.
+- Add a new migration rather than editing historical migrations.
+- Add suitable indexes and uniqueness constraints.
+- Define appropriate expiration or cleanup behaviour.
+- Ensure cache entries can expire or be refreshed correctly.
+- Keep report-derived information protected.
+- Provide forward and reverse migration operations in the form expected by the repository.
+
+Do not persist every intermediate calculation if the existing architecture does not require it.
+
+If no schema change is required, document the reason instead of adding an unnecessary table.
+
+## 13. Automated tests — focused CLI testing is mandatory
+
+The tests must verify the real implementation, not a separate prototype.
+
+Inspect the current tests and scripts and use the installed Misskey test infrastructure.
+
+I do not require a full repository test suite, comprehensive browser automation, live threat-intelligence access or large performance tests.
+
+### 13.1 URL handling
+
+Add focused tests covering applicable cases:
+
+- A normal benign HTTP or HTTPS URL.
+- A URL explicitly classified as malicious by a deterministic fixture.
+- A suspicious URL that generates the appropriate advisory.
+- An unknown reputation result.
+- An internationalised or Punycode hostname.
+- A misleading hostname or URL with user information.
+- Invalid and unsupported schemes.
+- IPv4 and IPv6 addresses where relevant to the implementation.
+- Normalisation of equivalent host representations.
+
+The tests must verify that the analysis result reflects actual rules rather than simply classifying every URL as safe or unsafe.
+
+### 13.2 Reputation provider and cache
+
+Test:
+
+- A configured provider returning a malicious result.
+- A benign result.
+- An unknown result.
+- A provider timeout or failure.
+- Cache hits and expiration where implemented.
+- Avoidance of unnecessary repeated lookup work.
+- Behaviour when no provider is configured.
+
+Use deterministic test providers and fixtures. Do not require a paid service or internet access for these tests.
+
+### 13.3 Composer and reader integration
+
+Where supported by existing frontend test conventions, add focused tests for:
+
+- Displaying a warning for a known malicious link.
+- Displaying the correct advisory category and explanation.
+- Handling unknown or failed reputation checks without false certainty.
+- Refreshing analysis when a draft URL changes.
+- Displaying a risk indicator for a flagged link in a post.
+- Preserving ordinary post creation and existing media/link behaviour.
+
+Use appropriate component and API mocks when unrelated infrastructure is not required. Do not claim full visual-browser verification from a unit test.
+
+### 13.4 Spam-pattern analysis
+
+Test relevant deterministic scenarios:
+
+- Repeated promotion of the same URL within the defined interval.
+- Repeated links to a configured domain.
+- Multiple independent reports contributing to a flag where this signal is implemented.
+- Duplicate reports not being counted as independent evidence.
+- A single report not automatically proving a URL is malicious.
+- Thresholds and time-window behaviour.
+- A legitimate post not being silently deleted solely because of a heuristic score.
+
+### 13.5 SSRF and redirect safeguards
+
+Where the implementation performs remote requests, test the actual validation logic for prohibited destinations, unsafe redirect targets, restricted address ranges, invalid schemes and redirect limits.
+
+Do not make the test suite depend on contacting real internal systems or arbitrary external hosts.
+
+Use deterministic DNS, address-resolution and HTTP test doubles where appropriate. Ensure tests exercise the application's actual validation code.
+
+If no redirect fetching is implemented, do not claim arbitrary redirect chains have been verified.
+
+### 13.6 Scope limits
+
+Do not automatically run:
+
+- The complete backend test suite.
+- The complete frontend test suite.
+- All end-to-end tests.
+- Full browser automation.
+- Live tests against external threat-intelligence services.
+- Remote federation tests.
+- Unrelated package test suites.
+
+Run a focused type-check or lint check when practical.
+
+Do not generate an excessive number of redundant tests. A small, meaningful suite covering the new behaviour and its essential security constraints is preferred.
+
+### 13.7 Test failures
+
+If a test fails:
+
+1. Inspect the actual failure.
+2. Determine whether the cause is a code defect, an invalid test assumption or an environmental limitation.
+3. Fix genuine implementation issues.
+4. Rerun the relevant tests.
+5. Save the final actual output.
+
+Do not weaken valid assertions merely to achieve a pass. Do not invent passing test logs.
+
+If a check cannot run, record the exact command, the reason and the status `not_run`.
+
+### 13.8 Required test log
+
+Save the real CLI output in:
+
+`A1/Part2/changes/Change3/test_result.log`
+
+Include the working directory, exact command, relevant tool versions, real output, exit code, pass/fail totals where available and a clear explanation of any unexecuted test.
+
+## 14. Git commit discipline
+
+Implement CH03 in the actual Misskey repository.
+
+Before committing:
+
+- Review `git status`.
+- Review `git diff`.
+- Run `git diff --check`.
+- Inspect staged paths.
+- Verify focused test results.
+- Ensure earlier changes and unrelated user files are not included accidentally.
+
+Create one separate local commit for CH03, using a descriptive message such as:
+
+`feat: add context-aware link safety and spam protection`
+
+Follow the existing repository's commit conventions if they differ.
+
+The commit should contain the CH03 production code, focused tests and required migrations, not the external coursework evidence folder.
+
+Do not push to a remote repository.
+
+After committing, record the actual commit SHA and verify the working tree status.
+
+Save this information to:
+
+`A1/Part2/changes/Change3/commit.txt`
+
+## 15. CH03 implementation evidence
+
+Create the following files using actual source and execution results.
+
+### `requirement.md`
+
+Path:
+
+`A1/Part2/changes/Change3/requirement.md`
+
+Record the requirement, observable acceptance criteria, relevant source scope, major security decisions, configuration behaviour and explicit limitations.
+
+### `diff.patch`
+
+Path:
+
+`A1/Part2/changes/Change3/diff.patch`
+
+Generate the actual diff between the preceding verified source commit and the CH03 implementation commit.
+
+Verify that the recorded SHAs correspond to the patch.
+
+### `test_result.log`
+
+Path:
+
+`A1/Part2/changes/Change3/test_result.log`
+
+Save actual test commands and results.
+
+### `commit.txt`
+
+Path:
+
+`A1/Part2/changes/Change3/commit.txt`
+
+Record the previous commit, CH03 implementation commit, actual commit message, relevant changed source paths and commit date where available.
+
+### `metrics.csv`
+
+Path:
+
+`A1/Part2/changes/Change3/metrics.csv`
+
+Measure comparable before/after source LOC with the same tool and counting rules.
+
+Separate production code and test code. Include the actual source SHAs, measurement scope, method and relevant test outcomes.
+
+Do not estimate unavailable data. Correctly explain any change in the measured scope.
+
+### `pattern_effects.md`
+
+Path:
+
+`A1/Part2/changes/Change3/pattern_effects.md`
+
+Document affected confirmed pattern collaborations, actual participants before and after, their evolution statuses, the reason for each change, code evidence and the refactoring performed.
+
+Identify a genuine code smell and document a meaningful refactoring where justified. If no safe and relevant refactoring is possible, say so and identify the remaining coursework requirement rather than inventing work.
+
+## 16. Update pattern evolution and counts
+
+Update these root-level CSVs:
+
+`A1/Part2/pattern_evalution.csv`
+
+`A1/Part2/Pattern_count.csv`
+
+Preserve the required headers.
+
+`pattern_evalution.csv`:
+
+`source_version,pattern_name,pattern_type,instance_name,participant_roles,source_locations,intent_and_evidence,status_after_change,change_description`
+
+`Pattern_count.csv`:
+
+`source_version,summary,pattern_name,count`
+
+Retain the verified baseline, CH01 and CH02 records. Add the records for the resulting CH03 snapshot.
+
+Use source-version labels consistently:
+
+- `baseline`
+- `CH01`
+- `CH02`
+- `CH03`
+
+Do not assume every existing pattern remains unaffected. Reinspect the relevant collaborations where CH03 changes shared code.
+
+Keep `instance_name` unchanged when the same collaboration continues. Record replacements, removals and newly introduced collaborations accurately.
+
+Generate counts from the confirmed records. Preserve removal history while excluding removed instances from active counts in the resulting version.
+
+Do not invent patterns, participant classes or source line ranges. Do not claim that the entire Misskey monorepo was exhaustively analysed; use the documented inspection scope.
+
+## 17. Architecture diagrams
+
+Store relevant diagrams under:
+
+`A1/Part2/diagrams/Change3/`
+
+Where the implementation materially changes a pattern collaboration or architecture, create an editable PlantUML source and a rendered image, for example:
+
+- `class_diagram.puml`
+- `class_diagram.png`
+
+Represent the actual implementation, including the URL-analysis service, reputation-provider abstraction, cache or review mechanism where those components are genuinely implemented.
+
+Show the actual dependencies, calls or relationships relevant to the design. Do not represent hypothetical services as existing production components.
+
+If an additional diagram would not meaningfully communicate the changes, document that determination rather than creating a misleading diagram.
+
+## 18. LLM input, output and verification evidence
+
+Create the following files.
+
+### Prompt
+
+`A1/Part2/llm/inputs/Change3_prompt.txt`
+
+Save the actual prompt used to implement CH03.
+
+### Input context
+
+`A1/Part2/llm/inputs/Change3_context.md`
+
+Record the actual preceding commit, relevant files inspected, supplied requirement, repository constraints and security decisions.
+
+### Output
+
+`A1/Part2/llm/outputs/Change3_output.txt`
+
+Preserve the actual available implementation report or execution output. Do not fabricate a conversation transcript. If the complete transcript is unavailable, record the actual available output and disclose the limitation.
+
+### Verification
+
+`A1/Part2/llm/verification/Change3_verification.md`
+
+Evaluate the significant implementation claims against actual source and test evidence.
+
+Record the exact commands, results, commit SHA and any remaining limitations.
+
+Be particularly explicit about whether URL-reputation lookups, redirect-chain inspection and remote-provider integration were actually executed or only tested using deterministic fixtures.
+
+## 19. Update `llm.csv`
+
+Update:
+
+`A1/Part2/llm.csv`
+
+Use its established columns:
+
+`part,model_and_date,prompt_file,input_file,output_file,evaluation,verification_file`
+
+Create a record that maps the actual prompt, context, output and verification evidence for CH03.
+
+Use paths relative to `A1/`, such as:
+
+- `Part2/llm/inputs/Change3_prompt.txt`
+- `Part2/llm/inputs/Change3_context.md`
+- `Part2/llm/outputs/Change3_output.txt`
+- `Part2/llm/verification/Change3_verification.md`
+
+Use the actual model name and interaction date when available. Do not invent either.
+
+Validate that every recorded path exists and refers to the corresponding interaction.
+
+## 20. Update the evolved source README
+
+Update:
+
+`A1/Part2/code/README.md`
+
+Record the CH03 implementation commit, the preceding source commit, relevant source paths, migrations if any, focused test commands and outcomes, metric methodology, and security limitations.
+
+Ensure the `code/` evidence directory represents the evolved application changes completed so far. Include or update the necessary new and modified production source files using their proper relative paths, together with the README.
+
+Do not duplicate dependency caches, compiled files or unrelated repository content.
+
+## 21. Final validation
+
+Do not declare CH03 complete until you have verified the following:
+
+1. URL normalisation and analysis work in the actual implementation.
+2. Configured reputation sources produce accurate, explainable classifications.
+3. Unknown and unavailable reputation results are not misrepresented as confirmed malicious or benign findings.
+4. Composer warnings and reader-facing indicators are integrated into actual application paths.
+5. Spam analysis is based on real configured signals and cannot silently delete ordinary posts solely because of a heuristic.
+6. Administrative configuration and review use appropriate permissions.
+7. Remote URL checks do not introduce unsafe SSRF or redirect fetching.
+8. Focused automated tests have actually run, with results recorded.
+9. The relevant type-check or lint checks have been executed where practical.
+10. The source change has its own local Git commit.
+11. `diff.patch` and `commit.txt` match the actual commit history.
+12. Metrics and pattern counts are reproducible.
+13. Diagrams reflect actual implementation relationships.
+14. LLM prompts, available outputs and verification records are saved.
+15. `llm.csv` maps the records correctly.
+16. The evolved-source README is updated.
+17. No earlier user work has been overwritten.
+18. No test or integration has been reported as successful without evidence.
+
+## 22. Final response
+
+After completing CH03, report:
+
+- What was actually implemented.
+- Important changed source paths.
+- Any database migrations.
+- Actual focused automated test commands and results.
+- Any unexecuted tests and reasons.
+- Actual type-check or lint results, if run.
+- Baseline and resulting commit SHAs.
+- Before/after metrics.
+- Confirmed design-pattern effects and refactoring.
+- All evidence-file paths.
+- Unresolved defects or limitations.
+
+Distinguish local deterministic testing from a live reputation-provider integration. Do not claim that the service detects all phishing attacks or that unknown URLs are safe.
+
+Do not begin another feature after CH03. Finish the implementation and its evidence package, then wait for my next instruction.

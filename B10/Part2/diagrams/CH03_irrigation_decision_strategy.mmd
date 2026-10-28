@@ -1,0 +1,47 @@
+%% CH03 - "Irrigation Decision Strategy" (Strategy) - status: modified
+%% Changed participant: Context bang_bang.CustomModule.loop (Extract Method + safe measurement value); strategy classes unchanged
+%% Code: Part2/code/mycodo/utils/irrigation_strategies.py and mycodo/functions/bang_bang.py
+classDiagram
+    class bang_bang_CustomModule["bang_bang.CustomModule"]
+    <<Context>> bang_bang_CustomModule
+    bang_bang_CustomModule : +strategy
+    bang_bang_CustomModule : +loop()
+    bang_bang_CustomModule : -_period_elapsed()
+    bang_bang_CustomModule : -_read_measurement()
+    bang_bang_CustomModule : -_measurement_value(last_measurement)$
+    bang_bang_CustomModule : -_read_rain_indicator()
+    bang_bang_CustomModule : -_apply_decision(decision)
+    class IrrigationStrategy {
+        <<abstract>>
+        +decide(context)*
+        +needs_rain_indicator()
+    }
+    class RaiseHysteresisStrategy {
+        +decide(context)
+    }
+    class LowerHysteresisStrategy {
+        +decide(context)
+    }
+    class IrrigationRestriction {
+        +inner
+    }
+    class TimeWindowStrategy {
+        +decide(context)
+    }
+    class RainSkipStrategy {
+        +decide(context)
+        +needs_rain_indicator()
+    }
+    class IrrigationContext {
+        <<dataclass>>
+    }
+    class build_irrigation_strategy
+    <<function>> build_irrigation_strategy
+    IrrigationStrategy <|-- RaiseHysteresisStrategy
+    IrrigationStrategy <|-- LowerHysteresisStrategy
+    IrrigationStrategy <|-- IrrigationRestriction
+    IrrigationRestriction <|-- TimeWindowStrategy
+    IrrigationRestriction <|-- RainSkipStrategy
+    bang_bang_CustomModule o-- IrrigationStrategy : strategy
+    bang_bang_CustomModule ..> build_irrigation_strategy
+    bang_bang_CustomModule ..> IrrigationContext : creates in loop()

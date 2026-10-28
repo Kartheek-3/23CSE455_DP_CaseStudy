@@ -1,0 +1,7 @@
+# <Class#method> [tags...]
+CalcTests#add fast
+CalcTests#div slow flaky
+CalcTests#sub fast
+StringTests#concat fast
+StringTests#upper flaky
+SlowTests#bigSum slow

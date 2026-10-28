@@ -1,0 +1,8 @@
+Prompt used (Part 3, cross-language), Claude Opus 4.8, 2026-10-10:
+"For the four confirmed pattern types (Strategy, Adapter, Template Method,
+Observer), implement one representative instance of each in Java, Python,
+JavaScript and C++ with identical inputs and outputs. Compile and run all four
+implementations of each pattern, confirm the outputs match, then measure source
+LOC, maximum per-function cyclomatic complexity, and median process time
+(protocol: compile once, 1 warmup run, 5 measured runs, report the median).
+Record everything in cross_language.csv."

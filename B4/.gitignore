@@ -1,0 +1,9 @@
+vendor/
+node_modules/
+*.class
+*.o
+*.out
+__pycache__/
+*.pyc
+.DS_Store
+*.inspect.ndjson

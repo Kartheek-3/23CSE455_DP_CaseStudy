@@ -1,0 +1,38 @@
+
+> airport_app@0.0.1 test:e2e
+> jest --config ./test/jest-e2e.json
+
+FAIL test/app.e2e-spec.ts
+  ● Test suite failed to run
+
+    Cannot find module 'src/flight/entities/flight.entity' from '../src/users/entities/user.entity.ts'
+
+    Require stack:
+      /Users/balasankarmohan/.gemini/antigravity/scratch/A9/data/code/src/users/entities/user.entity.ts
+      /Users/balasankarmohan/.gemini/antigravity/scratch/A9/data/code/src/users/users.service.ts
+      /Users/balasankarmohan/.gemini/antigravity/scratch/A9/data/code/src/users/users.module.ts
+      /Users/balasankarmohan/.gemini/antigravity/scratch/A9/data/code/src/app.module.ts
+      app.e2e-spec.ts
+
+      3 | import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+      4 | import { Role } from '../enums/roles';
+    > 5 | import { Flight } from 'src/flight/entities/flight.entity';
+        | ^
+      6 | import { Booking } from 'src/booking/entities/booking.entity';
+      7 |
+      8 | @ObjectType()
+
+      at Resolver._throwModNotFoundError (../node_modules/jest-resolve/build/index.js:863:11)
+      at Object.<anonymous> (../src/users/entities/user.entity.ts:5:1)
+      at Object.<anonymous> (../src/users/users.service.ts:8:1)
+      at Object.<anonymous> (../src/users/users.module.ts:2:1)
+      at Object.<anonymous> (../src/app.module.ts:2:1)
+      at Object.<anonymous> (app.e2e-spec.ts:5:1)
+
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        0.401 s
+Ran all test suites.
+
+EXIT_CODE=1

@@ -1,0 +1,54 @@
+[
+  {
+    "pattern_name": "Adapter",
+    "instance_name": "Multiple Booking Provider Normalization",
+    "language": "Java",
+    "snippet_path": "Part3/adapter/java/Main.java",
+    "source_loc": 120,
+    "max_function_cc": 12,
+    "runtime_compiler": "openjdk version \"21.0.12.1\" 2026-08-18; javac 21.0.12.1",
+    "test_command": "cd Part3/adapter/java && java TestMain",
+    "test_result": "PASS 10/10; failures=0; errors=0; skipped=0; exit_code=0; extra provider-isolation checks passed",
+    "median_process_ms": 71.667737,
+    "language_notes": "S2-N01 Adapter: client uses OfferProvider target; AtlasAdapter and BeaconAdapter normalize distinct local TSV schemas; fixed ProviderRegistry. No network/booking. Production files: adapter/java/Main.java."
+  },
+  {
+    "pattern_name": "Adapter",
+    "instance_name": "Multiple Booking Provider Normalization",
+    "language": "Python",
+    "snippet_path": "Part3/adapter/python/main.py",
+    "source_loc": 93,
+    "max_function_cc": 7,
+    "runtime_compiler": "Python 3.13.5",
+    "test_command": "cd Part3/adapter/python && python3 test_main.py",
+    "test_result": "PASS 10/10; failures=0; errors=0; skipped=0; exit_code=0; extra provider-isolation checks passed",
+    "median_process_ms": 852.239836,
+    "language_notes": "S2-N01 Adapter: client uses OfferProvider target; AtlasAdapter and BeaconAdapter normalize distinct local TSV schemas; fixed ProviderRegistry. No network/booking. Production files: adapter/python/main.py."
+  },
+  {
+    "pattern_name": "Adapter",
+    "instance_name": "Multiple Booking Provider Normalization",
+    "language": "JavaScript",
+    "snippet_path": "Part3/adapter/javascript/main.js",
+    "source_loc": 67,
+    "max_function_cc": 8,
+    "runtime_compiler": "Node.js v22.16.0",
+    "test_command": "cd Part3/adapter/javascript && node test_main.js",
+    "test_result": "PASS 10/10; failures=0; errors=0; skipped=0; exit_code=0; extra provider-isolation checks passed",
+    "median_process_ms": 35.245684,
+    "language_notes": "S2-N01 Adapter: client uses OfferProvider target; AtlasAdapter and BeaconAdapter normalize distinct local TSV schemas; fixed ProviderRegistry. No network/booking. Production files: adapter/javascript/main.js."
+  },
+  {
+    "pattern_name": "Adapter",
+    "instance_name": "Multiple Booking Provider Normalization",
+    "language": "C++",
+    "snippet_path": "Part3/adapter/cpp/main.cpp",
+    "source_loc": 141,
+    "max_function_cc": 12,
+    "runtime_compiler": "g++ (Debian 14.2.0-19) 14.2.0; C++17",
+    "test_command": "cd Part3/adapter/cpp && ./adapter_tests",
+    "test_result": "PASS 10/10; failures=0; errors=0; skipped=0; exit_code=0; extra provider-isolation checks passed",
+    "median_process_ms": 2.705641,
+    "language_notes": "S2-N01 Adapter: client uses OfferProvider target; AtlasAdapter and BeaconAdapter normalize distinct local TSV schemas; fixed ProviderRegistry. No network/booking. Production files: adapter/cpp/main.hpp, adapter/cpp/main.cpp."
+  }
+]

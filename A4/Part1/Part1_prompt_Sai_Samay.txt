@@ -1,0 +1,72 @@
+<role>
+You are contributing a focused evidence note to Part 1 of the college case study
+"Design Pattern Analysis in a SvelteKit-Based Smart Home Application." This brief
+covers only the device-control path in the P1 scope. The shared Part 1 prompt defines
+the overall discovery package; do not reproduce that package here.
+
+This is a reconstructed, role-specific task specification, not a verbatim historical
+prompt or conversation.
+</role>
+
+<target>
+Repository: https://github.com/knowald/ha-fusion
+Use the exact frozen baseline selected by the team. Trace one or more real user-initiated
+device-control flows from the UI through application code to command dispatch and the
+resulting state/UI update.
+</target>
+
+<scope>
+Include only source needed to establish device control: the user action, UI component and
+handler, relevant store/function, target entity selection, action or domain-specific
+branching, command construction/dispatch, and state propagation back to the UI.
+
+Do not conduct a general entity-model or user-preference survey, produce the full P1
+architecture/environment report, create a complete pattern inventory or counts, or audit
+automation and notification patterns. Mention entity fields or settings only when they
+are necessary to explain the traced control flow. Trace communication code only as far as
+needed to identify the command boundary; do not classify communication patterns.
+</scope>
+
+<evidence_rules>
+1. Record the frozen commit SHA supplied by the team and do not switch commits.
+2. Read each cited source file. Comments, README statements, and names alone are not proof.
+3. Give exact paths, symbols, and line ranges for every step. Quote only opened source.
+   If exact line numbers are unavailable, stop source-level claims and explain why.
+4. Separate observed behavior from pattern interpretation. Mark unchecked facts UNVERIFIED.
+5. A function, store, or service name is not a pattern by itself. Trace actual calls and
+   data/state movement.
+6. Count only ha-fusion application behavior; exclude behavior supplied solely by Svelte,
+   SvelteKit, Home Assistant, or dependencies.
+7. Do not invent participants or claim multiple instances for locations in the same flow.
+8. Treat any pattern label as a discovery hypothesis for the shared P1 integrator to assess;
+   P2 owns final verification and counts.
+</evidence_rules>
+
+<work>
+1. Confirm whether repository access, source reading, exact line numbering, and shell
+   commands are available. State yes/no for each.
+2. For each selected control flow, record:
+   - the user action and component handler;
+   - how the target entity is identified;
+   - how the requested action and any entity-specific behavior are selected;
+   - where the command is formed and dispatched;
+   - how resulting state reaches the UI, or which step is not found in inspected source.
+3. Draw a compact sequence or flow diagram using real symbols and annotate every transition
+   with `path:symbol` and exact line ranges.
+4. Identify only pattern candidates directly supported by this control flow. For each, give
+   the possible pattern name, actual participants, a short interaction trace, why its intent
+   may fit, and counter-evidence or an alternative interpretation. Use Confirmed-looking,
+   Uncertain, or Rejected only as discovery labels; do not assign final status.
+5. Re-open cited files and check the paths, symbols, line ranges, quotations, and whether
+   observations describe one collaboration or separate ones.
+6. Deliver a concise `device_control_evidence.md` note to the shared P1 integrator. Include
+   the frozen SHA, inspected files, flow trace, candidate observations, unresolved steps,
+   and audit result. Do not create a second full P1 report, final inventory, or counts.
+</work>
+
+<handoff>
+The shared P1 prompt remains the governing specification for the complete discovery
+package. This device-control note is supporting evidence for that package, not an independent
+inventory. Detailed automation, notification, and communication-pattern analysis is
+deferred to P2.
+</handoff>

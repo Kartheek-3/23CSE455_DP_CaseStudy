@@ -1,0 +1,416 @@
+Scenario 2 — Multiple Booking Providers is complete and source-verified.
+
+Use the Scenario 2 AFTER source as the starting point:
+
+scenario2_multiple_booking_providers
+
+Do not return to Scenario 1 or the original baseline for implementation.
+
+Current confirmed source-level pattern state:
+
+P01 Parsed Email to Trip Record Linking — Information Expert (GRASP)
+P02 Inbound Travel Email Intake Coordination — Controller (GRASP)
+P03 Trip Creation Coordination — Controller (GRASP)
+P04 Trip Membership Management Coordination — Controller (GRASP)
+P05 Bulk Itinerary Import Coordination — Controller (GRASP)
+P06 OAuth Sign-in and Identity Linking Coordination — Controller (GRASP)
+P07 Account Traveler Enrollment Coordination — Controller (GRASP)
+P08 Outbound Mail Delivery Logging — Observer (GoF)
+P09 Trip-Scoped Turbo Refresh Notifications — Observer (GoF)
+S1-N01 Personalized Itinerary Generation Coordination — Controller (GRASP)
+S2-N01 Multiple Booking Provider Normalization — Adapter (GoF)
+S2-N02 Multiple Booking Provider Option Coordination — Controller (GRASP)
+
+Current counts:
+
+Controller (GRASP) = 8
+Information Expert (GRASP) = 1
+Observer (GoF) = 2
+Adapter (GoF) = 1
+Total current instances = 12
+Distinct pattern types = 4
+
+Scenario 1 and Scenario 2 Rails integration tests remain blocked by the environment. Do not call them passed.
+
+Now perform Scenario 3 DESIGN ONLY.
+
+Scenario 3 requirement:
+
+SUPPORT DIFFERENT CANCELLATION POLICIES.
+
+Do not modify source code yet.
+
+1. Reinspect the actual Scenario 2 AFTER source.
+
+Focus especially on:
+
+- TripItem
+- TripItemsController
+- InboxItem
+- InboxItemsController
+- TripMailbox
+- ParseInboxItemJob
+- Expense
+- Trip and TripMember
+- BookingOptionsController
+- booking provider services
+- routes
+- TripItem show/edit views
+- current schema
+- migrations
+- any existing status, confirmation, amount, date or provider data
+- any current delete/remove/cancel-like actions
+
+Use actual source evidence and line ranges.
+
+2. Establish the exact BEFORE cancellation behavior.
+
+Determine what the application currently allows for:
+
+- deleting a TripItem
+- editing a TripItem
+- changing idea/confirmed status
+- removing an Expense
+- handling a genuine booking confirmation
+- handling provider-created demo ideas
+
+Search specifically for words and concepts such as:
+
+cancel
+cancellation
+refund
+refundable
+non-refundable
+fee
+deadline
+policy
+penalty
+delete
+destroy
+status
+
+Clearly distinguish:
+
+- deleting a local itinerary record
+from
+- cancelling a real booking.
+
+Do not treat a UI “Cancel” button that only exits a form as booking cancellation.
+
+3. Define a realistic Scenario 3 scope.
+
+The application should demonstrate different cancellation policies without claiming to cancel real external bookings.
+
+Compare at least these approaches:
+
+A. Hard-coded conditional cancellation logic in controller/model
+
+B. Separate policy objects chosen according to booking/policy type
+
+C. Policy data stored only in JSON/config with generic calculation code
+
+D. Real external-provider cancellation APIs
+
+E. A small local policy abstraction with multiple concrete policies and deterministic calculations
+
+For each discuss:
+
+- fit with current source
+- complexity
+- database impact
+- testability
+- realism
+- whether it could genuinely correspond to a recognized design pattern
+
+Recommend one approach.
+
+4. Prefer a locally testable policy model.
+
+The feature should not need real provider APIs.
+
+A reasonable V1 may support policies such as:
+
+- Flexible
+- Moderate
+- Strict / Non-refundable
+
+but choose names and rules only after inspecting how they can fit the current data model.
+
+Each policy should produce deterministic results based on information such as:
+
+- current booking amount
+- cancellation date/time
+- trip or item start date/time
+
+Example outcomes may include:
+
+- fully refundable
+- partially refundable
+- non-refundable
+- cancellation fee
+- refund amount
+
+Do not fabricate real airline/hotel contractual rules.
+
+Clearly label the policies as application/demo policies.
+
+5. Decide which TripItems are eligible.
+
+Do not automatically treat every itinerary idea as a cancellable booking.
+
+Determine whether cancellation-policy evaluation should apply only to:
+
+- confirmed TripItems
+- items with confirmation references
+- genuine inbox-linked bookings
+- provider demo ideas
+- some combination
+
+Recommend the safest rule.
+
+Scenario 2 demo offers are merely ideas and are not real reservations. They should not suddenly become real cancellable bookings.
+
+6. Decide whether a database migration is required.
+
+Inspect the current TripItem fields first.
+
+Consider whether the feature needs durable storage for:
+
+- cancellation policy type
+- cancelled status
+- cancelled_at
+- original amount
+- cancellation fee
+- refund amount
+
+Do not add fields solely to demonstrate a textbook pattern.
+
+If a migration is needed to make the feature semantically correct, propose the smallest justified migration.
+
+If the feature can remain evaluation-only without persistence, explain why.
+
+7. Define the user-visible behavior.
+
+For example:
+
+TripItem page
+→ view cancellation policy
+→ request cancellation quote
+→ selected policy evaluates cancellation
+→ show refundable amount / fee / result
+→ optionally confirm local cancellation
+
+Determine whether V1 should:
+
+A. only calculate/display cancellation outcome
+
+or
+
+B. also persist a local cancelled state.
+
+Explain which is better for this coursework and current application.
+
+Do not claim that an external reservation was cancelled.
+
+8. Design the cancellation-policy abstraction.
+
+If appropriate, specify concrete Ruby participants such as:
+
+CancellationPolicies::Flexible
+CancellationPolicies::Moderate
+CancellationPolicies::Strict
+CancellationPolicies::Registry or Resolver
+CancellationQuoteService / controller
+
+But do not create unnecessary classes simply to resemble Strategy.
+
+For every proposed class/module state:
+
+- responsibility
+- public method
+- inputs
+- output
+- error behavior
+
+Define one common result structure such as:
+
+policy_code
+policy_name
+original_amount
+fee_amount
+refund_amount
+refundable
+explanation
+
+Use decimal/money-safe handling where possible.
+
+9. Evaluate the likely design-pattern candidates.
+
+Pay particular attention to Strategy (GoF).
+
+Do not confirm it yet.
+
+Explain:
+
+- what would make separate cancellation policies genuine interchangeable strategies
+- what the Context would be
+- what the Strategy role would be
+- what the ConcreteStrategy roles would be
+- whether a simple registry/resolver is or is not a Factory
+- whether any GRASP Controller collaboration could also arise
+
+Do not count one Strategy instance per concrete policy.
+
+Multiple concrete policies participating in one interchangeable cancellation collaboration would count as ONE Strategy instance.
+
+10. Define cancellation rules precisely before coding.
+
+For every proposed policy specify deterministic rules.
+
+Use clear boundaries such as:
+
+- cancellation more than N days before start
+- cancellation within N days
+- after start
+
+Avoid ambiguous language.
+
+Include edge cases:
+
+- no amount
+- no start date
+- malformed policy code
+- zero amount
+- negative amount
+- cancellation after start
+- currency preservation
+- exactly on the deadline boundary
+
+Do not use current wall-clock time directly in unit tests; design policy evaluation so tests can inject or pass an evaluation time.
+
+11. Protect existing Scenario 1 and Scenario 2 behavior.
+
+The Scenario 3 design must preserve:
+
+- personalized itinerary generation
+- JSON import
+- multiple booking-provider comparison
+- provider Adapter collaboration
+- demo provider ideas
+- instance-scoped geocoding
+- email confirmation ingestion/linking
+- Expenses
+- authentication/membership
+- Turbo refresh
+
+Identify regression risks.
+
+12. Define authorization.
+
+Determine who may view a cancellation quote and who may confirm a local cancellation, if confirmation is included.
+
+Reuse actual existing owner/member rules rather than inventing a new authorization framework.
+
+13. Define acceptance criteria.
+
+Include at minimum:
+
+- at least three policy behaviors
+- same evaluation interface
+- deterministic refund/fee results
+- policy selection
+- unknown policy rejection
+- boundary-date behavior
+- missing required booking data handling
+- correct amount/currency handling
+- non-cancellable idea handling
+- no external cancellation API call
+- no false claim that a real reservation was cancelled
+- Scenario 1 preserved
+- Scenario 2 preserved
+- original email-confirmation flow preserved
+
+14. Define a test plan.
+
+Separate:
+
+- policy unit tests
+- controller/service tests
+- persistence tests if applicable
+- authorization tests
+- regression tests
+- manual/runtime checks
+
+Tests must use fixed evaluation times.
+
+Do not depend on external network services.
+
+15. Define the BEFORE → AFTER flow in concise arrow form.
+
+16. Identify proposed production files to modify.
+
+For each give:
+
+- current responsibility
+- proposed change
+- reason
+
+Identify all proposed new files separately.
+
+17. Analyze likely effects on the current 12 confirmed pattern instances.
+
+For every:
+
+P01–P09
+S1-N01
+S2-N01
+S2-N02
+
+state only:
+
+- likely directly affected
+- possibly affected
+- likely unchanged
+
+Do not assign final evolution statuses yet.
+
+18. Identify tentative new pattern candidates only.
+
+Possible candidates may include:
+
+- Strategy (GoF)
+- Controller (GRASP)
+
+but only include candidates supported by the proposed design.
+
+Do not change counts yet.
+
+19. Recommend the next source-version name:
+
+scenario3_cancellation_policies
+
+20. Give the exact coding sequence for the next implementation prompt.
+
+At the end provide:
+
+1. Verified Scenario 3 BEFORE state.
+2. Recommended cancellation feature scope.
+3. Eligible TripItem rule.
+4. Whether cancellation is quote-only or locally persisted.
+5. Chosen policy architecture.
+6. Exact policy rules.
+7. Database migration decision.
+8. Proposed classes/modules.
+9. Existing files to modify.
+10. New files to add.
+11. User workflow.
+12. Acceptance criteria.
+13. Test plan.
+14. Regression risks.
+15. Tentative pattern candidates only.
+16. Expected impact on P01–P09, S1-N01, S2-N01 and S2-N02.
+17. Step-by-step coding sequence.
+
+Do not modify source code.
+Do not assign final pattern-evolution statuses.
+Do not change pattern counts.

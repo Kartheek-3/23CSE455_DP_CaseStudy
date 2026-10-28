@@ -1,0 +1,9 @@
+Implement Change 2: Seat-Class Expansion.
+Requirements:
+- Introduce SeatClass enum (FIRST, BUSINESS, ECONOMY).
+- Add seatClass column to Seat entity.
+- Add seatClass to CreateSeatInput.
+- Add cabin row allocation rules (FIRST: 1-3, BUSINESS: 4-8, ECONOMY: 9-20).
+- Support explicit seatClass and deterministic row auto-inference.
+- Maintain existing seat availability, boundary, and uniqueness checks.
+- Add focused unit tests for valid classes, invalid row-class combinations, auto-inference, and run test suite.

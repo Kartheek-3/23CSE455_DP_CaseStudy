@@ -1,0 +1,19 @@
+%% Template Method - "Formula Setpoint Plot Sampling"
+%% mycodo/utils/method.py (AbstractDailyFormulaMethod.get_plot)
+classDiagram
+    class AbstractMethod {
+        +calculate_setpoint(now, method_start_time)
+        +get_plot(max_points_x)
+    }
+    class AbstractDailyFormulaMethod {
+        +get_plot(max_points_x)
+    }
+    class DailySineMethod {
+        +calculate_setpoint(now, method_start_time)
+    }
+    class DailyBezierMethod {
+        +calculate_setpoint(now, method_start_time)
+    }
+    AbstractMethod <|-- AbstractDailyFormulaMethod
+    AbstractDailyFormulaMethod <|-- DailySineMethod
+    AbstractDailyFormulaMethod <|-- DailyBezierMethod

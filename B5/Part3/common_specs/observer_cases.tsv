@@ -1,0 +1,8 @@
+case_id	register_logger	delivered	message_id	subject	recipient
+O01	YES	YES	mail-001	Travel receipt	alice@example.test
+O02	NO	YES	mail-002	Itinerary info	bob@example.test
+O03	YES	NO	mail-003	Failed delivery	carol@example.test
+O04	YES	YES	mail-004	Updated trip plan	dana@example.test
+O05	YES	YES	mail-005	Missing recipient	~
+O06	MAYBE	YES	mail-006	Invalid flag	erin@example.test
+O07	YES	YES	mail-007	Observer detached	frank@example.test

@@ -1,0 +1,13 @@
+# proxy / javascript
+# working folder: Part3/code/pattern_proxy/javascript
+# runtime: Node.js v24.15.0
+$ node analyticsProxy.test.js ../../../test-cases/proxy.txt
+PASS absent_real_is_noop
+PASS forwards_after_set
+PASS before_and_after_set
+PASS all_methods_forwarded
+PASS second_set_rejected
+passed 5/5
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 48.9, 42.7, 47.6, 43.8, 45.6 -> median 45.6

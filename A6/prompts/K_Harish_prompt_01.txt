@@ -1,0 +1,123 @@
+Context: Sarathi is an open-source Node.js/Express/TypeScript ride-sharing backend (github.com/AkhilMM2000/sarathi-backend, commit c8766f4) using MongoDB/Mongoose, tsyringe DI, Socket.IO, Redis, Stripe and the Google Distance Matrix API. Source lines are numbered on the left.
+
+Change request CH03 - multiple ride types and dynamic pricing: keep ONE_WAY (Rs 10/km, min Rs 450) and ROUND_TRIP (Rs 1000/day); add HOURLY (Rs 200/hour, min 4 hours) and OUTSTATION (Rs 12/km + Rs 300 per day). Add +25% for rides starting 08:00-10:59 or 17:00-20:59 IST and +20% when fewer than 3 drivers are nearby. A new ride type or pricing rule must not require editing existing fare code.
+
+Answer in this order, concisely:
+1. Code smells or defects in the current code that make this change risky (cite file:line).
+2. The design pattern(s) you would introduce, with every participant role mapped to a class name.
+3. Effect on the patterns already in this code: preserved / modified / extended / replaced / removed, with a reason.
+4. The key TypeScript changes (only the new/changed parts).
+
+--- src/domain/models/Booking.ts (lines 16-19) ---
+  16 export enum BookingType {
+  17   ONE_WAY = "ONE_RIDE",
+  18     ROUND_TRIP = "RANGE_OF_DATES",  
+  19         }
+
+--- src/application/services/FareCalculatorService.ts (lines 4-11) ---
+   4 export interface IFareCalculatorService {
+   5   calculate(params: {
+   6     bookingType: BookingType;
+   7     estimatedKm?: number;
+   8     startDate: Date;
+   9     endDate?: Date;
+  10   }): number;
+  11 }
+
+--- src/infrastructure/services/FareCalculatorService.ts (lines 6-38) ---
+   6 @injectable()
+   7 export class FareCalculatorService implements IFareCalculatorService {
+   8   private readonly PER_KM_RATE = 10; // move to env/config later
+   9   private readonly PER_DAY_RATE = 1000;
+  10 
+  11   calculate(params: {
+  12     bookingType: BookingType;
+  13     estimatedKm?: number;
+  14     startDate: Date;
+  15     endDate?: Date;
+  16   }): number {
+  17     const { bookingType, estimatedKm, startDate, endDate } = params;
+  18 let fare = 0;
+  19  console.log(params)
+  20     if (bookingType === BookingType.ONE_WAY) {
+  21       if (!estimatedKm) throw new Error("Estimated KM is required for ONE_WAY booking");
+  22       fare= estimatedKm * this.PER_KM_RATE;
+  23    
+  24       return fare < 450 ? 450 : fare;
+  25     }
+  26    
+  27     if (bookingType === BookingType.ROUND_TRIP) {
+  28       if (!endDate) throw new Error("End date is required for ROUND_TRIP booking");
+  29       const start = new Date(startDate).getTime();
+  30       const end = new Date(endDate).getTime();
+  31       const dayCount = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+  32       
+  33       return dayCount * this.PER_DAY_RATE;
+  34     }
+  35 
+  36     throw new AuthError("Invalid booking type", 400);
+  37   }
+  38 }
+
+--- src/application/use_cases/User/BookDriver.ts (lines 52-57) ---
+  52     const estimatedFare = this._fareCalculator.calculate({
+  53       bookingType,
+  54       estimatedKm: data.estimatedKm,
+  55       startDate,
+  56       endDate,
+  57     });
+
+--- src/application/use_cases/User/BookDriver.ts (lines 61-99) ---
+  61     if (!driverId) {
+  62       // 1. Find all approved, active-payment drivers within 30km straight-line radius
+  63       console.log(data.fromLat, data.fromLng, "fromLat,fromLng")
+  64       const nearbyDrivers = await this._driverRepo.findNearbyDriversWithinRadius(
+  65         { latitude: data.fromLat, longitude: data.fromLng },
+  66         [],
+  67         30 // 30 km straight-line radius
+  68       );
+  69       console.log(nearbyDrivers, "nearbyDrivers")
+  70 
+  71       // 2. Query Google Maps Distance API to filter by road distance
+  72       const driverLocations = nearbyDrivers.map((d) => ({
+  73         id: d._id.toString(),
+  74         latitude: d.latitude,
+  75         longitude: d.longitude,
+  76       }));
+  77 
+  78       if (driverLocations.length > 0) {
+  79         const distances = await this._distanceService.getDistances(
+  80           { latitude: data.fromLat, longitude: data.fromLng },
+  81           driverLocations
+  82         );
+  83 
+  84         // 3. Keep only drivers whose road distance is <= 20 km
+  85         targetedDriverIds = nearbyDrivers
+  86           .filter((d) => {
+  87             const roadDist = distances[d._id.toString()];
+  88             console.log(`[Matchmaking Filter] Driver ${d._id} road distance: ${roadDist} km`);
+  89             return roadDist !== undefined && roadDist <= 20; // 20 km road distance limit
+  90           })
+  91           .map((d) => d._id.toString());
+  92         console.log("🎯 final targetedDriverIds within 20km:", targetedDriverIds);
+  93       }
+  94 
+  95       // If there are no drivers within 20km road distance, throw error
+  96       if (targetedDriverIds.length === 0) {
+  97         throw new AuthError("No drivers available within 20km road distance from your pickup location.", HTTP_STATUS_CODES.BAD_REQUEST);
+  98       }
+  99     }
+
+--- src/application/use_cases/Driver/UpdateBookingstatus.ts (lines 43-54) ---
+  43     // If ride is completed and finalKm is provided, calculate final fare
+  44     if (status === "COMPLETED") {
+  45       if (finalKm === undefined || finalKm === null) {
+  46         
+  47         throw new AuthError("Final KM is required to complete the ride", HTTP_STATUS_CODES.BAD_REQUEST);
+  48       }
+  49 
+  50       const estimated = booking.estimatedFare || 0;
+  51       const ratePerKm = 10;
+  52 
+  53       finalFare = estimated + finalKm * ratePerKm;
+  54     }

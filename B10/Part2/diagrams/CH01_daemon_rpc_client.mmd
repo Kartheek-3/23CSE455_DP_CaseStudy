@@ -1,0 +1,34 @@
+%% CH01 - "Daemon RPC Client" (Proxy) - status: modified
+%% Changed participant: Client bang_bang.CustomModule.loop (Extract Method: _lower_threshold / _upper_threshold)
+%% Proxy calls (output_state, output_on, output_off) unchanged. RealSubject = daemon at PYRO_URI (outside scope)
+classDiagram
+    class DaemonControl {
+        +proxy(timeout)
+        +check_daemon()
+        +output_on(output_id, output_type, amount, min_off, output_channel, trigger_conditionals)
+        +output_off(output_id, output_channel, trigger_conditionals)
+        +output_state(output_id, output_channel)
+        +trigger_action(action_id, value, debug)
+        +trigger_all_actions(function_id, message, debug)
+    }
+    class Pyro5_api_Proxy["Pyro5.api.Proxy"]
+    <<dependency>> Pyro5_api_Proxy
+    class bang_bang_CustomModule["bang_bang.CustomModule"]
+    bang_bang_CustomModule : +loop()
+    bang_bang_CustomModule : -_lower_threshold()
+    bang_bang_CustomModule : -_upper_threshold()
+    bang_bang_CustomModule : +stop_function()
+    class InputController {
+        +loop()
+    }
+    class AbstractConditional {
+        +run_action(action_id, value, message)
+    }
+    class AbstractOutput {
+        +check_triggers(output_id, amount, output_channel)
+    }
+    DaemonControl ..> Pyro5_api_Proxy : creates and forwards to
+    bang_bang_CustomModule --> DaemonControl : control
+    InputController --> DaemonControl : control
+    AbstractConditional --> DaemonControl : control
+    AbstractOutput --> DaemonControl : control

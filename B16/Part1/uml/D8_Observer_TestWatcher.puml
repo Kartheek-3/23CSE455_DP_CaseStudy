@@ -1,0 +1,36 @@
+@startuml D8
+!pragma layout smetana
+title D8 Observer: TestWatcher
+
+interface TestWatcher <<Observer>> {
+  +testDisabled(ExtensionContext, Optional<String>)
+  +testSuccessful(ExtensionContext)
+  +testAborted(ExtensionContext, Throwable)
+  +testFailed(ExtensionContext, Throwable)
+}
+class RepetitionExtension <<ConcreteObserver>>
+abstract class MethodBasedTestDescriptor <<Subject>> {
+  #invokeTestWatchers(context, reverseOrder, callback)
+  +nodeSkipped(...)
+}
+class TestMethodTestDescriptor <<ConcreteSubject>> {
+  +nodeFinished(...)
+}
+class MutableExtensionRegistry <<Registry>> {
+  +getExtensions(Class)
+}
+
+RepetitionExtension ..|> TestWatcher
+TestMethodTestDescriptor --|> MethodBasedTestDescriptor
+MethodBasedTestDescriptor ..> MutableExtensionRegistry : getExtensions(TestWatcher.class)
+MethodBasedTestDescriptor ..> TestWatcher : notifies (errors only logged)
+' aligned-with-record
+legend right
+  <b>Counted participants</b> (record in the dataset)
+  Observer: TestWatcher
+  ConcreteObserver: RepetitionExtension
+  Subject (notify): MethodBasedTestDescriptor#invokeTestWatchers
+  Subject (trigger): TestMethodTestDescriptor#nodeFinished
+  Grey classes: real, shown for context, not counted
+endlegend
+@enduml

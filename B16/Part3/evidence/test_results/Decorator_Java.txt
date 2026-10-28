@@ -1,0 +1,7 @@
+$ (cd Part3/decorator-timeout-invocation/java) java -cp out decorator.DecoratorTest
+PASS report matches expected-output.txt
+PASS decorators stack in any order
+PASS invalid input is rejected with expected-error.txt
+3 passed, 0 failed
+[exit 0]
+result: 3/3 passed

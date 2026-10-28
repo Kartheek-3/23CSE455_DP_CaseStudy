@@ -1,0 +1,38 @@
+classDiagram
+    class Role {
+        <<type>>
+        types.ts line 1
+        admin
+        author
+    }
+    class Permission {
+        <<type>>
+        types.ts lines 3 to 18
+        posts create
+        api_keys write
+    }
+    class rolePermissions {
+        <<table>>
+        index.ts lines 3 to 30
+        maps Role to Permission list
+    }
+    class can {
+        <<function>>
+        index.ts lines 32 to 35
+        returns boolean
+    }
+    class canAccess {
+        <<function>>
+        index.ts lines 37 to 40
+        every permission must pass
+    }
+    class canAny {
+        <<function>>
+        index.ts lines 42 to 45
+        some permission must pass
+    }
+    rolePermissions ..> Role : keyed by
+    rolePermissions ..> Permission : lists
+    can ..> rolePermissions : looks up
+    canAccess ..> can : calls for each
+    canAny ..> can : calls for each

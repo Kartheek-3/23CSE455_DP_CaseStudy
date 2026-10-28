@@ -1,0 +1,32 @@
+%% Command - "Automation/Alert Actions"
+%% mycodo/actions/base_action.py, email.py, output_on_off.py; invoker (daemon) outside scope
+classDiagram
+    class AbstractFunctionAction {
+        +run_action(dict_vars)
+        +initialize()
+        +is_setup()
+    }
+    class email_ActionModule["email.ActionModule"]
+    email_ActionModule : +run_action(dict_vars)
+    class output_on_off_ActionModule["output_on_off.ActionModule"]
+    output_on_off_ActionModule : +run_action(dict_vars)
+    class send_email
+    <<function>> send_email
+    class DaemonControl {
+        +output_on_off(output_id, state, output_type, amount, output_channel)
+        +trigger_action(action_id, value, debug)
+        +trigger_all_actions(function_id, message, debug)
+    }
+    class AbstractConditional {
+        +run_action(action_id, value, message)
+    }
+    class AbstractOutput {
+        +check_triggers(output_id, amount, output_channel)
+    }
+    AbstractFunctionAction <|-- email_ActionModule
+    AbstractFunctionAction <|-- output_on_off_ActionModule
+    email_ActionModule ..> send_email : receiver
+    output_on_off_ActionModule ..> DaemonControl : receiver output_on_off()
+    AbstractConditional ..> DaemonControl : trigger_action(id)
+    AbstractOutput ..> DaemonControl : trigger_all_actions(id)
+    note for AbstractFunctionAction "Invoker that calls run_action is defined outside scope"

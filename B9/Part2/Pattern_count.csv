@@ -1,0 +1,52 @@
+source_version,summary,pattern_name,count
+baseline-local-2026-10-11,per_pattern,Builder,1
+baseline-local-2026-10-11,per_pattern,Facade,1
+baseline-local-2026-10-11,per_pattern,Repository,1
+baseline-local-2026-10-11,per_pattern,Observer,1
+baseline-local-2026-10-11,per_pattern,State,1
+baseline-local-2026-10-11,per_pattern,Command,1
+baseline-local-2026-10-11,per_pattern,Value Object,1
+baseline-local-2026-10-11,total_pattern_types,,7
+baseline-local-2026-10-11,total_pattern_instances,,7
+after-CH01,per_pattern,Facade,1
+after-CH01,per_pattern,Repository,3
+after-CH01,per_pattern,Observer,1
+after-CH01,per_pattern,State,1
+after-CH01,per_pattern,Command,1
+after-CH01,per_pattern,Value Object,1
+after-CH01,per_pattern,Strategy,2
+after-CH01,per_pattern,Simple Factory,1
+after-CH01,per_pattern,Adapter,1
+after-CH01,per_pattern,Dependency Injection,1
+after-CH01,per_pattern,Data Transfer Object,1
+after-CH01,total_pattern_types,,11
+after-CH01,total_pattern_instances,,14
+after-CH02,per_pattern,Facade,1
+after-CH02,per_pattern,Repository,3
+after-CH02,per_pattern,Observer,1
+after-CH02,per_pattern,State,1
+after-CH02,per_pattern,Command,1
+after-CH02,per_pattern,Value Object,1
+after-CH02,per_pattern,Strategy,3
+after-CH02,per_pattern,Simple Factory,1
+after-CH02,per_pattern,Adapter,1
+after-CH02,per_pattern,Dependency Injection,1
+after-CH02,per_pattern,Data Transfer Object,1
+after-CH02,per_pattern,Decorator,1
+after-CH02,total_pattern_types,,12
+after-CH02,total_pattern_instances,,16
+after-CH03,per_pattern,Facade,1
+after-CH03,per_pattern,Repository,3
+after-CH03,per_pattern,Observer,1
+after-CH03,per_pattern,State,1
+after-CH03,per_pattern,Command,1
+after-CH03,per_pattern,Value Object,1
+after-CH03,per_pattern,Strategy,3
+after-CH03,per_pattern,Simple Factory,1
+after-CH03,per_pattern,Adapter,1
+after-CH03,per_pattern,Dependency Injection,1
+after-CH03,per_pattern,Data Transfer Object,1
+after-CH03,per_pattern,Decorator,1
+after-CH03,per_pattern,Chain of Responsibility,1
+after-CH03,total_pattern_types,,13
+after-CH03,total_pattern_instances,,17

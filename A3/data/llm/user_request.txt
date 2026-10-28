@@ -1,0 +1,31 @@
+Online Banking Application using ASP.NET Core
+Case Study Title
+Design Pattern Usage and Evolution in an ASP.NET Core Banking Application
+Part 1
+Study an ASP.NET Core banking/financial application.
+Investigate:
+• account management
+• authentication
+• transactions
+• fund transfer
+• payment
+• fraud detection
+• notification
+Identify the patterns used and explain their purpose.
+Part 2
+Introduce:
+• new authentication mechanism
+• new transaction type
+• additional fraud-detection rule
+Analyze the impact on the identified patterns.
+Part 3
+Select important patterns and compare implementations across Java, Python, JavaScript and C++.
+Expected Outputs
+Part 1:
+Framework architecture + pattern inventory + UML + evidence
+Part 2:
+Change scenarios + pattern evolution + refactoring + metrics
+Part 3:
+Four implementations + comparative metrics + LLM analysis
+
+Now this is my project and the file I attached is the way how I have to the project and check my frnd gito I have to push files like that for my project i want all the file to be pushed to git

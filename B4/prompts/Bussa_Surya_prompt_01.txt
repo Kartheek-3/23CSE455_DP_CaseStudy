@@ -1,0 +1,3 @@
+Role: digital-contract evolution lead.
+Design CH03 for a contract lifecycle Draft -> Sent -> Signed or Draft -> Sent -> Expired. Each state owns allowed operations. Store SHA-256 document and signature hashes; reject invalid hashes and invalid transitions. Map State roles and add tests for the successful signing path and one blocked transition.
+

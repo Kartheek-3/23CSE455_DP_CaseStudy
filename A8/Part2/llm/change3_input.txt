@@ -1,0 +1,8 @@
+DISCLAIMER:
+This file is a reconstructed summary of the relevant intent/actions from the Change 3 agent session. It is not a literal historical LLM transcript or streaming log. The original session evidence was not recoverable after the agent session crash.
+
+Files provided for context:
+- src/booking/booking.service.ts
+- src/booking/dtos/update-booking.dto.ts
+- src/booking/booking.resolver.ts
+- src/seat/seat.service.ts

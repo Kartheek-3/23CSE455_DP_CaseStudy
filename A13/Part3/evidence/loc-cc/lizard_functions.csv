@@ -1,0 +1,426 @@
+pattern,language,file,function,nloc,ccn
+strategy,java,LogManager.java,"BootstrapConsoleBackend::write( String level , String message)",3,1
+strategy,java,LogManager.java,"PrettyConsoleBackend::write( String level , String message)",3,1
+strategy,java,LogManager.java,"JsonConsoleBackend::write( String level , String message)",3,1
+strategy,java,LogManager.java,LogManager::LogManager( LogBackend backend),3,1
+strategy,java,LogManager.java,LogManager::setBackend( LogBackend backend),4,2
+strategy,java,LogManager.java,"LogManager::log( String level , String message)",3,1
+strategy,python,log_manager.py,"write( self , level , message )",2,1
+strategy,python,log_manager.py,"write( self , level , message )",2,1
+strategy,python,log_manager.py,"write( self , level , message )",2,1
+strategy,python,log_manager.py,"__init__( self , backend )",2,1
+strategy,python,log_manager.py,"set_backend( self , backend )",4,2
+strategy,python,log_manager.py,"log( self , level , message )",2,1
+strategy,javascript,logManager.js,"write ( level , message )",1,1
+strategy,javascript,logManager.js,"write ( level , message )",1,1
+strategy,javascript,logManager.js,"write ( level , message )",1,1
+strategy,javascript,logManager.js,constructor ( backend ),1,1
+strategy,javascript,logManager.js,setBackend ( backend ),4,2
+strategy,javascript,logManager.js,"log ( level , message )",1,1
+strategy,cpp,log_manager.hpp,"BootstrapConsoleBackend::write( const std :: string & level , const std :: string & message) const",3,1
+strategy,cpp,log_manager.hpp,"PrettyConsoleBackend::write( const std :: string & level , const std :: string & message) const",5,1
+strategy,cpp,log_manager.hpp,"JsonConsoleBackend::write( const std :: string & level , const std :: string & message) const",3,1
+strategy,cpp,log_manager.hpp,LogManager::LogManager( std :: shared_ptr<LogBackend> backend),1,1
+strategy,cpp,log_manager.hpp,LogManager::setBackend( std :: shared_ptr<LogBackend> backend),4,2
+strategy,cpp,log_manager.hpp,"LogManager::log( const std :: string & level , const std :: string & message) const",3,1
+factory,java,LoggingFactory.java,PrettyConsoleBackend::name(),1,1
+factory,java,LoggingFactory.java,"PrettyConsoleBackend::write( String level , String message)",3,1
+factory,java,LoggingFactory.java,JsonConsoleBackend::name(),1,1
+factory,java,LoggingFactory.java,"JsonConsoleBackend::write( String level , String message)",3,1
+factory,java,LoggingFactory.java,LoggingFactory::createLoggingBackend( String format),5,4
+factory,python,logging_factory.py,"write( self , level , message )",2,1
+factory,python,logging_factory.py,"write( self , level , message )",2,1
+factory,python,logging_factory.py,create_logging_backend( fmt ),6,4
+factory,javascript,loggingFactory.js,get name ( ),1,1
+factory,javascript,loggingFactory.js,"write ( level , message )",1,1
+factory,javascript,loggingFactory.js,get name ( ),1,1
+factory,javascript,loggingFactory.js,"write ( level , message )",1,1
+factory,javascript,loggingFactory.js,createLoggingBackend ( format ),5,4
+factory,cpp,logging_factory.hpp,PrettyConsoleBackend::name() const,1,1
+factory,cpp,logging_factory.hpp,"PrettyConsoleBackend::write( const std :: string & level , const std :: string & message) const",5,1
+factory,cpp,logging_factory.hpp,JsonConsoleBackend::name() const,1,1
+factory,cpp,logging_factory.hpp,"JsonConsoleBackend::write( const std :: string & level , const std :: string & message) const",3,1
+factory,cpp,logging_factory.hpp,createLoggingBackend( const std :: optional<std::string> & format),5,4
+adapter,java,TelemetryRegistry.java,SentryTelemetryAdapter::SentryTelemetryAdapter( SentryClient sentry),3,1
+adapter,java,TelemetryRegistry.java,"SentryTelemetryAdapter::captureMessage( String message , String userId)",6,2
+adapter,java,TelemetryRegistry.java,"SentryTelemetryAdapter::startSpan( String name , Supplier<T> fn)",3,1
+adapter,java,TelemetryRegistry.java,SentryTelemetryAdapter::shutdown(),3,1
+adapter,java,TelemetryRegistry.java,TelemetryRegistry::TelemetryRegistry( List<TelemetryAdapter> adapters),3,1
+adapter,java,TelemetryRegistry.java,"TelemetryRegistry::captureMessage( String message , String userId)",3,2
+adapter,java,TelemetryRegistry.java,"TelemetryRegistry::startSpan( String name , Supplier<T> fn)",3,1
+adapter,java,TelemetryRegistry.java,"TelemetryRegistry::span( int index , String name , Supplier<T> fn)",4,2
+adapter,java,TelemetryRegistry.java,TelemetryRegistry::shutdown(),3,2
+adapter,python,telemetry.py,"__init__( self , sentry )",2,1
+adapter,python,telemetry.py,"capture_message( self , message , user_id = None )",5,2
+adapter,python,telemetry.py,"start_span( self , name , fn )",2,1
+adapter,python,telemetry.py,shutdown( self ),2,1
+adapter,python,telemetry.py,"__init__( self , adapters )",2,1
+adapter,python,telemetry.py,"capture_message( self , message , user_id = None )",3,2
+adapter,python,telemetry.py,"start_span( self , name , fn )",2,1
+adapter,python,telemetry.py,"_span( self , index , name , fn )",4,2
+adapter,python,telemetry.py,shutdown( self ),3,2
+adapter,javascript,telemetry.js,constructor ( sentry ),1,1
+adapter,javascript,telemetry.js,"captureMessage ( message , userId )",5,2
+adapter,javascript,telemetry.js,"startSpan ( name , fn )",1,1
+adapter,javascript,telemetry.js,shutdown ( ),1,1
+adapter,javascript,telemetry.js,constructor ( adapters ),1,1
+adapter,javascript,telemetry.js,"captureMessage ( message , userId )",3,2
+adapter,javascript,telemetry.js,"startSpan ( name , fn )",1,1
+adapter,javascript,telemetry.js,(anonymous),1,1
+adapter,javascript,telemetry.js,"span ( index , name , fn )",4,2
+adapter,javascript,telemetry.js,shutdown ( ),3,2
+adapter,cpp,telemetry.hpp,SentryTelemetryAdapter::SentryTelemetryAdapter( std :: shared_ptr<SentryClient> sentry),1,1
+adapter,cpp,telemetry.hpp,"SentryTelemetryAdapter::captureMessage( const std :: string & message , const std :: optional<std::string> & userId)",5,2
+adapter,cpp,telemetry.hpp,"SentryTelemetryAdapter::startSpan( const std :: string & name , const std :: function<std::string()> & fn)",3,1
+adapter,cpp,telemetry.hpp,SentryTelemetryAdapter::shutdown(),1,1
+adapter,cpp,telemetry.hpp,TelemetryRegistry::TelemetryRegistry( std :: vector<std::shared_ptr<TelemetryAdapter>> adapters),1,1
+adapter,cpp,telemetry.hpp,"TelemetryRegistry::captureMessage( const std :: string & message , const std :: optional<std::string> & userId)",3,2
+adapter,cpp,telemetry.hpp,"TelemetryRegistry::startSpan( const std :: string & name , const std :: function<std::string()> & fn)",3,1
+adapter,cpp,telemetry.hpp,TelemetryRegistry::shutdown(),3,2
+adapter,cpp,telemetry.hpp,"TelemetryRegistry::span( size_t index , const std :: string & name , const std :: function<std::string()> & fn)",4,2
+template_method,java,Chart.java,"Chart::tick( boolean major , String group)",10,4
+template_method,java,Chart.java,UsersChart::tickMajor( String group),3,1
+template_method,java,Chart.java,UsersChart::tickMinor( String group),3,1
+template_method,java,Chart.java,NotesChart::tickMajor( String group),3,1
+template_method,java,Chart.java,NotesChart::tickMinor( String group),3,1
+template_method,python,chart.py,__init__( self ),2,1
+template_method,python,chart.py,"tick( self , major , group = None )",7,4
+template_method,python,chart.py,"tick_major( self , group )",2,1
+template_method,python,chart.py,"tick_minor( self , group )",2,1
+template_method,python,chart.py,"tick_major( self , group )",2,1
+template_method,python,chart.py,"tick_minor( self , group )",2,1
+template_method,javascript,chart.js,constructor ( ),1,1
+template_method,javascript,chart.js,tickMajor ( group ),1,1
+template_method,javascript,chart.js,tickMinor ( group ),1,1
+template_method,javascript,chart.js,"tick ( major , group null )",9,4
+template_method,javascript,chart.js,tickMajor ( ),1,1
+template_method,javascript,chart.js,tickMinor ( ),1,1
+template_method,javascript,chart.js,tickMajor ( ),1,1
+template_method,javascript,chart.js,tickMinor ( ),1,1
+template_method,cpp,chart.hpp,"Chart::tick( bool major , const std :: string & group = """")",11,4
+template_method,cpp,chart.hpp,UsersChart::tickMajor( const std :: string &),1,1
+template_method,cpp,chart.hpp,UsersChart::tickMinor( const std :: string &),1,1
+template_method,cpp,chart.hpp,NotesChart::tickMajor( const std :: string &),1,1
+template_method,cpp,chart.hpp,NotesChart::tickMinor( const std :: string &),1,1
+proxy,java,AnalyticsProxy.java,RealAnalytics::track( String event),1,1
+proxy,java,AnalyticsProxy.java,RealAnalytics::page( String name),1,1
+proxy,java,AnalyticsProxy.java,RealAnalytics::identify( String user),1,1
+proxy,java,AnalyticsProxy.java,AnalyticsProxy::AnalyticsProxy(),1,1
+proxy,java,AnalyticsProxy.java,AnalyticsProxy::setAnalytics( AnalyticsInstance analytics),4,2
+proxy,java,AnalyticsProxy.java,AnalyticsProxy::track( String event),3,2
+proxy,java,AnalyticsProxy.java,AnalyticsProxy::page( String name),3,2
+proxy,java,AnalyticsProxy.java,AnalyticsProxy::identify( String user),3,2
+proxy,python,analytics_proxy.py,"track( self , event )",2,1
+proxy,python,analytics_proxy.py,"page( self , name )",2,1
+proxy,python,analytics_proxy.py,"identify( self , user )",2,1
+proxy,python,analytics_proxy.py,"__init__( self , analytics = None )",2,1
+proxy,python,analytics_proxy.py,"set_analytics( self , analytics )",4,2
+proxy,python,analytics_proxy.py,"track( self , event )",2,2
+proxy,python,analytics_proxy.py,"page( self , name )",2,2
+proxy,python,analytics_proxy.py,"identify( self , user )",2,2
+proxy,javascript,analyticsProxy.js,track ( event ),1,1
+proxy,javascript,analyticsProxy.js,page ( name ),1,1
+proxy,javascript,analyticsProxy.js,identify ( user ),1,1
+proxy,javascript,analyticsProxy.js,constructor ( analytics ),1,3
+proxy,javascript,analyticsProxy.js,setAnalytics ( analytics ),4,2
+proxy,javascript,analyticsProxy.js,track ( event ),1,3
+proxy,javascript,analyticsProxy.js,page ( name ),1,3
+proxy,javascript,analyticsProxy.js,identify ( user ),1,3
+proxy,cpp,analytics_proxy.hpp,RealAnalytics::track( const std :: string & event),1,1
+proxy,cpp,analytics_proxy.hpp,RealAnalytics::page( const std :: string & name),1,1
+proxy,cpp,analytics_proxy.hpp,RealAnalytics::identify( const std :: string & user),1,1
+proxy,cpp,analytics_proxy.hpp,AnalyticsProxy::setAnalytics( std :: unique_ptr<AnalyticsInstance> analytics),4,2
+proxy,cpp,analytics_proxy.hpp,AnalyticsProxy::track( const std :: string & event),1,2
+proxy,cpp,analytics_proxy.hpp,AnalyticsProxy::page( const std :: string & name),1,2
+proxy,cpp,analytics_proxy.hpp,AnalyticsProxy::identify( const std :: string & user),1,2
+observer,java,PreferencesManager.java,PreferencesManager::on( Consumer<CommitEvent> listener),3,1
+observer,java,PreferencesManager.java,PreferencesManager::off( Consumer<CommitEvent> listener),3,1
+observer,java,PreferencesManager.java,"PreferencesManager::commit( String key , String value)",6,3
+observer,python,preferences_manager.py,__init__( self ),3,1
+observer,python,preferences_manager.py,"on( self , listener )",2,1
+observer,python,preferences_manager.py,"off( self , listener )",3,2
+observer,python,preferences_manager.py,"commit( self , key , value )",7,4
+observer,javascript,preferencesManager.js,constructor ( ),4,1
+observer,javascript,preferencesManager.js,"commit ( key , value )",5,3
+observer,cpp,preferences_manager.hpp,PreferencesManager::on( Listener listener),4,1
+observer,cpp,preferences_manager.hpp,PreferencesManager::off( int handle),5,1
+observer,cpp,preferences_manager.hpp,"PreferencesManager::commit( const std :: string & key , const std :: string & value)",7,4
+two_level_cache,java,RedisSingleCache.java,"MemorySingleCache::MemorySingleCache( long lifetime , LongSupplier clock)",4,1
+two_level_cache,java,RedisSingleCache.java,MemorySingleCache::set( String value),4,1
+two_level_cache,java,RedisSingleCache.java,MemorySingleCache::get(),8,3
+two_level_cache,java,RedisSingleCache.java,MemorySingleCache::delete(),4,1
+two_level_cache,java,RedisSingleCache.java,"RedisSingleCache::RedisSingleCache( RemoteStore redis , String name , long memoryLifetime , Supplier<String> fetcher , LongSupplier clock)",6,1
+two_level_cache,java,RedisSingleCache.java,RedisSingleCache::set( String value),4,1
+two_level_cache,java,RedisSingleCache.java,RedisSingleCache::get(),8,3
+two_level_cache,java,RedisSingleCache.java,RedisSingleCache::delete(),4,1
+two_level_cache,java,RedisSingleCache.java,RedisSingleCache::fetch(),7,2
+two_level_cache,python,redis_single_cache.py,"__init__( self , lifetime , clock )",5,1
+two_level_cache,python,redis_single_cache.py,"set( self , value )",3,1
+two_level_cache,python,redis_single_cache.py,get( self ),7,3
+two_level_cache,python,redis_single_cache.py,delete( self ),3,1
+two_level_cache,python,redis_single_cache.py,"__init__( self , redis , name , memory_lifetime , fetcher , clock )",5,1
+two_level_cache,python,redis_single_cache.py,"set( self , value )",3,1
+two_level_cache,python,redis_single_cache.py,get( self ),9,3
+two_level_cache,python,redis_single_cache.py,delete( self ),3,1
+two_level_cache,python,redis_single_cache.py,fetch( self ),7,2
+two_level_cache,javascript,redisSingleCache.js,"constructor ( lifetime , clock )",6,1
+two_level_cache,javascript,redisSingleCache.js,set_ ( value ),4,1
+two_level_cache,javascript,redisSingleCache.js,get_ ( ),8,3
+two_level_cache,javascript,redisSingleCache.js,delete_ ( ),4,1
+two_level_cache,javascript,redisSingleCache.js,"constructor ( redis , name , memoryLifetime , fetcher , clock )",6,1
+two_level_cache,javascript,redisSingleCache.js,set_ ( value ),4,1
+two_level_cache,javascript,redisSingleCache.js,get_ ( ),8,3
+two_level_cache,javascript,redisSingleCache.js,delete_ ( ),4,1
+two_level_cache,javascript,redisSingleCache.js,fetch ( ),7,2
+two_level_cache,cpp,redis_single_cache.hpp,"MemorySingleCache::MemorySingleCache( long lifetime , std :: function<long()> clock)",1,1
+two_level_cache,cpp,redis_single_cache.hpp,MemorySingleCache::set( const std :: string & value),4,1
+two_level_cache,cpp,redis_single_cache.hpp,MemorySingleCache::get(),8,3
+two_level_cache,cpp,redis_single_cache.hpp,MemorySingleCache::remove(),4,1
+two_level_cache,cpp,redis_single_cache.hpp,"RedisSingleCache::RedisSingleCache( RemoteStore & redis , const std :: string & name , long memoryLifetime , std :: function<std::string()> fetcher , std :: function<long()> clock)",3,1
+two_level_cache,cpp,redis_single_cache.hpp,RedisSingleCache::set( const std :: string & value),4,1
+two_level_cache,cpp,redis_single_cache.hpp,RedisSingleCache::get(),7,3
+two_level_cache,cpp,redis_single_cache.hpp,RedisSingleCache::remove(),4,1
+two_level_cache,cpp,redis_single_cache.hpp,RedisSingleCache::fetch(),6,2
+cache_aside,java,FederatedInstanceService.java,InMemoryInstanceRepository::findOneByHost( String host),4,1
+cache_aside,java,FederatedInstanceService.java,InMemoryInstanceRepository::insertOne( String host),6,1
+cache_aside,java,FederatedInstanceService.java,KeyValueCache::has( String key),1,1
+cache_aside,java,FederatedInstanceService.java,KeyValueCache::get( String key),1,1
+cache_aside,java,FederatedInstanceService.java,"KeyValueCache::set( String key , Instance value)",1,1
+cache_aside,java,FederatedInstanceService.java,KeyValueCache::dispose(),1,1
+cache_aside,java,FederatedInstanceService.java,"FederatedInstanceService::FederatedInstanceService( InMemoryInstanceRepository repository , KeyValueCache cache)",4,1
+cache_aside,java,FederatedInstanceService.java,FederatedInstanceService::fetchOrRegister( String host),9,3
+cache_aside,java,FederatedInstanceService.java,FederatedInstanceService::lookup( String host),7,2
+cache_aside,python,federated_instance_service.py,__init__( self ),4,1
+cache_aside,python,federated_instance_service.py,"find_one_by_host( self , host )",3,1
+cache_aside,python,federated_instance_service.py,"insert_one( self , host )",5,1
+cache_aside,python,federated_instance_service.py,__init__( self ),2,1
+cache_aside,python,federated_instance_service.py,"has( self , key )",2,1
+cache_aside,python,federated_instance_service.py,"get( self , key )",2,1
+cache_aside,python,federated_instance_service.py,"set( self , key , value )",2,1
+cache_aside,python,federated_instance_service.py,dispose( self ),2,1
+cache_aside,python,federated_instance_service.py,"__init__( self , repository , cache )",3,1
+cache_aside,python,federated_instance_service.py,"fetch_or_register( self , host )",10,3
+cache_aside,python,federated_instance_service.py,"lookup( self , host )",7,2
+cache_aside,javascript,federatedInstanceService.js,constructor ( ),5,1
+cache_aside,javascript,federatedInstanceService.js,findOneByHost ( host ),4,3
+cache_aside,javascript,federatedInstanceService.js,insertOne ( host ),6,1
+cache_aside,javascript,federatedInstanceService.js,constructor ( ),1,1
+cache_aside,javascript,federatedInstanceService.js,has ( key ),1,1
+cache_aside,javascript,federatedInstanceService.js,get_ ( key ),1,1
+cache_aside,javascript,federatedInstanceService.js,"set_ ( key , value )",1,1
+cache_aside,javascript,federatedInstanceService.js,dispose ( ),1,1
+cache_aside,javascript,federatedInstanceService.js,"constructor ( repository , cache )",4,1
+cache_aside,javascript,federatedInstanceService.js,fetchOrRegister ( host ),9,3
+cache_aside,javascript,federatedInstanceService.js,lookup ( host ),7,2
+cache_aside,cpp,federated_instance_service.hpp,InMemoryInstanceRepository::findOneByHost( const std :: string & host),6,2
+cache_aside,cpp,federated_instance_service.hpp,InMemoryInstanceRepository::insertOne( const std :: string & host),6,1
+cache_aside,cpp,federated_instance_service.hpp,KeyValueCache::has( const std :: string & key) const,1,1
+cache_aside,cpp,federated_instance_service.hpp,KeyValueCache::get( const std :: string & key) const,4,2
+cache_aside,cpp,federated_instance_service.hpp,"KeyValueCache::set( const std :: string & key , const std :: optional<Instance> & value)",1,1
+cache_aside,cpp,federated_instance_service.hpp,KeyValueCache::dispose(),1,1
+cache_aside,cpp,federated_instance_service.hpp,"FederatedInstanceService::FederatedInstanceService( InMemoryInstanceRepository & repository , KeyValueCache & cache)",2,1
+cache_aside,cpp,federated_instance_service.hpp,FederatedInstanceService::fetchOrRegister( std :: string host),8,3
+cache_aside,cpp,federated_instance_service.hpp,FederatedInstanceService::lookup( std :: string host),7,2
+cache_aside,cpp,federated_instance_service.hpp,FederatedInstanceService::lower( std :: string s),4,1
+publish_subscribe,java,GlobalEventService.java,"Broker::subscribe( String channel , BiConsumer<String,String> handler)",3,1
+publish_subscribe,java,GlobalEventService.java,"Broker::unsubscribe( String channel , BiConsumer<String,String> handler)",4,2
+publish_subscribe,java,GlobalEventService.java,"Broker::publish( String channel , String message)",5,2
+publish_subscribe,java,GlobalEventService.java,GlobalEventService::GlobalEventService( Broker broker),3,1
+publish_subscribe,java,GlobalEventService.java,"GlobalEventService::publishMainStream( String userId , String type , String body)",3,1
+publish_subscribe,java,GlobalEventService.java,"GlobalEventService::publishBroadcastStream( String type , String body)",3,1
+publish_subscribe,java,GlobalEventService.java,"GlobalEventService::publish( String channel , String type , String body)",3,1
+publish_subscribe,python,event_bus.py,__init__( self ),2,1
+publish_subscribe,python,event_bus.py,"subscribe( self , channel , handler )",2,1
+publish_subscribe,python,event_bus.py,"unsubscribe( self , channel , handler )",4,2
+publish_subscribe,python,event_bus.py,"publish( self , channel , message )",5,2
+publish_subscribe,python,event_bus.py,"__init__( self , broker )",2,1
+publish_subscribe,python,event_bus.py,"publish_main_stream( self , user_id , event_type , body )",2,1
+publish_subscribe,python,event_bus.py,"publish_broadcast_stream( self , event_type , body )",2,1
+publish_subscribe,python,event_bus.py,"_publish( self , channel , event_type , body )",3,1
+publish_subscribe,javascript,eventBus.js,constructor ( ),1,1
+publish_subscribe,javascript,eventBus.js,"subscribe ( channel , handler )",4,2
+publish_subscribe,javascript,eventBus.js,"unsubscribe ( channel , handler )",5,4
+publish_subscribe,javascript,eventBus.js,"publish ( channel , message )",5,4
+publish_subscribe,javascript,eventBus.js,constructor ( broker ),1,1
+publish_subscribe,javascript,eventBus.js,"publishMainStream ( userId , type , body )",1,1
+publish_subscribe,javascript,eventBus.js,"publishBroadcastStream ( type , body )",1,1
+publish_subscribe,javascript,eventBus.js,"publish ( channel , type , body )",3,1
+publish_subscribe,cpp,event_bus.hpp,"Broker::subscribe( const std :: string & channel , Handler handler)",4,1
+publish_subscribe,cpp,event_bus.hpp,"Broker::unsubscribe( const std :: string & channel , int token)",6,1
+publish_subscribe,cpp,event_bus.hpp,"Broker::publish( const std :: string & channel , const std :: string & message)",5,2
+publish_subscribe,cpp,event_bus.hpp,GlobalEventService::GlobalEventService( Broker & broker),1,1
+publish_subscribe,cpp,event_bus.hpp,"GlobalEventService::publishMainStream( const std :: string & userId , const std :: string & type , const std :: string & body)",3,1
+publish_subscribe,cpp,event_bus.hpp,"GlobalEventService::publishBroadcastStream( const std :: string & type , const std :: string & body)",3,1
+publish_subscribe,cpp,event_bus.hpp,"GlobalEventService::publish( const std :: string & channel , const std :: string & type , const std :: string & body)",3,1
+job_queue,java,JobQueue.java,JobQueue::JobQueue( int maxAttempts),3,1
+job_queue,java,JobQueue.java,"JobQueue::add( String label , String to , String body)",5,1
+job_queue,java,JobQueue.java,"JobQueue::run( Function<Job,String> processor)",17,6
+job_queue,java,JobQueue.java,DeliverService::DeliverService( JobQueue queue),3,1
+job_queue,java,JobQueue.java,"DeliverService::deliver( String to , String body)",4,1
+job_queue,java,JobQueue.java,"DeliverProcessor::DeliverProcessor( Set<String> blockedHosts , Transport transport)",4,1
+job_queue,java,JobQueue.java,DeliverProcessor::process( Job job),6,2
+job_queue,python,job_queue.py,"__init__( self , max_attempts = 12 )",4,1
+job_queue,python,job_queue.py,"add( self , label , to , body )",5,1
+job_queue,python,job_queue.py,"run( self , processor )",13,6
+job_queue,python,job_queue.py,"__init__( self , queue )",2,1
+job_queue,python,job_queue.py,"deliver( self , to , body )",3,1
+job_queue,python,job_queue.py,"__init__( self , blocked_hosts , transport )",3,1
+job_queue,python,job_queue.py,"process( self , job )",6,2
+job_queue,javascript,jobQueue.js,constructor ( maxAttempts ),5,1
+job_queue,javascript,jobQueue.js,"add ( label , to , body )",5,1
+job_queue,javascript,jobQueue.js,run ( processor ),17,7
+job_queue,javascript,jobQueue.js,constructor ( queue ),1,1
+job_queue,javascript,jobQueue.js,"deliver ( to , body )",4,1
+job_queue,javascript,jobQueue.js,"constructor ( blockedHosts , transport )",4,1
+job_queue,javascript,jobQueue.js,process ( job ),6,2
+job_queue,cpp,job_queue.hpp,JobQueue::JobQueue( int maxAttempts = 12),1,1
+job_queue,cpp,job_queue.hpp,"JobQueue::add( const std :: string & label , const std :: string & to , const std :: string & body)",4,1
+job_queue,cpp,job_queue.hpp,JobQueue::run( const std :: function<std::string(const Job&)> & processor),18,5
+job_queue,cpp,job_queue.hpp,DeliverService::DeliverService( JobQueue & queue),1,1
+job_queue,cpp,job_queue.hpp,"DeliverService::deliver( const std :: string & to , const std :: string & body)",8,3
+job_queue,cpp,job_queue.hpp,"DeliverProcessor::DeliverProcessor( const std :: set<std::string> & blockedHosts , Transport & transport)",2,1
+job_queue,cpp,job_queue.hpp,DeliverProcessor::process( const Job & job),7,2
+front_controller,java,ApiController.java,"ApiController::ApiController( Function<String,String> authenticate , int limit)",4,1
+front_controller,java,ApiController.java,ApiController::register( Endpoint endpoint),3,1
+front_controller,java,ApiController.java,"ApiController::handle( String name , String token , String body)",11,6
+front_controller,python,api_controller.py,"__init__( self , authenticate , limit = 2 )",5,1
+front_controller,python,api_controller.py,"register( self , endpoint )",2,1
+front_controller,python,api_controller.py,"handle( self , name , token , body )",13,6
+front_controller,javascript,apiController.js,"constructor ( authenticate , limit )",6,1
+front_controller,javascript,apiController.js,register ( endpoint ),1,1
+front_controller,javascript,apiController.js,"handle ( name , token , body )",11,9
+front_controller,cpp,api_controller.hpp,"ApiController::ApiController( Authenticator authenticate , int limit = 2)",1,1
+front_controller,cpp,api_controller.hpp,ApiController::registerEndpoint( const Endpoint & endpoint),1,1
+front_controller,cpp,api_controller.hpp,"ApiController::handle( const std :: string & name , const std :: string & token , const std :: string & body)",11,5
+router,java,Router.java,"Router::Router( List<Route> routes , boolean loggedIn , String notFoundComponent)",5,1
+router,java,Router.java,Router::onChange( Consumer<Resolved> listener),3,1
+router,java,Router.java,Router::resolve( String fullPath),19,9
+router,java,Router.java,Router::navigate( String fullPath),11,6
+router,java,Router.java,Router::segmentsOf( String path),5,3
+router,python,nirax.py,"__init__( self , routes , logged_in , not_found_component )",6,1
+router,python,nirax.py,"on_change( self , listener )",2,1
+router,python,nirax.py,"resolve( self , full_path )",17,10
+router,python,nirax.py,"navigate( self , full_path )",9,6
+router,javascript,nirax.js,"constructor ( routes , loggedIn , notFoundComponent )",7,1
+router,javascript,nirax.js,onChange ( listener ),1,1
+router,javascript,nirax.js,(anonymous),4,2
+router,javascript,nirax.js,resolve ( fullPath ),13,4
+router,javascript,nirax.js,navigate ( fullPath ),9,6
+router,cpp,nirax.hpp,"Router::Router( std :: vector<Route> routes , bool loggedIn , std :: string notFound)",2,1
+router,cpp,nirax.hpp,Router::onChange( std :: function<void(const Resolved&)> listener),1,1
+router,cpp,nirax.hpp,Router::resolve( const std :: string & fullPath) const,18,9
+router,cpp,nirax.hpp,Router::navigate( const std :: string & fullPath),11,6
+router,cpp,nirax.hpp,Router::segmentsOf( const std :: string & path),11,4
+service_layer,java,AnnouncementService.java,"Announcement::Announcement( int id , String title , String userId)",5,1
+service_layer,java,AnnouncementService.java,AnnouncementRepository::insert( Announcement announcement),1,1
+service_layer,java,AnnouncementService.java,AnnouncementRepository::find( int id),1,1
+service_layer,java,AnnouncementService.java,AnnouncementRepository::all(),1,1
+service_layer,java,AnnouncementService.java,"AnnouncementRepository::addRead( String userId , int id)",1,1
+service_layer,java,AnnouncementService.java,"AnnouncementRepository::hasRead( String userId , int id)",1,1
+service_layer,java,AnnouncementService.java,"AnnouncementService::AnnouncementService( AnnouncementRepository repository , EventPublisher events , ModerationLog moderationLog)",5,1
+service_layer,java,AnnouncementService.java,"AnnouncementService::create( String title , String userId , String moderator)",12,4
+service_layer,java,AnnouncementService.java,AnnouncementService::unread( String userId),8,6
+service_layer,java,AnnouncementService.java,"AnnouncementService::read( String userId , int id)",6,5
+service_layer,java,AnnouncementService.java,"AnnouncementService::get( int id , String me)",7,5
+service_layer,python,announcement_service.py,__init__( self ),3,1
+service_layer,python,announcement_service.py,"insert( self , announcement )",2,1
+service_layer,python,announcement_service.py,"find( self , announcement_id )",2,1
+service_layer,python,announcement_service.py,all( self ),2,2
+service_layer,python,announcement_service.py,"add_read( self , user_id , announcement_id )",5,2
+service_layer,python,announcement_service.py,"has_read( self , user_id , announcement_id )",2,1
+service_layer,python,announcement_service.py,"__init__( self , repository , events , moderation_log )",5,1
+service_layer,python,announcement_service.py,"create( self , title , user_id = None , moderator = None )",13,4
+service_layer,python,announcement_service.py,"unread( self , user_id )",3,5
+service_layer,python,announcement_service.py,"read( self , user_id , announcement_id )",8,5
+service_layer,python,announcement_service.py,"get( self , announcement_id , me = None )",6,5
+service_layer,javascript,announcementService.js,constructor ( ),4,1
+service_layer,javascript,announcementService.js,insert ( announcement ),1,1
+service_layer,javascript,announcementService.js,find ( id ),1,3
+service_layer,javascript,announcementService.js,(anonymous),1,1
+service_layer,javascript,announcementService.js,all ( ),1,1
+service_layer,javascript,announcementService.js,"addRead ( userId , id )",6,2
+service_layer,javascript,announcementService.js,"hasRead ( userId , id )",1,1
+service_layer,javascript,announcementService.js,"constructor ( repository , events , moderationLog )",6,1
+service_layer,javascript,announcementService.js,"create ( title , userId null , moderator null )",12,4
+service_layer,javascript,announcementService.js,(anonymous),1,1
+service_layer,javascript,announcementService.js,unread ( userId ),4,4
+service_layer,javascript,announcementService.js,"read ( userId , id )",6,5
+service_layer,javascript,announcementService.js,"get_ ( id , me null )",7,5
+service_layer,cpp,announcement_service.hpp,AnnouncementRepository::insert( const Announcement & announcement),1,1
+service_layer,cpp,announcement_service.hpp,AnnouncementRepository::find( int id),4,2
+service_layer,cpp,announcement_service.hpp,AnnouncementRepository::all(),5,2
+service_layer,cpp,announcement_service.hpp,"AnnouncementRepository::addRead( const std :: string & userId , int id)",1,1
+service_layer,cpp,announcement_service.hpp,"AnnouncementRepository::hasRead( const std :: string & userId , int id) const",1,1
+service_layer,cpp,announcement_service.hpp,"AnnouncementService::AnnouncementService( AnnouncementRepository & repository , EventPublisher & events , ModerationLog & moderationLog)",2,1
+service_layer,cpp,announcement_service.hpp,"AnnouncementService::create( const std :: string & title , const std :: optional<std::string> & userId , const std :: optional<std::string> & moderator)",13,4
+service_layer,cpp,announcement_service.hpp,AnnouncementService::unread( const std :: string & userId),8,6
+service_layer,cpp,announcement_service.hpp,"AnnouncementService::read( const std :: string & userId , int id)",6,6
+service_layer,cpp,announcement_service.hpp,"AnnouncementService::get( int id , const std :: optional<std::string> & me)",9,5
+plugin_architecture,java,PluginHost.java,"PluginHost::install( String pluginId , Consumer<HandlerRegistrar> setup)",4,1
+plugin_architecture,java,PluginHost.java,PluginHost::abort( String pluginId),4,2
+plugin_architecture,java,PluginHost.java,PluginHost::getHandlers( String type),5,3
+plugin_architecture,python,plugin_host.py,__init__( self ),3,1
+plugin_architecture,python,plugin_host.py,"install.add_handler( handler_type , fn )",2,1
+plugin_architecture,python,plugin_host.py,"install( self , plugin_id , setup )",4,1
+plugin_architecture,python,plugin_host.py,"abort( self , plugin_id )",5,4
+plugin_architecture,python,plugin_host.py,"get_handlers( self , handler_type )",2,3
+plugin_architecture,javascript,pluginHost.js,constructor ( ),4,1
+plugin_architecture,javascript,pluginHost.js,"addHandler ( type , fn )",1,1
+plugin_architecture,javascript,pluginHost.js,"install ( pluginId , setup )",5,1
+plugin_architecture,javascript,pluginHost.js,(anonymous),1,1
+plugin_architecture,javascript,pluginHost.js,abort ( pluginId ),4,2
+plugin_architecture,javascript,pluginHost.js,(anonymous),1,1
+plugin_architecture,javascript,pluginHost.js,(anonymous),1,1
+plugin_architecture,javascript,pluginHost.js,getHandlers ( type ),3,1
+plugin_architecture,cpp,plugin_host.hpp,"PluginHost::install( const std :: string & pluginId , const std :: function<void(const Registrar&)> & setup)",6,1
+plugin_architecture,cpp,plugin_host.hpp,PluginHost::abort( const std :: string & pluginId),6,2
+plugin_architecture,cpp,plugin_host.hpp,PluginHost::getHandlers( const std :: string & type) const,5,3
+repository,java,InMemoryRepository.java,EntityNotFound::EntityNotFound(),3,1
+repository,java,InMemoryRepository.java,"insertOne( Map<String,String> entity)",4,1
+repository,java,InMemoryRepository.java,"InMemoryRepository::insert( Map<String,String> entity)",6,1
+repository,java,InMemoryRepository.java,"InMemoryRepository::findOneBy( Map<String,String> criteria)",6,3
+repository,java,InMemoryRepository.java,"InMemoryRepository::findOneOrFail( Map<String,String> criteria)",5,2
+repository,java,InMemoryRepository.java,InMemoryRepository::count(),3,1
+repository,java,InMemoryRepository.java,UserService::UserService( UsersRepository users),3,1
+repository,java,InMemoryRepository.java,UserService::register( String name),1,1
+repository,java,InMemoryRepository.java,UserService::findByName( String name),1,1
+repository,java,InMemoryRepository.java,UserService::getByName( String name),1,1
+repository,java,InMemoryRepository.java,UserService::count(),1,1
+repository,python,repository.py,__init__( self ),2,1
+repository,python,repository.py,__init__( self ),3,1
+repository,python,repository.py,"insert( self , entity )",4,1
+repository,python,repository.py,"find_one_by( self , criteria )",5,4
+repository,python,repository.py,"find_one_or_fail( self , criteria )",5,2
+repository,python,repository.py,count( self ),2,1
+repository,python,repository.py,"insert_one( self , entity )",3,1
+repository,python,repository.py,"__init__( self , users_repository )",2,1
+repository,python,repository.py,"register( self , name )",2,1
+repository,python,repository.py,"find_by_name( self , name )",2,1
+repository,python,repository.py,"get_by_name( self , name )",2,1
+repository,python,repository.py,count( self ),2,1
+repository,javascript,repository.js,constructor ( ),1,1
+repository,javascript,repository.js,constructor ( ),4,1
+repository,javascript,repository.js,insert ( entity ),5,1
+repository,javascript,repository.js,(anonymous),1,1
+repository,javascript,repository.js,(anonymous),1,1
+repository,javascript,repository.js,findOneBy ( criteria ),3,3
+repository,javascript,repository.js,findOneOrFail ( criteria ),5,2
+repository,javascript,repository.js,count ( ),1,1
+repository,javascript,repository.js,insertOne ( entity ),4,1
+repository,javascript,repository.js,"extend ( repository , extension )",3,1
+repository,javascript,repository.js,constructor ( usersRepository ),1,1
+repository,javascript,repository.js,register ( name ),1,1
+repository,javascript,repository.js,findByName ( name ),1,1
+repository,javascript,repository.js,getByName ( name ),1,1
+repository,javascript,repository.js,count ( ),1,1
+repository,cpp,repository.hpp,EntityNotFound::EntityNotFound(),1,1
+repository,cpp,repository.hpp,InMemoryRepository::insert( const Entity & entity),6,1
+repository,cpp,repository.hpp,InMemoryRepository::findOneBy( const Entity & criteria) const,11,6
+repository,cpp,repository.hpp,InMemoryRepository::findOneOrFail( const Entity & criteria) const,5,2
+repository,cpp,repository.hpp,InMemoryRepository::count() const,1,1
+repository,cpp,repository.hpp,MiRepository::insertOne( const Entity & entity),4,1
+repository,cpp,repository.hpp,UserService::UserService( UsersRepository & users),1,1
+repository,cpp,repository.hpp,UserService::registerUser( const std :: string & name),1,1
+repository,cpp,repository.hpp,UserService::findByName( const std :: string & name) const,1,1
+repository,cpp,repository.hpp,UserService::getByName( const std :: string & name) const,1,1
+repository,cpp,repository.hpp,UserService::count() const,1,1

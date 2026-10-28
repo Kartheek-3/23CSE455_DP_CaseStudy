@@ -1,0 +1,56 @@
+Registered crop types:
+  Rice    (rice) target  85.0 %  tolerance +/-5.0 %
+  Tomato  (tomato) target  65.0 %  tolerance +/-5.0 %
+  Wheat   (wheat) target  50.0 %  tolerance +/-5.0 %
+
+=== Crop profile 'tomato': setpoint 65.0 %, hysteresis 5.0 %  (irrigate below 60.0 %, stop above 70.0 %)
+  soil moisture  72.0 %  ->  (no change)  pump is OFF
+  soil moisture  66.0 %  ->  (no change)  pump is OFF
+  soil moisture  61.0 %  ->  (no change)  pump is OFF
+  soil moisture  58.0 %  ->  PUMP ON      pump is ON
+  soil moisture  63.0 %  ->  (no change)  pump is ON
+  soil moisture  69.0 %  ->  (no change)  pump is ON
+  soil moisture  71.0 %  ->  PUMP OFF     pump is OFF
+  soil moisture  80.0 %  ->  (no change)  pump is OFF
+  soil moisture  88.0 %  ->  (no change)  pump is OFF
+  soil moisture  91.0 %  ->  (no change)  pump is OFF
+
+=== Crop profile 'rice': setpoint 85.0 %, hysteresis 5.0 %  (irrigate below 80.0 %, stop above 90.0 %)
+  soil moisture  72.0 %  ->  PUMP ON      pump is ON
+  soil moisture  66.0 %  ->  PUMP ON      pump is ON
+  soil moisture  61.0 %  ->  PUMP ON      pump is ON
+  soil moisture  58.0 %  ->  PUMP ON      pump is ON
+  soil moisture  63.0 %  ->  PUMP ON      pump is ON
+  soil moisture  69.0 %  ->  PUMP ON      pump is ON
+  soil moisture  71.0 %  ->  PUMP ON      pump is ON
+  soil moisture  80.0 %  ->  (no change)  pump is ON
+  soil moisture  88.0 %  ->  (no change)  pump is ON
+  soil moisture  91.0 %  ->  PUMP OFF     pump is OFF
+
+=== Crop profile 'wheat': setpoint 50.0 %, hysteresis 5.0 %  (irrigate below 45.0 %, stop above 55.0 %)
+  soil moisture  72.0 %  ->  (no change)  pump is OFF
+  soil moisture  66.0 %  ->  (no change)  pump is OFF
+  soil moisture  61.0 %  ->  (no change)  pump is OFF
+  soil moisture  58.0 %  ->  (no change)  pump is OFF
+  soil moisture  63.0 %  ->  (no change)  pump is OFF
+  soil moisture  69.0 %  ->  (no change)  pump is OFF
+  soil moisture  71.0 %  ->  (no change)  pump is OFF
+  soil moisture  80.0 %  ->  (no change)  pump is OFF
+  soil moisture  88.0 %  ->  (no change)  pump is OFF
+  soil moisture  91.0 %  ->  (no change)  pump is OFF
+
+--- A developer adds a new crop type in one place: register_crop_profile(CropProfile('lettuce', ...))
+
+=== Crop profile 'lettuce': setpoint 70.0 %, hysteresis 4.0 %  (irrigate below 66.0 %, stop above 74.0 %)
+  soil moisture  75.0 %  ->  (no change)  pump is OFF
+  soil moisture  68.0 %  ->  (no change)  pump is OFF
+  soil moisture  65.0 %  ->  PUMP ON      pump is ON
+  soil moisture  70.0 %  ->  (no change)  pump is ON
+  soil moisture  75.0 %  ->  PUMP OFF     pump is OFF
+
+--- Error case: unknown crop 'banana' stored in the configuration -> configured values are kept
+    [log ERROR] Unknown crop profile 'banana'. Using the configured Setpoint (50) and Hysteresis (1).
+
+=== Crop profile 'banana': setpoint 50 %, hysteresis 1 %  (irrigate below 49 %, stop above 51 %)
+  soil moisture  48.0 %  ->  PUMP ON      pump is ON
+  soil moisture  52.0 %  ->  PUMP OFF     pump is OFF

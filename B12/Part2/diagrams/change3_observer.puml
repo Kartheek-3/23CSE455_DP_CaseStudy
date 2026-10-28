@@ -1,0 +1,54 @@
+@startuml
+' B12 Part 2 - Change 3 (real-time occupancy) - Observer pattern
+' Source: Part2/code/evolved/smart-parking-backend/src/occupancy/
+title B12 Part 2 Change 3 - Occupancy Monitoring Observer
+
+skinparam classAttributeIconSize 0
+
+class OccupancyEvent {
+  +slotId : number
+  +status : string
+  +at : Date
+}
+
+interface OccupancyObserver {
+  +name : string
+  +update(event : OccupancyEvent) : void
+}
+
+class LoggingObserver {
+  +entries : OccupancyEvent[]
+  +update(event) : void
+}
+
+class AvailabilityObserver {
+  +isOccupied(slotId) : boolean
+  +occupiedCount() : number
+  +update(event) : void
+}
+
+class OccupancyMonitor {
+  -observers : Set<OccupancyObserver>
+  +attach(observer) : void
+  +detach(observer) : void
+  +observerCount() : number
+  +report(slotId, status) : OccupancyEvent
+  -notify(event) : void
+}
+
+class OccupancyController {
+  +POST /occupancy/:slotId/status
+}
+
+OccupancyObserver <|.. LoggingObserver
+OccupancyObserver <|.. AvailabilityObserver
+OccupancyMonitor o--> "*" OccupancyObserver : observers
+OccupancyMonitor --> OccupancyEvent : creates
+OccupancyController --> OccupancyMonitor
+
+note bottom of OccupancyMonitor
+  The Nest module attaches LoggingObserver and
+  AvailabilityObserver at startup (change3.diff).
+end note
+
+@enduml

@@ -1,0 +1,17 @@
+classDiagram
+    class AuthSubject {
+        +subscribe(callback) Subscription
+        +publish(event)
+    }
+    class Subscription {
+        +unsubscribe()
+    }
+    class AuthStateObserver {
+        +on_auth_change(event)
+        +user_id
+        +observed_users
+    }
+    AuthStateObserver ..> AuthSubject : subscribes
+    AuthSubject ..> AuthStateObserver : notifies
+    AuthSubject --> Subscription : returns
+    Subscription ..> AuthSubject : removes callback

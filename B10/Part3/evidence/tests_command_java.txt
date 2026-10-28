@@ -1,0 +1,9 @@
+# Command / java
+working folder: Part3/command_automation_actions/java
+$ javac -d out AbstractFunctionAction.java AutomationActionsTest.java
+
+[compile exit code: 0]
+$ java -cp out AutomationActionsTest
+Command tests: 12/12 passed
+
+[exit code: 0]

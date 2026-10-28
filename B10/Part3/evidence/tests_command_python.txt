@@ -1,0 +1,6 @@
+# Command / python
+working folder: Part3/command_automation_actions/python
+$ python test_automation_actions.py
+Command tests: 12/12 passed
+
+[exit code: 0]

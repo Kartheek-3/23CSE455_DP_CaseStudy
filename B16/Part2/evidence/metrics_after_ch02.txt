@@ -1,0 +1,22 @@
+# lizard 1.24.1 on b16-evolution 99987b0 (CH02: new files only, no existing code changed)
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       5      2     24      1       5 destroy@47-51@junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/support/ResourceFactory.java
+       2      1      5      0       2 ManagedResourceExtension::ManagedResourceExtension@43-44@junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/support/ManagedResourceExtension.java
+       3      1     20      2       3 ManagedResourceExtension::supportsParameter@47-49@junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/support/ManagedResourceExtension.java
+      12      3    104      2      12 ManagedResourceExtension::resolveParameter@52-63@junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/support/ManagedResourceExtension.java
+3 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+     13       5.0     2.0       24.0         1     junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/support/ResourceFactory.java
+     17       0.0     0.0        0.0         0     junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/support/ManagedResource.java
+     58       5.7     1.7       43.0         3     junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/support/ManagedResourceExtension.java
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+        88       5.5     1.8       38.2        4            0      0.00    0.00

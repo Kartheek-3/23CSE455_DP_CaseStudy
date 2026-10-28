@@ -1,0 +1,44 @@
+@startuml D7
+!pragma layout smetana
+title D7 Adapter: BeforeEachMethodAdapter and AfterEachMethodAdapter
+
+interface Extension <<Interface>>
+interface BeforeEachMethodAdapter <<Target>> {
+  +invokeBeforeEachMethod(ExtensionContext, ExtensionRegistry)
+}
+interface AfterEachMethodAdapter <<Target>> {
+  +invokeAfterEachMethod(ExtensionContext, ExtensionRegistry)
+}
+class "java.lang.reflect.Method (@BeforeEach / @AfterEach)" as Method <<Adaptee>>
+class "lambda from synthesizeBeforeEachMethodAdapter(Method)" as BeforeLambda <<Adapter>>
+class "lambda from synthesizeAfterEachMethodAdapter(Method)" as AfterLambda <<Adapter>>
+abstract class ClassBasedTestDescriptor <<Creator>> {
+  -registerBeforeEachMethodAdapters(...)
+  -registerAfterEachMethodAdapters(...)
+}
+class TestMethodTestDescriptor <<Client>> {
+  -invokeBeforeEachMethods(...)
+  -invokeAfterEachMethods(...)
+}
+
+BeforeEachMethodAdapter --|> Extension
+AfterEachMethodAdapter --|> Extension
+BeforeLambda ..|> BeforeEachMethodAdapter
+AfterLambda ..|> AfterEachMethodAdapter
+BeforeLambda o--> Method : captures
+AfterLambda o--> Method : captures
+ClassBasedTestDescriptor ..> BeforeLambda : registerSyntheticExtension()
+ClassBasedTestDescriptor ..> AfterLambda : registerSyntheticExtension()
+TestMethodTestDescriptor ..> BeforeEachMethodAdapter : invokeBeforeEachMethod()
+TestMethodTestDescriptor ..> AfterEachMethodAdapter : invokeAfterEachMethod()
+' aligned-with-record
+legend right
+  <b>Counted participants</b> (record in the dataset)
+  Target: BeforeEachMethodAdapter
+  Target: AfterEachMethodAdapter
+  Adapter (lambda): ClassBasedTestDescriptor#synthesizeBeforeEachMethodAdapter
+  Adapter (lambda): ClassBasedTestDescriptor#synthesizeAfterEachMethodAdapter
+  Client: TestMethodTestDescriptor#invokeBeforeEachMethods
+  Grey classes: real, shown for context, not counted
+endlegend
+@enduml

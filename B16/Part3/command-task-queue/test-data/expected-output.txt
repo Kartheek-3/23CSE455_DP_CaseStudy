@@ -1,0 +1,6 @@
+queued 4 commands
+#1 test add -> PASS
+#2 test div -> FAIL
+#3 note: half-way
+#4 test sub -> PASS
+executed 4 commands: 3 tests, 2 passed, 1 failed

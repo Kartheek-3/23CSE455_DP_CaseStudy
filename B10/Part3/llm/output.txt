@@ -1,0 +1,730 @@
+Part 3 - Cross-Language Comparison - LLM explanation log
+=======================================================
+
+0. SET-UP DECISIONS (ambiguities resolved without asking, as instructed)
+-----------------------------------------------------------------------
+D1  Pattern list. The task names "Part1/patterns_llm_draft.csv" (verified) and "Part1/patterns.csv".
+    Neither exists at that path. The only Part 1 pattern file is Part1/llm_output/patterns_llm_draft.csv
+    (13 confirmed instances, 8 confirmed pattern types), and it is used as the verified list.
+D2  Original source: Mycodo/ at ee70a111c622e2a81026fd5c1553a948acf8161e (read-only, clean tree).
+D3  OS: Windows 11 (Microsoft Windows [Version 10.0.26300.9550]); commands run from Git Bash
+    (MINGW64). Exact versions are in Part3/evidence/toolchains.txt and Part3/llm/run_info.txt.
+D4  Java: JDK 21.0.2 (not on PATH; used through <jdk21>\bin). C++: MinGW
+    g++ 6.3.0 with -std=c++14. Python 3.12.7 and Node v23.11.0 are on the PATH. All four toolchains
+    were found, so no language is "not_run".
+D5  lizard 1.24.1 was already installed with pip in the dev venv <venv>
+    during Part 2. It was reused (dev tool only) and its version is recorded.
+D6  The same Python 3.12.7 (on the PATH) runs Part3/tools/measure.py and the Python test runners.
+D7  Uniform simplification for errors. Several source methods "log an error and give up" instead of
+    raising, which the shared tests cannot observe. Where the source ABORTS a configuration or lookup
+    step after logging, the snippet raises an exception instead (named per pattern below). Where the
+    source logs and CONTINUES with a fallback (e.g. unknown setpoint-method type), the fallback is kept.
+D8  The database, hardware, network, Pyro5 and Flask parts are replaced by small in-memory stand-ins
+    inside the production file. Each pattern's section A lists exactly what was simplified.
+D9  Value comparison in all test runners. Expected and actual strings are split into tokens on
+    whitespace and the characters | ; = , ( ). Tokens that are both decimal numbers are compared with an
+    absolute tolerance of 1e-9; all other tokens must be equal. This makes "25", "25.0" and "2.5E1"
+    equal and lets expected strings avoid commas (the CSV format forbids quoted fields).
+
+1. CONFIRMED PATTERN TYPES AND THE REPRESENTATIVE INSTANCE (chosen before any code was written)
+-----------------------------------------------------------------------------------------------
+N = 8 confirmed pattern types in Part1/llm_output/patterns_llm_draft.csv.
+
+| # | Pattern type    | Instances in Part 1 | Chosen instance (exact name)          | Reason |
+|---|-----------------|---------------------|---------------------------------------|--------|
+| 1 | Template Method | 6                   | Date/Daily Setpoint Interpolation     | All 4 roles map to real classes/methods (0 "not separately declared", 0 outside scope), and it is pure computation over method rows (no DB/hardware/network). The alternatives need hardware (Sensor Measurement Acquisition, Module Initialization with Retry, Output Actuation), threads and a daemon (Controller Thread Lifecycle), or numpy root finding for the Bezier concrete class (Formula Setpoint Plot Sampling). |
+| 2 | Strategy        | 1                   | Setpoint Schedule Calculation         | The only Strategy instance. Its strategies (DailySine, Duration, Cascade) are pure time-to-setpoint calculations. |
+| 3 | Adapter         | 1                   | Sensor Driver Adaptation              | The only Adapter instance. The adaptees (Seesaw driver, OpenWeatherMap HTTP) are replaced by in-memory stand-ins with the same method names. |
+| 4 | Proxy           | 1                   | Daemon RPC Client                     | The only Proxy instance. Pyro5 and the daemon are replaced by an in-memory remote proxy and daemon. |
+| 5 | Command         | 1                   | Automation/Alert Actions              | The only Command instance. The receivers (send_email, DaemonControl.output_on_off) and the out-of-scope invoker are replaced by small in-memory stand-ins. |
+| 6 | Plugin          | 1                   | Input/Output Module Loading           | The only Plugin instance. The file system / importlib is replaced by an in-memory catalogue of module "files". |
+| 7 | Layer Supertype | 1                   | Daemon Module Base                    | The only Layer Supertype instance. The option parsing is pure logic; the DB-backed option store becomes an in-memory store. |
+| 8 | Active Record   | 1                   | User and Role Persistence             | The only Active Record instance. The Flask-SQLAlchemy session becomes an in-memory session, and bcrypt becomes a std-lib stand-in hash. |
+
+Folder / problem names (Part3/<pattern>_<problem>/):
+  template_method_setpoint_interpolation  strategy_setpoint_schedule      adapter_sensor_driver
+  proxy_daemon_rpc                        command_automation_actions      plugin_module_loading
+  layer_supertype_module_base             active_record_user_role
+
+Common notes for sections A-F:
+- Source paths are relative to Mycodo/ (= the read-only original). Every file:lines below was confirmed
+  by printing the first and last line of the range (sed -n) or with grep -n.
+- B (SPEC) for every pattern is in Part3/test-cases/SPEC.md; C (cases) is in
+  Part3/test-cases/<problem>_cases.csv.
+- D (code) is in Part3/<folder>/<language>/: one production file plus one separate test runner per
+  language. E (README.md) is in each language folder and contains the working folder, toolchain, exact
+  commands, the expected final line and the measurement rules.
+- Size deviation: the rules ask for production files of "about 30-90 code lines". The measured lizard NLOC
+  is 37-80 for Python, 54-88 for JavaScript, 68-113 for Java and 82-130 for C++. The Java and C++ files
+  above 90 are larger because of explicit types, constructors, the Subject/receiver declarations that
+  static typing requires, and structs that stand in for Optional/variant values in C++14. They were not
+  compressed further, so that they stay readable.
+
+
+==================================================================================================
+2. PATTERN 1 - TEMPLATE METHOD - "Date/Daily Setpoint Interpolation"
+==================================================================================================
+A. Selection and mapping
+Why this instance: DateMethod.calculate_setpoint is a fixed interpolation algorithm that calls a single
+hook, ignore_date(). DailyMethod changes the behaviour (daily repetition) only by overriding that hook,
+which is the textbook Template Method shape (Gamma et al., 1994). It is pure computation over time
+strings and numbers, so it can be reproduced exactly without a database.
+
+| Pattern role                                   | Name in snippet                        | Source symbol (Mycodo/ file:lines) |
+|------------------------------------------------|----------------------------------------|------------------------------------|
+| AbstractClass (defines template + default hook)| DateMethod                             | mycodo/utils/method.py:75-162 (class DateMethod) |
+| TemplateMethod                                 | calculate_setpoint / calculateSetpoint | mycodo/utils/method.py:87-135 |
+| Hook (primitive operation with default)        | ignore_date / ignoreDate               | mycodo/utils/method.py:81-85 |
+| ConcreteClass                                  | DailyMethod                            | mycodo/utils/method.py:165-196 (ignore_date override 172-176) |
+| Data (method rows)                             | MethodRow                              | method_data rows loaded in AbstractMethod.__init__, mycodo/utils/method.py:30-48 |
+
+Simplified away:
+- MethodData database rows become a list of MethodRow objects. `now` is passed as text
+  "YYYY-MM-DD HH:MM:SS" instead of a datetime object.
+- The debug logging (method.py:118-131) is dropped.
+- get_plot (method.py:137-162, 178-196) is not reproduced, because it is plotting, not part of the template
+  collaboration.
+- The AbstractMethod base class is omitted, because it belongs to the Strategy instance below.
+- Strict input formats (2-digit fields) are specified because strptime is not available in Java, JS and C++;
+  Python keeps strptime (see J).
+
+C. Test cases (setpoint_interpolation_cases.csv)
+TM01 Daily, now inside the first row → linear interpolation (25).
+TM02 Same row, a different date → the Daily hook ignores the date (25).
+TM03 now equal to the row start → strict "<" boundary gives None.
+TM04 Decreasing setpoint (30→10) → subtract branch (25).
+TM05 Empty setpoint_end → constant setpoint_start (22).
+TM06 Second row matches → the loop reaches later rows (28.5).
+TM07 Date method across two days → full-timestamp interpolation (17.5).
+TM08 Date method with now outside the span (different month) → None.
+TM09 Date method across leap day 2024-02-29 → day arithmetic with a leap year (30).
+TM10 A malformed later row is never parsed because an earlier row matched → lazy parsing (25).
+TM11 ERROR: Daily row with hour 25 → time format error.
+TM12 ERROR: Date method given a time-only row → format mismatch error.
+
+F. Language notes
+- Java: DateMethod is a concrete base class; the template calculateSetpoint is declared final and the hook
+  ignoreDate is protected and overridden with @Override. Overrides are checked at compile time; objects are
+  garbage-collected.
+- Python: DateMethod is a plain base class whose ignore_date is overridden in DailyMethod. Nothing prevents
+  overriding the template itself, and mistakes surface only at run time; objects are reference-counted/GC.
+- JavaScript: ES class with extends; ignoreDate is found by prototype lookup at run time; there is no
+  final/protected, and objects are garbage-collected.
+- C++: calculate_setpoint is non-virtual (the template cannot be overridden) and calls a protected virtual
+  ignore_date marked override in DailyMethod, all checked at compile time. Rows are held by value; the
+  runner owns the method through std::unique_ptr<DateMethod> (virtual destructor).
+
+
+==================================================================================================
+3. PATTERN 2 - STRATEGY - "Setpoint Schedule Calculation"
+==================================================================================================
+A. Selection and mapping
+Why this instance: every setpoint schedule (sine, duration, cascade) is an interchangeable algorithm
+behind calculate_setpoint(now, start). create_method_handler selects the algorithm at run time from a
+type name, and CascadeMethod is a context that uses other strategies only through that interface. It is
+the only Strategy instance in Part 1.
+
+| Pattern role                          | Name in snippet                              | Source symbol (Mycodo/ file:lines) |
+|---------------------------------------|----------------------------------------------|------------------------------------|
+| Strategy (interface + neutral fallback)| AbstractMethod                              | mycodo/utils/method.py:22-72 (calculate_setpoint 57-64) |
+| ConcreteStrategy                      | DailySineMethod (+ sine_wave_y_out)          | mycodo/utils/method.py:220-239; 458-466 |
+| ConcreteStrategy                      | DurationMethod (cycle_duration, repeat_duration) | mycodo/utils/method.py:261-378 (calculate_setpoint 268-321) |
+| ConcreteStrategy + Context            | CascadeMethod                                | mycodo/utils/method.py:381-428 |
+| Strategy selector                     | create_method_handler / createMethodHandler  | mycodo/utils/method.py:431-441 |
+
+Simplified away:
+- DB rows become number lists. The repeat row stores duration_end as its third number, and setpoint_end =
+  None is not supported.
+- CascadeMethod receives its linked strategies directly instead of loading them by id
+  (load_method_handler, method.py:444-455, uses the DB). Its blacklist recursion guard is therefore not
+  needed and is dropped.
+- The reflective lookup globals().get(type + "Method") becomes an explicit dispatch (C++ has no
+  reflection). The selector validates the row sizes (a consequence of untyped number lists; see D7).
+- DailyBezierMethod (needs numpy), DateMethod/DailyMethod (covered in pattern 1), determine_end_time,
+  get_plot and the logger are not reproduced.
+- Times are plain seconds.
+
+C. Test cases (setpoint_schedule_cases.csv)
+ST01 DailySine at 06:00 → angle 90°, sin = 1 → 60.
+ST02 DailySine at day 3 18:00 → seconds-of-day modulo, sin(270°) = -1 → 40.
+ST03 Duration, first row half-way → 25.
+ST04 Duration, second (decreasing) row half-way → 20.
+ST05 Duration past the cycle without a repeat row → (None, ended).
+ST06 Repeat row with duration_end 0 = repeat forever → wraps with modulo → 25.
+ST07 Repeat row with duration_end 3000 reached → (None, ended).
+ST08 Cascade of sine (60) and duration (25) → product 0.6·0.25·100 = 15.
+ST09 Cascade where the linked duration has ended → the cascade reports (None, ended).
+ST10 Unknown type → fallback strategy AbstractMethod → (None, false).
+ST11 ERROR: DailySine with 3 numbers → selector rejects it.
+ST12 ERROR: Duration row with 2 numbers → selector rejects it.
+
+F. Language notes
+- Java: AbstractMethod is a concrete base class (it is also the fallback); the subclasses override
+  calculateSetpoint and the selector returns the base type, so it is type-checked at compile time; GC.
+- Python: duck-typed subclasses of AbstractMethod; the call is resolved at run time and the result is a
+  tuple; GC.
+- JavaScript: class hierarchy with run-time lookup; results are two-element arrays; GC.
+- C++: virtual calculate_setpoint; the selector returns std::unique_ptr<AbstractMethod> and CascadeMethod
+  owns its linked strategies (std::vector<std::unique_ptr<AbstractMethod>>, moved in), checked at compile
+  time.
+
+
+==================================================================================================
+4. PATTERN 3 - ADAPTER - "Sensor Driver Adaptation"
+==================================================================================================
+A. Selection and mapping
+Why this instance: two input modules convert foreign interfaces into the one get_measurement() contract
+that the controller expects:
+- the Adafruit Seesaw driver (moisture_read / get_temp);
+- an HTTP weather JSON response.
+This is an object adapter (Gamma et al., 1994). It is the only Adapter instance in Part 1.
+
+| Pattern role | Name in snippet                          | Source symbol (Mycodo/ file:lines) |
+|--------------|------------------------------------------|------------------------------------|
+| Target       | AbstractInput (get_measurement, value_set, is_enabled) | mycodo/inputs/base_input.py:18-271 (get_measurement 108-113, is_enabled 148-156, value_set 195-220) |
+| Adapter      | SoilInput                                | mycodo/inputs/adafruit_i2c_soil.py:50-84 (InputModule) |
+| Adaptee      | Seesaw (in-memory stand-in)              | adafruit_seesaw.seesaw.Seesaw, imported/constructed at mycodo/inputs/adafruit_i2c_soil.py:61-67 |
+| Adapter      | WeatherInput                             | mycodo/inputs/weather_openweathermap_weather.py:82-146 (InputModule) |
+| Adaptee      | WeatherApi (in-memory stand-in)          | requests.get + JSON at mycodo/inputs/weather_openweathermap_weather.py:111-112 |
+| Helper       | calculate_dewpoint                       | mycodo/inputs/sensorutils.py:71-92 |
+| Client       | update_measure / InputController.updateMeasure | mycodo/controllers/controller_input.py:345-393 |
+
+Simplified away:
+- The hardware (I2C) and the network (HTTP) are replaced by stand-ins that keep the adaptee method names. A
+  raw "IOERROR" value simulates an I2C failure.
+- The measurements_dict metadata (measurement/unit) and the timestamps are dropped; the result is
+  channel → value.
+- The nested JSON (x["main"]["temp"], x["wind"]["speed"]) is flattened to single keys. Logging and the
+  input_dev database configuration (constructor arguments instead) are dropped.
+- The client only calls get_measurement. The read()/next() error classification of the source belongs to
+  the Template Method instance "Sensor Measurement Acquisition" and is not repeated.
+
+C. Test cases (sensor_driver_cases.csv)
+AD01 Soil, both channels → moisture and temperature from the adaptee.
+AD02 Soil, only channel 0 enabled → only moisture.
+AD03 Soil with no sensor configured → None.
+AD04 Soil, temperature would fail but channel 1 is disabled → the adaptee is not called for it.
+AD05 ERROR: the moisture read fails → the adapter does not swallow adaptee errors.
+AD06 ERROR: the temperature read fails with channel 1 enabled → error.
+AD07 Weather, all channels → including the computed dew point 9.255174598981256.
+AD08 Weather below 0 °C → ice constants of the dew point → -7.584871050435558.
+AD09 Weather, channel 1 disabled → no dew point (it needs 0, 1 and 3).
+AD10 Weather cod 404 → None.
+AD11 Weather response missing wind_deg → the guarded block catches it → None.
+AD12 Weather without an api_key → None (no URL is built).
+
+F. Language notes
+- Java: the Target is an abstract class with an abstract getMeasurement. The adapters hold the adaptee by
+  reference (composition, object adapter), checked at compile time; GC.
+- Python: the Target base raises NotImplementedError and is checked only when called; the adapters hold
+  the adaptee; GC.
+- JavaScript: the Target base throws in getMeasurement; the adapters hold the adaptee; run-time check; GC.
+  Number() needed an explicit check, see J.
+- C++: pure virtual get_measurement (the Target cannot be instantiated, checked at compile time). The
+  adapters hold non-owning pointers to adaptees owned by the caller; the result is a struct with
+  has_value instead of std::optional (C++14).
+
+
+==================================================================================================
+5. PATTERN 4 - PROXY - "Daemon RPC Client"
+==================================================================================================
+A. Selection and mapping
+Why this instance: DaemonControl is a local stand-in for the remote daemon.
+- It creates a Pyro5 proxy per call with a timeout and forwards calls under the same names.
+- check_daemon adds timeout control and error translation.
+- output_on_off is answered locally for an invalid state.
+These are the remote-proxy responsibilities described by Gamma et al. (1994). It is the only Proxy
+instance in Part 1.
+
+| Pattern role             | Name in snippet                   | Source symbol (Mycodo/ file:lines) |
+|--------------------------|-----------------------------------|------------------------------------|
+| Proxy                    | DaemonControl                     | mycodo/mycodo_client.py:50-292 |
+| Proxy: connection factory| proxy()                           | mycodo/mycodo_client.py:65-74 |
+| Proxy: added behaviour   | check_daemon / checkDaemon        | mycodo/mycodo_client.py:80-107 |
+| Proxy: forwarded calls   | output_on, output_off, output_state | mycodo/mycodo_client.py:203-212, 199-201, 231-232 |
+| Proxy: local dispatch    | output_on_off / outputOnOff       | mycodo/mycodo_client.py:214-222 |
+| Remote proxy (dependency)| RemoteProxy (stand-in)            | Pyro5.api.Proxy, imported at mycodo/mycodo_client.py:32 |
+| RealSubject              | Daemon (stand-in)                 | daemon object at PYRO_URI, outside the Part 1 scope |
+| Subject                  | DaemonApi (Java and C++ only)     | not separately declared in the source (Pyro forwards dynamically) |
+
+Simplified away:
+- The Pyro5 network becomes an in-memory URI → Daemon map. A timeout is simulated by comparing the
+  daemon's latency with the proxy timeout (no sleeping).
+- The NamingError branch is dropped (there is no name server). The default timeout comes from a constant
+  (30) instead of the Misc table.
+- output_on keeps only (id, amount, channel); output_type, min_off and trigger_conditionals are dropped.
+- Returned (code, message) tuples are flattened to text ("0 ...", "1 ..."), and states are compared as
+  text ("on"/"1"/"true").
+- Only 5 of the ~40 forwarded DaemonControl methods are reproduced.
+
+C. Test cases (daemon_rpc_cases.csv)
+PX01 Forward output_on with an amount, then output_state → the RealSubject state changes through the proxy.
+PX02 output_on_off on/off dispatch → mapped to output_on / output_off.
+PX03 Invalid state "dance" → answered locally without a remote call.
+PX04 check_daemon on a healthy daemon → empty reply mapped to GOOD.
+PX05 Unhealthy daemon → its message is returned unchanged.
+PX06 Daemon not registered → CommunicationError translated by check_daemon.
+PX07 Latency 20 s with timeout 30: output_on succeeds, but check_daemon uses its own 10 s timeout and
+     reports a TimeoutError; the next call works again.
+PX08 ERROR: latency 20 s > timeout 15 on a forwarded call → the error propagates.
+PX09 ERROR: forwarded call with no daemon → CommunicationError propagates.
+PX10 Default timeout (30) with latency 25 → the call succeeds; the default state is off.
+PX11 Latency 5 ≤ 10 → check_daemon GOOD.
+PX12 output_on_off with state "1" and channel 2, then off and state → "1" means on; the channel is kept.
+
+F. Language notes
+- Java: an explicit Subject interface DaemonApi is implemented by Daemon, RemoteProxy and DaemonControl, so
+  the forwarding is checked at compile time; GC.
+- Python: no Subject interface (as in the source); RemoteProxy forwards any attribute through __getattr__,
+  so a wrong method name fails only at run time; GC.
+- JavaScript: RemoteProxy's constructor returns an ES Proxy whose get trap forwards any property, so
+  forwarding is dynamic and resolved at run time; GC.
+- C++: an abstract DaemonApi class with pure virtual methods. proxy() returns std::unique_ptr<RemoteProxy>,
+  which is destroyed after each call (the "finally" restore is a plain statement after the try/catch). The
+  network map holds non-owning Daemon pointers.
+
+
+==================================================================================================
+6. PATTERN 5 - COMMAND - "Automation/Alert Actions"
+==================================================================================================
+A. Selection and mapping
+Why this instance: each action object stores its parameters (recipient, output, state, duration) and
+exposes one run_action(dict_vars) operation. The invoker triggers it by id without knowing the receiver
+(SMTP or output control), as in the Command pattern (Gamma et al., 1994). It is the only Command
+instance in Part 1.
+
+| Pattern role     | Name in snippet                          | Source symbol (Mycodo/ file:lines) |
+|------------------|------------------------------------------|------------------------------------|
+| Command          | AbstractFunctionAction.run_action        | mycodo/actions/base_action.py:25-114 (run_action 77-79) |
+| ConcreteCommand  | EmailAction                              | mycodo/actions/email.py:41-98 (run_action 59-95) |
+| ConcreteCommand  | OutputOnOffAction                        | mycodo/actions/output_on_off.py:68-139 (run_action 89-136) |
+| Receiver         | EmailService (check_allowed, send_email) | mycodo/utils/actions.py:106-129 (check_allowed_to_email); mycodo/utils/send_data.py:19-176 (send_email) |
+| Receiver         | OutputControl (output_on_off, output_name) | mycodo/mycodo_client.py:214-222 (DaemonControl.output_on_off); Output lookup at mycodo/actions/output_on_off.py:111-112 |
+| Invoker          | ActionInvoker.trigger_action             | daemon-side trigger_action, outside the Part 1 scope (client call: mycodo/mycodo_client.py:150-153) |
+| Request          | dict_vars / DictVars                     | the dict_vars argument of run_action |
+
+Simplified away:
+- Options read from the Actions table (setup_custom_options) become constructor arguments. The output
+  channel-id lookup becomes a channel number.
+- output_on_off runs synchronously instead of in a thread. check_allowed_to_email's hourly DB counter
+  becomes an in-memory counter, and SMTP becomes a log entry.
+- value["email_address"] (a list in the source) becomes ";"-separated text.
+- The invoker is a minimal stand-in, because the real one is daemon code outside the scope. An unknown
+  action id raises (D7).
+
+C. Test cases (automation_actions_cases.csv)
+CM01 Email with the configured recipient → message appended, mail sent with the message as body.
+CM02 Value overrides recipients and body → the configured address still appears in the message (source quirk).
+CM03 Explicit empty recipient list → " Error: No recipients specified." and nothing sent.
+CM04 Hourly limit 0 → receiver refuses; message unchanged and nothing sent.
+CM05 Two configured recipients → both receive the mail.
+CM06 Output on for 300 s → message "... on for 300 seconds." and the receiver is called.
+CM07 Value overrides the state to off → no " for ..." part.
+CM08 Duration 0 → no " for ..." part; another output and channel.
+CM09 Unknown output id → error text appended; the receiver is not called.
+CM10 ERROR: unknown action id at the invoker.
+CM11 ERROR: email request without "message" (KeyError in the source).
+CM12 ERROR: output request without "message".
+
+F. Language notes
+- Java: an abstract class with abstract runAction and a small DictVars class (message may be null). The
+  invoker maps ids to commands; checked at compile time; GC.
+- Python: the base run_action is a no-op ("pass", as in the source) and dict_vars is a dict, so a missing
+  'message' raises KeyError by itself; run time; GC.
+- JavaScript: base class with runAction. An explicit appendMessage check is needed, because
+  `undefined + " text"` does not throw; run time; GC.
+- C++: pure virtual run_action. ActionInvoker owns the commands through std::unique_ptr, and the commands
+  hold their receivers by reference; checked at compile time.
+
+
+==================================================================================================
+7. PATTERN 6 - PLUGIN - "Input/Output Module Loading"
+==================================================================================================
+A. Selection and mapping
+Why this instance:
+- Mycodo discovers input modules by scanning files, keeps those that declare INPUT_INFORMATION, and
+  registers them under a unique name.
+- The host later loads and instantiates the module's InputModule by device name.
+This is the Plugin pattern (Fowler, 2002): implementations are linked at run time, not at compile time. It
+is the only Plugin instance in Part 1.
+
+| Pattern role               | Name in snippet                               | Source symbol (Mycodo/ file:lines) |
+|----------------------------|-----------------------------------------------|------------------------------------|
+| Loader                     | load_module_from_file / loadModuleFromFile    | mycodo/utils/modules.py:10-21 |
+| Registry / discovery       | parse_input_information / parseInputInformation | mycodo/utils/inputs.py:163-308 |
+| Host                       | InputController.initialize                    | mycodo/controllers/controller_input.py:246-343 (load + instantiate 309-313, invalid device 320) |
+| Plugin interface           | AbstractInput (+ INPUT_INFORMATION, InputModule) | mycodo/inputs/base_input.py:18-271 |
+| ConcretePlugin             | SoilInputModule + INPUT_INFORMATION           | mycodo/inputs/adafruit_i2c_soil.py:19-47 and 50-84 |
+| ConcretePlugin             | WeatherInputModule + INPUT_INFORMATION        | mycodo/inputs/weather_openweathermap_weather.py:41-79 and 82-146 |
+| Loaded module              | PluginModule                                  | the module object created by importlib, mycodo/utils/modules.py:14-16 |
+
+Simplified away:
+- Directories, os.listdir and importlib become an in-memory catalogue (file name → module factory), with
+  extra entries for a helper module, a broken module, a duplicate and a module without
+  input_name_unique.
+- The custom-input directory, the load status/traceback and the ~50 copied INPUT_INFORMATION keys are
+  dropped (3 are kept).
+- The deactivation of an invalid device becomes an error (D7). The has_loop/listener capability detection
+  and the output side of the Plugin instance are not reproduced.
+
+C. Test cases (module_loading_cases.csv)
+PL01 Two valid plugins → both registered; the soil device is instantiated.
+PL02 Same registry; the weather device is instantiated → the host picks the plugin by name.
+PL03 Helper module without INPUT_INFORMATION → skipped.
+PL04 Module that fails to load → skipped (the loader never raises).
+PL05 Unknown file and excluded names (__init__.py, base_input.py) → skipped.
+PL06 Duplicate unique name → error recorded; the later file overwrites file_path (source behaviour).
+PL07 ERROR (device): empty directory → empty registry; the requested device is not valid.
+PL08 ERROR (device): unknown device HX711 → not a valid device type.
+PL09 ERROR (registry): module whose INPUT_INFORMATION lacks input_name_unique (KeyError in the source).
+
+F. Language notes
+- Java: the catalogue holds Supplier<PluginModule> lambdas and constructor references
+  (SoilInputModule::new), and the plugin contract is an abstract class; checked at compile time; GC. Java
+  reflection (Class.forName) could load by name, but it was not used, to keep the four versions
+  comparable.
+- Python: classes are first-class values returned by catalogue lambdas, and the host calls
+  module.InputModule(input_dev); run time; GC.
+- JavaScript: classes are values with static INPUT_INFORMATION fields, and the host calls
+  `new inputLoaded.InputModule()`; run time; GC.
+- C++: there is no reflection, so the catalogue uses std::function factories plus a template make_input<T>.
+  The loader returns std::unique_ptr<PluginModule> and the host returns std::unique_ptr<AbstractInput>;
+  checked at compile time.
+
+
+==================================================================================================
+8. PATTERN 7 - LAYER SUPERTYPE - "Daemon Module Base"
+==================================================================================================
+A. Selection and mapping
+Why this instance: AbstractBaseController holds behaviour that every daemon-side module type needs
+(custom-option parsing and the persisted custom options). The layer members AbstractInput and
+AbstractFunction inherit it and add only their own table name. This is the Layer Supertype described by
+Fowler (2002). It is the only instance in Part 1.
+
+| Pattern role    | Name in snippet                                  | Source symbol (Mycodo/ file:lines) |
+|-----------------|--------------------------------------------------|------------------------------------|
+| LayerSupertype  | AbstractBaseController                           | mycodo/abstract_base_controller.py:35-543 |
+| Shared service  | setup_custom_options / setupCustomOptions        | mycodo/abstract_base_controller.py:67-74 (dispatch) and 209-315 (setup_custom_options_json) |
+| Shared service  | _set_custom_option / _get_custom_option          | mycodo/abstract_base_controller.py:425-439 and 441-455 |
+| LayerMember     | AbstractInput (set/get_custom_option, table Input) | mycodo/inputs/base_input.py:18-271 (264-268) |
+| LayerMember     | AbstractFunction (table CustomController)        | mycodo/functions/base_function.py:17-83 (76-80) |
+| Store           | OptionStore                                      | custom_options column written through session_scope, mycodo/abstract_base_controller.py:427-436 |
+
+Simplified away:
+- The JSON custom_options become a text map, and the options are kept in an options map instead of
+  setattr.
+- setup_custom_options_csv (91-207) and the option types select_channel, select_measurement_channel and
+  select_type_* are dropped.
+- The validation errors that make the source log and return become ConfigurationError (D7), and logger
+  messages become an errors list.
+- The other members (AbstractOutput, AbstractController, AbstractFunctionAction) and the DB session are
+  not reproduced.
+
+C. Test cases (module_base_cases.csv)
+LS01 Input member: float from the store and text default → shared parsing.
+LS02 Function member with the same input → identical result (behaviour comes from the supertype).
+LS03 select_measurement "dev1,meas1" → split into _device_id and _measurement_id.
+LS04 select_measurement without a comma → both None.
+LS05 Required option missing → default kept and one error logged.
+LS06 new_line and message definitions → skipped (id/default may be absent).
+LS07 select_device → <id>_id.
+LS08 Unknown type → error logged, and processing continues with the next option.
+LS09 bool and integer conversion, plus persistence through the member: the stored value is visible via the
+     same table but not via the other table with the same unique_id.
+LS10 ERROR: definition without type → ConfigurationError.
+LS11 ERROR: definition without id → ConfigurationError.
+
+F. Language notes
+- Java: abstract class AbstractBaseController inherited by both members, options in Map<String,Object>, and
+  the protected helpers are called by the members; checked at compile time; GC.
+- Python: a plain base class shared by two members, options in a dict; run time; GC.
+- JavaScript: base class shared via extends, options in a plain object; JS has no "protected", so the
+  helpers are ordinary methods (renamed setCustomOptionFor / getCustomOptionFor to avoid clashing with the
+  members' one-argument methods); run time; GC.
+- C++: base class with protected helpers. Option values are an OptionValue struct (no std::variant in
+  C++14), and the OptionStore is held by reference (owned by the caller); checked at compile time.
+
+
+==================================================================================================
+9. PATTERN 8 - ACTIVE RECORD - "User and Role Persistence"
+==================================================================================================
+A. Selection and mapping
+Why this instance: User and Role are domain objects that carry their own persistence (save/delete through
+CRUDMixin) next to domain logic (password hashing). That is the Active Record pattern (Fowler, 2002). It
+is the only instance in Part 1.
+
+| Pattern role             | Name in snippet                     | Source symbol (Mycodo/ file:lines) |
+|--------------------------|-------------------------------------|------------------------------------|
+| Active Record base       | CRUDMixin.save / delete             | mycodo/databases/__init__.py:10-32 (save 16-24, delete 26-32) |
+| Active Record (domain)   | User (set_password, check_password) | mycodo/databases/models/user.py:11-52 (35-39, 41-52) |
+| Active Record (domain)   | Role                                | mycodo/databases/models/role.py:7-27 |
+| Database session         | Session (stand-in)                  | db.session (Flask-SQLAlchemy, outside scope) used at mycodo/databases/__init__.py:19-30 |
+| Password hashing         | gensalt / hashpw (stand-in)         | bcrypt.gensalt / bcrypt.hashpw at mycodo/databases/models/user.py:39 and 51 |
+
+Simplified away:
+- Flask-SQLAlchemy and SQLite become an in-memory Session with add/delete/commit/rollback. Columns are
+  reduced, and the constraints are declared as UNIQUE/REQUIRED lists (instead of db.Column(unique=True,
+  nullable=False)).
+- bcrypt becomes an FNV-1a salted stand-in that is NOT secure (std-lib only; no bcrypt in four standard
+  libraries).
+- UserMixin, UserSchema, __repr__, id/unique_id defaults and current_app.logger (replaced by Session.log)
+  are dropped.
+
+C. Test cases (user_role_cases.csv)
+AR01 Save one user → saved; count 1.
+AR02 Save two users → count 2.
+AR03 Duplicate name → save returns None (rolled back); count stays 1.
+AR04 Duplicate email followed by another user → rollback clears the failed add, so the next save works.
+AR05 Password round trip → match; a wrong password → no_match.
+AR06 Delete a saved user → deleted; count drops.
+AR07 Delete a never-saved user → error logged, not raised (source behaviour); count 0.
+AR08 Roles: duplicate name and missing name → both None; count 1.
+AR09 hashpw with a salt only → fixed digest $fnv$abcd1234$d3b8b801 (computed independently).
+AR10 hashpw with a full hash → same digest (salt extracted from the hash).
+AR11 ERROR: malformed stored hash → "Invalid salt" (bcrypt raises ValueError).
+AR12 ERROR: hash with an empty salt → "Invalid salt".
+
+F. Language notes
+- Java: an abstract CRUDMixin with abstract column-metadata methods implemented by User/Role, and a
+  Session that keeps object references; identity comparison through the default equals; checked at
+  compile time; GC.
+- Python: a mixin base class whose models declare UNIQUE/REQUIRED class attributes read with getattr
+  (dynamic attribute access, as SQLAlchemy does); run time; GC.
+- JavaScript: base class with static UNIQUE/REQUIRED fields, and obj[column] for dynamic column access; run
+  time; GC.
+- C++: an abstract CRUDMixin with pure virtual column metadata. The Session stores non-owning raw pointers
+  while the runner owns the records (std::unique_ptr). delete() is renamed del() because delete is a
+  keyword. Checked at compile time.
+
+
+==================================================================================================
+10. G. CROSS-LANGUAGE CSV
+==================================================================================================
+Part3/llm/cross_language_llm_draft.csv has 32 rows (8 patterns × 4 languages). It was generated by
+Part3/tools/collect_results.py, which reads every number from the raw evidence:
+- source_loc and max_function_cc from evidence/lizard_<pattern>.txt;
+- test_result from evidence/tests_<pattern>_<language>.txt;
+- median_process_ms from evidence/timings_<pattern>.txt.
+
+
+==================================================================================================
+11. H. COMPARISON DRAFT (numbers copied from cross_language_llm_draft.csv)
+==================================================================================================
+Legend: "Contract checked when" refers to whether a missing or misspelled role method is caught before
+running (compile time) or only when the call happens (run time). median_process_ms is the whole
+test-runner process (startup + CSV + all cases), median of 5 runs on one Windows machine.
+
+H1. Template Method
+| Language   | How roles are written | Contract checked when | Inheritance vs composition | Memory/ownership | Notable language features used | source_loc | max_function_cc | median_process_ms |
+|------------|-----------------------|-----------------------|----------------------------|------------------|--------------------------------|-----------:|----------------:|------------------:|
+| Java       | concrete base class, final template, protected hook | compile time | inheritance | GC | final, @Override, java.time strict DateTimeFormatter | 77 | 7 | 157.771 |
+| Python     | plain base class + overridden hook | run time | inheritance | GC (refcount) | datetime.strptime, tuple return | 37 | 6 | 72.495 |
+| JavaScript | ES class + extends | run time | inheritance | GC | regex parsing, Date.UTC | 54 | 11 | 90.926 |
+| C++        | non-virtual template + protected virtual hook | compile time | inheritance | value rows, unique_ptr | override, days_from_civil helper | 85 | 21 | 33.060 |
+Static vs dynamic: the typed languages can lock the skeleton (final in Java, non-virtual in C++) and
+check the hook signature at compile time, whereas Python and JavaScript rely on convention. The
+measured size and complexity differences come mostly from date parsing:
+- Python reuses strptime (37 NLOC, max CC 6), and Java reuses java.time (77 NLOC, max CC 7).
+- JavaScript and C++ need hand-written parsers, which hold their highest-CC function (parseSeconds CC 11,
+  parse_seconds CC 21).
+So the library, not the pattern, drives the difference.
+
+H2. Strategy
+| Language   | How roles are written | Contract checked when | Inheritance vs composition | Memory/ownership | Notable language features used | source_loc | max_function_cc | median_process_ms |
+|------------|-----------------------|-----------------------|----------------------------|------------------|--------------------------------|-----------:|----------------:|------------------:|
+| Java       | base class (fallback) + subclasses; static factory | compile time | inheritance for strategies, composition in CascadeMethod | GC | switch on String, Double for None | 106 | 9 | 156.784 |
+| Python     | base class + duck typing; module function factory | run time | same | GC | tuples, *args unpacking | 67 | 10 | 73.589 |
+| JavaScript | class hierarchy; function factory | run time | same | GC | spread args, array results | 83 | 9 | 96.586 |
+| C++        | virtual method; factory returns unique_ptr | compile time | same | unique_ptr, Cascade owns links | std::fmod, move semantics | 97 | 12 | 31.403 |
+Static vs dynamic: Java and C++ need the factory to declare a common return type (AbstractMethod /
+unique_ptr<AbstractMethod>) and a result type with an explicit "absent" value (Double null, has_value
+flag). Python and JavaScript return a tuple or array with None/null. This shows up as larger files: 106
+and 97 NLOC vs 67 and 83, while the maximum complexity stays similar (9-12).
+
+H3. Adapter
+| Language   | How roles are written | Contract checked when | Inheritance vs composition | Memory/ownership | Notable language features used | source_loc | max_function_cc | median_process_ms |
+|------------|-----------------------|-----------------------|----------------------------|------------------|--------------------------------|-----------:|----------------:|------------------:|
+| Java       | abstract Target class; adapters extend it and hold the adaptee | compile time | inheritance (Target) + composition (adaptee) | GC | UncheckedIOException, TreeMap | 108 | 7 | 156.345 |
+| Python     | base class raising NotImplementedError | run time | same | GC | dict, IOError/OSError | 80 | 7 | 72.979 |
+| JavaScript | base class throwing | run time | same | GC | Map, destructuring with defaults | 88 | 7 | 92.718 |
+| C++        | pure virtual Target | compile time | same | non-owning adaptee pointers | struct instead of optional, map::at | 106 | 7 | 32.800 |
+Static vs dynamic: the adapter logic is identical in all four (max CC 7 everywhere, in the weather
+adapter). The typed versions are 106-108 NLOC vs 80-88, mainly because of declarations. Python's float()
+rejects bad text natively, while JavaScript's Number('') returns 0 and needed an explicit check (J).
+
+H4. Proxy
+| Language   | How roles are written | Contract checked when | Inheritance vs composition | Memory/ownership | Notable language features used | source_loc | max_function_cc | median_process_ms |
+|------------|-----------------------|-----------------------|----------------------------|------------------|--------------------------------|-----------:|----------------:|------------------:|
+| Java       | explicit DaemonApi interface on Proxy, RemoteProxy and RealSubject | compile time | composition (proxy holds connection) + interface | GC | interface, try/finally | 111 | 7 | 158.345 |
+| Python     | no Subject; __getattr__ dynamic forwarding | run time | composition | GC | __getattr__ | 60 | 6 | 70.879 |
+| JavaScript | ES Proxy object with get trap | run time | composition | GC | Proxy, bind | 69 | 5 | 88.559 |
+| C++        | abstract DaemonApi with pure virtuals | compile time | composition + interface | unique_ptr per call, non-owning daemon pointers | override, std::runtime_error subclasses | 103 | 7 | 33.030 |
+Static vs dynamic: the clearest contrast in the set.
+- Python and JavaScript forward any method without listing it (__getattr__, ES Proxy), mirroring Pyro5's
+  dynamic proxy. This gives 60 and 69 NLOC.
+- Java and C++ must declare the Subject interface and repeat each forwarded method, giving 111 and 103 NLOC.
+- In exchange, a misspelled remote method is a compile error in Java and C++, but only a run-time error in
+  Python and JavaScript.
+
+H5. Command
+| Language   | How roles are written | Contract checked when | Inheritance vs composition | Memory/ownership | Notable language features used | source_loc | max_function_cc | median_process_ms |
+|------------|-----------------------|-----------------------|----------------------------|------------------|--------------------------------|-----------:|----------------:|------------------:|
+| Java       | abstract command class; DictVars request | compile time | inheritance (commands) + composition (receivers, invoker map) | GC | NoSuchElementException, getOrDefault | 112 | 8 | 173.109 |
+| Python     | base with no-op run_action; dict request | run time | same | GC | dict KeyError semantics | 67 | 7 | 74.217 |
+| JavaScript | base class; plain object request | run time | same | GC | `in` operator, explicit missing-key check | 88 | 9 | 90.155 |
+| C++        | pure virtual run_action; DictVars struct | compile time | same | invoker owns commands (unique_ptr); receivers by reference | references, ostringstream | 130 | 8 | 32.462 |
+Static vs dynamic: in Python, a missing request key fails by itself (KeyError), exactly as in the source.
+JavaScript silently produces "undefined..." and needed an explicit check, while Java and C++ needed a
+typed request object with an explicit "has message" state. C++ is the largest file (130 NLOC) because
+string splitting and formatting have to be written out.
+
+H6. Plugin
+| Language   | How roles are written | Contract checked when | Inheritance vs composition | Memory/ownership | Notable language features used | source_loc | max_function_cc | median_process_ms |
+|------------|-----------------------|-----------------------|----------------------------|------------------|--------------------------------|-----------:|----------------:|------------------:|
+| Java       | abstract plugin class; Supplier catalogue | compile time | inheritance (plugins) + composition (catalogue) | GC | lambdas, constructor refs, Map.of | 87 | 9 | 156.021 |
+| Python     | classes as values in a lambda catalogue | run time | same | GC | first-class classes | 61 | 8 | 65.257 |
+| JavaScript | classes as values with static fields | run time | same | GC | static class fields | 75 | 9 | 91.112 |
+| C++        | std::function factories + template make_input | compile time | same | unique_ptr returned to host | templates, function-local statics | 94 | 8 | 32.298 |
+Static vs dynamic: Python and JavaScript can treat a loaded class as a value and call it, which is close to
+the source's importlib usage. Java expresses the same with lambdas and constructor references, and C++
+needs a template factory because it has no reflection. The measured complexity is almost the same (8-9);
+size again follows the typing overhead (61/75 vs 87/94).
+
+H7. Layer Supertype
+| Language   | How roles are written | Contract checked when | Inheritance vs composition | Memory/ownership | Notable language features used | source_loc | max_function_cc | median_process_ms |
+|------------|-----------------------|-----------------------|----------------------------|------------------|--------------------------------|-----------:|----------------:|------------------:|
+| Java       | abstract supertype; members extend it | compile time | inheritance | GC | switch on String, Map<String,Object> | 68 | 23 | 156.814 |
+| Python     | base class; members extend it | run time | inheritance | GC | dict.get, setdefault | 56 | 19 | 65.902 |
+| JavaScript | base class via extends | run time | inheritance | GC | object literals, hasOwnProperty | 65 | 22 | 94.884 |
+| C++        | base class with protected helpers | compile time | inheritance | store by reference | OptionValue struct (no variant) | 82 | 25 | 32.492 |
+Static vs dynamic: this pattern has the highest measured complexity in every language (19-25), all in
+setup_custom_options, the type-switch over option kinds that the supertype centralises. Python stores
+heterogeneous option values directly in a dict (19). The typed languages need a container type for mixed
+values (Map<String,Object> or the OptionValue struct), plus explicit checks, which adds branches
+(23 and 25).
+
+H8. Active Record
+| Language   | How roles are written | Contract checked when | Inheritance vs composition | Memory/ownership | Notable language features used | source_loc | max_function_cc | median_process_ms |
+|------------|-----------------------|-----------------------|----------------------------|------------------|--------------------------------|-----------:|----------------:|------------------:|
+| Java       | abstract CRUDMixin; models implement column metadata | compile time | inheritance (models) + composition (session) | GC | int overflow for FNV, SecureRandom | 113 | 14 | 235.049 |
+| Python     | mixin + class attributes + getattr | run time | same | GC | getattr, secrets, bit mask | 69 | 13 | 86.483 |
+| JavaScript | base class + static fields + obj[column] | run time | same | GC | Math.imul, >>> 0, Buffer, crypto | 83 | 7 | 95.829 |
+| C++        | abstract CRUDMixin; pure virtual metadata | compile time | same | Session holds raw pointers, runner owns records | uint32_t wrap-around, typeid, random_device | 119 | 14 | 33.528 |
+Static vs dynamic:
+- Active Record relies on generic column access. Python (getattr) and JavaScript (obj[column]) get it for
+  free, while Java and C++ need an extra column(name) method in every model (113 and 119 NLOC vs 69 and 83).
+- JavaScript's commit has the lowest measured complexity (7), because array methods (filter, some)
+  replace nested loops.
+- Java's process time (235.049 ms) is the highest Java median in the set. The only Java-specific
+  addition in this runner is SecureRandom; a cause was not measured separately.
+
+Process-time summary (whole process, not algorithm speed):
+- Across all 8 patterns, the medians were C++ 31.403-33.528 ms, Python 65.257-86.483 ms, JavaScript
+  88.559-96.586 ms and Java 156.021-235.049 ms.
+- With 9-12 tiny cases per run, these numbers mainly reflect process and runtime start-up (a native
+  executable vs CPython, V8 and the JVM). They do not show which language executes the pattern logic
+  faster.
+
+
+==================================================================================================
+12. I. TECHNOLOGY DISCUSSION DRAFT (247 words, excluding the reference list)
+==================================================================================================
+The same eight collaborations could be written in all four languages without changing the pattern roles.
+What changes is where the contract lives:
+- Java and C++ make the roles explicit types. Java uses abstract classes, interfaces, final and @Override
+  (Java Language Specification, Java SE 21, chapters 8-9). C++ uses pure virtual functions, override and
+  std::unique_ptr ownership (cppreference.com, "virtual function specifier" and "std::unique_ptr").
+  A missing or misnamed role method is therefore rejected by the compiler.
+- Python and JavaScript express the same roles by convention. The Python abc module could enforce abstract
+  methods at instantiation (Python documentation, "abc — Abstract Base Classes"); the snippets follow the
+  source and use plain base classes. ECMAScript classes (MDN, "Classes") have no abstract or final
+  keywords.
+- Dynamic features make some patterns shorter. Python's __getattr__ (Python Language Reference, "Data
+  model") and the JavaScript Proxy object (MDN, "Proxy") implement a forwarding proxy without listing the
+  methods. First-class classes make the Plugin catalogue trivial.
+- The measured cost of static typing is size, not complexity. Java and C++ files are consistently larger,
+  while the maximum function complexity is usually within a few points across languages. The largest
+  complexity differences come from missing library support: hand-written date parsing in JavaScript and
+  C++.
+- The patterns themselves are as described by Gamma et al. (1994, Template Method, Strategy, Adapter,
+  Proxy, Command) and Fowler (2002, Plugin, Layer Supertype, Active Record). Their intent survives the
+  translation; only the enforcement point moves between compile time and run time.
+
+References: E. Gamma, R. Helm, R. Johnson, J. Vlissides, "Design Patterns: Elements of Reusable
+Object-Oriented Software", Addison-Wesley, 1994. M. Fowler, "Patterns of Enterprise Application
+Architecture", Addison-Wesley, 2002. The Java Language Specification, Java SE 21 Edition (Oracle). Python
+3.12 documentation: "abc" module and the Language Reference "Data model". MDN Web Docs: "Classes" and
+"Proxy". cppreference.com: "virtual function specifier", "std::unique_ptr".
+
+
+==================================================================================================
+13. J. PITFALLS FOUND (and how they were resolved)
+==================================================================================================
+J1  CSV splitting differs. Java "a,b,".split(",") drops trailing empty fields, so every runner uses
+    split(",", -1). C++ std::getline also loses a trailing empty field, so the runners' split appends ""
+    explicitly. An empty field split on "|" gives [""] in every language, so empty lists are filtered
+    (Plugin PL07: empty file list).
+J2  C++ number formatting: the default ostream precision (6 digits) would print the dew point as 9.25517,
+    which fails the 1e-9 tolerance. The C++ runners use std::setprecision(17).
+J3  M_PI is not declared by MinGW g++ 6.3 under -std=c++14 (strict mode), which was a compile error in a
+    probe. pi is computed as std::acos(-1.0) in setpoint_schedule.hpp. std::stod and std::to_string did
+    compile on this MinGW (probe in the scratchpad), so no istringstream workaround was needed.
+J4  Date parsing.
+    - Python strptime accepts single-digit fields; Java needs ResolverStyle.STRICT with "uuuu" to reject
+      invalid dates; JavaScript's Date.UTC silently rolls over out-of-range values (hour 25), so JS and
+      C++ validate the ranges by hand.
+    - The spec therefore requires 2-digit fields, and no test uses single digits.
+J5  Integer vs float division.
+    - C++ computes the percentage from long long seconds, so both operands are static_cast<double>.
+    - Java's Duration.getSeconds() returns long and is assigned to double before dividing.
+    - Python and JavaScript always use true division.
+J6  Missing keys / bad numbers.
+    - In JavaScript, `undefined + "text"` does not throw, so an explicit appendMessage check reproduces
+      Python's KeyError (Command CM11/CM12).
+    - Number('') is 0 in JavaScript, while float('') raises in Python, so the JS adapter and module-base
+      code validate numeric text explicitly.
+    - Java Map.get returns null (NullPointerException later), and C++ map::at throws out_of_range. Both
+      reach the guarded "return None" path in the weather adapter.
+J7  Exception types differ (Python ValueError/KeyError/OSError, Java IllegalArgumentException,
+    NoSuchElementException, DateTimeParseException, UncheckedIOException, JS Error subclasses, C++
+    std::invalid_argument/out_of_range/runtime_error). The shared CSV only says ERROR, and every runner
+    accepts any exception. The Python ERROR reasons were printed and checked once (all come from
+    production code, none from runner parsing).
+J8  32-bit FNV-1a hash. Java int multiplication wraps and String.format("%08x") prints the unsigned value;
+    JavaScript needs Math.imul and >>> 0; Python masks with & 0xffffffff; C++ uses std::uint32_t. All four
+    reproduce the independently computed value d3b8b801 (AR09/AR10) and the published FNV-1a("a") =
+    e40c292c.
+J9  Mixed-type state in the source. DaemonControl.output_on_off compares state with ['on', 1, True]. The
+    snippets compare text ("on", "1", "true") in all languages, because the CSV only carries text.
+J10 Semantics of empty text. Python's ''.split(',') gives [''] but a std::getline loop gives no element;
+    Java needed isEmpty() to treat an empty value.message like Python's falsy check. Both were fixed in
+    production code before the first run of the Command tests (not covered by a CSV case).
+J11 C++ keyword: CRUDMixin.delete() is named del() in C++ (delete is reserved). Session::commit is
+    declared inline in the class and defined after CRUDMixin, because it calls CRUDMixin's virtual methods.
+J12 Measurement tooling.
+    - The first lizard pass silently skipped the four .hpp files. The command list was written by Python on
+      Windows with "\r\n", so the last path ended in "\r" and lizard skipped a file it could not find.
+      Fixed with tools/run_lizard.py, which checks every path.
+    - lizard's JavaScript parser stopped after a nested template literal (`...${x ? `...` : ''}`) in
+      daemon_rpc.js and reported only 3 functions. The expression was split into a separate variable
+      (same output; the Proxy tests still pass 12/12), and the file was re-measured: 13 functions.
+J13 Shell quoting. A bash heredoc with backslash-heavy text was mangled, so the CSV files and the README
+    generator were written with the file tool instead.
+J14 Untested divergence kept on purpose: DurationMethod with an empty cycle and repeat = 0 would compute
+    s mod 0. Python raises ZeroDivisionError, while Java, JavaScript and C++ give NaN. The SPEC
+    precondition (rows present, now ≥ start) excludes it, and no case covers it.
+
+
+==================================================================================================
+14. FINAL SELF-CHECK
+==================================================================================================
+- Required files: 159 checked (SPEC.md, 8 case CSVs, 32 production files, 32 runners, 32 READMEs,
+  tools/measure.py, llm/input.txt, llm/output.txt, llm/run_info.txt, llm/cross_language_llm_draft.csv,
+  evidence/toolchains.txt, 8 lizard files, 8 timing files, 32 test outputs). Missing: none.
+- Final rerun of all 32 test runners (python tools/run_tests.py; summary in evidence/final_rerun_summary.txt):
+  every runner printed "<Pattern> tests: X/X passed" with exit code 0.
+- cross_language_llm_draft.csv: 32 rows = 4 languages x 8 pattern types. Every source_loc,
+  max_function_cc, test_result and median_process_ms value was re-parsed from evidence/ and compared:
+  0 mismatches. The H tables in this file were compared with the CSV: 0 mismatches.
+- Mycodo/: no changes (git status empty, HEAD ee70a111c). Part1/ and Part2/: no file modified after Part 3
+  started (find -newer Part3/evidence/toolchains.txt: 0 files).

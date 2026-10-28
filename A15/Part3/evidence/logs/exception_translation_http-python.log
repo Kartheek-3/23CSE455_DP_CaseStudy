@@ -1,0 +1,9 @@
+# python3 run_tests.py ../test-cases/cases.txt (working folder Part3/exception_translation_http/python)
+# runtime: CPython 3.13.16
+PASS case1
+PASS case2
+PASS case3
+PASS case4
+PASS case5
+PASS case6
+RESULT passed=6 total=6

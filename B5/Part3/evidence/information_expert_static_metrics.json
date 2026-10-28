@@ -1,0 +1,69 @@
+{
+  "Java": {
+    "production_files": [
+      "information_expert/java/Main.java"
+    ],
+    "source_loc": 63,
+    "max_function_cc": 7,
+    "functions_cc": {
+      "missing": 3,
+      "display": 2,
+      "linkOrCreateTripItem": 7,
+      "review": 2,
+      "TripItem#constructor": 1,
+      "Trip#constructor": 1,
+      "LinkResult#constructor": 1,
+      "InboxItem#constructor": 1
+    },
+    "methodology": "Frozen McCabe-style 1 + decisions; original count_loc/py_functions/extract_brace_functions"
+  },
+  "Python": {
+    "production_files": [
+      "information_expert/python/main.py"
+    ],
+    "source_loc": 45,
+    "max_function_cc": 7,
+    "functions_cc": {
+      "missing": 2,
+      "display": 2,
+      "InboxItem.link_or_create_trip_item": 7,
+      "InboxReviewController.review": 2
+    },
+    "methodology": "Frozen McCabe-style 1 + decisions; original count_loc/py_functions/extract_brace_functions"
+  },
+  "JavaScript": {
+    "production_files": [
+      "information_expert/javascript/main.js"
+    ],
+    "source_loc": 38,
+    "max_function_cc": 6,
+    "functions_cc": {
+      "missing": 3,
+      "display": 2,
+      "constructor": 1,
+      "constructor#2": 1,
+      "constructor#3": 1,
+      "linkOrCreateTripItem": 6,
+      "review": 2
+    },
+    "methodology": "Frozen McCabe-style 1 + decisions; original count_loc/py_functions/extract_brace_functions"
+  },
+  "C++": {
+    "production_files": [
+      "information_expert/cpp/main.hpp",
+      "information_expert/cpp/main.cpp"
+    ],
+    "source_loc": 83,
+    "max_function_cc": 7,
+    "functions_cc": {
+      "trim": 2,
+      "asciiLower": 1,
+      "InboxItem::missing": 2,
+      "InboxItem::display": 2,
+      "InboxItem::linkOrCreateTripItem": 7,
+      "InboxReviewController::review": 2,
+      "InboxItem::InboxItem#constructor": 1
+    },
+    "methodology": "Frozen McCabe-style 1 + decisions; original count_loc/py_functions/extract_brace_functions"
+  }
+}

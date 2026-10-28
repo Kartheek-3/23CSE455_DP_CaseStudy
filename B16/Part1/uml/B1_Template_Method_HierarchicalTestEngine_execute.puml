@@ -1,0 +1,32 @@
+@startuml B1
+!pragma layout smetana
+title B1 Template Method: HierarchicalTestEngine.execute()
+
+interface TestEngine <<Interface>> {
+  +execute(ExecutionRequest)
+}
+abstract class "HierarchicalTestEngine<C>" as HierarchicalTestEngine <<AbstractClass>> {
+  +{method} final execute(ExecutionRequest)
+  #createExecutorService(ExecutionRequest)
+  #createThrowableCollectorFactory(ExecutionRequest)
+  #{abstract} createExecutionContext(ExecutionRequest) : C
+}
+class JupiterTestEngine <<ConcreteClass>> {
+  #createExecutorService(ExecutionRequest)
+  #createThrowableCollectorFactory(ExecutionRequest)
+  #createExecutionContext(ExecutionRequest)
+}
+
+HierarchicalTestEngine ..|> TestEngine
+JupiterTestEngine --|> HierarchicalTestEngine
+HierarchicalTestEngine ..> HierarchicalTestEngine : execute() calls the steps
+' aligned-with-record
+legend right
+  <b>Counted participants</b> (record in the dataset)
+  AbstractClass: HierarchicalTestEngine
+  TemplateMethod: HierarchicalTestEngine#execute
+  PrimitiveOperation: HierarchicalTestEngine#createExecutionContext
+  ConcreteClass: JupiterTestEngine
+  Grey classes: real, shown for context, not counted
+endlegend
+@enduml

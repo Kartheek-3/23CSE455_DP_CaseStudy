@@ -1,0 +1,22 @@
+# Part 1 run information
+Note: written on 2026-10-25 from the details recorded for the run (Part1/llm.csv and the header of
+output.txt). Unlike Parts 2 and 3, the Part 1 prompt did not ask for a run_info file during the run.
+
+## Run
+Date:        2026-10-11
+Model:       Claude Opus 5.5 (claude-opus-5-5), in Claude Code (VS Code extension)
+Prompt:      Part1/llm/part1_prompt_Johan.txt
+Task type:   read-only static analysis (no packages installed, application not run, no network)
+
+## Source
+Repository:  https://github.com/kizniche/Mycodo.git
+Commit:      ee70a111c622e2a81026fd5c1553a948acf8161e (v8.17.0), clean working tree
+Location:    Mycodo/ at the time of the run (now data/code/)
+Files:       the 24 scope files listed in input.txt
+
+## Tools used during the run
+Read tool and grep -n to read files and confirm every line range (see the header of output.txt).
+
+## Outputs
+Raw output:  Part1/llm/output.txt (sections 1-8; sections 5 and 6 are the draft CSV rows)
+Team result: Part1/patterns.csv and Part1/Pattern_count.csv (reviewed version of sections 5 and 6)

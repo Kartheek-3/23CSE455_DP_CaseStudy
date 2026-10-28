@@ -1,0 +1,37 @@
+@startuml B7
+!pragma layout smetana
+title B7 Adapter: ExecutionListenerAdapter
+
+interface EngineExecutionListener <<Target>> {
+  +executionStarted(TestDescriptor)
+  +executionFinished(TestDescriptor, TestExecutionResult)
+}
+interface TestExecutionListener <<Adaptee>> {
+  +executionStarted(TestIdentifier)
+  +executionFinished(TestIdentifier, TestExecutionResult)
+}
+class ExecutionListenerAdapter <<Adapter>> {
+  -testPlan : TestPlan
+  -testExecutionListener : TestExecutionListener
+}
+class TestPlan <<Helper>> {
+  +getTestIdentifier(UniqueId)
+}
+class "NodeTestTask<C>" as NodeTestTask <<Client>>
+class EngineExecutionOrchestrator <<Assembler>>
+
+ExecutionListenerAdapter ..|> EngineExecutionListener
+ExecutionListenerAdapter o--> TestExecutionListener : testExecutionListener
+ExecutionListenerAdapter o--> TestPlan : testPlan (TestDescriptor to TestIdentifier)
+NodeTestTask ..> EngineExecutionListener : executionStarted()
+EngineExecutionOrchestrator ..> ExecutionListenerAdapter : buildEngineExecutionListener() creates
+' aligned-with-record
+legend right
+  <b>Counted participants</b> (record in the dataset)
+  Target: EngineExecutionListener
+  Adapter: ExecutionListenerAdapter
+  Adaptee: TestExecutionListener
+  Client (wiring): EngineExecutionOrchestrator#buildEngineExecutionListener
+  Grey classes: real, shown for context, not counted
+endlegend
+@enduml

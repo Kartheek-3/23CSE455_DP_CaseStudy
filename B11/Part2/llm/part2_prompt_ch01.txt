@@ -1,0 +1,4 @@
+[Part 2 - CH01 (new late-fee Strategy) - owner: Rakshann (Am.sc.u4cse23268)]
+Context: legalSystem @4e4ebb57. Add a configurable late-fee policy that extends the
+existing Strategy pattern, written into com.dcm. Give the FinePolicy interface, two
+concrete policies, a FineService context, a JUnit 5 test, and the pattern effect.

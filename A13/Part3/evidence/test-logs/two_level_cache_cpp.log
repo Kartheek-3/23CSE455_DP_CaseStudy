@@ -1,0 +1,21 @@
+# two_level_cache / cpp
+# working folder: Part3/code/pattern_two_level_cache/cpp
+# runtime: g++ 16.1.1 20260625, -std=c++17
+$ mkdir -p build
+
+
+$ g++ -std=c++17 -Wall -Wextra -o build/test redis_single_cache.test.cpp
+
+
+$ build/test ../../../test-cases/two_level_cache.txt
+PASS first_fetch_calls_fetcher
+PASS second_fetch_hits_memory
+PASS memory_expiry_falls_back_to_redis
+PASS delete_clears_both_levels
+PASS get_on_empty_cache_is_none
+PASS get_does_not_call_fetcher
+PASS other_process_reads_redis
+passed 7/7
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 3.5, 3.5, 3.3, 3.3, 3.2 -> median 3.3

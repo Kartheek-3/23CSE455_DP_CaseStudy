@@ -1,0 +1,105 @@
+flowchart TB
+    %% Part 1 — evidence-based DaPlanStan architecture, intended baseline only.
+    %% Functional groups below are for readability; they are NOT formal architectural layers.
+
+    Browser[User / Browser]
+    ForwardedEmail[Travel email sender]
+
+    subgraph Web[Routes, controllers, and frontend]
+        Routes[config/routes.rb]
+        TripsC[TripsController]
+        InboxC[InboxItemsController]
+        SessionsC[SessionsController]
+        NotifC[NotificationsController]
+        Views[Rails ERB views / Turbo frontend]
+    end
+
+    subgraph Models[Application models and model concern]
+        Trip[Trip]
+        Member[TripMember]
+        Inbox[InboxItem]
+        Item[TripItem]
+        Expense[Expense]
+        Identity[User / UserIdentity]
+        GeoConcern[Geocodable concern]
+    end
+
+    subgraph Background[Application background jobs]
+        CoverJob[FetchTripCoverImageJob]
+        ParseJob[ParseInboxItemJob]
+        GeoJob[GeocodeTripItemsJob]
+        ReceiptJob[ParseReceiptJob]
+    end
+
+    subgraph Email[Inbound and outbound email components]
+        ActionMailbox[Action Mailbox / Postmark ingress]
+        TripMailbox[TripMailbox]
+        Mailers[TripMailer / InvitationMailer]
+    end
+
+    subgraph External[External providers and supporting libraries]
+        Anthropic[Anthropic API]
+        Pexels[Pexels API]
+        Geocoder[Geocoder library]
+        Nominatim[Nominatim]
+        OAuth[Google / Apple via OmniAuth]
+        Map[Leaflet + OSM / CARTO map resources]
+        Postmark[Postmark email service]
+    end
+
+    DB[(SQLite / Active Record persistence)]
+
+    %% HTTP, trip creation, and browsing
+    Browser -->|HTTP requests| Routes
+    Routes -->|trip actions| TripsC
+    Routes -->|inbox review actions| InboxC
+    Routes -->|notifications| NotifC
+    TripsC -->|create / manage trip| Trip
+    TripsC -->|create owner membership| Member
+    Trip -->|save / query| DB
+    Member -->|save / query| DB
+    TripsC -->|enqueue cover-image lookup| CoverJob
+    CoverJob -->|search cover images| Pexels
+    Pexels -->|image result| CoverJob
+    CoverJob -->|update trip cover information| Trip
+    TripsC -->|render / redirect| Views
+    Views -->|HTML / Turbo UI| Browser
+    Views -->|display map| Map
+
+    %% Inbound email and subsequent, separately triggered domain linking
+    ForwardedEmail -->|send message| Postmark
+    Postmark -->|inbound delivery| ActionMailbox
+    ActionMailbox -->|route inbound email| TripMailbox
+    TripMailbox -->|create record; check sender| Inbox
+    Inbox -->|save email and states| DB
+    TripMailbox -->|approved sender: enqueue| ParseJob
+    TripMailbox -->|unapproved sender notice| Mailers
+    ParseJob -->|structured extraction request| Anthropic
+    Anthropic -->|parsed response| ParseJob
+    ParseJob -->|save parsed data / status| Inbox
+    InboxC -->|review / confirm when applicable| Inbox
+    Inbox -->|fill_missing_links!: create / link itinerary| Item
+    Inbox -->|fill_missing_links!: create / link expense| Expense
+    Item -->|save / query| DB
+    Expense -->|save / query| DB
+    NotifC -->|query pending sender / review status| Inbox
+    NotifC -->|render notifications page| Views
+
+    %% Geocoding: route/controller work is synchronous; job/API work is async
+    TripsC -->|geocode_missing: enqueue| GeoJob
+    GeoJob -->|geocode_from_address| Item
+    Item -->|include / invoke concern behavior| GeoConcern
+    GeoConcern -->|geocoding lookup| Geocoder
+    Geocoder -->|configured lookup provider| Nominatim
+    Nominatim -->|coordinates response| Geocoder
+    GeoConcern -->|latitude / longitude result| Item
+    GeoJob -->|Turbo refresh broadcast| Views
+
+    %% Other confirmed integrations
+    ReceiptJob -->|receipt parsing request| Anthropic
+    Browser -->|sign in| OAuth
+    OAuth -->|callback /auth/:provider/callback| Routes
+    Routes -->|sessions#create| SessionsC
+    SessionsC -->|find / create provider identity| Identity
+    Identity -->|save / query| DB
+    Mailers -->|outbound delivery| Postmark

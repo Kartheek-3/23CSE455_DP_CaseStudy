@@ -1,0 +1,10 @@
+PASS OBS-1 [Python] line 2: 'Admin notified: Order O101 is Shipped'
+PASS OBS-2 [Python] line 3: 'Restaurant notified: Order O101 is Shipped'
+PASS OBS-3 [Python] line 4: 'Delivery Partner notified: Order O101 is Shipped'
+PASS STR-1 [Python] line 7: 'Assigned to: Partner A'
+PASS STR-2 [Python] line 8: 'Assigned to: Partner C'
+PASS FULL [Python] complete output
+SUMMARY Python Observer: 3/3 passed
+SUMMARY Python Strategy: 2/2 passed
+SUMMARY Python full-output: 1/1 passed
+exit=0

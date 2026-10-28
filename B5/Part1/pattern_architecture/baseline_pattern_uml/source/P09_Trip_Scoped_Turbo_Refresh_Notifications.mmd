@@ -1,0 +1,36 @@
+classDiagram
+direction TB
+class InboxItem {
+  <<application>>
+}
+class GeocodeTripItemsJob {
+  <<application>>
+  +perform()
+}
+class TripShowView["trips/show.html.erb"] {
+  <<application view>>
+}
+class InboxIndexView["inbox_items/index.html.erb"] {
+  <<application view>>
+}
+class TurboBroadcastable["Turbo::Broadcastable"] {
+  <<framework>>
+}
+class TurboStreamsChannel["Turbo::StreamsChannel"] {
+  <<framework>>
+}
+class ActionCable["Action Cable"] {
+  <<framework>>
+}
+class TurboBrowser["Turbo browser runtime"] {
+  <<framework>>
+}
+
+InboxItem ..> TurboBroadcastable : declares refresh on trip changes
+TurboBroadcastable ..> TurboStreamsChannel : schedules trip refresh
+GeocodeTripItemsJob ..> TurboStreamsChannel : broadcasts refresh to trip
+TripShowView ..> TurboBrowser : declares trip stream subscription
+InboxIndexView ..> TurboBrowser : declares trip stream subscription
+TurboBrowser ..> TurboStreamsChannel : subscribes to trip stream
+TurboStreamsChannel ..> ActionCable : publishes refresh action
+ActionCable ..> TurboBrowser : delivers stream notification

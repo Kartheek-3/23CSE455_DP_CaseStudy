@@ -1,0 +1,142 @@
+@startuml
+!pragma layout smetana
+skinparam style strictuml
+skinparam monochrome false
+skinparam roundcorner 8
+skinparam classAttributeIconSize 0
+skinparam defaultFontName SansSerif
+skinparam classFontStyle bold
+
+title Misskey Native Events Architecture (Change 1 - CH01)
+
+package "Server / API Layer" {
+    abstract class Endpoint {
+        +meta: Object
+        +paramDef: Object
+        +{abstract} exec(params, user): Promise<any>
+    }
+
+    class EventsCreateEndpoint {
+        +exec(params, user): Promise<Object>
+    }
+    class EventsShowEndpoint {
+        +exec(params, user): Promise<Object>
+    }
+    class EventsUpdateEndpoint {
+        +exec(params, user): Promise<Object>
+    }
+    class EventsCancelEndpoint {
+        +exec(params, user): Promise<Object>
+    }
+    class EventsRsvpEndpoint {
+        +exec(params, user): Promise<Object>
+    }
+    class EventsRsvpsEndpoint {
+        +exec(params, user): Promise<Object>
+    }
+
+    Endpoint <|-- EventsCreateEndpoint
+    Endpoint <|-- EventsShowEndpoint
+    Endpoint <|-- EventsUpdateEndpoint
+    Endpoint <|-- EventsCancelEndpoint
+    Endpoint <|-- EventsRsvpEndpoint
+    Endpoint <|-- EventsRsvpsEndpoint
+}
+
+package "Core Domain Layer" {
+    class EventService <<Injectable>> {
+        -eventsRepository: MiRepository<MiEvent>
+        -eventRsvpsRepository: MiRepository<MiEventRsvp>
+        -idService: IdService
+        -notificationService: NotificationService
+        +create(params, creator): Promise<MiEvent>
+        +show(id): Promise<MiEvent>
+        +update(params, user): Promise<MiEvent>
+        +cancel(id, user): Promise<MiEvent>
+        +rsvp(eventId, user, status): Promise<MiEventRsvp>
+        +getRsvps(eventId): Promise<MiEventRsvp[]>
+        +triggerReminder(eventId): Promise<number>
+    }
+
+    class EventReminderSchedule <<Value Object>> {
+        +{static} DEFAULT_LEAD_TIME_MS: number = 900000
+        +reminderAt: Date
+        +delayMs: number
+        +isEligible: boolean
+        +constructor(startsAt: Date, now?: Date, leadTimeMs?: number)
+    }
+
+    EventService ..> EventReminderSchedule : uses / instantiates
+}
+
+package "Persistence / Models" {
+    class MiEvent <<Entity>> {
+        +id: ID
+        +userId: ID
+        +user: MiUser
+        +title: string
+        +description: string | null
+        +location: string | null
+        +meetingUrl: string | null
+        +timezone: string
+        +startsAt: Date
+        +endsAt: Date
+        +isCancelled: boolean
+        +createdAt: Date
+        +updatedAt: Date
+    }
+
+    enum EventRsvpStatus <<Enum>> {
+        going
+        interested
+        not_going
+    }
+
+    class MiEventRsvp <<Entity>> {
+        +id: ID
+        +eventId: ID
+        +userId: ID
+        +event: MiEvent
+        +user: MiUser
+        +status: EventRsvpStatus
+        +createdAt: Date
+        +updatedAt: Date
+    }
+
+    MiEvent "1" *-- "0..*" MiEventRsvp : event
+    MiEventRsvp --> EventRsvpStatus : status
+}
+
+package "Cross-Cutting Subsystems" {
+    class NotificationService <<Injectable>> {
+        +createNotification(recipientId, type, customData): Promise<void>
+    }
+
+    class IdService <<Injectable>> {
+        +gen(): string
+    }
+}
+
+package "Frontend Layer" {
+    class MkEventCard <<Vue Component>> {
+        +event: MiEvent
+        +currentRsvp: EventRsvpStatus
+        +onRsvp(status: EventRsvpStatus): void
+    }
+}
+
+' Relationships & Invocations
+EventsCreateEndpoint --> EventService : invokes
+EventsShowEndpoint --> EventService : invokes
+EventsUpdateEndpoint --> EventService : invokes
+EventsCancelEndpoint --> EventService : invokes
+EventsRsvpEndpoint --> EventService : invokes
+EventsRsvpsEndpoint --> EventService : invokes
+
+EventService --> MiEvent : persists & queries
+EventService --> MiEventRsvp : manages state
+EventService --> NotificationService : dispatches notifications
+EventService --> IdService : generates IDs
+MkEventCard ..> EventsRsvpEndpoint : HTTP POST /api/events/rsvp
+
+@enduml

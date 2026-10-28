@@ -1,0 +1,30 @@
+@startuml C5
+!pragma layout smetana
+title C5 Adapter: DefaultTestReporter
+
+interface TestReporter <<Target>> {
+  +publishEntry(Map<String, String>)
+  +publishEntry(String, String)
+}
+class DefaultTestReporter <<Adapter>> {
+  -extensionContext : ExtensionContext
+  +publishEntry(Map<String, String>)
+}
+interface ExtensionContext <<Adaptee>> {
+  +publishReportEntry(Map<String, String>)
+}
+class TestReporterParameterResolver <<Creator>>
+
+DefaultTestReporter ..|> TestReporter
+DefaultTestReporter o--> ExtensionContext : extensionContext
+DefaultTestReporter ..> ExtensionContext : publishReportEntry(map)
+TestReporterParameterResolver ..> DefaultTestReporter : creates for test parameter
+' aligned-with-record
+legend right
+  <b>Counted participants</b> (record in the dataset)
+  Target: TestReporter
+  Adapter: DefaultTestReporter
+  Adaptee: AbstractExtensionContext#publishReportEntry (not drawn)
+  Grey classes: real, shown for context, not counted
+endlegend
+@enduml

@@ -1,0 +1,5 @@
+[Part 2 - pattern evolution counts - owner: Lokesh (Am.sc.u4cse23237)]
+Context: given the three changes CH01-CH03, produce the per-snapshot pattern counts
+(baseline / after CH01 / after CH02 / after CH03), keeping instance names for
+continuing collaborations and marking newly_introduced / modified. Record in
+patterns_evolution.csv.

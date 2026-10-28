@@ -1,0 +1,16 @@
+Command: python3 test_main.py
+Working directory: Part3/controller/python
+Exit code: 0
+
+STDOUT:
+C01	CREATED	trip-C01	Autumn Rome Trip	traveler-01	owner	COVER_QUEUED
+C02	ERROR	UNAUTHENTICATED
+C03	ERROR	MISSING_OWNER
+C04	ERROR	MISSING_TITLE
+C05	ERROR	INVALID_DATE
+C06	ERROR	INVALID_DATE_RANGE
+C07	CREATED	trip-C07	Same Day Trip	traveler-07	owner	COVER_QUEUED
+C08	CREATED	trip-C08	City Break	traveler-08	owner	COVER_QUEUED
+
+STDERR:
+passed=8/8 failures=0 errors=0 skipped=0

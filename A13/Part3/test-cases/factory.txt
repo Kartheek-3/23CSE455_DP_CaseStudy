@@ -1,0 +1,7 @@
+# case|format (- = absent, <empty> = empty string)|expected (backend name:sample line written at level info with message hi)
+default_is_pretty|-|pretty:[INFO] hi
+explicit_pretty|pretty|pretty:[INFO] hi
+json|json|json:{"level":"info","message":"hi"}
+unknown_format|xml|ERR:logging.format must be either pretty or json
+format_is_case_sensitive|JSON|ERR:logging.format must be either pretty or json
+empty_string_rejected|<empty>|ERR:logging.format must be either pretty or json

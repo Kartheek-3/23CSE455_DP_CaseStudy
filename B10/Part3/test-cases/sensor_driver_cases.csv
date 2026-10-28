@@ -1,0 +1,13 @@
+case_id,input,raw,enabled,expected
+AD01,soil,moisture=612|temp=21.5,0|1,0=612|1=21.5
+AD02,soil,moisture=612|temp=21.5,0,0=612
+AD03,soil,unset,0|1,None
+AD04,soil,moisture=612|temp=IOERROR,0,0=612
+AD05,soil,moisture=IOERROR|temp=21.5,0|1,ERROR
+AD06,soil,moisture=612|temp=IOERROR,0|1,ERROR
+AD07,weather,api_key=k1|city=Paris|cod=200|temp=20|humidity=50|pressure=101325|wind_speed=3.5|wind_deg=180,0|1|2|3|4|5,0=20|1=50|2=101325|3=9.255174598981256|4=3.5|5=180
+AD08,weather,api_key=k1|city=Oslo|cod=200|temp=-5|humidity=80|pressure=100800|wind_speed=7|wind_deg=270,0|1|3,0=-5|1=80|3=-7.584871050435558
+AD09,weather,api_key=k1|city=Paris|cod=200|temp=20|humidity=50|pressure=101325|wind_speed=3.5|wind_deg=180,0|3,0=20
+AD10,weather,api_key=k1|city=Atlantis|cod=404,0|1,None
+AD11,weather,api_key=k1|city=Paris|cod=200|temp=20|humidity=50|pressure=101325|wind_speed=3.5,0|1|5,None
+AD12,weather,api_key=|city=Paris|cod=200|temp=20,0,None

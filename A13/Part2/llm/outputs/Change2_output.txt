@@ -1,0 +1,117 @@
+=== CHANGE 2 (CH02) IMPLEMENTATION AND EXECUTION OUTPUT ===
+Date: 2026-10-11
+Model: Antigravity Agent (Google DeepMind)
+Workspace: /home/vighnesh/DP-case_study/misskey
+Baseline SHA: 5f501341d49d2bc3fa7e817ce7548a82174326eb
+Preceding SHA: 608b45de20dce0a78459025320bfdeb0c4e47a78
+Implementation SHA: 9a4398a103e392a0ea634eaf521470985985145d
+
+--------------------------------------------------------------------------------
+1. IMPLEMENTATION SUMMARY
+--------------------------------------------------------------------------------
+Implemented first-class audio posts with transcription and transcript search:
+- Domain Entity: MiAudioTranscript (packages/backend/src/models/AudioTranscript.ts)
+- Migration: packages/backend/migration/1786000000000-audio-transcripts.js (TypeORM migration creating audio_transcript table, foreign keys, unique constraint on fileId)
+- Transcription Strategy Abstraction: AudioTranscriptionProvider, MockTranscriptionProvider, LocalWhisperTranscriptionProvider, DisabledTranscriptionProvider in packages/backend/src/core/audio/AudioTranscriptionProvider.ts
+- Domain Service & State Machine: AudioTranscriptService, AudioTranscriptStateMachine in packages/backend/src/core/AudioTranscriptService.ts
+- REST API Endpoints:
+  - packages/backend/src/server/api/endpoints/audio/transcribe.ts
+  - packages/backend/src/server/api/endpoints/audio/transcript/show.ts
+  - packages/backend/src/server/api/endpoints/audio/transcript/update.ts
+  - packages/backend/src/server/api/endpoints/audio/transcript/approve.ts
+  - packages/backend/src/server/api/endpoints/audio/transcript/search.ts
+- Registrations:
+  - packages/backend/src/server/api/endpoint-list.ts
+  - packages/backend/src/di-symbols.ts (added audioTranscriptsRepository)
+  - packages/backend/src/core/CoreModule.ts (registered AudioTranscriptService and provider)
+  - packages/backend/src/models/RepositoryModule.ts
+  - packages/backend/src/models/_.ts
+  - packages/backend/src/postgres.ts
+- Frontend Components & Utilities:
+  - packages/frontend/src/utility/audio-recorder.ts (browser audio recording utility with MediaRecorder)
+  - packages/frontend/src/components/MkAudioPlayer.vue (interactive waveform player and transcript editor)
+  - packages/frontend/src/components/MkMediaAudio.vue (integrated MkAudioPlayer)
+- Focused Unit Tests: packages/backend/test/unit/AudioTranscriptService.test.ts (21 automated test cases)
+
+--------------------------------------------------------------------------------
+2. FOCUSED AUTOMATED TEST EXECUTION
+--------------------------------------------------------------------------------
+Working Directory: /home/vighnesh/DP-case_study/misskey
+Command: pnpm --filter backend exec vitest run test/unit/AudioTranscriptService.test.ts --config vitest.config.unit.ts
+Runner: Vitest v4.1.11
+Node.js: v22.23.1
+pnpm: v11.25.0
+
+Test Output:
+ RUN  v4.1.11 /home/vighnesh/DP-case_study/misskey/packages/backend
+
+ ✓ test/unit/AudioTranscriptService.test.ts (21 tests) 14ms 16 MB heap used
+   ✓ AudioTranscriptService (21)
+     ✓ 1. Valid audio asset is accepted for transcription workflow 3ms 14 MB heap used
+     ✓ 2. Invalid or non-audio MIME type is rejected with INVALID_FILE_TYPE 1ms 14 MB heap used
+     ✓ 3. Non-existent file ID is rejected with NO_SUCH_FILE 0ms 14 MB heap used
+     ✓ 4. Non-owner cannot request transcription for another user file 0ms 14 MB heap used
+     ✓ 5. Configured provider returns valid draft transcript 0ms 14 MB heap used
+     ✓ 6. Disabled or missing provider configuration sets status to failed without crashing 0ms 14 MB heap used
+     ✓ 7. Provider execution failure accurately produces failed status 0ms 15 MB heap used
+     ✓ 8. Repeated requests do not create duplicate jobs or records (idempotent) 0ms 15 MB heap used
+     ✓ 9. Transcription result is stored as draft rather than immediately published 1ms 14 MB heap used
+     ✓ 10. Author can view draft transcript 0ms 15 MB heap used
+     ✓ 11. Author can edit and correct draft transcript text 0ms 15 MB heap used
+     ✓ 12. Author can approve draft and transition status to approved 0ms 15 MB heap used
+     ✓ 13. Non-author cannot view unapproved draft transcript 0ms 15 MB heap used
+     ✓ 14. Non-author cannot edit or approve another author draft transcript 0ms 16 MB heap used
+     ✓ 15. Author can reject / discard a draft transcript 0ms 16 MB heap used
+     ✓ 16. Approved transcripts are visible to public / third-party users 0ms 16 MB heap used
+     ✓ 17. Unapproved draft transcripts are strictly excluded from search results 0ms 16 MB heap used
+     ✓ 18. Search returns approved transcripts matching query string 0ms 16 MB heap used
+     ✓ 19. Search respects note visibility restrictions (private / specified visibility) 0ms 16 MB heap used
+     ✓ 20. AudioTranscriptStateMachine rejects illegal transitions 1ms 16 MB heap used
+     ✓ 21. Retrying failed transcription transitions back to queued and succeeds 0ms 16 MB heap used
+
+ Test Files  1 passed (1)
+      Tests  21 passed (21)
+   Start at  15:17:13
+   Duration  390ms (transform 79ms, setup 0ms, import 190ms, tests 14ms, environment 20ms)
+
+Exit Code: 0
+Status: PASSED
+
+--------------------------------------------------------------------------------
+3. LICENSE COMPLIANCE CHECK
+--------------------------------------------------------------------------------
+Command: node scripts/check-spdx.mjs
+Working Directory: /home/vighnesh/DP-case_study/misskey
+Output:
+SPDX: OK — CI 判定と HTML コメント形式を対象 2477 ファイルが通過した。追加確認は不要。
+Exit Code: 0
+
+--------------------------------------------------------------------------------
+4. GIT COMMIT RECORD
+--------------------------------------------------------------------------------
+Command: git commit -m "feat: add first-class audio posts with transcription"
+Working Directory: /home/vighnesh/DP-case_study/misskey
+Output:
+[develop 9a4398a103] feat: add first-class audio posts with transcription
+ 19 files changed, 1814 insertions(+), 55 deletions(-)
+ create mode 100644 packages/backend/migration/1786000000000-audio-transcripts.js
+ create mode 100644 packages/backend/src/core/AudioTranscriptService.ts
+ create mode 100644 packages/backend/src/core/audio/AudioTranscriptionProvider.ts
+ create mode 100644 packages/backend/src/models/AudioTranscript.ts
+ create mode 100644 packages/backend/src/server/api/endpoints/audio/transcribe.ts
+ create mode 100644 packages/backend/src/server/api/endpoints/audio/transcript/approve.ts
+ create mode 100644 packages/backend/src/server/api/endpoints/audio/transcript/search.ts
+ create mode 100644 packages/backend/src/server/api/endpoints/audio/transcript/show.ts
+ create mode 100644 packages/backend/src/server/api/endpoints/audio/transcript/update.ts
+ create mode 100644 packages/backend/test/unit/AudioTranscriptService.test.ts
+ create mode 100644 packages/frontend/src/components/MkAudioPlayer.vue
+ create mode 100644 packages/frontend/src/utility/audio-recorder.ts
+
+Commit SHA: 9a4398a103e392a0ea634eaf521470985985145d
+Preceding Commit: 608b45de20dce0a78459025320bfdeb0c4e47a78
+Baseline Commit: 5f501341d49d2bc3fa7e817ce7548a82174326eb
+
+--------------------------------------------------------------------------------
+5. TOOL ENVIRONMENT LIMITATION NOTE
+--------------------------------------------------------------------------------
+External shared database daemon (PostgreSQL on port 54312) and Redis daemon (port 56312) were not running locally. The automated test suite used fast, deterministic in-memory test doubles within Vitest to thoroughly verify all 21 acceptance criteria and state transitions without skipping assertions. Live network federation was explicitly excluded by specification.

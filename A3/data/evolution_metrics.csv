@@ -1,0 +1,5 @@
+source_version,scope,files,source_loc,max_function_cc,tool
+original,Fixed union of changed production C# paths; tests/migrations/Razor markup excluded,4,363,9,Lizard 1.21.0
+after_change1,Fixed union of changed production C# paths; tests/migrations/Razor markup excluded,6,444,9,Lizard 1.21.0
+after_change2,Fixed union of changed production C# paths; tests/migrations/Razor markup excluded,10,558,17,Lizard 1.21.0
+after_change3,Fixed union of changed production C# paths; tests/migrations/Razor markup excluded,11,601,17,Lizard 1.21.0

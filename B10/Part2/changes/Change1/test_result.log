@@ -1,0 +1,147 @@
+# Change1 test results
+# Command (run in Part2/work with the venv at ../.venv-mycodo):
+#   python -m pytest -p no:cacheprovider -v mycodo/tests/case_study
+# Pass counts (pytest summary line of each raw run below):
+#   before the change : no tests ran in 0.00s
+#   after step a      : 25 passed in 13.13s
+#   after step b      : 25 passed in 12.79s
+#   after step c      : 42 passed in 12.92s
+# The raw, unedited pytest output of each run follows.
+
+################ raw/0_before.log ################
+$ python -m pytest -p no:cacheprovider -v mycodo/tests/case_study   (Part2/work @ ee70a111c; before CH01, baseline)
+============================= test session starts =============================
+platform win32 -- Python 3.12.7, pytest-9.0.2, pluggy-1.6.0 -- <venv>\Scripts\python.exe
+rootdir: B10\Part2\work
+collecting ... ERROR: file or directory not found: mycodo/tests/case_study
+
+collected 0 items
+
+============================ no tests ran in 0.00s ============================
+[exit code: 4]
+
+################ raw/1_after_step_a.log ################
+$ python -m pytest -p no:cacheprovider -v mycodo/tests/case_study   (Part2/work @ ee70a111c; CH01 after step a = characterization tests on unchanged code)
+============================= test session starts =============================
+platform win32 -- Python 3.12.7, pytest-9.0.2, pluggy-1.6.0 -- <venv>\Scripts\python.exe
+rootdir: B10\Part2\work
+collecting ... collected 25 items
+
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_init_parses_stored_custom_options PASSED [  4%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_initialize_resolves_output_channel_number PASSED [  8%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_queries_measurement_and_output_state PASSED [ 12%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[raise-48.9-off-on] PASSED [ 16%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[raise-48.9-on-on] PASSED [ 20%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[raise-49.0-off-None] PASSED [ 24%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[raise-50.0-off-None] PASSED [ 28%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[raise-50.0-on-None] PASSED [ 32%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[raise-51.0-on-None] PASSED [ 36%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[raise-51.1-on-off] PASSED [ 40%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[raise-51.1-off-None] PASSED [ 44%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[lower-51.1-off-on] PASSED [ 48%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[lower-51.1-on-on] PASSED [ 52%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[lower-51.0-off-None] PASSED [ 56%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[lower-50.0-on-None] PASSED [ 60%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[lower-49.0-on-None] PASSED [ 64%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[lower-48.9-on-off] PASSED [ 68%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[lower-48.9-off-None] PASSED [ 72%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_uses_configured_setpoint_and_hysteresis PASSED [ 76%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_missing_measurement_value_turns_output_off PASSED [ 80%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_unknown_direction_logs_error_and_does_nothing PASSED [ 84%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_missing_output_channel_stops_before_reading PASSED [ 88%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_returns_early_when_period_not_elapsed PASSED [ 92%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_advances_timer_by_whole_periods PASSED [ 96%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_stop_function_turns_output_off PASSED [100%]
+
+============================= 25 passed in 13.13s =============================
+[exit code: 0]
+
+################ raw/2_after_step_b.log ################
+$ python -m pytest -p no:cacheprovider -v mycodo/tests/case_study   (Part2/work @ dee5d7d76; CH01 after step b = Extract Method refactoring, tests unchanged)
+============================= test session starts =============================
+platform win32 -- Python 3.12.7, pytest-9.0.2, pluggy-1.6.0 -- <venv>\Scripts\python.exe
+rootdir: B10\Part2\work
+collecting ... collected 25 items
+
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_init_parses_stored_custom_options PASSED [  4%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_initialize_resolves_output_channel_number PASSED [  8%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_queries_measurement_and_output_state PASSED [ 12%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[raise-48.9-off-on] PASSED [ 16%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[raise-48.9-on-on] PASSED [ 20%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[raise-49.0-off-None] PASSED [ 24%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[raise-50.0-off-None] PASSED [ 28%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[raise-50.0-on-None] PASSED [ 32%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[raise-51.0-on-None] PASSED [ 36%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[raise-51.1-on-off] PASSED [ 40%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[raise-51.1-off-None] PASSED [ 44%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[lower-51.1-off-on] PASSED [ 48%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[lower-51.1-on-on] PASSED [ 52%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[lower-51.0-off-None] PASSED [ 56%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[lower-50.0-on-None] PASSED [ 60%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[lower-49.0-on-None] PASSED [ 64%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[lower-48.9-on-off] PASSED [ 68%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[lower-48.9-off-None] PASSED [ 72%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_uses_configured_setpoint_and_hysteresis PASSED [ 76%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_missing_measurement_value_turns_output_off PASSED [ 80%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_unknown_direction_logs_error_and_does_nothing PASSED [ 84%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_missing_output_channel_stops_before_reading PASSED [ 88%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_returns_early_when_period_not_elapsed PASSED [ 92%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_advances_timer_by_whole_periods PASSED [ 96%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_stop_function_turns_output_off PASSED [100%]
+
+============================= 25 passed in 12.79s =============================
+[exit code: 0]
+
+################ raw/3_after_step_c.log ################
+$ python -m pytest -p no:cacheprovider -v mycodo/tests/case_study   (Part2/work @ d454803d0; CH01 after step c = crop profile feature, full suite)
+============================= test session starts =============================
+platform win32 -- Python 3.12.7, pytest-9.0.2, pluggy-1.6.0 -- <venv>\Scripts\python.exe
+rootdir: B10\Part2\work
+collecting ... collected 42 items
+
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_init_parses_stored_custom_options PASSED [  2%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_initialize_resolves_output_channel_number PASSED [  4%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_queries_measurement_and_output_state PASSED [  7%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[raise-48.9-off-on] PASSED [  9%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[raise-48.9-on-on] PASSED [ 11%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[raise-49.0-off-None] PASSED [ 14%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[raise-50.0-off-None] PASSED [ 16%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[raise-50.0-on-None] PASSED [ 19%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[raise-51.0-on-None] PASSED [ 21%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[raise-51.1-on-off] PASSED [ 23%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[raise-51.1-off-None] PASSED [ 26%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[lower-51.1-off-on] PASSED [ 28%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[lower-51.1-on-on] PASSED [ 30%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[lower-51.0-off-None] PASSED [ 33%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[lower-50.0-on-None] PASSED [ 35%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[lower-49.0-on-None] PASSED [ 38%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[lower-48.9-on-off] PASSED [ 40%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_hysteresis_decisions[lower-48.9-off-None] PASSED [ 42%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_uses_configured_setpoint_and_hysteresis PASSED [ 45%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_missing_measurement_value_turns_output_off PASSED [ 47%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_unknown_direction_logs_error_and_does_nothing PASSED [ 50%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_missing_output_channel_stops_before_reading PASSED [ 52%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_returns_early_when_period_not_elapsed PASSED [ 54%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_loop_advances_timer_by_whole_periods PASSED [ 57%]
+mycodo/tests/case_study/test_bang_bang_characterization.py::test_char_stop_function_turns_output_off PASSED [ 59%]
+mycodo/tests/case_study/test_ch01_crop_profiles.py::test_ac1_tomato_profile_supplies_setpoint_and_tolerance PASSED [ 61%]
+mycodo/tests/case_study/test_ch01_crop_profiles.py::test_ac2_each_crop_uses_its_own_values PASSED [ 64%]
+mycodo/tests/case_study/test_ch01_crop_profiles.py::test_ac3_custom_or_missing_crop_keeps_configured_values[option-absent-in-stored-config] PASSED [ 66%]
+mycodo/tests/case_study/test_ch01_crop_profiles.py::test_ac3_custom_or_missing_crop_keeps_configured_values[custom-selected] PASSED [ 69%]
+mycodo/tests/case_study/test_ch01_crop_profiles.py::test_ac4_new_crop_type_registered_in_one_place PASSED [ 71%]
+mycodo/tests/case_study/test_ch01_crop_profiles.py::test_ac5_unknown_crop_logs_error_and_keeps_configured_values PASSED [ 73%]
+mycodo/tests/case_study/test_ch01_crop_profiles.py::test_ac5_lookup_of_unknown_crop_raises_lookup_error PASSED [ 76%]
+mycodo/tests/case_study/test_ch01_crop_profiles.py::test_ac6_invalid_crop_definition_rejected[zero-tolerance] PASSED [ 78%]
+mycodo/tests/case_study/test_ch01_crop_profiles.py::test_ac6_invalid_crop_definition_rejected[negative-tolerance] PASSED [ 80%]
+mycodo/tests/case_study/test_ch01_crop_profiles.py::test_ac6_invalid_crop_definition_rejected[target-over-100] PASSED [ 83%]
+mycodo/tests/case_study/test_ch01_crop_profiles.py::test_ac6_invalid_crop_definition_rejected[target-below-0] PASSED [ 85%]
+mycodo/tests/case_study/test_ch01_crop_profiles.py::test_ac6_invalid_crop_definition_rejected[band-over-100] PASSED [ 88%]
+mycodo/tests/case_study/test_ch01_crop_profiles.py::test_ac6_invalid_crop_definition_rejected[band-below-0] PASSED [ 90%]
+mycodo/tests/case_study/test_ch01_crop_profiles.py::test_ac6_invalid_crop_definition_rejected[empty-id] PASSED [ 92%]
+mycodo/tests/case_study/test_ch01_crop_profiles.py::test_ac6_invalid_crop_definition_rejected[reserved-id] PASSED [ 95%]
+mycodo/tests/case_study/test_ch01_crop_profiles.py::test_ac6_duplicate_crop_id_rejected PASSED [ 97%]
+mycodo/tests/case_study/test_ch01_crop_profiles.py::test_ac7_function_information_offers_crop_selection PASSED [100%]
+
+============================= 42 passed in 12.92s =============================
+[exit code: 0]
+

@@ -1,0 +1,13 @@
+case_id,operations,expected
+AR01,user:alice:alice@farm.org:pw1|count_users,saved|1
+AR02,user:alice:alice@farm.org:pw1|user:bob:bob@farm.org:pw2|count_users,saved|saved|2
+AR03,user:alice:alice@farm.org:pw1|user:alice:other@farm.org:pw2|count_users,saved|None|1
+AR04,user:alice:alice@farm.org:pw1|user:bob:alice@farm.org:pw2|user:carol:carol@farm.org:pw3|count_users,saved|None|saved|2
+AR05,user:alice:alice@farm.org:secret|check:alice:secret|check:alice:wrong,saved|match|no_match
+AR06,user:alice:alice@farm.org:pw1|user:bob:bob@farm.org:pw2|delete_user:alice|count_users,saved|saved|deleted|1
+AR07,delete_new:dave|count_users,error_logged|0
+AR08,role:Admin|role:Admin|role:!|count_roles,saved|None|None|1
+AR09,check_hash:secret:$fnv$abcd1234$,$fnv$abcd1234$d3b8b801
+AR10,check_hash:secret:$fnv$abcd1234$d3b8b801,$fnv$abcd1234$d3b8b801
+AR11,check_hash:secret:nothash,ERROR
+AR12,user:alice:alice@farm.org:pw1|check_hash:pw1:$fnv$$,ERROR

@@ -1,0 +1,47 @@
+﻿   1: import type { Role, Permission } from './types'
+   2: 
+   3: const rolePermissions: Record<Role, Permission[]> = {
+   4:   admin: [
+   5:     'posts:create',
+   6:     'posts:read:own',
+   7:     'posts:read:all',
+   8:     'posts:update:own',
+   9:     'posts:update:all',
+  10:     'posts:delete:own',
+  11:     'posts:delete:all',
+  12:     'posts:publish',
+  13:     'users:read',
+  14:     'users:update',
+  15:     'categories:write',
+  16:     'tags:write',
+  17:     'comments:delete:own',
+  18:     'comments:delete:all',
+  19:     'api_keys:write',
+  20:   ],
+  21:   author: [
+  22:     'posts:create',
+  23:     'posts:read:own',
+  24:     'posts:update:own',
+  25:     'posts:delete:own',
+  26:     'posts:publish',
+  27:     'comments:delete:own',
+  28:     'api_keys:write',
+  29:   ],
+  30: }
+  31: 
+  32: export function can(role: Role | null | undefined, permission: Permission): boolean {
+  33:   if (!role) return false
+  34:   return rolePermissions[role]?.includes(permission) ?? false
+  35: }
+  36: 
+  37: export function canAccess(role: Role | null | undefined, permissions: Permission[]): boolean {
+  38:   if (!role) return false
+  39:   return permissions.every((p) => can(role, p))
+  40: }
+  41: 
+  42: export function canAny(role: Role | null | undefined, permissions: Permission[]): boolean {
+  43:   if (!role) return false
+  44:   return permissions.some((p) => can(role, p))
+  45: }
+  46: 
+  47: export type { Role, Permission }

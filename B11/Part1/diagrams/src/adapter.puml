@@ -1,0 +1,23 @@
+@startuml adapter
+title Adapter - User-to-Security (CustomUserDetails)
+skinparam shadowing false
+interface UserDetails <<Target>> {
+  +getUsername()
+  +getPassword()
+  +isEnabled()
+  +getAuthorities()
+}
+class Users <<Adaptee>> {
+  -name; -password; -active; -roles
+}
+class CustomUserDetails <<Adapter>> {
+  +getAuthorities()
+}
+class CustomUserDetailsService <<Client>> {
+  +loadUserByUsername()
+}
+Users <|-- CustomUserDetails
+UserDetails <|.. CustomUserDetails
+CustomUserDetailsService ..> CustomUserDetails : CustomUserDetails::new
+note bottom of CustomUserDetails : modal/CustomUserDetails.java:10
+@enduml

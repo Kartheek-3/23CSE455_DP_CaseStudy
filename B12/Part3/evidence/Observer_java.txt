@@ -1,0 +1,10 @@
+PATTERN/SUITE   : Observer_java
+RUNTIME/COMPILER: javac 17.0.18 / openjdk version "17.0.18" 2026-01-20 
+WORKDIR         : C:\Users\eswar\OneDrive\Documents\Visual Studio Code\23CSE455_DP_Submission\B12\Part3\Observer\java
+BUILD COMMAND   : javac OccupancyObserver.java ObserverTest.java
+BUILD OUTPUT    : 
+RUN COMMAND     : java ObserverTest
+PROGRAM OUTPUT  : OBSERVER_JAVA PASS 8/8
+TIME INCLUDES   : whole process wall time (runtime startup + program execution), after 1 unmeasured warm-up
+TIMING SAMPLES  : 5 measured runs (ms): 146.7059, 160.4556, 144.3214, 162.5786, 159.1056
+MEDIAN_MS       : 159.106

@@ -1,0 +1,13 @@
+﻿   1: import { createClient } from '@supabase/supabase-js'
+   2: 
+   3: // Client for use in generateStaticParams (no cookies/request context)
+   4: export function createStaticClient() {
+   5:   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+   6:   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+   7: 
+   8:   if (!url || !key) return null
+   9: 
+  10:   return createClient(url, key, {
+  11:     auth: { persistSession: false },
+  12:   })
+  13: }

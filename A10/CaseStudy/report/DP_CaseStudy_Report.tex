@@ -1,0 +1,305 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{float}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue,
+    citecolor=blue
+}
+\setlist[itemize]{itemsep=3pt,topsep=4pt}
+\setlist[enumerate]{itemsep=3pt,topsep=4pt}
+\renewcommand{\arraystretch}{1.2}
+
+\title{\textbf{Design Pattern Analysis in a FastAPI-Based Logistics Management Application}\\
+\large Warehouse \& Transportation Management System (WTMS)}
+\author{Design Pattern Case Study Team}
+\date{October 2026}
+
+\begin{document}
+\maketitle
+\begin{abstract}
+This case study examines the Warehouse \& Transportation Management System (WTMS), a FastAPI-based logistics application backed by PostgreSQL. It identifies patterns supported by the baseline source code, describes the evolution of the application as delivery-partner, tracking, and route-history requirements are introduced, and compares a representative Repository Pattern implementation in Java, Python, JavaScript, and C++. The report distinguishes verified implementation results from patterns that remain recommendations. The measurements are local process-level timings and should not be interpreted as universal language-performance rankings.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{Introduction and Objectives}
+Logistics applications coordinate warehouse stock, orders, vehicles, drivers, routes, and shipments. As the number of requirements grows, API handlers that combine request processing, business decisions, and persistence can become difficult to test and maintain. Design patterns provide reusable structures for organizing responsibilities, but a pattern should only be reported as present when the source code supports that conclusion.
+
+The objectives of this case study are:
+\begin{itemize}
+    \item Analyze the actual WTMS source and identify patterns supported by code evidence.
+    \item Document the baseline architecture without inventing classes or interfaces.
+    \item Evaluate the design changes needed for delivery partners, tracking history, and route changes.
+    \item Preserve the existing repository abstraction while extending the application.
+    \item Compare equivalent Repository Pattern demonstrations across four programming languages.
+    \item Record tests and measurements using a consistent procedure and state the limitations.
+\end{itemize}
+
+\section{Application Overview}
+This case study analyzes the Warehouse \& Transportation Management System (WTMS), a FastAPI-based logistics management application using PostgreSQL. The application provides warehouse management, multi-warehouse inventory, storage zones and bins, stock movements, orders, vehicles, drivers, routes, shipments, shipment tracking, and transportation management.
+
+The baseline application uses a repository-based data-access architecture. FastAPI routers expose HTTP operations, repository classes group data-access operations, and the Database abstraction provides PostgreSQL connectivity and query/transaction facilities.
+
+\subsection{Principal Components}
+\begin{longtable}{p{0.25\textwidth}p{0.67\textwidth}}
+\toprule
+\textbf{Component} & \textbf{Responsibility evidenced in the baseline}\\
+\midrule
+FastAPI routers & Expose endpoints for warehouse, inventory, order, and transportation operations.\\
+Repository classes & Group persistence operations for warehouses, inventory, orders, and transportation.\\
+Database abstraction & Provides database connectivity and query/transaction operations.\\
+Pydantic models & Represent and validate request and response data, including transportation-related fields.\\
+PostgreSQL & Stores the application’s logistics records.\\
+\bottomrule
+\end{longtable}
+
+\section{Environment}
+The analyzed environment was recorded as follows:
+\begin{itemize}
+    \item Backend: FastAPI / Python
+    \item Python: 3.11.5
+    \item Database: PostgreSQL 18.6
+    \item Java: OpenJDK/Temurin 21.0.1 LTS
+    \item JavaScript runtime: Node.js 22.15.1
+    \item C++ compiler: MinGW.org GCC 6.3.0, using C++17 and \texttt{-O2}
+\end{itemize}
+The WTMS backend uses Python and PostgreSQL. The four language examples are small independent demonstrations of the selected pattern; they are not complete WTMS backends written in four languages.
+
+\section{Part 1: Baseline Pattern Analysis}
+\subsection{Confirmed Repository Pattern}
+The primary confirmed design pattern is the Repository Pattern. Four repository instances were confirmed from source-code evidence:
+\begin{enumerate}
+    \item \texttt{WarehouseRepository}
+    \item \texttt{InventoryRepository}
+    \item \texttt{OrderRepository}
+    \item \texttt{TransportationRepository}
+\end{enumerate}
+
+These classes group database operations behind repository objects rather than requiring every API endpoint to contain persistence logic directly. In the inspected routes, FastAPI dependency injection supplies repository or database dependencies, and repositories use the Database abstraction to perform database operations.
+
+FastAPI dependency injection, the Database abstraction, and layered architecture are treated as supporting mechanisms or architectural approaches rather than counted as additional GoF pattern instances. The Database class is not labelled a strict Singleton merely because it is instantiated at module level. No additional pattern is counted without sufficient source-code evidence.
+
+\subsection{Pattern Inventory}
+\begin{longtable}{p{0.24\textwidth}p{0.39\textwidth}p{0.28\textwidth}}
+\toprule
+\textbf{Pattern or approach} & \textbf{Baseline finding} & \textbf{Treatment}\\
+\midrule
+Repository Pattern & Four concrete repository instances were confirmed. & Counted as the primary confirmed pattern.\\
+Dependency Injection & \texttt{Depends()} is used in inspected FastAPI routes. & Supporting mechanism; not counted as a GoF pattern instance.\\
+Layered Architecture & Routers, repositories, and database access have distinct roles. & Architectural approach.\\
+DTO-like models & Pydantic request/response models are present. & Data modelling approach; not counted as a separate GoF instance.\\
+Singleton & A shared Database instance may appear in some modules, but strict single-instance enforcement was not established. & Not counted as a confirmed Singleton.\\
+Strategy, Observer, State, Factory & No sufficient baseline evidence established explicit implementations of these patterns. & Considered as potential refactoring options only.\\
+\bottomrule
+\end{longtable}
+
+\subsection{Design Strengths and Limitations}
+The repository structure separates many persistence operations from the API layer. This improves the organization of database access and provides a natural place to extend persistence operations as new features are added.
+
+One limitation is that \texttt{TransportationRepository} groups vehicle, driver, route, and shipment responsibilities. This may be acceptable for the current scope, but it can become harder to maintain as provider integrations, tracking consumers, and routing policies grow. Dependency injection is not uniform across every inspected module; therefore, the report does not claim that every dependency is wired through the same mechanism.
+
+\subsection{Baseline UML Description}
+The baseline architecture can be described as:
+\begin{center}
+\texttt{API client $\rightarrow$ FastAPI application $\rightarrow$ domain routers}\\
+\texttt{$\rightarrow$ concrete repository classes $\rightarrow$ Database abstraction $\rightarrow$ PostgreSQL}
+\end{center}
+The diagram should show the concrete classes established by the source. It should not invent a common repository interface or event-publisher classes unless these are found in the implementation.
+
+\subsection{Evidence Locations}
+Detailed source evidence is maintained in:
+\begin{itemize}
+    \item \texttt{CaseStudy/Part1/application\_analysis.txt}
+    \item \texttt{CaseStudy/Part1/repository\_pattern\_evidence.txt}
+    \item \texttt{CaseStudy/data/patterns.csv}
+    \item \texttt{CaseStudy/data/pattern\_counts.csv}
+\end{itemize}
+
+\section{Part 2: Design Evolution}
+An important baseline finding is that multi-warehouse support already exists. The baseline database was verified with four warehouse records. Therefore, the evolution scenario should focus on intelligent warehouse selection rather than claiming that multi-warehouse storage was added from scratch.
+
+\subsection{Baseline: Multiple Warehouses}
+The \texttt{warehouses} table and warehouse references in inventory-related entities provide database-level support for multiple warehouses. No artificial change was introduced solely to satisfy this scenario; it is documented as an existing baseline capability.
+
+Evidence is maintained in \texttt{CaseStudy/Part2/MultiWarehouse\_Baseline/multi\_warehouse\_baseline.txt}.
+
+\subsection{Change 1: Delivery Partner}
+A new \texttt{delivery\_partners} table was introduced. The \texttt{shipments} table was extended with \texttt{delivery\_partner\_id}, together with an index and foreign-key relationship. The application was extended with delivery-partner models, repository operations, and API endpoints.
+
+Runtime verification successfully created and retrieved a delivery partner and created a shipment associated with the partner. The recorded API outcomes were HTTP 201 for creation and HTTP 200 for retrieval.
+
+Detailed evidence is maintained in:
+\begin{itemize}
+    \item \texttt{CaseStudy/Part2/Change1\_DeliveryPartner/change1\_analysis.txt}
+    \item \texttt{CaseStudy/Part2/Change1\_DeliveryPartner/change1\_schema.sql}
+    \item \texttt{CaseStudy/Part2/Change1\_DeliveryPartner/change1\_delivery\_partner.puml}
+\end{itemize}
+
+\subsection{Change 2: Shipment Tracking}
+A new \texttt{shipment\_tracking} table was introduced. It stores shipment ID, latitude, longitude, location, status, and recording timestamp. Tracking creation and tracking-history retrieval were implemented through the transportation repository and API.
+
+Runtime verification successfully inserted tracking updates and retrieved shipment tracking history. This confirms persistent tracking-history operations; it does not by itself prove a complete push-based real-time notification subsystem or Observer Pattern implementation.
+
+Detailed evidence is maintained in:
+\begin{itemize}
+    \item \texttt{CaseStudy/Part2/Change2\_Tracking/change2\_analysis.txt}
+    \item \texttt{CaseStudy/Part2/Change2\_Tracking/change2\_schema.sql}
+    \item \texttt{CaseStudy/Part2/Change2\_Tracking/change2\_source\_evidence.txt}
+    \item \texttt{CaseStudy/Part2/Change2\_Tracking/change2\_tracking.puml}
+\end{itemize}
+
+\subsection{Change 3: Route Changes}
+A new \texttt{shipment\_route\_history} table was introduced to preserve previous and new route assignments. The repository operation performs the route change transactionally:
+\begin{enumerate}
+    \item Lock and read the current shipment route.
+    \item Update the shipment route.
+    \item Insert the previous and new route IDs into route history.
+\end{enumerate}
+
+Runtime verification changed shipment 4 from route 1 to route 2 and recorded the corresponding route-history row. An invalid foreign-key route was rejected, as expected. The transactional operation is important because the route assignment and its audit record should not disagree.
+
+Detailed evidence is maintained in:
+\begin{itemize}
+    \item \texttt{CaseStudy/Part2/Change3\_RouteChanges/change3\_analysis.txt}
+    \item \texttt{CaseStudy/Part2/Change3\_RouteChanges/change3\_schema.sql}
+    \item \texttt{CaseStudy/Part2/Change3\_RouteChanges/change3\_source\_evidence.txt}
+    \item \texttt{CaseStudy/Part2/Change3\_RouteChanges/change3\_route\_changes.puml}
+\end{itemize}
+
+\subsection{Pattern Evolution}
+The confirmed Repository Pattern instances were tracked across the baseline and the three changes. The four baseline repository instances remain present. \texttt{TransportationRepository} is marked as extended across the changes because transportation-related persistence functionality was expanded.
+
+\begin{longtable}{p{0.25\textwidth}p{0.22\textwidth}p{0.42\textwidth}}
+\toprule
+\textbf{Pattern / approach} & \textbf{Evolution status} & \textbf{Explanation}\\
+\midrule
+Repository Pattern & Preserved / extended & Existing repositories remain the data-access boundary while new persistence operations are added.\\
+Dependency Injection & Preserved & The same mechanism can be used to supply new services and repositories.\\
+Layered Architecture & Extended & New focused business services may be introduced without removing existing layers.\\
+Delivery-partner persistence & Newly introduced & Partner records and a shipment partner reference were added.\\
+Tracking history & Newly introduced & Tracking records can be stored and retrieved.\\
+Route-change history & Newly introduced & Route assignment changes are recorded transactionally.\\
+Strategy Pattern & Proposed unless separately implemented & Suitable for interchangeable warehouse-selection or routing algorithms.\\
+Observer Pattern & Proposed unless separately implemented & Suitable when tracking events must notify independent consumers.\\
+State Pattern & Proposed unless separately implemented & Suitable when shipment lifecycle transitions require explicit rules.\\
+\bottomrule
+\end{longtable}
+
+The statuses above distinguish data-model/API extensions from GoF patterns. A new table or endpoint does not automatically imply that Strategy, Observer, or State has been implemented. These patterns require the corresponding classes and collaborations to exist in code and to be exercised by tests.
+
+\section{Part 3: Cross-Language Implementation}
+The Repository Pattern was implemented independently in Java, Python, JavaScript, and C++. Each implementation performs equivalent shipment operations:
+\begin{itemize}
+    \item Save a shipment.
+    \item Find a shipment by ID.
+    \item Retrieve all shipments.
+    \item Verify the expected result.
+\end{itemize}
+All four implementations passed their functional tests.
+
+\subsection{Measured Results}
+\begin{center}
+\begin{tabular}{lrrrr}
+\toprule
+Language & Lines & Complexity & Median (ms) & Result\\
+\midrule
+Java & 74 & 3 & 81.214 & PASS\\
+Python & 45 & 1 & 93.486 & PASS\\
+JavaScript & 49 & 3 & 46.009 & PASS\\
+C++ & 65 & 3 & 14.209 & PASS\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The results apply to the small demonstration programs, not to the complete WTMS backend. The examples share the same core responsibilities, but language mechanisms for data representation, abstraction, typing, memory management, and runtime execution differ.
+
+\subsection{Timing Methodology}
+For every implementation:
+\begin{enumerate}
+    \item Compilation was performed where required.
+    \item One warm-up execution was performed.
+    \item Five measured executions were performed.
+    \item PowerShell \texttt{Measure-Command} was used for process-level elapsed time.
+    \item The median of the five measured executions was recorded.
+\end{enumerate}
+
+The timings include process startup overhead and are specific to the local environment. They should not be interpreted as general programming-language performance rankings. Compilation time was not included in repeated runtime measurements where the executable had already been built.
+
+\subsection{Cyclomatic Complexity}
+Cyclomatic complexity was documented using the McCabe definition:
+\[
+CC = 1 + \text{number of decision points}
+\]
+The values were based on the actual control-flow constructs in the selected implementation files. Line counts and complexity values depend on file boundaries and counting rules, so those rules should be applied consistently when the experiment is repeated.
+
+\section{Testing and Verification}
+\begin{longtable}{p{0.22\textwidth}p{0.43\textwidth}p{0.27\textwidth}}
+\toprule
+\textbf{Test area} & \textbf{Recorded verification} & \textbf{What it supports}\\
+\midrule
+Delivery partner & Partner creation, retrieval, and shipment association returned expected HTTP statuses. & The partner API and persistence path was exercised.\\
+Tracking & Tracking record creation and history retrieval were exercised. & Tracking data can be persisted and queried.\\
+Route change & Valid route change and history were checked; an invalid route reference was rejected. & Route updates have validation and transactional history behaviour.\\
+Python demo & Functional test passed. & Save/find/list behaviour matched expected results.\\
+Java demo & Functional test passed. & Save/find/list behaviour matched expected results.\\
+JavaScript demo & Functional test passed. & Save/find/list behaviour matched expected results.\\
+C++ demo & Functional test passed. & Save/find/list behaviour matched expected results.\\
+\bottomrule
+\end{longtable}
+
+These recorded results are distinct from proposed tests for patterns that remain recommendations. A test should only be marked as passed after it has been executed and its output captured. In particular, a complete WebSocket-based Observer system, external delivery-provider adapters, and a formal State hierarchy must not be claimed as tested unless their implementation and test evidence are available.
+
+\section{Evidence and Data Management}
+Pattern instances were counted only when source-code evidence supported the pattern. Class names, annotations, README descriptions, and LLM suggestions were not treated as sufficient evidence by themselves.
+
+The case-study data files are:
+\begin{itemize}
+    \item \texttt{patterns.csv}
+    \item \texttt{pattern\_counts.csv}
+    \item \texttt{patterns\_evolution.csv}
+    \item \texttt{cross\_language.csv}
+    \item \texttt{llm.csv}
+\end{itemize}
+
+The \texttt{llm.csv} file contains only its header at the time of report generation because fabricated prompts or outputs were not added. Actual prompts and responses should be recorded from source conversations only, with any summaries clearly labelled as summaries rather than verbatim transcripts.
+
+\section{Limitations}
+\begin{itemize}
+    \item The four cross-language programs are small representative implementations, not full logistics applications.
+    \item Timing includes process startup overhead and depends on the local machine, operating system, and runtime environment.
+    \item Cyclomatic complexity and line counts depend on the file boundaries and counting rules.
+    \item The baseline pattern inventory is conservative and counts only structures supported by source evidence.
+    \item Persisted tracking history is not the same as a live push-notification system.
+    \item Delivery-partner persistence is not by itself proof of an Adapter Pattern, and route-history persistence is not by itself proof of a Strategy Pattern.
+    \item Verified implementation results are kept separate from recommended future refactorings.
+\end{itemize}
+
+\section{Future Work}
+Further improvements should solve real requirements rather than introduce patterns solely to increase the pattern count. A warehouse-selection Strategy could separate ranking policies after eligibility constraints are enforced. Adapter is appropriate when external provider APIs differ. Observer is appropriate when tracking events must reach independent consumers, potentially through WebSockets or a message broker. State is appropriate if shipment lifecycle rules justify explicit state objects or a centralized transition policy.
+
+These additions should be accompanied by unit tests, integration tests, database-migration evidence, and before/after measurements. Future measurements should use the same test cases, hardware, timing procedure, and counting rules for baseline and refactored versions.
+
+\section{Conclusion}
+The baseline WTMS application demonstrates a Repository-based data-access architecture with four confirmed repository instances. Multi-warehouse capability already exists, so the evolution work focuses on intelligent selection and additional logistics features rather than claiming to introduce support that was already present.
+
+Delivery-partner association, shipment tracking history, and transactional route-change history extend the application while retaining the repository abstraction. The four language demonstrations show equivalent Repository Pattern behaviour and passed their functional tests. Their process-level timings were collected using a consistent local procedure and are interpreted conservatively.
+
+The central lesson is to identify patterns from evidence, introduce new patterns only when they solve a real design problem, and support implementation claims with executable tests and reproducible measurements.
+
+\appendix
+\section{Evidence and Supporting Files}
+The project keeps pattern evidence in \texttt{patterns.csv} and \texttt{pattern\_counts.csv}, evolution records in \texttt{patterns\_evolution.csv}, and cross-language measurements in \texttt{cross\_language.csv}. Part 1, Part 2, and Part 3 evidence files and UML diagrams are stored under the \texttt{CaseStudy} directory. The README should record the source revision, environment versions, run/test commands, file and complexity counting rules, and features that remain proposals.
+
+\end{document}

@@ -1,0 +1,5 @@
+# test <name> PASS|FAIL | note <text>
+test add PASS
+test div FAIL
+note half-way
+test sub PASS

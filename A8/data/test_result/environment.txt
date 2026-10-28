@@ -1,0 +1,14 @@
+Date:
+Fri Oct  9 23:34:16 IST 2026
+OS:
+ProductName:		macOS
+ProductVersion:		26.5
+BuildVersion:		25F71
+Node:
+v24.15.0
+npm:
+11.12.1
+Baseline commit:
+ae2c24869377ce2f7a29022cd237d808338156ea
+Jest version (project-local):
+30.1.3

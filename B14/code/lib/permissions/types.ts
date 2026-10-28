@@ -1,0 +1,18 @@
+export type Role = 'admin' | 'author'
+
+export type Permission =
+  | 'posts:create'
+  | 'posts:read:own'
+  | 'posts:read:all'
+  | 'posts:update:own'
+  | 'posts:update:all'
+  | 'posts:delete:own'
+  | 'posts:delete:all'
+  | 'posts:publish'
+  | 'users:read'
+  | 'users:update'
+  | 'categories:write'
+  | 'tags:write'
+  | 'comments:delete:own'
+  | 'comments:delete:all'
+  | 'api_keys:write'

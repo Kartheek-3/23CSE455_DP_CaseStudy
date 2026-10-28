@@ -1,0 +1,39 @@
+You are continuing a design-pattern case study on the attached application source code (zip file). Unzip it and read every source file. Ignore build/vendor/generated folders (node_modules, venv, .venv, target, build, __pycache__, migrations, static assets, .env files).
+
+I have also attached (or pasted below) patterns.csv, the list of design pattern instances found in the original code. Use the SAME instance names from that file. Do not rename them.
+
+The case study requires these three realistic changes (new features):
+- CH01: [PASTE REQUIREMENT 1 HERE]
+- CH02: [PASTE REQUIREMENT 2 HERE]
+- CH03: [PASTE REQUIREMENT 3 HERE]
+
+For EACH change, in order, give:
+1. Requirement and acceptance criteria: 3-5 criteria that can be seen or tested.
+2. Code smell to refactor FIRST: a real smell that exists in the code I will touch (long if/else or switch on type, duplicated logic, long method, large class, bad names, hard-coded creation). Give the file and line range and name the refactoring technique (e.g. Replace Conditional with Polymorphism, Extract Method, Move creation out). Refactoring must not change behaviour. If you find no real smell, say so honestly. Do not invent one.
+3. Characterization tests: which existing behaviours should be tested BEFORE refactoring, with example test names and assertions.
+4. Feature design: which existing pattern to use or extend instead of adding more if/else. Name the new classes/methods/files and where they plug into the existing code.
+5. Tests for the acceptance criteria: example test names and assertions.
+6. Pattern effects: for EVERY pattern instance alive at that point (not only the one being changed), give one status: preserved / modified / extended / replaced / removed / newly_introduced, with a one-line reason.
+   - preserved = not touched at all
+   - modified = same roles, code inside or line numbers changed
+   - extended = new participant added to the same collaboration
+   - replaced = old collaboration replaced by a different one
+   - removed = collaboration no longer exists
+   - newly_introduced = a new pattern instance that did not exist before
+7. Updated participant roles for each affected instance (every role mapped to its real class/function) and, for newly introduced patterns, the full roles and intent.
+
+RULES:
+- Adding a new concrete class to an existing collaboration (e.g. one more ConcreteStrategy) does NOT create a new instance. It is the same instance with status "extended".
+- Removed instances are not counted in that version's totals.
+- Do not invent classes, files or line numbers. If unsure, say "uncertain" and explain why.
+- Be realistic about whether a change actually introduces a pattern or just adds code. Do not force a pattern where none exists.
+
+ALSO PROVIDE after the three changes:
+A. A summary table: rows = every pattern instance, columns = Original, After Change1, After Change2, After Change3, showing the status in each version.
+B. Counts per version (Original, After Change1, After Change2, After Change3): number of distinct pattern types and number of pattern instances, plus per-pattern counts.
+C. A short description of the evolved architecture after all three changes (3-4 sentences).
+D. A CSV block with this exact header and one row per pattern instance per version (include baseline rows copied from patterns.csv with status "baseline" and change_description "Original collaboration."). Multi-valued cells are separated by ";" and any cell containing a comma is wrapped in double quotes:
+source_version,pattern_name,pattern_type,instance_name,participant_roles,source_locations,intent_and_evidence,status_after_change,change_description
+Use source_version values: "Original code", "Code after Change1", "Code after Change2", "Code after Change3".
+
+Present everything in this order: CH01, CH02, CH03, summary table, counts, architecture description, CSV.

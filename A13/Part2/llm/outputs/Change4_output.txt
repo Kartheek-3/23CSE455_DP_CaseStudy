@@ -1,0 +1,95 @@
+=== CHANGE 4 (CH04) IMPLEMENTATION AND EXECUTION OUTPUT ===
+Date: 2026-10-11
+Model: Antigravity Agent (Google DeepMind)
+Workspace: /home/vighnesh/DP-case_study/misskey
+Baseline SHA: 5f501341d49d2bc3fa7e817ce7548a82174326eb
+Preceding SHA: 39e3c987488d59045cc3ed5cfe532f6f32c0936d
+Implementation SHA: b3040278d3e63cf4ced915f9623b95969ff42010
+
+--------------------------------------------------------------------------------
+1. IMPLEMENTATION SUMMARY
+--------------------------------------------------------------------------------
+Implemented explainable, user-controlled personalized recommendation feed:
+- Domain Entity: MiRecommendationPreference (packages/backend/src/models/RecommendationPreference.ts)
+  - Fields: userId (PK), mutedTopics (varchar[]), reducedAuthors (varchar[]), preferredTopics (varchar[]), topicWeights (jsonb), createdAt, updatedAt
+- Migration: packages/backend/migration/1788000000000-recommendation-preferences.js (TypeORM migration creating recommendation_preference table with userId foreign key cascading on delete)
+- Ranking Strategy Hierarchy: packages/backend/src/core/recommendation/RecommendationStrategy.ts
+  - Interface RecommendationRankingStrategy: scoreCandidates(candidates, profile, now): ScoredRecommendation[]
+  - Concrete Strategy WeightedPersonalizedRankingStrategy: computes interest relevance (explicit topics +40 pts, inferred weights +10*w), interaction relevance (followed author +25 pts, user interacted +15 pts), recency exponential decay (30 * exp(-age/24h)), author repetition penalty (-20*count), topic repetition penalty (-5*count), and author reduction penalty (-100 pts)
+  - Concrete Strategy ChronologicalRankingStrategy: sorts candidates strictly by createdAt descending
+- Core Recommendation Service: RecommendationService in packages/backend/src/core/RecommendationService.ts
+  - Candidate retrieval bounded to eligible public notes (visibility === 'public', localOnly === false)
+  - Hard safety filters: blocks, mutes, deleted/suspended authors, muted topics, and unresolved CH03 malicious links strictly excluded
+  - User-scoped cache with TTL (30s) isolated by userId and mode
+  - Cache invalidation on preference updates and profile resets
+  - Preference management methods: getPreferences, updatePreferences, resetProfile
+- REST API Endpoints:
+  - packages/backend/src/server/api/endpoints/recommendations/for-you.ts (returns packed notes with recommendationReason, recommendationScore, principalReason)
+  - packages/backend/src/server/api/endpoints/recommendations/preferences.ts (returns user recommendation preferences)
+  - packages/backend/src/server/api/endpoints/recommendations/preferences/update.ts (updates topic mutes, author reductions, and preferred topics)
+  - packages/backend/src/server/api/endpoints/recommendations/preferences/reset.ts (resets recommendation profile to defaults without touching unrelated user data)
+- DI & Registry Wiring:
+  - packages/backend/src/server/api/endpoint-list.ts (registered 4 recommendations/* endpoints)
+  - packages/backend/src/di-symbols.ts (added recommendationPreferencesRepository symbol)
+  - packages/backend/src/core/CoreModule.ts (registered RecommendationService and provider alias)
+  - packages/backend/src/models/RepositoryModule.ts (registered $recommendationPreferencesRepository provider)
+  - packages/backend/src/models/_.ts (exported MiRecommendationPreference and RecommendationPreferencesRepository)
+  - packages/backend/src/postgres.ts (registered MiRecommendationPreference in dataSource entities)
+- Frontend Integration:
+  - packages/frontend/src/components/MkNote.vue (added recommendationTip banner displaying appearNote.recommendationReason with sparkler icon)
+  - packages/frontend/src/pages/for-you.vue (dedicated timeline page with mode selector, controls modal, profile reset confirmation, and empty onboarding state)
+- Focused Unit Tests: packages/backend/test/unit/RecommendationService.test.ts (20 automated test cases covering ranking, explanations, controls, visibility, pagination, and cache isolation)
+
+--------------------------------------------------------------------------------
+2. FOCUSED AUTOMATED TEST EXECUTION
+--------------------------------------------------------------------------------
+Working Directory: /home/vighnesh/DP-case_study/misskey
+Command: pnpm --filter backend exec vitest run test/unit/RecommendationService.test.ts --config vitest.config.unit.ts
+Runner: Vitest v4.1.11
+Node.js: v22.23.1
+pnpm: v11.25.0
+
+Test Output:
+ RUN  v4.1.11 /home/vighnesh/DP-case_study/misskey/packages/backend
+
+ ✓ test/unit/RecommendationService.test.ts (20 tests) 17ms 25 MB heap used
+   ✓ RecommendationService (CH04) (20)
+     ✓ 15.1 Ranking algorithm & strategies (7)
+       ✓ outranks unrelated post when post matches explicit preferred topic 4ms
+       ✓ inferred topic weight boosts ranking proportionally 0ms
+       ✓ followed author and past interactions provide meaningful relevance boost 1ms
+       ✓ recency decay gives advantage to newer posts with comparable relevance 0ms
+       ✓ author diversity penalty suppresses consecutive posts from the same author 0ms
+       ✓ reduced-recommendation author receives heavy suppression penalty 0ms
+       ✓ deterministic tie-breaking produces identical repeatable ordering 1ms
+     ✓ 15.2 Truthful and explainable recommendations (4)
+       ✓ emits explicit topic explanation when matched 0ms
+       ✓ emits inferred interaction explanation when topic weight is highest signal 1ms
+       ✓ emits followed author explanation when author is followed 0ms
+       ✓ truthful fallback explanation when no user preference matches 0ms
+     ✓ 15.3 User controls and preference persistence (3)
+       ✓ topic mute completely excludes matching candidate notes 2ms
+       ✓ profile reset clears recommendation state without touching user data 1ms
+       ✓ topic normalization strips hashes and ignores casing 0ms
+     ✓ 15.4 Visibility, privacy and content safety (3)
+       ✓ non-public notes (home, followers, specified) are strictly excluded 1ms
+       ✓ blocked or muting users are excluded from recommendations 0ms
+       ✓ CH03 malicious links are strictly excluded from recommendation feed 0ms
+     ✓ 15.5 Chronological mode and pagination (2)
+       ✓ chronological mode orders strictly by createdAt descending with correct explanation 1ms
+       ✓ pagination respects limit and slices results cleanly 1ms
+     ✓ 15.6 Cache isolation and invalidation (1)
+       ✓ cache is isolated per user and invalidated on preference update 1ms
+
+ Test Files  1 passed (1)
+      Tests  20 passed (20)
+   Start at  16:28:05
+   Duration  481ms
+
+Full Regression Suite Across CH01-CH04:
+Command: pnpm --filter backend exec vitest run test/unit/EventService.test.ts test/unit/AudioTranscriptService.test.ts test/unit/LinkSafetyService.test.ts test/unit/RecommendationService.test.ts --config vitest.config.unit.ts
+Result: 4 test files passed, 91 passed (91 total), 0 failed in 2.76s
+
+SPDX License Compliance Check:
+Command: node scripts/check-spdx.mjs
+Result: OK — 2496 files passed

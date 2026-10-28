@@ -1,0 +1,10 @@
+PATTERN/SUITE   : Repository_java
+RUNTIME/COMPILER: javac 17.0.18 / openjdk version "17.0.18" 2026-01-20 
+WORKDIR         : C:\Users\eswar\OneDrive\Documents\Visual Studio Code\23CSE455_DP_Submission\B12\Part3\Repository\java
+BUILD COMMAND   : javac UserRepository.java RepositoryTest.java
+BUILD OUTPUT    : 
+RUN COMMAND     : java RepositoryTest
+PROGRAM OUTPUT  : REPOSITORY_JAVA PASS 8/8
+TIME INCLUDES   : whole process wall time (runtime startup + program execution), after 1 unmeasured warm-up
+TIMING SAMPLES  : 5 measured runs (ms): 143.9715, 143.4148, 145.8252, 142.1511, 142.069
+MEDIAN_MS       : 143.415

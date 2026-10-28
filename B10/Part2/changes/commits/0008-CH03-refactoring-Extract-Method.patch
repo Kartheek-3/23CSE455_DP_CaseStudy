@@ -1,0 +1,81 @@
+From 349ed087cefe5323a3cfdd2ce469a115a241ecc0 Mon Sep 17 00:00:00 2001
+From: JohanR7 <143104864+JohanR7@users.noreply.github.com>
+Date: Sun, 11 Oct 2026 20:19:14 +0530
+Subject: [PATCH 8/9] CH03 refactoring: Extract Method
+
+Smell: Long Method - loop() (bang_bang.py:284-320 after CH02) mixed
+timer gating, reading the measurement, inlined missing-measurement
+handling and strategy evaluation. Extract Method: _period_elapsed(),
+_read_measurement() and _handle_missing_measurement(). Behaviour
+unchanged; all tests pass unchanged.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ mycodo/functions/bang_bang.py | 34 ++++++++++++++++++++++++----------
+ 1 file changed, 24 insertions(+), 10 deletions(-)
+
+diff --git a/mycodo/functions/bang_bang.py b/mycodo/functions/bang_bang.py
+index cded5d1b1..b84e33f15 100644
+--- a/mycodo/functions/bang_bang.py
++++ b/mycodo/functions/bang_bang.py
+@@ -282,20 +282,14 @@ class CustomModule(AbstractFunction):
+         self.hysteresis = profile.tolerance
+ 
+     def loop(self):
+-        if self.timer_loop > time.time():
++        if not self._period_elapsed():
+             return
+ 
+-        while self.timer_loop < time.time():
+-            self.timer_loop += self.update_period
+-
+         if self.output_channel is None:
+             self.logger.error("Cannot run bang-bang controller: Check output channel.")
+             return
+ 
+-        last_measurement = self.get_last_measurement(
+-            self.measurement_device_id,
+-            self.measurement_measurement_id,
+-            max_age=self.measurement_max_age)
++        last_measurement = self._read_measurement()
+ 
+         output_state = self.control.output_state(self.output_device_id, self.output_channel)
+ 
+@@ -303,8 +297,7 @@ class CustomModule(AbstractFunction):
+                           f"setpoint: {self.setpoint}, hysteresis: {self.hysteresis}")
+ 
+         if not last_measurement or last_measurement[1] is None:
+-            self.logger.error("No measurement available. Cannot operate without measurement. Turning output Off.")
+-            self.control.output_off(self.output_device_id, output_channel=self.output_channel)
++            self._handle_missing_measurement()
+             return
+ 
+         if self.strategy is None:
+@@ -319,6 +312,27 @@ class CustomModule(AbstractFunction):
+             now=self._now(),
+             rain_indicator=self._read_rain_indicator())))
+ 
++    def _period_elapsed(self):
++        """True once per update period; advances the timer by whole periods."""
++        if self.timer_loop > time.time():
++            return False
++
++        while self.timer_loop < time.time():
++            self.timer_loop += self.update_period
++        return True
++
++    def _read_measurement(self):
++        """Latest [timestamp, value] of the controlled measurement."""
++        return self.get_last_measurement(
++            self.measurement_device_id,
++            self.measurement_measurement_id,
++            max_age=self.measurement_max_age)
++
++    def _handle_missing_measurement(self):
++        """No usable measurement: the output must not stay on."""
++        self.logger.error("No measurement available. Cannot operate without measurement. Turning output Off.")
++        self.control.output_off(self.output_device_id, output_channel=self.output_channel)
++
+     @staticmethod
+     def _now():
+         """Local time used by time-based irrigation strategies."""

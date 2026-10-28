@@ -1,0 +1,17 @@
+ src/application/services/NotificationService.ts    |   1 +
+ .../use_cases/Driver/UpdateBookingstatus.ts        |   7 ++
+ src/application/use_cases/User/CancelBooking.ts    |  54 ++++-----
+ .../User/interfaces/ICancelBookingUseCase.ts       |  14 ++-
+ src/constants/Routes.ts                            |   1 +
+ src/domain/booking/CancellationPolicy.ts           |  50 ++++++++
+ src/domain/booking/TripState.ts                    | 120 +++++++++++++++++++
+ src/domain/models/Booking.ts                       |   2 +
+ .../database/modals/Bookingschema.ts               |   4 +-
+ src/infrastructure/services/CronScheduler.ts       |   3 +-
+ src/infrastructure/services/SocketNotification.ts  |   7 ++
+ src/presentation/controllers/BookingController.ts  |  21 +++-
+ src/presentation/routes/driverRoutes.ts            |   2 +
+ tests/baseline_defects.test.ts                     |  18 ---
+ tests/booking.test.ts                              |   5 +-
+ tests/cancellation.test.ts                         | 130 +++++++++++++++++++++
+ 16 files changed, 384 insertions(+), 55 deletions(-)

@@ -1,0 +1,729 @@
+== Tool versions ==
+Darwin arm64
+openjdk version "25.0.4.1" 2026-08-18 LTS
+javac 25.0.4.1
+Python 3.14.2
+v26.11.1
+Apple clang version 21.0.0 (clang-2100.3.34.2)
+
+========== observer-test-listeners/java ==========
+
+$ javac -d out src/observer/*.java test/observer/*.java
+[exit 0]
+
+$ java -cp out observer.ObserverDemo ../test-data/events.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ java -cp out observer.ObserverTest
+PASS report matches expected-output.txt
+PASS a throwing listener does not stop the next one
+PASS invalid input is rejected with expected-error.txt
+3 passed, 0 failed
+[exit 0]
+
+========== observer-test-listeners/python ==========
+
+$ python3 main.py ../test-data/events.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ python3 -m unittest -v test_observer
+test_invalid_input_is_rejected_with_expected_error (test_observer.ObserverTest.test_invalid_input_is_rejected_with_expected_error) ... ok
+test_report_matches_expected_output (test_observer.ObserverTest.test_report_matches_expected_output) ... ok
+test_throwing_listener_does_not_stop_the_next_one (test_observer.ObserverTest.test_throwing_listener_does_not_stop_the_next_one) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK
+[exit 0]
+
+========== observer-test-listeners/javascript ==========
+
+$ node src/main.js ../test-data/events.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ node --test test/observer.test.js
+✔ report matches expected-output.txt (0.653209ms)
+✔ a throwing listener does not stop the next one (0.293916ms)
+✔ invalid input is rejected with expected-error.txt (0.244375ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 97.716333
+[exit 0]
+
+========== observer-test-listeners/cpp ==========
+
+$ clang++ -std=c++20 -Wall -Wextra -pedantic -o observer main.cpp listeners.cpp runner.cpp
+[exit 0]
+
+$ ./observer ../test-data/events.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ clang++ -std=c++20 -Wall -Wextra -pedantic -o observer_test test_main.cpp listeners.cpp runner.cpp
+[exit 0]
+
+$ ./observer_test
+PASS report matches expected-output.txt
+PASS a throwing listener does not stop the next one
+PASS invalid input is rejected with expected-error.txt
+3 passed, 0 failed
+[exit 0]
+
+========== composite-test-tree/java ==========
+
+$ javac -d out src/composite/*.java test/composite/*.java
+[exit 0]
+
+$ java -cp out composite.CompositeDemo ../test-data/tree.txt slow | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ java -cp out composite.CompositeTest
+PASS report for tag 'slow' matches expected-output.txt
+PASS a leaf and a container answer countTests the same way
+PASS invalid input is rejected with expected-error.txt
+3 passed, 0 failed
+[exit 0]
+
+========== composite-test-tree/python ==========
+
+$ python3 main.py ../test-data/tree.txt slow | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ python3 -m unittest -v test_composite
+test_invalid_input_is_rejected_with_expected_error (test_composite.CompositeTest.test_invalid_input_is_rejected_with_expected_error) ... ok
+test_leaf_and_container_answer_count_tests_the_same_way (test_composite.CompositeTest.test_leaf_and_container_answer_count_tests_the_same_way) ... ok
+test_report_matches_expected_output (test_composite.CompositeTest.test_report_matches_expected_output) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK
+[exit 0]
+
+========== composite-test-tree/javascript ==========
+
+$ node src/main.js ../test-data/tree.txt slow | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ node --test test/composite.test.js
+✔ report for tag 'slow' matches expected-output.txt (0.705542ms)
+✔ a leaf and a container answer countTests the same way (0.300042ms)
+✔ invalid input is rejected with expected-error.txt (0.243042ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 100.046666
+[exit 0]
+
+========== composite-test-tree/cpp ==========
+
+$ clang++ -std=c++20 -Wall -Wextra -pedantic -o composite main.cpp nodes.cpp tree_parser.cpp
+[exit 0]
+
+$ ./composite ../test-data/tree.txt slow | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ clang++ -std=c++20 -Wall -Wextra -pedantic -o composite_test test_main.cpp nodes.cpp tree_parser.cpp
+[exit 0]
+
+$ ./composite_test
+PASS report for tag 'slow' matches expected-output.txt
+PASS a leaf and a container answer count_tests the same way
+PASS invalid input is rejected with expected-error.txt
+3 passed, 0 failed
+[exit 0]
+
+========== strategy-test-filters/java ==========
+
+$ javac -d out src/strategy/*.java test/strategy/*.java
+[exit 0]
+
+$ java -cp out strategy.StrategyDemo ../test-data/tests.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ java -cp out strategy.StrategyTest
+PASS report matches expected-output.txt
+PASS a new strategy plugs in without changing the selector
+PASS invalid input is rejected with expected-error.txt
+3 passed, 0 failed
+[exit 0]
+
+========== strategy-test-filters/python ==========
+
+$ python3 main.py ../test-data/tests.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ python3 -m unittest -v test_strategy
+test_invalid_input_is_rejected_with_expected_error (test_strategy.StrategyTest.test_invalid_input_is_rejected_with_expected_error) ... ok
+test_new_strategy_plugs_in_without_changing_the_selector (test_strategy.StrategyTest.test_new_strategy_plugs_in_without_changing_the_selector) ... ok
+test_report_matches_expected_output (test_strategy.StrategyTest.test_report_matches_expected_output) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK
+[exit 0]
+
+========== strategy-test-filters/javascript ==========
+
+$ node src/main.js ../test-data/tests.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ node --test test/strategy.test.js
+✔ report matches expected-output.txt (0.836833ms)
+✔ a new strategy plugs in without changing the selector (0.393083ms)
+✔ invalid input is rejected with expected-error.txt (0.244541ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 100.406292
+[exit 0]
+
+========== strategy-test-filters/cpp ==========
+
+$ clang++ -std=c++20 -Wall -Wextra -pedantic -o strategy main.cpp 
+[exit 0]
+
+$ ./strategy ../test-data/tests.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ clang++ -std=c++20 -Wall -Wextra -pedantic -o strategy_test test_main.cpp 
+[exit 0]
+
+$ ./strategy_test
+PASS report matches expected-output.txt
+PASS a new strategy plugs in without changing the selector
+PASS invalid input is rejected with expected-error.txt
+3 passed, 0 failed
+[exit 0]
+
+========== adapter-listener-bridge/java ==========
+
+$ javac -d out src/adapter/*.java test/adapter/*.java
+[exit 0]
+
+$ java -cp out adapter.AdapterDemo ../test-data/events.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ java -cp out adapter.AdapterTest
+PASS report matches expected-output.txt
+PASS the adapter converts engine calls into client calls
+PASS invalid input is rejected with expected-error.txt
+3 passed, 0 failed
+[exit 0]
+
+========== adapter-listener-bridge/python ==========
+
+$ python3 main.py ../test-data/events.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ python3 -m unittest -v test_adapter
+test_adapter_converts_engine_calls_into_client_calls (test_adapter.AdapterTest.test_adapter_converts_engine_calls_into_client_calls) ... ok
+test_invalid_input_is_rejected_with_expected_error (test_adapter.AdapterTest.test_invalid_input_is_rejected_with_expected_error) ... ok
+test_report_matches_expected_output (test_adapter.AdapterTest.test_report_matches_expected_output) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK
+[exit 0]
+
+========== adapter-listener-bridge/javascript ==========
+
+$ node src/main.js ../test-data/events.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ node --test test/adapter.test.js
+✔ report matches expected-output.txt (0.970458ms)
+✔ the adapter converts engine calls into client calls (0.343833ms)
+✔ invalid input is rejected with expected-error.txt (0.298583ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 100.02775
+[exit 0]
+
+========== adapter-listener-bridge/cpp ==========
+
+$ clang++ -std=c++20 -Wall -Wextra -pedantic -o adapter main.cpp 
+[exit 0]
+
+$ ./adapter ../test-data/events.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ clang++ -std=c++20 -Wall -Wextra -pedantic -o adapter_test test_main.cpp 
+[exit 0]
+
+$ ./adapter_test
+PASS report matches expected-output.txt
+PASS the adapter converts engine calls into client calls
+PASS invalid input is rejected with expected-error.txt
+3 passed, 0 failed
+[exit 0]
+
+========== decorator-timeout-invocation/java ==========
+
+$ javac -d out src/decorator/*.java test/decorator/*.java
+[exit 0]
+
+$ java -cp out decorator.DecoratorDemo ../test-data/invocations.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ java -cp out decorator.DecoratorTest
+PASS report matches expected-output.txt
+PASS decorators stack in any order
+PASS invalid input is rejected with expected-error.txt
+3 passed, 0 failed
+[exit 0]
+
+========== decorator-timeout-invocation/python ==========
+
+$ python3 main.py ../test-data/invocations.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ python3 -m unittest -v test_decorator
+test_decorators_stack_in_any_order (test_decorator.DecoratorTest.test_decorators_stack_in_any_order) ... ok
+test_invalid_input_is_rejected_with_expected_error (test_decorator.DecoratorTest.test_invalid_input_is_rejected_with_expected_error) ... ok
+test_report_matches_expected_output (test_decorator.DecoratorTest.test_report_matches_expected_output) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK
+[exit 0]
+
+========== decorator-timeout-invocation/javascript ==========
+
+$ node src/main.js ../test-data/invocations.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ node --test test/decorator.test.js
+✔ report matches expected-output.txt (0.573792ms)
+✔ decorators stack in any order (0.338334ms)
+✔ invalid input is rejected with expected-error.txt (0.30275ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 100.776209
+[exit 0]
+
+========== decorator-timeout-invocation/cpp ==========
+
+$ clang++ -std=c++20 -Wall -Wextra -pedantic -o decorator main.cpp 
+[exit 0]
+
+$ ./decorator ../test-data/invocations.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ clang++ -std=c++20 -Wall -Wextra -pedantic -o decorator_test test_main.cpp 
+[exit 0]
+
+$ ./decorator_test
+PASS report matches expected-output.txt
+PASS decorators stack in any order
+PASS invalid input is rejected with expected-error.txt
+3 passed, 0 failed
+[exit 0]
+
+========== template-method-engine/java ==========
+
+$ javac -d out src/template/*.java test/template/*.java
+[exit 0]
+
+$ java -cp out template.TemplateDemo ../test-data/tests.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ java -cp out template.TemplateTest
+PASS report matches expected-output.txt
+PASS a new engine gets the whole skeleton from one primitive
+PASS invalid input is rejected with expected-error.txt
+3 passed, 0 failed
+[exit 0]
+
+========== template-method-engine/python ==========
+
+$ python3 main.py ../test-data/tests.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ python3 -m unittest -v test_template
+test_invalid_input_is_rejected_with_expected_error (test_template.TemplateMethodTest.test_invalid_input_is_rejected_with_expected_error) ... ok
+test_new_engine_gets_the_whole_skeleton_from_one_primitive (test_template.TemplateMethodTest.test_new_engine_gets_the_whole_skeleton_from_one_primitive) ... ok
+test_report_matches_expected_output (test_template.TemplateMethodTest.test_report_matches_expected_output) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK
+[exit 0]
+
+========== template-method-engine/javascript ==========
+
+$ node src/main.js ../test-data/tests.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ node --test test/template.test.js
+✔ report matches expected-output.txt (0.535792ms)
+✔ a new engine gets the whole skeleton from one primitive (0.35675ms)
+✔ invalid input is rejected with expected-error.txt (0.294292ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 101.463666
+[exit 0]
+
+========== template-method-engine/cpp ==========
+
+$ clang++ -std=c++20 -Wall -Wextra -pedantic -o template main.cpp 
+[exit 0]
+
+$ ./template ../test-data/tests.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ clang++ -std=c++20 -Wall -Wextra -pedantic -o template_test test_main.cpp 
+[exit 0]
+
+$ ./template_test
+PASS report matches expected-output.txt
+PASS a new engine gets the whole skeleton from one primitive
+PASS invalid input is rejected with expected-error.txt
+3 passed, 0 failed
+[exit 0]
+
+========== command-task-queue/java ==========
+
+$ javac -d out src/command/*.java test/command/*.java
+[exit 0]
+
+$ java -cp out command.CommandDemo ../test-data/tasks.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ java -cp out command.CommandTest
+PASS report matches expected-output.txt
+PASS commands run only when the invoker runs them
+PASS invalid input is rejected with expected-error.txt
+3 passed, 0 failed
+[exit 0]
+
+========== command-task-queue/python ==========
+
+$ python3 main.py ../test-data/tasks.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ python3 -m unittest -v test_command
+test_commands_run_only_when_the_invoker_runs_them (test_command.CommandTest.test_commands_run_only_when_the_invoker_runs_them) ... ok
+test_invalid_input_is_rejected_with_expected_error (test_command.CommandTest.test_invalid_input_is_rejected_with_expected_error) ... ok
+test_report_matches_expected_output (test_command.CommandTest.test_report_matches_expected_output) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK
+[exit 0]
+
+========== command-task-queue/javascript ==========
+
+$ node src/main.js ../test-data/tasks.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ node --test test/command.test.js
+✔ report matches expected-output.txt (0.534208ms)
+✔ commands run only when the invoker runs them (0.612666ms)
+✔ invalid input is rejected with expected-error.txt (0.317666ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 100.772542
+[exit 0]
+
+========== command-task-queue/cpp ==========
+
+$ clang++ -std=c++20 -Wall -Wextra -pedantic -o command main.cpp 
+[exit 0]
+
+$ ./command ../test-data/tasks.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ clang++ -std=c++20 -Wall -Wextra -pedantic -o command_test test_main.cpp 
+[exit 0]
+
+$ ./command_test
+PASS report matches expected-output.txt
+PASS commands run only when the invoker runs them
+PASS invalid input is rejected with expected-error.txt
+3 passed, 0 failed
+[exit 0]
+
+========== null-object-listener/java ==========
+
+$ javac -d out src/nullobject/*.java test/nullobject/*.java
+[exit 0]
+
+$ java -cp out nullobject.NullObjectDemo ../test-data/tests.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ java -cp out nullobject.NullObjectTest
+PASS report matches expected-output.txt
+PASS a runner without listener uses the null object
+PASS invalid input is rejected with expected-error.txt
+3 passed, 0 failed
+[exit 0]
+
+========== null-object-listener/python ==========
+
+$ python3 main.py ../test-data/tests.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ python3 -m unittest -v test_nullobject
+test_invalid_input_is_rejected_with_expected_error (test_nullobject.NullObjectTest.test_invalid_input_is_rejected_with_expected_error) ... ok
+test_report_matches_expected_output (test_nullobject.NullObjectTest.test_report_matches_expected_output) ... ok
+test_runner_without_listener_uses_the_null_object (test_nullobject.NullObjectTest.test_runner_without_listener_uses_the_null_object) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK
+[exit 0]
+
+========== null-object-listener/javascript ==========
+
+$ node src/main.js ../test-data/tests.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ node --test test/nullobject.test.js
+✔ report matches expected-output.txt (0.522083ms)
+✔ a runner without listener uses the null object (0.3305ms)
+✔ invalid input is rejected with expected-error.txt (0.324708ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 101.6675
+[exit 0]
+
+========== null-object-listener/cpp ==========
+
+$ clang++ -std=c++20 -Wall -Wextra -pedantic -o nullobject main.cpp 
+[exit 0]
+
+$ ./nullobject ../test-data/tests.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ clang++ -std=c++20 -Wall -Wextra -pedantic -o nullobject_test test_main.cpp 
+[exit 0]
+
+$ ./nullobject_test
+PASS report matches expected-output.txt
+PASS a runner without listener uses the null object
+PASS invalid input is rejected with expected-error.txt
+3 passed, 0 failed
+[exit 0]
+
+========== chain-of-responsibility-interceptors/java ==========
+
+$ javac -d out src/chain/*.java test/chain/*.java
+[exit 0]
+
+$ java -cp out chain.ChainDemo ../test-data/invocations.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ java -cp out chain.ChainTest
+PASS report matches expected-output.txt
+PASS a handler can stop the chain before later links
+PASS invalid input is rejected with expected-error.txt
+3 passed, 0 failed
+[exit 0]
+
+========== chain-of-responsibility-interceptors/python ==========
+
+$ python3 main.py ../test-data/invocations.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ python3 -m unittest -v test_chain
+test_a_handler_can_stop_the_chain_before_later_links (test_chain.ChainTest.test_a_handler_can_stop_the_chain_before_later_links) ... ok
+test_invalid_input_is_rejected_with_expected_error (test_chain.ChainTest.test_invalid_input_is_rejected_with_expected_error) ... ok
+test_report_matches_expected_output (test_chain.ChainTest.test_report_matches_expected_output) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK
+[exit 0]
+
+========== chain-of-responsibility-interceptors/javascript ==========
+
+$ node src/main.js ../test-data/invocations.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ node --test test/chain.test.js
+✔ report matches expected-output.txt (0.688875ms)
+✔ a handler can stop the chain before later links (0.348792ms)
+✔ invalid input is rejected with expected-error.txt (0.286041ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 106.047042
+[exit 0]
+
+========== chain-of-responsibility-interceptors/cpp ==========
+
+$ clang++ -std=c++20 -Wall -Wextra -pedantic -o chain main.cpp 
+[exit 0]
+
+$ ./chain ../test-data/invocations.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ clang++ -std=c++20 -Wall -Wextra -pedantic -o chain_test test_main.cpp 
+[exit 0]
+
+$ ./chain_test
+PASS report matches expected-output.txt
+PASS a handler can stop the chain before later links
+PASS invalid input is rejected with expected-error.txt
+3 passed, 0 failed
+[exit 0]
+
+========== factory-method-executors/java ==========
+
+$ javac -d out src/factory/*.java test/factory/*.java
+[exit 0]
+
+$ java -cp out factory.FactoryDemo ../test-data/tests.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ java -cp out factory.FactoryTest
+PASS report matches expected-output.txt
+PASS a subclass changes only the created product
+PASS invalid input is rejected with expected-error.txt
+3 passed, 0 failed
+[exit 0]
+
+========== factory-method-executors/python ==========
+
+$ python3 main.py ../test-data/tests.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ python3 -m unittest -v test_factory
+test_invalid_input_is_rejected_with_expected_error (test_factory.FactoryMethodTest.test_invalid_input_is_rejected_with_expected_error) ... ok
+test_report_matches_expected_output (test_factory.FactoryMethodTest.test_report_matches_expected_output) ... ok
+test_subclass_changes_only_the_created_product (test_factory.FactoryMethodTest.test_subclass_changes_only_the_created_product) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK
+[exit 0]
+
+========== factory-method-executors/javascript ==========
+
+$ node src/main.js ../test-data/tests.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ node --test test/factory.test.js
+✔ report matches expected-output.txt (0.612125ms)
+✔ a subclass changes only the created product (0.353625ms)
+✔ invalid input is rejected with expected-error.txt (0.258875ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 100.817042
+[exit 0]
+
+========== factory-method-executors/cpp ==========
+
+$ clang++ -std=c++20 -Wall -Wextra -pedantic -o factory main.cpp 
+[exit 0]
+
+$ ./factory ../test-data/tests.txt | diff - ../test-data/expected-output.txt && echo same
+same
+[exit 0]
+
+$ clang++ -std=c++20 -Wall -Wextra -pedantic -o factory_test test_main.cpp 
+[exit 0]
+
+$ ./factory_test
+PASS report matches expected-output.txt
+PASS a subclass changes only the created product
+PASS invalid input is rejected with expected-error.txt
+3 passed, 0 failed
+[exit 0]
+
+ALL STEPS PASSED

@@ -1,0 +1,31 @@
+source_version,instance_name,concrete_participants,verification
+original,Notification transport,BankSystem.Common.EmailSender.Implementation.EmailSender,Source inspected and mapped by assistant; human sign-off pending
+original,Security header policy,BankSystem.Web.Infrastructure.Middleware.SecurityHeadersBuilder,Source inspected and mapped by assistant; human sign-off pending
+original,Account administration,BankSystem.Services.BankAccount.BankAccountService,Source inspected and mapped by assistant; human sign-off pending
+original,Card administration,BankSystem.Services.Card.CardService,Source inspected and mapped by assistant; human sign-off pending
+original,User profile lookup,BankSystem.Services.User.UserService,Source inspected and mapped by assistant; human sign-off pending
+original,Transfer posting,BankSystem.Services.MoneyTransfer.MoneyTransferService,Source inspected and mapped by assistant; human sign-off pending
+after_change1,Notification transport,BankSystem.Common.EmailSender.Implementation.EmailSender,Source inspected and mapped by assistant; human sign-off pending
+after_change1,Security header policy,BankSystem.Web.Infrastructure.Middleware.SecurityHeadersBuilder,Source inspected and mapped by assistant; human sign-off pending
+after_change1,Account administration,BankSystem.Services.BankAccount.BankAccountService,Source inspected and mapped by assistant; human sign-off pending
+after_change1,Card administration,BankSystem.Services.Card.CardService,Source inspected and mapped by assistant; human sign-off pending
+after_change1,User profile lookup,BankSystem.Services.User.UserService,Source inspected and mapped by assistant; human sign-off pending
+after_change1,Transfer posting,BankSystem.Services.MoneyTransfer.MoneyTransferService,Source inspected and mapped by assistant; human sign-off pending
+after_change1,Second-factor login,BankSystem.Web.Infrastructure.Authentication.AuthenticatorSecondFactor; BankSystem.Web.Infrastructure.Authentication.RecoverySecondFactor,Source inspected and mapped by assistant; human sign-off pending
+after_change2,Notification transport,BankSystem.Common.EmailSender.Implementation.EmailSender,Source inspected and mapped by assistant; human sign-off pending
+after_change2,Security header policy,BankSystem.Web.Infrastructure.Middleware.SecurityHeadersBuilder,Source inspected and mapped by assistant; human sign-off pending
+after_change2,Account administration,BankSystem.Services.BankAccount.BankAccountService,Source inspected and mapped by assistant; human sign-off pending
+after_change2,Card administration,BankSystem.Services.Card.CardService,Source inspected and mapped by assistant; human sign-off pending
+after_change2,User profile lookup,BankSystem.Services.User.UserService,Source inspected and mapped by assistant; human sign-off pending
+after_change2,Transfer posting,BankSystem.Services.MoneyTransfer.MoneyTransferService,Source inspected and mapped by assistant; human sign-off pending
+after_change2,Second-factor login,BankSystem.Web.Infrastructure.Authentication.AuthenticatorSecondFactor; BankSystem.Web.Infrastructure.Authentication.RecoverySecondFactor,Source inspected and mapped by assistant; human sign-off pending
+after_change2,Atomic internal payment,BankSystem.Services.MoneyTransfer.InternalTransferService,Source inspected and mapped by assistant; human sign-off pending
+after_change3,Notification transport,BankSystem.Common.EmailSender.Implementation.EmailSender,Source inspected and mapped by assistant; human sign-off pending
+after_change3,Security header policy,BankSystem.Web.Infrastructure.Middleware.SecurityHeadersBuilder,Source inspected and mapped by assistant; human sign-off pending
+after_change3,Account administration,BankSystem.Services.BankAccount.BankAccountService,Source inspected and mapped by assistant; human sign-off pending
+after_change3,Card administration,BankSystem.Services.Card.CardService,Source inspected and mapped by assistant; human sign-off pending
+after_change3,User profile lookup,BankSystem.Services.User.UserService,Source inspected and mapped by assistant; human sign-off pending
+after_change3,Transfer posting,BankSystem.Services.MoneyTransfer.MoneyTransferService,Source inspected and mapped by assistant; human sign-off pending
+after_change3,Second-factor login,BankSystem.Web.Infrastructure.Authentication.AuthenticatorSecondFactor; BankSystem.Web.Infrastructure.Authentication.RecoverySecondFactor,Source inspected and mapped by assistant; human sign-off pending
+after_change3,Atomic internal payment,BankSystem.Services.MoneyTransfer.InternalTransferService,Source inspected and mapped by assistant; human sign-off pending
+after_change3,Transfer risk checks,BankSystem.Services.Fraud.PositiveAmountRule; BankSystem.Services.Fraud.SufficientFundsRule; BankSystem.Services.Fraud.HighValueRule,Source inspected and mapped by assistant; human sign-off pending

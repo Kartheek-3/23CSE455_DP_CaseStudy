@@ -1,0 +1,658 @@
+Paths are relative to api-quarkus-2/. Each line starts with its real line number then '|'.
+
+===== FILE: src/main/java/br/com/michaelcruz/exception/BadRequestException.java (11 lines) =====
+   1| package br.com.michaelcruz.exception;
+   2| 
+   3| import jakarta.ws.rs.WebApplicationException;
+   4| import jakarta.ws.rs.core.Response;
+   5| 
+   6| public class BadRequestException extends WebApplicationException {
+   7| 
+   8|     public BadRequestException(String message) {
+   9|         super(Response.status(Response.Status.BAD_REQUEST).entity(message).build());
+  10|     }
+  11| }
+
+===== FILE: src/main/java/br/com/michaelcruz/exception/NotFoundException.java (11 lines) =====
+   1| package br.com.michaelcruz.exception;
+   2| 
+   3| import jakarta.ws.rs.WebApplicationException;
+   4| import jakarta.ws.rs.core.Response;
+   5| 
+   6| public class NotFoundException extends WebApplicationException {
+   7| 
+   8|     public NotFoundException(String message){
+   9|         super(Response.status(Response.Status.NOT_FOUND).entity(message).build());
+  10|     }
+  11| }
+
+===== FILE: src/main/java/br/com/michaelcruz/persistence/dao/AccountDAO.java (45 lines) =====
+   1| package br.com.michaelcruz.persistence.dao;
+   2| 
+   3| import br.com.michaelcruz.exception.NotFoundException;
+   4| import br.com.michaelcruz.persistence.model.Account;
+   5| import jakarta.enterprise.context.ApplicationScoped;
+   6| import jakarta.inject.Inject;
+   7| import jakarta.persistence.EntityManager;
+   8| import jakarta.transaction.Transactional;
+   9| 
+  10| import java.util.List;
+  11| import java.util.Optional;
+  12| 
+  13| @ApplicationScoped
+  14| public class AccountDAO implements DAO<Account>{
+  15| 
+  16|     @Inject
+  17|     EntityManager entityManager;
+  18| 
+  19|     @Override
+  20|     public Optional<Account> findById(Long id) {
+  21|         Account account = this.entityManager.find(Account.class, id);
+  22| 
+  23|         if (account == null){
+  24|             throw new NotFoundException("A conta com o ID citado não foi encontrada");
+  25|         }
+  26| 
+  27|         return Optional.of(account);
+  28|     }
+  29| 
+  30|     @Transactional
+  31|     public void save(Account data) {
+  32|         this.entityManager.persist(data);
+  33|     }
+  34| 
+  35|     @Transactional
+  36|     public void update(Account data){
+  37|         Account account = data;
+  38|         this.entityManager.merge(account);
+  39|     }
+  40| 
+  41|     @Override
+  42|     public List<Account> getAll() {
+  43|         return entityManager.createQuery("SELECT a FROM Account a", Account.class).getResultList();
+  44|     }
+  45| }
+
+===== FILE: src/main/java/br/com/michaelcruz/persistence/dao/DAO.java (11 lines) =====
+   1| package br.com.michaelcruz.persistence.dao;
+   2| 
+   3| import java.util.List;
+   4| import java.util.Optional;
+   5| 
+   6| public interface DAO<T> {
+   7| 
+   8|     Optional<T> findById(Long id);
+   9|     List<T> getAll();
+  10| 
+  11| }
+
+===== FILE: src/main/java/br/com/michaelcruz/persistence/dao/UserDAO.java (38 lines) =====
+   1| package br.com.michaelcruz.persistence.dao;
+   2| 
+   3| import br.com.michaelcruz.exception.NotFoundException;
+   4| import br.com.michaelcruz.persistence.model.User;
+   5| import jakarta.enterprise.context.ApplicationScoped;
+   6| import jakarta.inject.Inject;
+   7| import jakarta.persistence.EntityManager;
+   8| import jakarta.transaction.Transactional;
+   9| 
+  10| import java.util.List;
+  11| import java.util.Optional;
+  12| 
+  13| @ApplicationScoped
+  14| public class UserDAO implements DAO<User>{
+  15| 
+  16|     @Inject
+  17|     EntityManager entityManager;
+  18| 
+  19|     @Override
+  20|     public Optional<User> findById(Long id) {
+  21|         try {
+  22|             return Optional.of(entityManager.find(User.class, id));
+  23|         } catch (NotFoundException ex) {
+  24|             throw new NotFoundException("Usuário não encontrado");
+  25|         }
+  26|     }
+  27| 
+  28|     @Transactional
+  29|     public User save(User data) {
+  30|         this.entityManager.persist(data);
+  31|         return null;
+  32|     }
+  33| 
+  34|     @Override
+  35|     public List<User> getAll() {
+  36|         return null;
+  37|     }
+  38| }
+
+===== FILE: src/main/java/br/com/michaelcruz/persistence/dto/AccountDTO.java (50 lines) =====
+   1| package br.com.michaelcruz.persistence.dto;
+   2| 
+   3| import br.com.michaelcruz.persistence.model.AccountType;
+   4| import jakarta.validation.constraints.NotNull;
+   5| 
+   6| public class AccountDTO {
+   7| 
+   8|     Long accountId;
+   9| 
+  10|     @NotNull(message = "Precisa ser informado o tipo de conta")
+  11|     AccountType type;
+  12| 
+  13|     @NotNull(message = "Precisa ser informado um saldo")
+  14|     double balance;
+  15| 
+  16|     @NotNull(message = "Precisa informar um ID de usuário da conta")
+  17|     Long userId;
+  18| 
+  19|     public Long getAccountId() {
+  20|         return accountId;
+  21|     }
+  22| 
+  23|     public void setAccountId(Long accountId) {
+  24|         this.accountId = accountId;
+  25|     }
+  26| 
+  27|     public AccountType getType() {
+  28|         return type;
+  29|     }
+  30| 
+  31|     public void setType(AccountType type) {
+  32|         this.type = type;
+  33|     }
+  34| 
+  35|     public double getBalance() {
+  36|         return balance;
+  37|     }
+  38| 
+  39|     public void setBalance(double balance) {
+  40|         this.balance = balance;
+  41|     }
+  42| 
+  43|     public Long getUserId() {
+  44|         return userId;
+  45|     }
+  46| 
+  47|     public void setUserId(Long userId) {
+  48|         this.userId = userId;
+  49|     }
+  50| }
+
+===== FILE: src/main/java/br/com/michaelcruz/persistence/dto/TransactionDTO.java (15 lines) =====
+   1| package br.com.michaelcruz.persistence.dto;
+   2| 
+   3| import jakarta.validation.constraints.NotNull;
+   4| 
+   5| public class TransactionDTO {
+   6| 
+   7|     @NotNull(message = "Precisa ser informado um valor")
+   8|     private double amount;
+   9|     public double getAmount() {
+  10|         return amount;
+  11|     }
+  12|     public void setAmount(double amount) {
+  13|         this.amount = amount;
+  14|     }
+  15| }
+
+===== FILE: src/main/java/br/com/michaelcruz/persistence/dto/UserDTO.java (60 lines) =====
+   1| package br.com.michaelcruz.persistence.dto;
+   2| 
+   3| import jakarta.validation.constraints.NotNull;
+   4| 
+   5| public class UserDTO {
+   6| 
+   7|     Long id;
+   8| 
+   9|     @NotNull(message = "Precisa ser informado o nome do usuário")
+  10|     String name;
+  11| 
+  12|     @NotNull(message = "Precisa ser informada a idade do usuário")
+  13|     int age;
+  14| 
+  15|     @NotNull(message = "Precisa ser informado um número de telefone para contato")
+  16|     String phone;
+  17| 
+  18|     @NotNull(message = "Precisa ser informado o endereço do usuário")
+  19|     String address;
+  20| 
+  21|     public Long getId() {
+  22|         return id;
+  23|     }
+  24| 
+  25|     public void setId(Long id) {
+  26|         this.id = id;
+  27|     }
+  28| 
+  29|     public String getName() {
+  30|         return name;
+  31|     }
+  32| 
+  33|     public void setName(String name) {
+  34|         this.name = name;
+  35|     }
+  36| 
+  37|     public int getAge() {
+  38|         return age;
+  39|     }
+  40| 
+  41|     public void setAge(int age) {
+  42|         this.age = age;
+  43|     }
+  44| 
+  45|     public String getPhone() {
+  46|         return phone;
+  47|     }
+  48| 
+  49|     public void setPhone(String phone) {
+  50|         this.phone = phone;
+  51|     }
+  52| 
+  53|     public String getAddress() {
+  54|         return address;
+  55|     }
+  56| 
+  57|     public void setAddress(String address) {
+  58|         this.address = address;
+  59|     }
+  60| }
+
+===== FILE: src/main/java/br/com/michaelcruz/persistence/model/Account.java (44 lines) =====
+   1| package br.com.michaelcruz.persistence.model;
+   2| 
+   3| import jakarta.persistence.*;
+   4| 
+   5| @Entity
+   6| public class Account {
+   7| 
+   8|     @Id
+   9|     @GeneratedValue(strategy = GenerationType.IDENTITY)
+  10|     Long id;
+  11| 
+  12|     @Enumerated(EnumType.STRING)
+  13|     AccountType type;
+  14| 
+  15|     double balance;
+  16| 
+  17|     @OneToOne
+  18|     @JoinColumn(name = "user_id")
+  19|     User user;
+  20| 
+  21|     public AccountType getType() {
+  22|         return type;
+  23|     }
+  24| 
+  25|     public void setType(AccountType type) {
+  26|         this.type = type;
+  27|     }
+  28| 
+  29|     public double getBalance() {
+  30|         return balance;
+  31|     }
+  32| 
+  33|     public void setBalance(double balance) {
+  34|         this.balance = balance;
+  35|     }
+  36| 
+  37|     public User getUser() {
+  38|         return user;
+  39|     }
+  40| 
+  41|     public void setUser(User user) {
+  42|         this.user = user;
+  43|     }
+  44| }
+
+===== FILE: src/main/java/br/com/michaelcruz/persistence/model/AccountType.java (7 lines) =====
+   1| package br.com.michaelcruz.persistence.model;
+   2| 
+   3| public enum AccountType {
+   4| 
+   5|     CONTA_CORRENTE,
+   6|     CONTA_POUPANCA
+   7| }
+
+===== FILE: src/main/java/br/com/michaelcruz/persistence/model/User.java (56 lines) =====
+   1| package br.com.michaelcruz.persistence.model;
+   2| 
+   3| import jakarta.persistence.*;
+   4| 
+   5| @Entity
+   6| public class User {
+   7| 
+   8|     @Id
+   9|     @GeneratedValue(strategy = GenerationType.IDENTITY)
+  10|     Long id;
+  11| 
+  12|     String name;
+  13|     int age;
+  14|     String phone;
+  15|     String address;
+  16| 
+  17|     public Long getId() {
+  18|         return id;
+  19|     }
+  20| 
+  21|     public void setId(Long id) {
+  22|         this.id = id;
+  23|     }
+  24| 
+  25|     public String getName() {
+  26|         return name;
+  27|     }
+  28| 
+  29|     public void setName(String name) {
+  30|         this.name = name;
+  31|     }
+  32| 
+  33|     public int getAge() {
+  34|         return age;
+  35|     }
+  36| 
+  37|     public void setAge(int age) {
+  38|         this.age = age;
+  39|     }
+  40| 
+  41|     public String getPhone() {
+  42|         return phone;
+  43|     }
+  44| 
+  45|     public void setPhone(String phone) {
+  46|         this.phone = phone;
+  47|     }
+  48| 
+  49|     public String getAddress() {
+  50|         return address;
+  51|     }
+  52| 
+  53|     public void setAddress(String address) {
+  54|         this.address = address;
+  55|     }
+  56| }
+
+===== FILE: src/main/java/br/com/michaelcruz/rest/AccountController.java (50 lines) =====
+   1| package br.com.michaelcruz.rest;
+   2| 
+   3| import br.com.michaelcruz.persistence.dto.AccountDTO;
+   4| import br.com.michaelcruz.persistence.dto.TransactionDTO;
+   5| import br.com.michaelcruz.persistence.model.Account;
+   6| import br.com.michaelcruz.service.AccountService;
+   7| import jakarta.inject.Inject;
+   8| import jakarta.ws.rs.*;
+   9| import jakarta.ws.rs.core.Response;
+  10| 
+  11| import java.util.List;
+  12| 
+  13| @Path("/api/v1/accounts")
+  14| public class AccountController {
+  15| 
+  16|     @Inject
+  17|     AccountService accountService;
+  18| 
+  19| 
+  20| 
+  21|     @POST
+  22|     public Response createAccount(AccountDTO accountDTO) {
+  23|         this.accountService.createAccount(accountDTO);
+  24|         System.out.println(accountDTO);
+  25|         return Response.status(Response.Status.CREATED).entity("Conta criada com sucesso").build();
+  26|     }
+  27| 
+  28|     @Path("/deposit/{accountId}")
+  29|     @PUT
+  30|     public Response depositToAccount(@PathParam("accountId") Long accountId, TransactionDTO depositDTO) {
+  31|         double amount = depositDTO.getAmount();
+  32|         this.accountService.depositToAccount(accountId, amount);
+  33|         return Response.status(Response.Status.OK).entity("Depósito realizado com sucesso").build();
+  34|     }
+  35| 
+  36|     @Path("/withdraw/{accountId}")
+  37|     @PUT
+  38|     public Response withdraw(@PathParam("accountId") Long accountId, TransactionDTO withdrawDTO) {
+  39|         double amount = withdrawDTO.getAmount();
+  40|         this.accountService.withdraw(accountId, amount);
+  41|         return Response.status(Response.Status.OK).entity("Saque realizado com sucesso").build();
+  42|     }
+  43| 
+  44|     @GET
+  45|     public Response listAccounts() {
+  46|         List<Account> accounts = this.accountService.listAllAccounts();
+  47|         return Response.status(Response.Status.OK).entity(accounts).build();
+  48|     }
+  49| 
+  50| }
+
+===== FILE: src/main/java/br/com/michaelcruz/rest/UserController.java (21 lines) =====
+   1| package br.com.michaelcruz.rest;
+   2| 
+   3| import br.com.michaelcruz.persistence.dto.UserDTO;
+   4| import br.com.michaelcruz.service.UserService;
+   5| import jakarta.inject.Inject;;
+   6| import jakarta.ws.rs.POST;
+   7| import jakarta.ws.rs.Path;
+   8| import jakarta.ws.rs.core.Response;
+   9| 
+  10| @Path("/api/v1/users")
+  11| public class UserController {
+  12| 
+  13|     @Inject
+  14|     UserService userService;
+  15| 
+  16|     @POST
+  17|     public Response createUser(UserDTO userDTO){
+  18|         this.userService.createUser(userDTO);
+  19|         return Response.status(Response.Status.CREATED).entity("Usuário criado com sucesso").build();
+  20|     }
+  21| }
+
+===== FILE: src/main/java/br/com/michaelcruz/service/AccountService.java (85 lines) =====
+   1| package br.com.michaelcruz.service;
+   2| 
+   3| import br.com.michaelcruz.exception.BadRequestException;
+   4| import br.com.michaelcruz.exception.NotFoundException;
+   5| import br.com.michaelcruz.persistence.dao.AccountDAO;
+   6| import br.com.michaelcruz.persistence.model.AccountType;
+   7| import br.com.michaelcruz.util.AccountUtil;
+   8| import br.com.michaelcruz.persistence.dto.AccountDTO;
+   9| import br.com.michaelcruz.persistence.dto.UserDTO;
+  10| import br.com.michaelcruz.persistence.model.Account;
+  11| import jakarta.enterprise.context.ApplicationScoped;
+  12| import jakarta.inject.Inject;
+  13| import jakarta.validation.Valid;
+  14| 
+  15| import java.util.List;
+  16| import java.util.Optional;
+  17| 
+  18| @ApplicationScoped
+  19| public class AccountService {
+  20|     @Inject
+  21|     AccountDAO accountDAO;
+  22| 
+  23|     @Inject
+  24|     UserService userService;
+  25| 
+  26|     @Inject
+  27|     AccountUtil accountUtil;
+  28| 
+  29| 
+  30|     public void createAccount(@Valid AccountDTO accountDTO) {
+  31|         UserDTO userDTO = userService.getUserDetails(accountDTO.getUserId());
+  32|         Account account = accountUtil.convertToAccount(accountDTO, userDTO);
+  33|         accountDAO.save(account);
+  34|     }
+  35| 
+  36|     public void depositToAccount(@Valid Long accountId, double amount){
+  37| 
+  38|         Optional<Account> optionalAccount = accountDAO.findById(accountId);
+  39| 
+  40|         if(optionalAccount != null && optionalAccount.isPresent()){
+  41|             Account account = optionalAccount.get();
+  42| 
+  43|             if (amount > 0){
+  44|                 double newBalance = account.getBalance() + amount;
+  45| 
+  46|                 if(account.getType() == AccountType.CONTA_POUPANCA){
+  47|                     newBalance += 0.5;
+  48|                 }
+  49| 
+  50|                 account.setBalance(newBalance);
+  51|                 accountDAO.update(account);
+  52|             } else {
+  53|                 throw new BadRequestException("Valor do depósito precisa ser maior que zero");
+  54|             }
+  55|         } else {
+  56|             throw new NotFoundException("Conta informada não encontrada");
+  57|         }
+  58|     }
+  59| 
+  60|     public void withdraw(@Valid Long accountId, double amount) {
+  61| 
+  62|         Optional<Account> optionalAccount = accountDAO.findById(accountId);
+  63| 
+  64|         if(optionalAccount != null && optionalAccount.isPresent()){
+  65|             Account account = optionalAccount.get();
+  66| 
+  67|             if(amount > 0 && account.getBalance() > amount) {
+  68|                 double newBalance = account.getBalance() - amount;
+  69| 
+  70|                 account.setBalance(newBalance);
+  71| 
+  72|                 accountDAO.update(account);
+  73|             } else {
+  74|                 throw new BadRequestException("Valor do saque indisponível na conta");
+  75|             }
+  76|         } else {
+  77|             throw new NotFoundException("Conta informada não encontrada");
+  78|         }
+  79|     }
+  80| 
+  81|     public List<Account> listAllAccounts(){
+  82|         return this.accountDAO.getAll();
+  83|     }
+  84| 
+  85| }
+
+===== FILE: src/main/java/br/com/michaelcruz/service/UserService.java (46 lines) =====
+   1| package br.com.michaelcruz.service;
+   2| 
+   3| import br.com.michaelcruz.exception.NotFoundException;
+   4| import br.com.michaelcruz.persistence.dao.UserDAO;
+   5| import br.com.michaelcruz.persistence.dto.UserDTO;
+   6| import br.com.michaelcruz.persistence.model.User;
+   7| 
+   8| import br.com.michaelcruz.util.UserUtil;
+   9| import jakarta.enterprise.context.ApplicationScoped;
+  10| import jakarta.inject.Inject;
+  11| import jakarta.validation.Valid;
+  12| 
+  13| import java.util.Optional;
+  14| 
+  15| @ApplicationScoped
+  16| public class UserService {
+  17| 
+  18|     @Inject
+  19|     UserDAO userDAO;
+  20| 
+  21|     @Inject
+  22|     UserUtil userUtil;
+  23| 
+  24| 
+  25|     public void createUser(@Valid UserDTO userDTO){
+  26|         User user = new User();
+  27| 
+  28|         user.setName(userDTO.getName());
+  29|         user.setAge(userDTO.getAge());
+  30|         user.setPhone(userDTO.getPhone());
+  31|         user.setAddress(userDTO.getAddress());
+  32| 
+  33|         this.userDAO.save(user);
+  34|     }
+  35| 
+  36|     public UserDTO getUserDetails(Long userId) {
+  37|         Optional<User> userOptional = userDAO.findById(userId);
+  38| 
+  39|         if (userOptional != null && userOptional.isPresent()) {
+  40|             User user = userOptional.get();
+  41|             return userUtil.convertToUserDTO(user);
+  42|         }
+  43|         throw new NotFoundException("Usuário não encontrado");
+  44|     }
+  45| 
+  46| }
+
+===== FILE: src/main/java/br/com/michaelcruz/util/AccountUtil.java (35 lines) =====
+   1| package br.com.michaelcruz.util;
+   2| 
+   3| import br.com.michaelcruz.exception.NotFoundException;
+   4| import br.com.michaelcruz.persistence.dao.AccountDAO;
+   5| import br.com.michaelcruz.persistence.dto.AccountDTO;
+   6| import br.com.michaelcruz.persistence.dto.UserDTO;
+   7| import br.com.michaelcruz.persistence.model.Account;
+   8| import br.com.michaelcruz.persistence.model.User;
+   9| import jakarta.enterprise.context.ApplicationScoped;
+  10| import jakarta.inject.Inject;
+  11| 
+  12| import java.util.Optional;
+  13| 
+  14| @ApplicationScoped
+  15| public class AccountUtil {
+  16| 
+  17|     @Inject
+  18|     AccountDAO accountDAO;
+  19| 
+  20|     //Converter de AccountDTO para Account
+  21|     public Account convertToAccount(AccountDTO accountDTO, UserDTO userDTO) {
+  22|         Account account = new Account();
+  23| 
+  24|         account.setType(accountDTO.getType());
+  25|         account.setBalance(accountDTO.getBalance());
+  26| 
+  27|         var user = new User();
+  28| 
+  29|         user.setId(userDTO.getId());
+  30|         account.setUser(user);
+  31| 
+  32|         return account;
+  33|     }
+  34| 
+  35| }
+
+===== FILE: src/main/java/br/com/michaelcruz/util/UserUtil.java (30 lines) =====
+   1| package br.com.michaelcruz.util;
+   2| 
+   3| import br.com.michaelcruz.exception.NotFoundException;
+   4| import br.com.michaelcruz.persistence.dao.UserDAO;
+   5| import br.com.michaelcruz.persistence.dto.UserDTO;
+   6| import br.com.michaelcruz.persistence.model.User;
+   7| import jakarta.enterprise.context.ApplicationScoped;
+   8| import jakarta.inject.Inject;
+   9| 
+  10| import java.util.Optional;
+  11| 
+  12| @ApplicationScoped
+  13| public class UserUtil {
+  14|     @Inject
+  15|     UserDAO userDAO;
+  16| 
+  17|     //Converter User para DTO
+  18|     public UserDTO convertToUserDTO(User user) {
+  19|         UserDTO userDTO = new UserDTO();
+  20| 
+  21|         userDTO.setId(user.getId());
+  22|         userDTO.setAge(user.getAge());
+  23|         userDTO.setName(user.getName());
+  24|         userDTO.setPhone(user.getPhone());
+  25|         userDTO.setAddress(user.getAddress());
+  26| 
+  27|         return userDTO;
+  28|     }
+  29| 
+  30| }
+
+===== FILE: src/main/resources/application.properties (6 lines) =====
+   1| quarkus.datasource.db-kind=mysql 
+   2| quarkus.datasource.username=root
+   3| quarkus.datasource.password=<REDACTED>
+   4| quarkus.datasource.jdbc.url=jdbc:mysql://localhost:3306/apiquarkus
+   5| 
+   6| quarkus.hibernate-orm.database.generation=update

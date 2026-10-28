@@ -1,0 +1,74 @@
+{
+  "Java": {
+    "folder": "java",
+    "test_command": "java TestMain",
+    "exit_code": 0,
+    "passed": 15,
+    "total": 15,
+    "failures": 0,
+    "errors": 0,
+    "warmup_ms": 78.626071,
+    "five_measurements_ms": [
+      77.186116,
+      91.907135,
+      104.041751,
+      118.96241,
+      87.222314
+    ],
+    "median_process_ms": 91.907135
+  },
+  "Python": {
+    "folder": "python",
+    "test_command": "python3 test_main.py",
+    "exit_code": 0,
+    "passed": 15,
+    "total": 15,
+    "failures": 0,
+    "errors": 0,
+    "warmup_ms": 830.646829,
+    "five_measurements_ms": [
+      846.949444,
+      837.542837,
+      827.757039,
+      847.218735,
+      839.468689
+    ],
+    "median_process_ms": 839.468689
+  },
+  "JavaScript": {
+    "folder": "javascript",
+    "test_command": "node test_main.js",
+    "exit_code": 0,
+    "passed": 15,
+    "total": 15,
+    "failures": 0,
+    "errors": 0,
+    "warmup_ms": 34.046254,
+    "five_measurements_ms": [
+      30.074123,
+      38.740904,
+      30.425864,
+      33.440363,
+      29.249207
+    ],
+    "median_process_ms": 30.425864
+  },
+  "C++": {
+    "folder": "cpp",
+    "test_command": "./strategy_tests",
+    "exit_code": 0,
+    "passed": 15,
+    "total": 15,
+    "failures": 0,
+    "errors": 0,
+    "warmup_ms": 3.290723,
+    "five_measurements_ms": [
+      2.665064,
+      2.558798,
+      2.737605,
+      2.241367,
+      2.582103
+    ],
+    "median_process_ms": 2.582103
+  }
+}

@@ -1,0 +1,9 @@
+# case|commands: adapters N; msg <userId|-> <text>; span <name> <value|!error>; shutdown|expected (log lines joined by ~)
+no_adapter_runs_function|adapters 0;msg - ignored;span api.ping 42;shutdown|result=42
+message_with_user|adapters 1;msg 7 db slow|sentry.captureMessage(db slow,level=error,user.id=7)
+message_without_user|adapters 1;msg - queue stuck|sentry.captureMessage(queue stuck,level=error)
+span_returns_value|adapters 1;span api.notes 42|sentry.startSpan(api.notes)~result=42
+span_propagates_error|adapters 1;span api.fail !boom|sentry.startSpan(api.fail)~ERR:boom
+shutdown_has_time_limit|adapters 1;shutdown|sentry.close(5000)
+two_adapters_fan_out|adapters 2;msg 7 db slow|sentry.captureMessage(db slow,level=error,user.id=7)~sentry.captureMessage(db slow,level=error,user.id=7)
+two_adapters_nest_spans|adapters 2;span api.x 1|sentry.startSpan(api.x)~sentry.startSpan(api.x)~result=1

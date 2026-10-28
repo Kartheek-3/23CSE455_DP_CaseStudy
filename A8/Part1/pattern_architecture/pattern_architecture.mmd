@@ -1,0 +1,55 @@
+﻿flowchart TB
+    %% A9 Part 1 — confirmed pattern architecture in the original NestJS application
+    %% Relationships and source locations should be checked against the recorded baseline commit.
+
+    subgraph GUARD["Dynamic Guard Factory"]
+        direction TB
+        RF["rolesRestrict(...allowedRoles)<br/>Factory function<br/>src/flight/guards/roles.restrict.guard.ts:12–28"]
+        RG["RolesRestrictGuard<br/>Dynamic guard product<br/>canActivate(context)<br/>src/flight/guards/roles.restrict.guard.ts:14–26"]
+        CA["CanActivate<br/>NestJS guard interface"]
+        US["UsersService<br/>Injected dependency"]
+        RF -->|creates / mixes in| RG
+        RG -.->|implements contract| CA
+        RG -->|uses| US
+    end
+
+    subgraph LOADERS["DataLoader Batch Loaders"]
+        direction TB
+        BR["BookingResolver<br/>GraphQL field resolvers"]
+        UDL["UserDataLoader<br/>userLoader: DataLoader&lt;string, User&gt;<br/>src/users/loaders/user.loader.ts:10–24"]
+        FDL["FlightDataLoader<br/>flightLoader: DataLoader&lt;string, Flight&gt;<br/>src/flight/loaders/flight.loader.ts:7–23"]
+        SDL["SeatDataLoader<br/>seatLoader and seatManyLoader<br/>src/seat/loaders/seat.loader.ts:8–45"]
+        UR["TypeORM Repository&lt;User&gt;<br/>Batch query by user IDs"]
+        FR["TypeORM Repository&lt;Flight&gt;<br/>Batch query by flight IDs"]
+        SR["TypeORM Repository&lt;Seat&gt;<br/>Batch query; seatManyLoader groups by booking ID"]
+
+        BR -->|user field loads userLoader| UDL
+        BR -->|flight field loads flightLoader| FDL
+        BR -->|seat field loads seatManyLoader| SDL
+        UDL -->|queries| UR
+        FDL -->|queries| FR
+        SDL -->|queries| SR
+    end
+
+    subgraph EMAIL["Producer–Consumer — Async Email Processing Queue"]
+        direction LR
+        PRODUCER["Email job producers<br/>SendGridService / UsersResolver<br/>src/users/send-grid.service.ts"]
+        QUEUE["BullMQ email queue<br/>Job channel"]
+        CONSUMER["EmailProcessor<br/>Consumer processes jobs<br/>src/users/workers/email.worker.ts"]
+        PRODUCER -->|enqueues jobs| QUEUE
+        QUEUE -->|delivers jobs| CONSUMER
+    end
+
+    classDef factory fill:#1d4ed8,stroke:#60a5fa,color:#ffffff,stroke-width:1.5px;
+    classDef component fill:#172554,stroke:#60a5fa,color:#f8fafc,stroke-width:1.2px;
+    classDef interface fill:#0f172a,stroke:#93c5fd,color:#dbeafe,stroke-dasharray:5 4;
+    classDef loader fill:#312e81,stroke:#a5b4fc,color:#ffffff,stroke-width:1.2px;
+    classDef repository fill:#1e293b,stroke:#94a3b8,color:#f8fafc;
+    classDef queue fill:#3f1d4b,stroke:#d8b4fe,color:#ffffff,stroke-width:1.2px;
+
+    class RF factory;
+    class RG,US,BR component;
+    class CA interface;
+    class UDL,FDL,SDL loader;
+    class UR,FR,SR repository;
+    class PRODUCER,QUEUE,CONSUMER queue;

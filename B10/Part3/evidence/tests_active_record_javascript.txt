@@ -1,0 +1,6 @@
+# Active Record / javascript
+working folder: Part3/active_record_user_role/javascript
+$ node test_user_role.js
+Active Record tests: 12/12 passed
+
+[exit code: 0]

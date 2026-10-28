@@ -1,0 +1,58 @@
+@startuml ch01_driver_account_state
+title CH01 - new driver status SUSPENDED: State pattern for the driver account
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+hide empty members
+
+interface DriverAccountState <<State>> {
+  +status
+  +approve(): DriverAccountState
+  +reject(reason): DriverAccountState
+  +suspend(reason): DriverAccountState
+  +resetToPending(): DriverAccountState
+  +canReceiveRides(): boolean
+}
+abstract class BaseDriverAccountState {
+  #refuse(action): never  // InvalidTransitionError 409
+}
+class PendingDriverState <<ConcreteState>>
+class ApprovedDriverState <<ConcreteState>> {
+  +canReceiveRides() = true
+}
+class RejectedDriverState <<ConcreteState>>
+class SuspendedDriverState <<ConcreteState>> #LightYellow
+class DriverAccount <<Context>> {
+  -state: DriverAccountState
+  +changeTo(target, reason): status
+  +canReceiveRides(): boolean
+}
+BaseDriverAccountState ..|> DriverAccountState
+PendingDriverState --|> BaseDriverAccountState
+ApprovedDriverState --|> BaseDriverAccountState
+RejectedDriverState --|> BaseDriverAccountState
+SuspendedDriverState --|> BaseDriverAccountState
+DriverAccount o--> DriverAccountState
+
+class AdminChangeDriverStatus <<Client>>
+class AcceptBooking <<Client>>
+class BookDriver <<Client>>
+class "NotificationSocket\n(driver:online catch-up)" as Sock <<Client>>
+interface IBookingRepository {
+  +acceptPendingBooking(bookingId, driverId)  // new (refactoring)
+}
+AdminChangeDriverStatus --> DriverAccount
+AcceptBooking --> DriverAccount : canReceiveRides()
+BookDriver --> DriverAccount : canReceiveRides()
+Sock --> DriverAccount : canReceiveRides()
+AcceptBooking --> IBookingRepository
+
+note right of DriverAccount
+  pending  --approve-->  approved
+  pending  --reject(r)-->  rejected
+  approved --suspend(r)--> suspended   (new)
+  suspended --approve--> approved      (reinstate)
+  suspended --reject(r)--> rejected
+  rejected --resetToPending--> pending
+  anything else -> InvalidTransitionError
+end note
+@enduml
