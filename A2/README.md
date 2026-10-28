@@ -1,83 +1,160 @@
-# A2 – Design Patterns Case Study
+# Team A2 --- MBTA API Design Patterns Case Study
 
-## Course Information
+**Course:** 23CSE455 --- Design Patterns\
+**Application:** [MBTA API](https://github.com/mbta/api)\
+**Submission repository:**
+[23CSE455_DP_CaseStudy](https://github.com/aswathymohan-amrita/23CSE455_DP_CaseStudy)
 
-- **Course:** 23CSE455 – Design Patterns
-- **Case Study:** MBTA API
-- **Team:** A2
+## Project overview
 
-## Team Members
+This project studies Strategy-pattern collaborations in the MBTA API,
+documents three changes, and compares simplified Strategy examples
+across Java, Python, JavaScript, and C++.
 
-| Name | Roll Number | Batch | Contribution |
-|---|---|---|---|
-| Aadhav Gugan DU | AM.SC.U4CSE23201 | A | Part 1 – Design Pattern Discovery |
-| G Yaswanth Ram Saran | AM.SC.U4CSE23220 | A | Part 2 – Code Changes and Testing |
-| KB Sai Prasad Reddy | AM.SC.U4CSE23227 | A | Part 3 – Cross-Language Implementations |
+The inspected application is written in Elixir/Phoenix. The submitted
+source snapshot was an archive, so its exact baseline Git commit/tag
+could not be verified.
 
-## Project Overview
+## Repository structure
 
-This case study examines design patterns in the MBTA API project. It identifies existing design pattern implementations, investigates code changes and pattern evolution, and demonstrates corresponding design patterns across multiple programming languages.
-
-## Folder Structure
-
-```text
+``` text
 A2/
 ├── README.md
-├── A2_Report.pdf
-├── A2_Report.tex
-├── data/
-│   ├── patterns.csv
-│   ├── pattern_counts.csv
-│   ├── cross_language.csv
-│   └── llm.csv
+├── A2_Report_Final_Updated.tex
+├── A2_Report_Final_Updated.pdf
 ├── Part1/
+│   ├── patterns.csv
+│   ├── images/
+│   └── evidence/
 ├── Part2/
-└── Part3/
-    └── llm/
-        ├── part3_prompt.txt
-        ├── llm.csv
-        └── pattern_crosslanguage.csv
+│   ├── code/
+│   ├── changes/
+│   │   ├── change1/
+│   │   ├── change2/
+│   │   └── change3/
+│   └── images/
+├── Part3/
+│   ├── Rate_Limiter_Backend_Selection/
+│   ├── State_Data_Parsing/
+│   └── evidence/
+└── data/
+    └── code/
 ```
 
-## Part 1 – Design Pattern Discovery
+Adjust names in this tree if the final submitted folder uses different
+filenames or locations. Include only files and folders that actually
+exist in the submitted A2 directory.
 
-**Responsible:** Aadhav Gugan DU
+## Part 1 --- Pattern discovery
 
-This part focuses on analyzing the MBTA API source code, identifying design pattern instances, documenting their implementations, and recording the findings in the required data files.
+Two Strategy-pattern collaborations were documented:
 
-## Part 2 – Code Changes and Pattern Evolution
+1.  **Rate Limiter Backend Selection**
+    -   Context: `ApiWeb.RateLimiter`
+    -   Behaviour contract: `ApiWeb.RateLimiter.Limiter`
+    -   Backends: `ApiWeb.RateLimiter.ETS` and
+        `ApiWeb.RateLimiter.Memcache`
+    -   The context selects the configured backend and delegates
+        operations.
+2.  **State Data Parsing**
+    -   Context: `State.Server`
+    -   Parser contract: `Parse.parse/1`
+    -   Parser implementations: `Parse.Alerts`, `Parse.Line`, and
+        `Parse.Routes`
+    -   `Parse.Simple` supplies shared parsing support for applicable
+        parsers.
 
-**Responsible:** G Yaswanth Ram Saran
+See `Part1/patterns.csv` and the architecture diagrams for the recorded
+evidence.
 
-This part focuses on implementing code changes, refactoring, developing and running tests, documenting changes, and analyzing how the design patterns evolve.
+## Part 2 --- Changes and test evidence
 
-Test results and limitations are documented in the relevant test logs.
+### CH01 --- Rate-limiter test coverage
 
-## Part 3 – Cross-Language Implementations
+Added tests for clearing rate-limiter state and keeping different users'
+counters independent. The recorded command was:
 
-**Responsible:** KB Sai Prasad Reddy
+``` powershell
+mix test apps/api_web/test/api_web/rate_limiter_test.exs --no-warnings-as-errors
+```
 
-This part demonstrates corresponding Strategy pattern examples in:
+Recorded result: **8 tests passed, 0 failures**. The run excluded
+`:memcache` and `:integration` tests. Compilation warnings were allowed
+and remain unresolved. This change adds test coverage; it does not
+change production Strategy participants.
 
-- Java
-- Python
-- JavaScript
-- C++
+### CH02 --- ETS rate-limiter tests
 
-Each language example includes implementation code, a test runner, and a README explaining the example and its verification.
+Added targeted ETS tests covering within-limit requests, over-limit
+requests, independent keys, clearing state, and concurrent requests.
 
-## Data and Documentation
+``` powershell
+mix test apps/api_web/test/api_web/rate_limiter/ets_test.exs
+```
 
-The `data/` directory contains the required CSV files for design pattern discovery, pattern counts, cross-language comparisons, and LLM-related records.
+Recorded result: **5 tests passed, 0 failures**. The run excluded
+`:memcache` and `:integration` tests. The Strategy pattern is preserved.
 
-The `Part1/`, `Part2/`, and `Part3/` directories contain the corresponding analysis, code, test evidence, prompts, and documentation.
+### CH03 --- Parser exception handling
 
-## Source Repository
+Updated `parse_new_state/3` so parser exceptions are handled before the
+successful state-update flow. On parsing failure, the code logs the
+error and avoids publishing a successful update event.
 
-MBTA API: https://github.com/mbta/api
+The recorded targeted test result was **1 passed, 18 excluded**, using
+`--no-compile`. This does not prove that the latest source compiles
+cleanly. A separate regular compile/test attempt encountered a warning
+in `apps/state/lib/state/shape.ex` treated as an error.
 
-## Notes
+## Part 3 --- Cross-language examples
 
-- Test results should be interpreted according to the individual test logs.
-- Illustrative cross-language examples should not be treated as production-equivalent implementations unless their behavior has been verified.
-- The report and CSV files should reflect the actual source locations, test outcomes, and measurements collected during the case study.
+The report includes simplified educational Strategy examples for Java,
+Python, JavaScript, and C++ for both rate-limiter backend selection and
+state-data parsing.
+
+These examples are **illustrative equivalents**, not production
+implementations copied from the MBTA API. In particular, the
+rate-limiter examples use placeholder behavior and should not be treated
+as production rate limiters.
+
+Run each example using the language-specific instructions and test
+runner in its own folder. Confirm filenames and commands against the
+final submitted files before submission.
+
+## Toolchain notes
+
+The repository's `.tool-versions` specifies:
+
+-   Elixir `1.19.5-otp-28`
+-   Erlang/OTP `28.5.0.3`
+
+Use the versions declared by the repository when setting up the full
+application. A clean full build was not verified for this report
+revision. Do not describe the full test suite as passing based only on
+the focused test results above.
+
+## Team
+
+-   **AM.SC.U4CSE23201 --- Aadhav Gugan DU (Batch A):** Part 1 pattern
+    discovery, source inspection, participant mapping, and pattern
+    evidence.
+-   **AM.SC.U4CSE23220 --- G Yaswanth Ram Saran (Batch A):** Part 2
+    change records, test additions, targeted test evidence, and pattern
+    evolution analysis.
+-   **AM.SC.U4CSE23227 --- KB Sai Prasad Reddy (Batch A):** Part 3
+    cross-language Strategy examples, test runners, and comparison
+    documentation.
+
+Update these allocations if the team's actual contributions differed.
+
+## References
+
+-   [MBTA API repository](https://github.com/mbta/api)
+-   [Elixir behaviours
+    documentation](https://hexdocs.pm/elixir/typespecs.html#behaviours)
+-   [Java documentation](https://docs.oracle.com/en/java/)
+-   [Python documentation](https://docs.python.org/3/)
+-   [Node.js documentation](https://nodejs.org/docs/latest/api/)
+-   [C++ reference](https://en.cppreference.com/)
+-   23CSE455 Design Patterns Case Study instructions and report template
+    supplied for the assignment

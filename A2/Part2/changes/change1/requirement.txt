@@ -1,4 +1,4 @@
-**Change 1: Improve ETS Rate Limiter Test Coverage**
+# Change 1: Improve ETS Rate Limiter Test Coverage
 
 **Goal:** Strengthen tests for the existing ETS rate-limiter Strategy.
 
@@ -13,16 +13,16 @@
 - `apps/api_web/test/api_web/rate_limiter_test.exs`
 
 **Evidence:**
-- `test_change1.log` — test execution log.
+- `test_change1.log` — fresh test execution log.
 - `change1.diff` — diff against the original test file.
 
 **Test command:**
-`mix test apps/api_web/test/api_web/rate_limiter_test.exs`
+`mix test apps/api_web/test/api_web/rate_limiter_test.exs --no-warnings-as-errors`
 
 **Observed result:** 8 tests, 0 failures.
 
 **Pattern effect:** The existing Strategy pattern is preserved. No new Strategy participant is introduced.
 
-**Limitation:** The test run excluded `:memcache` and `:integration` tests. Only the specified test file was run.
+**Limitation:** The test run excluded `:memcache` and `:integration` tests. Only the specified test file was run. Compilation warnings were allowed and remain unresolved.
 
 **Implementation status:** Completed — test-coverage improvement; no application production code changed.

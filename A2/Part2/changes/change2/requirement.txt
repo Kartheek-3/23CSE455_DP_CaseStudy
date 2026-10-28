@@ -1,4 +1,4 @@
-**Change 2: Add Concurrent Request Test Coverage for the ETS Rate Limiter**
+# Change 2: Add Concurrent Request Test Coverage for the ETS Rate Limiter
 
 **Goal:** Verify that concurrent requests respect the configured rate limit.
 
@@ -12,18 +12,16 @@
 - `apps/api_web/test/api_web/rate_limiter/ets_test.exs`
 
 **Test command:**
-`mix test apps/api_web/test/api_web/rate_limiter/ets_test.exs`
+`mix test apps/api_web/test/api_web/rate_limiter/ets_test.exs --no-warnings-as-errors`
 
-Evidence files
+**Evidence files:**
+- `test_change2.log` — actual test execution output.
+- `change2.diff` — descriptive patch record for the newly added ETS test file. The original source ZIP did not contain this file, so this is not a Git-generated unified diff.
 
-test_change2.log — actual test execution output.
-
-change2.diff — descriptive patch record for the newly added ETS test file. The original source ZIP did not contain this file, so this is not a Git-generated unified diff.
-
-**Observed result:** 5 tests, 0 failures.
+**Observed result:** 5 tests passed, 0 failures.
 
 **Pattern effect:** The existing Strategy pattern is preserved. No new Strategy participant is introduced.
 
 **Implementation status:** Completed — concurrency test added; no production application code changed.
 
-**Limitation:** Only the ETS backend test file was run. The `:memcache` and `:integration` tests were excluded.
+**Limitation:** Only the ETS backend test file was run. The `:memcache` and `:integration` tests were excluded. Compilation warnings remain; the test run used `--no-warnings-as-errors`.

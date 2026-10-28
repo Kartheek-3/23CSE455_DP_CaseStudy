@@ -1,0 +1,4 @@
+Command: g++ -std=c++17 -Wall -Wextra -pedantic rate_limiter_strategy.cpp test_runner.cpp -o test_runner.exe && ./test_runner.exe
+Result: PASS
+Output: Checking limit using ETS-style storage for user-1
+PASS: Rate limiter strategy delegation (placeholder behavior)

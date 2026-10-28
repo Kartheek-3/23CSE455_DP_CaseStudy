@@ -1,12 +1,13 @@
+Analyze the supplied MBTA API source code for possible design pattern instances.
 
-Analyze the MBTA API source code from the supplied baseline version for genuine design pattern collaborations.
+For every candidate:
+1. Identify the pattern type and meaningful instance name.
+2. Identify the context, common interface or behaviour, and concrete participants.
+3. Record exact source file paths and line ranges.
+4. Explain the relationships and delegation calls that support the pattern.
+5. Distinguish confirmed patterns from uncertain or rejected candidates.
+6. Do not infer participants or source evidence that are not present in the supplied code.
 
-Focus on:
-1. Strategy — Rate Limiter Backend Selection.
-2. Strategy — State Data Parsing.
+Focus on Strategy pattern candidates involving rate-limiter backend selection and state-data parsing.
 
-For each candidate, identify the actual participants and their roles, source file paths and line ranges, callback or method relationships, configuration, intent, and supporting evidence.
-
-Verify claims against the source code. Do not invent classes, methods, patterns, tests, or metrics. Distinguish confirmed findings from uncertain candidates. Count each independent collaboration once, regardless of how many concrete implementations it has.
-
-Produce CSV-compatible records using the course's required patterns.csv columns and explain any limitations in verifying the source version.
+Return evidence-backed findings and clearly identify any details that cannot be verified.

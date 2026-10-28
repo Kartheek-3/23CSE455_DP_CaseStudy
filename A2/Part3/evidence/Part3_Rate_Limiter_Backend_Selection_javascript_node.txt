@@ -1,0 +1,6 @@
+Command: node test_runner.js
+Runtime: Node.js v24.15.0
+Result: PASS
+Output: Checking limit using ETS-style storage for user-1
+PASS: Rate limiter strategy delegation (placeholder behavior)
+Note: Placeholder delegation behavior only; not production rate limiting.

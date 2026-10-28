@@ -1,11 +1,5 @@
-
-source_version,summary,pattern_name,count
-Original,per_pattern,Strategy,2
-Original,total_pattern_types,,1
-Original,total_pattern_instances,,2
-Original + Change1,per_pattern,Strategy,2
-Original + Change1,total_pattern_types,,1
-Original + Change1,total_pattern_instances,,2
-Original + Change2,per_pattern,Strategy,2
-Original + Change2,total_pattern_types,,1
-Original + Change2,total_pattern_instances,,2
+change_id,pattern_name,before_count,after_count,notes
+Baseline,Strategy,2,2,Two candidate Strategy collaborations identified in the baseline source
+Change1,Strategy,2,2,Rate limiter test coverage added; pattern structure unchanged
+Change2,Strategy,2,2,ETS rate limiter tests added; pattern structure unchanged
+Change3,Strategy,2,2,Parser exception handling improved; pattern structure unchanged

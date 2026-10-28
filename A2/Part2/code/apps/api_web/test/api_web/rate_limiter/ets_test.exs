@@ -1,23 +1,10 @@
-
 defmodule ApiWeb.RateLimiter.ETSTest do
   use ExUnit.Case, async: false
 
   alias ApiWeb.RateLimiter.ETS
 
   setup do
-    if Process.whereis(ETS) do
-      GenServer.stop(ETS)
-    end
-
-    {:ok, pid} = ETS.start_link(clear_interval: 60_000)
     ETS.clear()
-
-    on_exit(fn ->
-      if Process.alive?(pid) do
-        GenServer.stop(pid)
-      end
-    end)
-
     :ok
   end
 

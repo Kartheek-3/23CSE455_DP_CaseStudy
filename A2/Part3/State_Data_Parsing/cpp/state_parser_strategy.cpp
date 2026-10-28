@@ -42,9 +42,3 @@ public:
         return parser->parse(data);
     }
 };
-
-int main() {
-    StateServer server(make_unique<AlertParser>());
-    cout << server.process("sample-data") << endl;
-    return 0;
-}

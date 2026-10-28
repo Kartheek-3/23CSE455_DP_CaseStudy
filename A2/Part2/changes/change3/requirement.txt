@@ -1,4 +1,4 @@
-**Change 3: Improve State Update Error Handling**
+# Change 3: Improve State Update Error Handling
 
 **Goal:** Prevent invalid state data from being reported as a successful update.
 
@@ -8,8 +8,13 @@
 
 **Regression test:** `invalid parsed state does not emit a successful update event`
 
-**Test result:** 1 passed, 18 excluded in the targeted test run. See `test_change3.log`.
+**Test command:**
+`mix test apps/state/test/state/server_test.exs --name-pattern "invalid parsed state does not emit a successful update event" --no-warnings-as-errors`
+
+**Test result:** 1 passed, 18 excluded. See `test_change3.log`.
 
 **Pattern effect:** The existing State Server update-handling collaboration is preserved; its error-handling behavior is modified.
 
-**Limitations:** Compilation produced existing warnings in other code. The test was verified using the project's already compiled code after the source change; a clean full compilation and full test suite have not been verified.
+**Limitations:** Compilation produced warnings in existing code. The targeted test passed with `--no-warnings-as-errors`, but the full test suite has not been verified. The 18 excluded tests were not run by this targeted command.
+
+**Implementation status:** Completed — parser exception-handling behavior and a regression test were added.

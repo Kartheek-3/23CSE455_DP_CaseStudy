@@ -37,9 +37,3 @@ public:
         return strategy->isRateLimited(userId);
     }
 };
-
-int main() {
-    RateLimiter limiter(make_unique<EtsRateLimiter>());
-    cout << limiter.isRateLimited("user-1") << endl;
-    return 0;
-}
