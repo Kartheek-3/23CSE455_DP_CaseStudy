@@ -1,0 +1,255 @@
+﻿diff --git "a/D:\\DP\\CASE_STUDY\\new_Dp\\django-job-portal_observer\\jobsapp\\application_states.py" "b/D:\\DP\\CASE_STUDY\\new_Dp\\django-job-portal_observer\\jobsapp\\application_states.py"
+new file mode 100644
+index 0000000..f09c7c4
+--- /dev/null
++++ "b/D:\\DP\\CASE_STUDY\\new_Dp\\django-job-portal_observer\\jobsapp\\application_states.py"
+@@ -0,0 +1,81 @@
++
++from abc import ABC, abstractmethod
++
++
++class ApplicationState(ABC):
++    """Interface for applicant-status behavior."""
++
++    @property
++    @abstractmethod
++    def code(self) -> int:
++        """Return the integer code stored in Applicant.status."""
++        raise NotImplementedError
++
++    @property
++    @abstractmethod
++    def label(self) -> str:
++        """Return the human-readable status."""
++        raise NotImplementedError
++
++    @abstractmethod
++    def can_transition_to(self, target: "ApplicationState") -> bool:
++        """Determine whether a transition to another state is allowed."""
++        raise NotImplementedError
++
++
++class PendingState(ApplicationState):
++    @property
++    def code(self) -> int:
++        return 1
++
++    @property
++    def label(self) -> str:
++        return "Pending"
++
++    def can_transition_to(self, target: ApplicationState) -> bool:
++        return isinstance(target, (AcceptedState, RejectedState))
++
++
++class AcceptedState(ApplicationState):
++    @property
++    def code(self) -> int:
++        return 2
++
++    @property
++    def label(self) -> str:
++        return "Accepted"
++
++    def can_transition_to(self, target: ApplicationState) -> bool:
++        return isinstance(target, RejectedState)
++
++
++class RejectedState(ApplicationState):
++    @property
++    def code(self) -> int:
++        return 3
++
++    @property
++    def label(self) -> str:
++        return "Rejected"
++
++    def can_transition_to(self, target: ApplicationState) -> bool:
++        return False
++
++
++class ApplicationStateFactory:
++    """Resolve an existing database status code to its State object."""
++
++    _states = {
++        1: PendingState,
++        2: AcceptedState,
++        3: RejectedState,
++    }
++
++    @classmethod
++    def from_code(cls, code: int) -> ApplicationState:
++        try:
++            state_class = cls._states[code]
++        except KeyError:
++            raise ValueError(f"Unknown application status code: {code}") from None
++
++        return state_class()
+git : warning: in the working copy of 'D:\DP\CASE_STUDY\new_Dp\django-job-portal_observer\jobsapp\api\views\employer.py', LF will be 
+replaced by CRLF the next time Git touches it
+At line:32 char:9
++         git diff --no-index --no-ext-diff -- $baseline $current 2>&1  ...
++         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (warning: in the... Git touches it:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+diff --git "a/D:\\DP\\CASE_STUDY\\new_Dp\\django-job-portal\\jobsapp\\api\\views\\employer.py" "b/D:\\DP\\CASE_STUDY\\new_Dp\\django-job-portal_observer\\jobsapp\\api\\views\\employer.py"
+index c7d5dbd..463576a 100644
+--- "a/D:\\DP\\CASE_STUDY\\new_Dp\\django-job-portal\\jobsapp\\api\\views\\employer.py"
++++ "b/D:\\DP\\CASE_STUDY\\new_Dp\\django-job-portal_observer\\jobsapp\\api\\views\\employer.py"
+@@ -3,6 +3,7 @@ from rest_framework.generics import CreateAPIView, ListAPIView, ListCreateAPIVie
+ from rest_framework.permissions import IsAuthenticated
+ from rest_framework.views import APIView
+ from rest_framework import status
++from jobsapp.application_states import ApplicationStateFactory
+ 
+ from jobsapp.api.permissions import IsEmployer, IsJobCreator
+ from jobsapp.api.serializers import (
+@@ -13,6 +14,7 @@ from jobsapp.api.serializers import (
+     NewJobSerializer,
+ )
+ from jobsapp.models import Applicant, Company
++from jobsapp.observers import job_created_subject
+ 
+ 
+ class DashboardAPIView(ListAPIView):
+@@ -32,7 +34,9 @@ class JobCreateAPIView(CreateAPIView):
+     permission_classes = [IsAuthenticated, IsEmployer]
+ 
+     def perform_create(self, serializer):
+-        serializer.save(user=self.request.user)
++        job = serializer.save(user=self.request.user)
++        # Notify observers only after the job has been persisted successfully.
++        job_created_subject.notify(job)
+ 
+ 
+ class EmployerCompanyListCreateAPIView(ListCreateAPIView):
+@@ -49,7 +53,9 @@ class EmployerCompanyListCreateAPIView(ListCreateAPIView):
+         return Company.objects.filter(user=self.request.user).order_by("-created_at")
+ 
+     def perform_create(self, serializer):
+-        serializer.save(user=self.request.user)
++        job = serializer.save(user=self.request.user)
++        # Notify observers only after the job has been persisted successfully.
++        job_created_subject.notify(job)
+ 
+ 
+ class EmployerCompanyDetailAPIView(RetrieveUpdateAPIView):
+@@ -91,28 +97,54 @@ class ApplicantsPerJobListAPIView(ListAPIView):
+         ).order_by("id")
+ 
+ 
++
+ class UpdateApplicantStatusAPIView(APIView):
+     permission_classes = [IsAuthenticated, IsEmployer]
+ 
+     def post(self, request, *args, **kwargs):
+         applicant_id = kwargs.get("applicant_id")
+         status_code = kwargs.get("status_code")
++
+         try:
+             applicant = Applicant.objects.select_related("job__user").get(
+                 id=applicant_id
+             )
+         except Applicant.DoesNotExist:
+-            data = {"message": "Applicant not found"}
+-            return JsonResponse(data, status=status.HTTP_404_NOT_FOUND)
++            return JsonResponse(
++                {"message": "Applicant not found"},
++                status=status.HTTP_404_NOT_FOUND,
++            )
+ 
+         if applicant.job.user != request.user:
+-            data = {"errors": "You are not authorized"}
+-            return JsonResponse(data, status=status.HTTP_403_FORBIDDEN)
++            return JsonResponse(
++                {"errors": "You are not authorized"},
++                status=status.HTTP_403_FORBIDDEN,
++            )
++
++        # Preserve the existing API behavior for unsupported target codes.
+         if status_code not in [1, 2]:
+             status_code = 3
+ 
+-        applicant.status = status_code
++        current_state = ApplicationStateFactory.from_code(applicant.status)
++        target_state = ApplicationStateFactory.from_code(status_code)
++
++        # Let the State pattern decide whether the transition is valid.
++        if not current_state.can_transition_to(target_state):
++            return JsonResponse(
++                {
++                    "errors": (
++                        f"Cannot transition from {current_state.label} "
++                        f"to {target_state.label}"
++                    )
++                },
++                status=status.HTTP_400_BAD_REQUEST,
++            )
++
++        applicant.status = target_state.code
+         applicant.comment = request.data.get("comment", "")
+         applicant.save()
+-        data = {"message": "Applicant status updated"}
+-        return JsonResponse(data, status=status.HTTP_200_OK)
++
++        return JsonResponse(
++            {"message": "Applicant status updated"},
++            status=status.HTTP_200_OK,
++        )
+diff --git "a/D:\\DP\\CASE_STUDY\\new_Dp\\django-job-portal_observer\\tests\\jobsapp\\test_application_states.py" "b/D:\\DP\\CASE_STUDY\\new_Dp\\django-job-portal_observer\\tests\\jobsapp\\test_application_states.py"
+new file mode 100644
+index 0000000..e194ae3
+--- /dev/null
++++ "b/D:\\DP\\CASE_STUDY\\new_Dp\\django-job-portal_observer\\tests\\jobsapp\\test_application_states.py"
+@@ -0,0 +1,50 @@
++
++from django.test import SimpleTestCase
++
++from jobsapp.application_states import (
++    AcceptedState,
++    ApplicationStateFactory,
++    PendingState,
++    RejectedState,
++)
++
++
++class TestApplicationStates(SimpleTestCase):
++    def test_status_codes_and_labels(self):
++        expected = {
++            1: (PendingState, "Pending"),
++            2: (AcceptedState, "Accepted"),
++            3: (RejectedState, "Rejected"),
++        }
++
++        for code, (state_class, label) in expected.items():
++            with self.subTest(code=code):
++                state = ApplicationStateFactory.from_code(code)
++                self.assertIsInstance(state, state_class)
++                self.assertEqual(state.code, code)
++                self.assertEqual(state.label, label)
++
++    def test_pending_can_transition_to_accepted_or_rejected(self):
++        state = PendingState()
++
++        self.assertTrue(state.can_transition_to(AcceptedState()))
++        self.assertTrue(state.can_transition_to(RejectedState()))
++
++    def test_accepted_can_transition_to_rejected(self):
++        self.assertTrue(
++            AcceptedState().can_transition_to(RejectedState())
++        )
++        self.assertFalse(
++            AcceptedState().can_transition_to(PendingState())
++        )
++
++    def test_rejected_is_terminal(self):
++        state = RejectedState()
++
++        self.assertFalse(state.can_transition_to(PendingState()))
++        self.assertFalse(state.can_transition_to(AcceptedState()))
++        self.assertFalse(state.can_transition_to(RejectedState()))
++
++    def test_unknown_status_code_raises_error(self):
++        with self.assertRaises(ValueError):
++            ApplicationStateFactory.from_code(99)

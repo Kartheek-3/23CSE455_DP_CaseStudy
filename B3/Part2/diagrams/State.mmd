@@ -1,0 +1,6 @@
+﻿stateDiagram-v2
+    [*] --> Pending
+    Pending --> Accepted : accept application
+    Pending --> Rejected : reject application
+    Accepted --> Rejected : permitted transition
+    Rejected --> [*]

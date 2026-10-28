@@ -1,0 +1,6 @@
+source_version,summary,pattern_name,count
+Original code,per_pattern,Strategy,2
+Original code,per_pattern,Template Method,2
+Original code,per_pattern,Factory Method,1
+Original code,total_pattern_types,,3
+Original code,total_pattern_instances,,5

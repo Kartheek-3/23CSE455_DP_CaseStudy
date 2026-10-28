@@ -1,0 +1,11 @@
+digraph u2 { rankdir=BT; fontname="Helvetica"; node [fontname="Helvetica",fontsize=10,shape=record,style=filled,fillcolor="#f4f6fa"]; edge [fontname="Helvetica",fontsize=9];
+ mm [label="{MutationMixin\n«AbstractClass, implicit»|+ mutate(root, info, **input)\l   «TemplateMethod»\l+ resolve_mutation(...)\l   «Hook, not declared»\l}"];
+ pm [label="{PermissionMixin|+ check_permissions()\l}"];
+ h1 [label="{CreateNewJobMixin|+ resolve_mutation()\l   saves a new Job\l}"];
+ h2 [label="{UpdateJobMixin|+ resolve_mutation()\l   updates an existing Job\l}"];
+ c1 [label="{CreateNewJob\n«ConcreteClass»}"];
+ c2 [label="{UpdateJob\n«ConcreteClass»}"];
+ mm -> pm [arrowhead=empty,label="mutate() calls 1. check_permissions()\n2. resolve_mutation()"];
+ c1 -> mm [arrowhead=empty]; c2 -> mm [arrowhead=empty];
+ c1 -> h1 [arrowhead=empty,label="supplies hook"]; c2 -> h2 [arrowhead=empty,label="supplies hook"];
+}

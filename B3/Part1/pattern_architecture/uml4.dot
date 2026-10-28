@@ -1,0 +1,10 @@
+digraph u4 { rankdir=BT; fontname="Helvetica"; node [fontname="Helvetica",fontsize=10,shape=record,style=filled,fillcolor="#f4f6fa"]; edge [fontname="Helvetica",fontsize=9];
+ t [label="{rest_framework.mixins.CreateModelMixin\n«AbstractClass, framework»|+ create(request)   «TemplateMethod»\l+ perform_create(serializer)   «Hook»\l}",fillcolor="#e8e8e8"];
+ g1 [label="{CreateAPIView\n(framework)}",fillcolor="#e8e8e8"];
+ g2 [label="{ListCreateAPIView\n(framework)}",fillcolor="#e8e8e8"];
+ a [label="{JobCreateAPIView\n«ConcreteClass»|+ perform_create(serializer)\l}"];
+ b [label="{EmployerCompanyListCreateAPIView\n«ConcreteClass»|+ perform_create(serializer)\l}"];
+ c [label="{ApplyJobApiView\n«ConcreteClass»|+ perform_create(serializer)\l+ create(...), calls perform_create\l}"];
+ g1 -> t [arrowhead=empty]; g2 -> t [arrowhead=empty];
+ a -> g1 [arrowhead=empty]; c -> g1 [arrowhead=empty]; b -> g2 [arrowhead=empty];
+}
