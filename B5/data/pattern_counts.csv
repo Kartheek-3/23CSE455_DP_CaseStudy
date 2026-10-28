@@ -1,0 +1,24 @@
+source_version,summary,pattern_name,count
+baseline,per_pattern,Controller (GRASP),6
+baseline,per_pattern,Information Expert (GRASP),1
+baseline,per_pattern,Observer (GoF),2
+baseline,total_pattern_types,,3
+baseline,total_pattern_instances,,9
+scenario1_personalized_itinerary,per_pattern,Controller (GRASP),7
+scenario1_personalized_itinerary,per_pattern,Information Expert (GRASP),1
+scenario1_personalized_itinerary,per_pattern,Observer (GoF),2
+scenario1_personalized_itinerary,total_pattern_types,,3
+scenario1_personalized_itinerary,total_pattern_instances,,10
+scenario2_multiple_booking_providers,per_pattern,Controller (GRASP),8
+scenario2_multiple_booking_providers,per_pattern,Information Expert (GRASP),1
+scenario2_multiple_booking_providers,per_pattern,Observer (GoF),2
+scenario2_multiple_booking_providers,per_pattern,Adapter (GoF),1
+scenario2_multiple_booking_providers,total_pattern_types,,4
+scenario2_multiple_booking_providers,total_pattern_instances,,12
+scenario3_cancellation_policies,per_pattern,Controller (GRASP),9
+scenario3_cancellation_policies,per_pattern,Information Expert (GRASP),1
+scenario3_cancellation_policies,per_pattern,Observer (GoF),2
+scenario3_cancellation_policies,per_pattern,Adapter (GoF),1
+scenario3_cancellation_policies,per_pattern,Strategy (GoF),1
+scenario3_cancellation_policies,total_pattern_types,,5
+scenario3_cancellation_policies,total_pattern_instances,,14

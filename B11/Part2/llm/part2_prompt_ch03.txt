@@ -1,0 +1,4 @@
+[Part 2 - CH03 (replace stubbed encoder with real BCrypt - refactor) - owner: Sai Tharun (Am.sc.u4cse23249)]
+Context: legalSystem @4e4ebb57. The PasswordEncoder at config/SecurityConfiguration.java:57-77
+is a stub (plaintext). Replace it with a real BCryptPasswordEncoder, preserving the
+Strategy structure. Give the diff, a JUnit 5 test, and the pattern effect.

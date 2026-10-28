@@ -1,0 +1,10 @@
+﻿PATTERN/SUITE   : Strategy_java
+RUNTIME/COMPILER: javac 17.0.18 / openjdk version "17.0.18" 2026-01-20 
+WORKDIR         : C:\Users\eswar\OneDrive\Documents\Visual Studio Code\23CSE455_DP_CaseStudy\B12\Part3\Strategy\java
+BUILD COMMAND   : javac SlotAllocationStrategy.java StrategyTest.java
+BUILD OUTPUT    : 
+RUN COMMAND     : java StrategyTest
+PROGRAM OUTPUT  : STRATEGY_JAVA PASS 5/5
+TIME INCLUDES   : whole process wall time (runtime startup + program execution), after 1 unmeasured warm-up
+TIMING SAMPLES  : 5 measured runs (ms): 204.1404, 185.6459, 176.554, 202.5897, 170.5192
+MEDIAN_MS       : 185.646

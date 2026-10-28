@@ -1,0 +1,83 @@
+{
+  "srcDir": "Part2/code/src",
+  "files": 12,
+  "total": {
+    "nloc": 779,
+    "functions": 73,
+    "max_cc": 18
+  },
+  "rows": [
+    {
+      "file": "application/use_cases/Admin/AdminChangeDriverStatus.ts",
+      "nloc": 32,
+      "functions": 2,
+      "max_cc": 3
+    },
+    {
+      "file": "application/use_cases/Driver/AcceptBooking.ts",
+      "nloc": 58,
+      "functions": 2,
+      "max_cc": 6
+    },
+    {
+      "file": "application/use_cases/User/CancelBooking.ts",
+      "nloc": 48,
+      "functions": 2,
+      "max_cc": 9
+    },
+    {
+      "file": "application/use_cases/Driver/UpdateBookingstatus.ts",
+      "nloc": 64,
+      "functions": 2,
+      "max_cc": 12
+    },
+    {
+      "file": "infrastructure/services/FareCalculatorService.ts",
+      "nloc": 30,
+      "functions": 4,
+      "max_cc": 2
+    },
+    {
+      "file": "application/use_cases/User/BookDriver.ts",
+      "nloc": 136,
+      "functions": 5,
+      "max_cc": 18
+    },
+    {
+      "file": "infrastructure/services/CronScheduler.ts",
+      "nloc": 45,
+      "functions": 2,
+      "max_cc": 5
+    },
+    {
+      "file": "domain/driver/DriverAccountState.ts",
+      "nloc": 135,
+      "functions": 19,
+      "max_cc": 6
+    },
+    {
+      "file": "domain/booking/TripState.ts",
+      "nloc": 114,
+      "functions": 19,
+      "max_cc": 4
+    },
+    {
+      "file": "domain/booking/CancellationPolicy.ts",
+      "nloc": 37,
+      "functions": 4,
+      "max_cc": 4
+    },
+    {
+      "file": "domain/pricing/FareStrategy.ts",
+      "nloc": 52,
+      "functions": 6,
+      "max_cc": 3
+    },
+    {
+      "file": "domain/pricing/DynamicPricing.ts",
+      "nloc": 28,
+      "functions": 6,
+      "max_cc": 5
+    }
+  ]
+}

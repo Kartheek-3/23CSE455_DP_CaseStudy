@@ -1,0 +1,3 @@
+Documentation note: This is a task-specific prompt summary, not a verbatim transcript of a separate model call. The project was produced in response to the user's complete case-study request; the associated output file is a concise response extract.
+
+Propose maintainable changes for multi-currency transfer, transaction limits, and fraud screening in a Quarkus wallet. Identify the pattern impact and do not assert tests were run.

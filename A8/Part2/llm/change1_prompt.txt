@@ -1,0 +1,9 @@
+Implement Change 1: Non-destructive Flight Cancellation.
+Requirements:
+- Single authoritative FlightStatus enum (ACTIVE, CANCELLED).
+- flight.status === FlightStatus.CANCELLED checks.
+- Prevent new bookings on cancelled flights.
+- Ensure seat consistency by releasing booked seats.
+- Role-based authorization via rolesRestrict(Role.ADMIN, Role.CREW).
+- Send cancellation email notification via SendGridService/BullMQ if configured.
+- Add focused unit tests and run test suite.

@@ -1,0 +1,10 @@
+$ python -m pytest -p no:cacheprovider -v mycodo/tests/case_study   (Part2/work @ ee70a111c; before CH01, baseline)
+============================= test session starts =============================
+platform win32 -- Python 3.12.7, pytest-9.0.2, pluggy-1.6.0 -- <venv>\Scripts\python.exe
+rootdir: B10\Part2\work
+collecting ... ERROR: file or directory not found: mycodo/tests/case_study
+
+collected 0 items
+
+============================ no tests ran in 0.00s ============================
+[exit code: 4]

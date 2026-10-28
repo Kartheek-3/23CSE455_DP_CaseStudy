@@ -1,0 +1,17 @@
+# factory / java
+# working folder: Part3/code/pattern_factory/java
+# runtime: OpenJDK 17.0.19 (javac 17.0.19)
+$ javac -d build *.java
+
+
+$ java -cp build LoggingFactoryTest ../../../test-cases/factory.txt
+PASS default_is_pretty
+PASS explicit_pretty
+PASS json
+PASS unknown_format
+PASS format_is_case_sensitive
+PASS empty_string_rejected
+passed 6/6
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 74.1, 85.5, 73.9, 97.4, 83.1 -> median 83.1

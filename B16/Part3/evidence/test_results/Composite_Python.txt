@@ -1,0 +1,11 @@
+$ (cd Part3/composite-test-tree/python) python3 -m unittest -v test_composite
+test_invalid_input_is_rejected_with_expected_error (test_composite.CompositeTest.test_invalid_input_is_rejected_with_expected_error) ... ok
+test_leaf_and_container_answer_count_tests_the_same_way (test_composite.CompositeTest.test_leaf_and_container_answer_count_tests_the_same_way) ... ok
+test_report_matches_expected_output (test_composite.CompositeTest.test_report_matches_expected_output) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK
+[exit 0]
+result: 3/3 passed

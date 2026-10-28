@@ -1,0 +1,25 @@
+You are analysing the attached application source code (zip file). First unzip it and read every source file. Ignore build/vendor/generated folders (node_modules, venv, .venv, target, build, __pycache__, migrations, static assets, .env files).
+
+TASK: Identify every design pattern instance that is actually present in the code (GoF patterns: Creational, Structural, Behavioral; plus architectural patterns such as Repository, Dependency Injection, MVC; and GRASP principles). Do not rely on class names alone. A pattern counts only if you can see the real collaboration between its participants in the code.
+
+For EACH pattern instance, give:
+1. Pattern name and category (Behavioral / Creational / Structural / Architectural / GRASP)
+2. A meaningful instance name describing its purpose in this app (e.g. "Overdue Fine Calculation", not just "Strategy")
+3. Every participant role mapped to the actual class / interface / function (e.g. Strategy=..., ConcreteStrategy=..., Context=...). If a role is missing or combined into one class, say so explicitly (e.g. "Subject=not separately declared; ConcreteSubject=X also performs subject role")
+4. File path and line range for each participant (give line numbers by reading the files, and be accurate)
+5. The intent: what problem it solves in this app
+6. The code evidence: the specific lines/calls that prove the collaboration (e.g. the delegation call, the notify loop, the creation logic)
+
+RULES:
+- Two or more concrete classes in the same collaboration count as ONE instance, not several.
+- Use the same counting rule throughout: count GoF design patterns in which at least one class or method of the app takes part. Name architecture styles and GRASP principles but list them separately so they can be counted separately.
+- Do not invent classes, files, or line numbers. If you cannot confirm something, say "uncertain" and explain why.
+
+ALSO PROVIDE:
+A. A table of REJECTED or UNCERTAIN candidates: patterns that look present from names or structure but are not (or might not be), with the specific reason (e.g. "Singleton rejected: public constructor, instantiated in 3 places").
+B. A short architecture summary: the main components of the app and how one request flows through them (3-4 sentences).
+C. Totals: number of distinct pattern types, number of pattern instances, number of concrete participant classes, number of unique participant symbols, and counts of rejected and uncertain candidates.
+D. A CSV block with this exact header and one row per pattern instance, with source_version always set to "Original code", multi-valued cells separated by ";" and any cell containing a comma wrapped in double quotes:
+source_version,pattern_name,pattern_type,instance_name,participant_roles,source_locations,intent_and_evidence
+
+Present everything clearly, in this order: pattern instances, rejected/uncertain candidates, architecture summary, totals, CSV.

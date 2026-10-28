@@ -1,0 +1,37 @@
+@startuml N1
+!pragma layout smetana
+title N1 Strategy: Managed Resource Factory (newly introduced by Change2)
+
+interface "ResourceFactory<T>" as ResourceFactory <<Strategy, new in CH02>> #C8F7C5 {
+  +create(ExtensionContext) : T
+  +destroy(T) <<default: close AutoCloseable>>
+}
+class "user-supplied factory\n(e.g. HttpServerFactory in demo)" as UserFactory <<ConcreteStrategy - absent in production code, not counted>> #E6E6E6
+class ManagedResourceExtension <<Context, new in CH02>> #C8F7C5 {
+  +resolveParameter(...) : Object
+}
+class "ManagedResourceExtension.Holder" as Holder <<Context (destroy), new in CH02>> #C8F7C5 {
+  -resource : Object
+  -factory : ResourceFactory<Object>
+  {static} ~create(Class, ExtensionContext) : Holder
+  +close()
+}
+annotation "@ManagedResource" as ManagedResource <<selects the strategy, new in CH02>> #C8F7C5 {
+  +value() : Class<? extends ResourceFactory<?>>
+}
+
+UserFactory ..|> ResourceFactory
+ManagedResource ..> ResourceFactory : value()
+ManagedResourceExtension ..> ManagedResource : findAnnotation().value()
+ManagedResourceExtension ..> Holder : computeIfAbsent(factoryType, Holder::create)
+Holder --> ResourceFactory : create(context) / destroy(resource)
+' aligned-with-record
+legend right
+  <b>Counted participants</b> (record in the dataset)
+  Strategy: ResourceFactory
+  ConcreteStrategy: user-supplied (none in production code)
+  Context: ManagedResourceExtension#resolveParameter
+  Context (destroy): Holder
+  Grey classes: real, shown for context, not counted
+endlegend
+@enduml

@@ -1,0 +1,9 @@
+class,variable_role,instance_id
+InboxItem,Information Expert,P01
+TripMailbox,Controller,P02
+TripsController,Controller,P03
+TripMembersController,Controller,P04
+TripItemsController,Controller,P05
+SessionsController,Controller,P06
+TravelersController,Controller,P07
+MailLogger,Concrete Observer,P08

@@ -1,0 +1,37 @@
+// Strategy instance "Delivery Assignment Policy Selection" (introduced by CH01).
+digraph strategy_ch01 {
+  graph [rankdir=TB, fontname="Helvetica", fontsize=13, nodesep=0.45, ranksep=0.45];
+  node  [shape=plain, fontname="Helvetica", fontsize=13];
+  edge  [fontname="Helvetica", fontsize=11, color="#444444"];
+  client [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="3" bgcolor="#f4f4f4">
+    <tr><td><b>Client</b></td></tr><tr><td>views.adminassignordertodelivery</td></tr>
+    <tr><td align="left">policy_name = data.get('policy', 'manual')</td></tr>
+    <tr><td align="left">get_assignment_policy(policy_name)</td></tr></table>>];
+  ctx [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="3" bgcolor="#f4f4f4">
+    <tr><td><b>Context</b></td></tr><tr><td>DeliveryAssignmentService</td></tr>
+    <tr><td align="left">- policy : DeliveryAssignmentPolicy</td></tr>
+    <tr><td align="left">+ assign(order_id, *, email=None)  [atomic]</td></tr>
+    <tr><td align="left">  validate order; person = policy.select(...);</td></tr>
+    <tr><td align="left">  conditional update → status 'shipped'</td></tr></table>>];
+  strat [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="3" bgcolor="#e8eef7">
+    <tr><td><b>Strategy  «abstract»</b></td></tr><tr><td>DeliveryAssignmentPolicy(ABC)</td></tr>
+    <tr><td align="left">+ select(candidates, *, email=None)</td></tr></table>>];
+  manual [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="3" bgcolor="#f4f4f4">
+    <tr><td><b>ConcreteStrategy</b></td></tr><tr><td>ManualAssignmentPolicy</td></tr>
+    <tr><td align="left">eligible candidate with the given email</td></tr></table>>];
+  least [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="3" bgcolor="#f4f4f4">
+    <tr><td><b>ConcreteStrategy</b></td></tr><tr><td>LeastWorkloadAssignmentPolicy</td></tr>
+    <tr><td align="left">min unfinished delivery orders; tie → lowest pk</td></tr></table>>];
+  reg [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="3">
+    <tr><td><b>Registry</b></td></tr><tr><td>POLICIES = {"manual", "least_workload"}</td></tr></table>>];
+  elig [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="3">
+    <tr><td><b>Shared candidate query</b></td></tr><tr><td>eligible_delivery_people()</td></tr></table>>];
+  client -> reg [label="lookup by name", style=dashed];
+  client -> ctx [label="Service(policy).assign(...)"];
+  ctx -> strat [label="delegates select()", arrowhead=vee];
+  strat -> manual [dir=back, arrowtail=empty];
+  strat -> least [dir=back, arrowtail=empty];
+  {rank=same; ctx; reg;}
+  {rank=same; strat; elig;}
+  ctx -> elig [label="candidates", style=dotted];
+}

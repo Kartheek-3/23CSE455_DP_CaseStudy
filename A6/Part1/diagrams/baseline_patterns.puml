@@ -1,0 +1,91 @@
+@startuml baseline_patterns
+title Baseline pattern collaborations (Original code, c8766f4)
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam defaultFontSize 11
+hide empty members
+
+package "Repository (Trip Booking / Driver / Rider / Wallet / Review)" {
+  interface IBaseRepository<T> {
+    +create(data)
+    +findById(id)
+    +update(id, updates)
+  }
+  abstract class "BaseRepository<T,U>" as BaseRepository
+  interface IBookingRepository {
+    +createBooking(b)
+    +findBookingById(id)
+    +updateBooking(id, changes)
+    +checkDriverAvailability(...)
+  }
+  interface IDriverRepository {
+    +findNearbyDriversWithinRadius(loc, excl, km)
+    +updateStatus(id, status, reason)
+  }
+  class MongoBookingRepository
+  class MongoDriverRepository
+  BaseRepository ..|> IBaseRepository
+  MongoBookingRepository --|> BaseRepository
+  MongoBookingRepository ..|> IBookingRepository
+  MongoDriverRepository --|> BaseRepository
+  MongoDriverRepository ..|> IDriverRepository
+}
+
+package "Adapter + Observer (Ride Event Notification)" {
+  interface INotificationService <<Target>> {
+    +sendBookingNotification(driverId, data)
+    +broadcastBookingNotification(ids, data)
+    +cancelBookingNotification(driverId, data)
+    +sendBookingConfirmation(userId, data)
+    +adminChangeDriverStatusNotification(id, data)
+  }
+  class SocketNotificationService <<Adapter / Subject>>
+  class "Socket.IO Server (getIO)" as IO <<Adaptee / Singleton>>
+  class "Redis driver:socket:<id>" as Registry <<subscriber registry>>
+  class NotificationSocket <<subscribe/unsubscribe handlers>>
+  SocketNotificationService ..|> INotificationService
+  SocketNotificationService --> IO : emit(event)
+  SocketNotificationService --> Registry : get socket id
+  NotificationSocket --> Registry : set on driver:online\ndel on disconnect
+}
+
+package "Adapter (Stripe Ride Payment)" {
+  interface IStripeService <<Target>>
+  class PaymentService <<Adapter>>
+  class "Stripe SDK" as StripeSDK <<Adaptee>>
+  PaymentService ..|> IStripeService
+  PaymentService --> StripeSDK
+}
+
+package "Gateway (Location)" {
+  class GoogleDistanceService {
+    +getDistances(origin, points): Record<id, km>
+  }
+}
+
+package "Chain of Responsibility + Decorator (HTTP pipeline)" {
+  class "protectRoute(roles)" as Auth <<handler>>
+  class "CheckBlockedUserOrDriver.handle" as Blocked <<handler>>
+  class "catchAsync(fn)" as CatchAsync <<decorator>>
+  class "BookingController.bookDriver" as Handler <<handler>>
+  class errorHandler <<handler>>
+  Auth --> Blocked : next()
+  Blocked --> CatchAsync : next()
+  CatchAsync --> Handler : wraps
+  CatchAsync ..> errorHandler : next(err)
+}
+
+class BookDriver <<use case / client>>
+class CancelBookingInputUseCase <<client>>
+BookDriver --> IBookingRepository
+BookDriver --> IDriverRepository
+BookDriver --> INotificationService
+BookDriver --> GoogleDistanceService
+CancelBookingInputUseCase --> IBookingRepository
+CancelBookingInputUseCase --> INotificationService
+note bottom of BookDriver
+  Dependency Injection: every arrow from a use case
+  is a constructor @inject(TOKENS.X) resolved by the
+  tsyringe container (container.ts, useCaseContainer.ts)
+end note
+@enduml

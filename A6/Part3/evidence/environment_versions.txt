@@ -1,0 +1,8 @@
+java: java version "25" 2025-09-16 LTS
+javac: javac 25
+python: Python 3.13.7
+node: v22.18.0
+g++: g++ (GCC) 13.5.0
+docker: Docker version 29.5.2, build 79eb04c
+lizard: 1.17.13
+host OS: Windows 11 Home 10.0.26300

@@ -1,0 +1,116 @@
+\documentclass[landscape,10pt,a4paper]{article}
+\usepackage[landscape,margin=1.2cm]{geometry}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{colortbl}
+\usepackage{multicol}
+\usepackage{tcolorbox}
+\usepackage{enumitem}
+
+\definecolor{headerblue}{RGB}{24, 76, 120}
+\definecolor{accentgray}{RGB}{240, 243, 246}
+\definecolor{textdark}{RGB}{33, 37, 41}
+
+\pagestyle{empty}
+
+\begin{document}
+\color{textdark}
+
+% Header Block
+\begin{tcolorbox}[colback=headerblue,colframe=headerblue,arc=3mm,boxrule=0mm]
+\color{white}
+\begin{center}
+{\Large\textbf{Design Pattern Analysis in SvelteKit-Based Smart Home (ha-fusion)}}\\[1mm]
+{\normalsize\textbf{Part 3: Cross-Language Implementation \& Empirical Benchmark Comparison (Team A4)}}\\[0.5mm]
+{\footnotesize Target Languages: Java (OpenJDK 23), Python (3.11), JavaScript (Node.js 22), C++ (MinGW GCC 6.3 -std=c++14)}
+\end{center}
+\end{tcolorbox}
+
+\vspace{-2mm}
+
+% Master Metrics Table
+\begin{center}
+{\small\textbf{Empirical Metric Summary across 24 Implementations (Median of 5 Measured Runs + 1 Warmup)}}
+\vspace{1mm}
+
+\small
+\begin{tabular}{ll ccc ccc ccc ccc}
+\toprule
+\textbf{Pattern} & \textbf{Collaborative Context} & \multicolumn{3}{c}{\textbf{Java}} & \multicolumn{3}{c}{\textbf{Python}} & \multicolumn{3}{c}{\textbf{JavaScript}} & \multicolumn{3}{c}{\textbf{C++}} \\
+\cmidrule(lr){3-5} \cmidrule(lr){6-8} \cmidrule(lr){9-11} \cmidrule(lr){12-14}
+ & & \textbf{LOC} & \textbf{CC} & \textbf{ms} & \textbf{LOC} & \textbf{CC} & \textbf{ms} & \textbf{LOC} & \textbf{CC} & \textbf{ms} & \textbf{LOC} & \textbf{CC} & \textbf{ms} \\
+\midrule
+\rowcolor{accentgray}
+\textbf{Composite} & Visibility Condition Tree & 89 & 8 & 6.91 & 64 & 8 & 0.02 & 76 & 3 & 0.31 & 53 & 8 & 0.05 \\
+\textbf{Observer} & Entity WebSocket Subscriptions & 46 & 3 & 4.58 & 41 & 2 & 0.02 & 45 & 3 & 0.57 & 40 & 3 & 0.03 \\
+\rowcolor{accentgray}
+\textbf{Memento} & Hearth History \& Transactions & 87 & 5 & 2.52 & 64 & 4 & 0.04 & 70 & 6 & 0.17 & 11 & 3 & 0.03 \\
+\textbf{Strategy} & Evaluator Condition Dispatch & 60 & 7 & 22.37 & 86 & 8 & 0.05 & 56 & 3 & 0.40 & 57 & 8 & 0.05 \\
+\rowcolor{accentgray}
+\textbf{Factory Method} & Entity Domain Modal Factory & 63 & 5 & 8.89 & 55 & 5 & 0.02 & 71 & 5 & 0.14 & 38 & 5 & 0.03 \\
+\textbf{Template Method} & Konva Canvas Renderer Base & 63 & 2 & 3.90 & 48 & 2 & 0.01 & 50 & 2 & 0.22 & 46 & 1 & 0.04 \\
+\midrule
+\textbf{Total / Mean} & \textit{System-Wide Averages} & \textbf{408} & \textbf{5.0} & \textbf{8.20} & \textbf{358} & \textbf{4.8} & \textbf{0.03} & \textbf{368} & \textbf{3.7} & \textbf{0.30} & \textbf{245} & \textbf{4.7} & \textbf{0.04} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\vspace{-2mm}
+
+% Language Paradigm Insights in 4 Columns
+\begin{multicols}{4}
+
+\begin{tcolorbox}[title=\textbf{Java (OOP / JVM)},colback=white,colframe=headerblue!80,arc=2mm,boxrule=0.5pt,top=1mm,bottom=1mm,left=1.5mm,right=1.5mm]
+\scriptsize
+\begin{itemize}[leftmargin=*,noitemsep]
+\item \textbf{Type Safety}: Strict interfaces, generics, explicit type checks.
+\item \textbf{Encapsulation}: Clean private/nested classes.
+\item \textbf{LOC}: Highest (408 total) due to boilerplate contracts.
+\item \textbf{Latency}: 2.5--22.4 ms due to JVM classloader, reflection overhead, and JIT warmup.
+\end{itemize}
+\end{tcolorbox}
+
+\begin{tcolorbox}[title=\textbf{Python (Dynamic / ABC)},colback=white,colframe=headerblue!80,arc=2mm,boxrule=0.5pt,top=1mm,bottom=1mm,left=1.5mm,right=1.5mm]
+\scriptsize
+\begin{itemize}[leftmargin=*,noitemsep]
+\item \textbf{Expressiveness}: ABC classes, first-class closures, native dicts.
+\item \textbf{Duck Typing}: High velocity and minimal boilerplate.
+\item \textbf{LOC}: Low footprint (358 total, -12\% vs Java).
+\item \textbf{Latency}: 0.01--0.05 ms in micro-execution; low interpreter initialization cost.
+\end{itemize}
+\end{tcolorbox}
+
+\begin{tcolorbox}[title=\textbf{JavaScript (ESM / V8)},colback=white,colframe=headerblue!80,arc=2mm,boxrule=0.5pt,top=1mm,bottom=1mm,left=1.5mm,right=1.5mm]
+\scriptsize
+\begin{itemize}[leftmargin=*,noitemsep]
+\item \textbf{Native Match}: Closest to source SvelteKit/Node.js architecture.
+\item \textbf{Prototypes}: Class syntax with dynamic polymorphism.
+\item \textbf{LOC}: Compact (368 total).
+\item \textbf{Latency}: 0.14--0.57 ms; V8 JIT inline caching provides steady predictable performance.
+\end{itemize}
+\end{tcolorbox}
+
+\begin{tcolorbox}[title=\textbf{C++ (Native / RAII)},colback=white,colframe=headerblue!80,arc=2mm,boxrule=0.5pt,top=1mm,bottom=1mm,left=1.5mm,right=1.5mm]
+\scriptsize
+\begin{itemize}[leftmargin=*,noitemsep]
+\item \textbf{Zero-Overhead}: Smart pointers (\texttt{shared\_ptr}), deterministic memory.
+\item \textbf{Vtable}: Compile-time optimization with \texttt{-O2}.
+\item \textbf{LOC}: Lowest production footprint (245 LOC, -40\% vs Java).
+\item \textbf{Latency}: 0.03--0.05 ms using QPC microsecond counters.
+\end{itemize}
+\end{tcolorbox}
+
+\end{multicols}
+
+\vspace{-3mm}
+
+% Key Architectural Conclusions
+\begin{tcolorbox}[colback=accentgray,colframe=gray!50,arc=2mm,boxrule=0.5pt,top=1mm,bottom=1mm]
+\scriptsize
+\textbf{Key Takeaways \& Tradeoffs}:
+1. \textbf{Complexity Invariance}: Cyclomatic complexity (CCN) reflects algorithmic branching (e.g., Composite condition evaluation = 8), remaining largely invariant across languages regardless of syntax.
+2. \textbf{Developer Velocity vs Execution Control}: Python and JavaScript drastically reduce boilerplate for Observer and Strategy, while C++ delivers deterministic memory management and zero runtime overhead for embedded IoT edge nodes.
+3. \textbf{Test Fidelity}: 100\% test pass rate achieved across all 24 runners (6/6 on Composite, Memento, Strategy; 5/5 on Observer, Factory, Template) verifying rigorous functional parity.
+\end{tcolorbox}
+
+\end{document}

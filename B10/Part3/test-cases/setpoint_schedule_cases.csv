@@ -1,0 +1,13 @@
+case_id,method_type,params,now,start,expected
+ST01,DailySine,10;1;0;50,21600,0,60|false
+ST02,DailySine,10;1;0;50,324000,0,40|false
+ST03,Duration,600;20;30|600;30;10,1300,1000,25|false
+ST04,Duration,600;20;30|600;30;10,1900,1000,20|false
+ST05,Duration,600;20;30|600;30;10,2200,1000,None|true
+ST06,Duration,600;20;30|600;30;10|0;0;0,2500,1000,25|false
+ST07,Duration,600;20;30|600;30;10|0;0;3000,4000,1000,None|true
+ST08,Cascade,DailySine:10;1;0;50|Duration:600;20;30/600;30;10,21600,21300,15|false
+ST09,Cascade,DailySine:10;1;0;50|Duration:600;20;30,21600,20900,None|true
+ST10,Unknown,1;2;3,21600,0,None|false
+ST11,DailySine,10;1;0,21600,0,ERROR
+ST12,Duration,600;20|600;30;10,1300,1000,ERROR

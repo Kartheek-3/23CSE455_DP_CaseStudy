@@ -1,0 +1,57 @@
+@startuml
+' B12 Part 1 - Sequence: reserveSlot
+' Derived from reservations.controller.ts:27-38 and reservations.service.ts:22-113.
+' Baseline commit: 940daeeab52d5a0b101ce0e76813bcfac88e01a1
+title B12 Part 1 - Sequence: reserveSlot (POST /reservations)
+
+actor User
+participant "ReservationsController" as C
+participant "ReservationsService" as S
+participant "Repository<Reservation>" as RR
+participant "Repository<Slot>" as SR
+participant "MailService" as M
+
+User -> C : POST /reservations (CreateReservationDto)
+activate C
+C -> C : parse startTime/endTime to Date
+C -> S : reserveSlot(user, slotId, start, end, vehicleNumber, phone, vehicleType)
+activate S
+
+S -> S : validate start < end (reservations.service.ts:31-33)
+S -> S : validate start >= now (:35-38)
+S -> RR : count active reservations for user (:40-42)
+alt user already has an active reservation
+  S --> C : BadRequestException (:43-45)
+end
+
+S -> SR : findOne(slot with parkingArea) (:47-50)
+alt slot not found
+  S --> C : NotFoundException (:52-54)
+end
+alt slot.status == OCCUPIED
+  S --> C : BadRequestException (:56-58)
+end
+
+S -> RR : find overlapping ACTIVE reservation (:60-67)
+alt overlapping reservation exists
+  S --> C : BadRequestException (:68-72)
+end
+
+S -> S : expiresAt = start + 30 min (:74)
+S -> S : compute totalPrice = pricePerHour * hours (:76-82)
+S -> RR : create + save Reservation (:84-97)
+S -> SR : update slot.status = OCCUPIED (:99)
+
+S -> M : sendReservationConfirmation(...) (async, errors logged) (:101-110)
+note right of M
+  Fire-and-forget: the email is sent
+  asynchronously and does not block
+  the reservation response.
+end note
+
+S --> C : Reservation
+deactivate S
+C --> User : 201 Reservation
+deactivate C
+
+@enduml

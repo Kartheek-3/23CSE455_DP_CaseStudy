@@ -1,0 +1,11 @@
+# Missing transitive/legacy support dependencies resolved for validation only.
+# No existing baseline pin is replaced; see evidence for the known baseline conflicts.
+anyio==4.14.2
+cbor2==6.1.5
+cryptography==47.0.0
+httpcore==1.0.9
+httpx==0.28.1
+py-ubjson==0.16.1
+pycryptodome==3.18.0
+setuptools==80.9.0
+ujson==6.0.0

@@ -1,0 +1,55 @@
+# Timings for Layer Supertype (layer_supertype_module_base)
+# time.perf_counter() around subprocess.run(); 1 warmup + 5 measured runs; milliseconds
+# machine: <host>, measured with Python 3.12.7
+
+[java]
+working folder: B10\Part3\layer_supertype_module_base\java
+compile command: javac -d out AbstractBaseController.java ModuleBaseTest.java
+run command: java -cp out ModuleBaseTest
+warmup_ms: 195.155
+run_1_ms: 157.046
+run_2_ms: 154.439
+run_3_ms: 158.634
+run_4_ms: 156.814
+run_5_ms: 155.765
+median_ms: 156.814
+last run exit code: 0; last line: Layer Supertype tests: 11/11 passed
+
+[python]
+working folder: B10\Part3\layer_supertype_module_base\python
+compile command: (none)
+run command: python test_module_base.py
+warmup_ms: 69.464
+run_1_ms: 67.198
+run_2_ms: 64.185
+run_3_ms: 69.876
+run_4_ms: 63.944
+run_5_ms: 65.902
+median_ms: 65.902
+last run exit code: 0; last line: Layer Supertype tests: 11/11 passed
+
+[javascript]
+working folder: B10\Part3\layer_supertype_module_base\javascript
+compile command: (none)
+run command: node test_module_base.js
+warmup_ms: 98.768
+run_1_ms: 94.884
+run_2_ms: 89.067
+run_3_ms: 95.365
+run_4_ms: 88.635
+run_5_ms: 98.651
+median_ms: 94.884
+last run exit code: 0; last line: Layer Supertype tests: 11/11 passed
+
+[cpp]
+working folder: B10\Part3\layer_supertype_module_base\cpp
+compile command: g++ -std=c++14 -O2 -Wall -o test_module_base.exe test_module_base.cpp
+run command: B10\Part3\layer_supertype_module_base\cpp\test_module_base.exe
+warmup_ms: 296.239
+run_1_ms: 31.742
+run_2_ms: 32.492
+run_3_ms: 32.911
+run_4_ms: 32.609
+run_5_ms: 32.020
+median_ms: 32.492
+last run exit code: 0; last line: Layer Supertype tests: 11/11 passed

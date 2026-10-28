@@ -1,0 +1,37 @@
+classDiagram
+    class SendMessageParams {
+        <<type>>
+        model string
+        provider LLMProvider
+        messages AIMessage list
+        extractedText string
+        apiKey string
+        lines 10 to 16
+    }
+    class StreamingStrategy {
+        <<interface>>
+        implicit contract not declared
+        stream(params) AsyncGenerator
+    }
+    class sendMessage {
+        <<Context>>
+        lines 150 to 155
+        selects by params.provider
+    }
+    class streamClaude {
+        <<ConcreteStrategy>>
+        lines 69 to 90
+    }
+    class streamOpenAI {
+        <<ConcreteStrategy>>
+        lines 94 to 118
+    }
+    class streamGemini {
+        <<ConcreteStrategy>>
+        lines 129 to 146
+    }
+    sendMessage ..> SendMessageParams : receives
+    sendMessage ..> StreamingStrategy : delegates to chosen strategy
+    streamClaude ..|> StreamingStrategy : same signature
+    streamOpenAI ..|> StreamingStrategy : same signature
+    streamGemini ..|> StreamingStrategy : same signature

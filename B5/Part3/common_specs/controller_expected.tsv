@@ -1,0 +1,9 @@
+case_id	status	trip_id_or_error	normalized_title	owner_traveler_id	owner_role	cover_task
+C01	CREATED	trip-C01	Autumn Rome Trip	traveler-01	owner	COVER_QUEUED
+C02	ERROR	UNAUTHENTICATED
+C03	ERROR	MISSING_OWNER
+C04	ERROR	MISSING_TITLE
+C05	ERROR	INVALID_DATE
+C06	ERROR	INVALID_DATE_RANGE
+C07	CREATED	trip-C07	Same Day Trip	traveler-07	owner	COVER_QUEUED
+C08	CREATED	trip-C08	City Break	traveler-08	owner	COVER_QUEUED

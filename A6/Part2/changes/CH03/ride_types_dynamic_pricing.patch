@@ -1,0 +1,458 @@
+diff --git a/src/application/services/FareCalculatorService.ts b/src/application/services/FareCalculatorService.ts
+index 02d4780..774c38e 100644
+--- a/src/application/services/FareCalculatorService.ts
++++ b/src/application/services/FareCalculatorService.ts
+@@ -1,11 +1,7 @@
+-import { AuthError } from "../../domain/errors/Autherror";
+ import { BookingType } from "../../domain/models/Booking";
++import { FareRequest } from "../../domain/pricing/FareStrategy";
+ 
+ export interface IFareCalculatorService {
+-  calculate(params: {
+-    bookingType: BookingType;
+-    estimatedKm?: number;
+-    startDate: Date;
+-    endDate?: Date;
+-  }): number;
++  calculate(params: FareRequest): number;
++  finalFare(params: { bookingType: BookingType; estimatedFare?: number; finalKm: number }): number;
+ }
+diff --git a/src/application/use_cases/Driver/UpdateBookingstatus.ts b/src/application/use_cases/Driver/UpdateBookingstatus.ts
+index a5fe788..5e973fd 100644
+--- a/src/application/use_cases/Driver/UpdateBookingstatus.ts
++++ b/src/application/use_cases/Driver/UpdateBookingstatus.ts
+@@ -8,6 +8,7 @@ import { HTTP_STATUS_CODES } from "../../../constants/HttpStatusCode";
+ import { ERROR_MESSAGES } from "../../../constants/ErrorMessages";
+ import { IUpdateBookingStatusUseCase } from "./interfaces/IUpdateBookingStatusUseCase";
+ import { TripLifecycle } from "../../../domain/booking/TripState";
++import { IFareCalculatorService } from "../../services/FareCalculatorService";
+ 
+ 
+ interface UpdateBookingStatusInput {
+@@ -21,7 +22,9 @@ export class UpdateBookingStatus implements IUpdateBookingStatusUseCase {
+   constructor(  @inject(TOKENS.IBOOKING_REPO)
+   private _bookingRepo: IBookingRepository,
+  @inject(TOKENS.NOTIFICATION_SERVICE)
+-    private _notificationService: INotificationService
++    private _notificationService: INotificationService,
++  @inject(TOKENS.IFARE_CALCULATE_SERVICE)
++    private _fareCalculator: IFareCalculatorService
+ ) {}
+ 
+   async execute(input: UpdateBookingStatusInput): Promise<void> {
+@@ -54,10 +57,11 @@ export class UpdateBookingStatus implements IUpdateBookingStatusUseCase {
+         throw new AuthError("Final KM is required to complete the ride", HTTP_STATUS_CODES.BAD_REQUEST);
+       }
+ 
+-      const estimated = booking.estimatedFare || 0;
+-      const ratePerKm = 10;
+-
+-      finalFare = estimated + finalKm * ratePerKm;
++      finalFare = this._fareCalculator.finalFare({
++        bookingType: booking.bookingType,
++        estimatedFare: booking.estimatedFare,
++        finalKm,
++      });
+     }
+     if (status === "REJECTED" && reason){
+       this._notificationService.rejectBookingNotification(booking.userId.toString(),{status,startDate:booking.startDate,bookingId,reason})
+diff --git a/src/application/use_cases/User/BookDriver.ts b/src/application/use_cases/User/BookDriver.ts
+index 24049f7..3d9f6d1 100644
+--- a/src/application/use_cases/User/BookDriver.ts
++++ b/src/application/use_cases/User/BookDriver.ts
+@@ -54,13 +54,6 @@ export class BookDriver implements IBookDriverUseCase  {
+       }
+     }
+ 
+-    const estimatedFare = this._fareCalculator.calculate({
+-      bookingType,
+-      estimatedKm: data.estimatedKm,
+-      startDate,
+-      endDate,
+-    });
+-
+     let targetedDriverIds: string[] = [];
+ 
+     if (!driverId) {
+@@ -103,6 +96,15 @@ export class BookDriver implements IBookDriverUseCase  {
+       }
+     }
+ 
++    // Priced after matching so the low-supply rule can see how many drivers are nearby
++    const estimatedFare = this._fareCalculator.calculate({
++      bookingType,
++      estimatedKm: data.estimatedKm,
++      startDate,
++      endDate,
++      ...(!driverId && { availableDrivers: targetedDriverIds.length }),
++    });
++
+     const newBooking: Booking = {
+       userId: new Types.ObjectId(data.userId),
+       ...(driverId && { driverId: new Types.ObjectId(driverId) }),
+diff --git a/src/domain/models/Booking.ts b/src/domain/models/Booking.ts
+index e83390a..79d3e85 100644
+--- a/src/domain/models/Booking.ts
++++ b/src/domain/models/Booking.ts
+@@ -16,6 +16,8 @@ export enum BookingStatus {
+ export enum BookingType {
+   ONE_WAY = "ONE_RIDE",
+     ROUND_TRIP = "RANGE_OF_DATES",  
++  HOURLY = "HOURLY",
++  OUTSTATION = "OUTSTATION",
+         }
+ export interface Booking {
+     _id?: Types.ObjectId | string;
+diff --git a/src/domain/pricing/DynamicPricing.ts b/src/domain/pricing/DynamicPricing.ts
+new file mode 100644
+index 0000000..4ec3544
+--- /dev/null
++++ b/src/domain/pricing/DynamicPricing.ts
+@@ -0,0 +1,40 @@
++import { FareRequest, FareStrategy } from "./FareStrategy";
++
++/**
++ * Decorator: dynamic-pricing rules wrap any FareStrategy and adjust its result,
++ * so a rule can be added without touching the ride-type strategies.
++ */
++export abstract class FareDecorator implements FareStrategy {
++  constructor(protected readonly inner: FareStrategy) {}
++
++  get extraKmRate(): number {
++    return this.inner.extraKmRate;
++  }
++
++  abstract calculate(request: FareRequest): number;
++}
++
++const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
++const istHour = (date: Date) => new Date(new Date(date).getTime() + IST_OFFSET_MS).getUTCHours();
++
++/** +25% when the ride starts 08:00-10:59 or 17:00-20:59 IST. */
++export class PeakHourSurcharge extends FareDecorator {
++  static readonly MULTIPLIER = 1.25;
++  calculate(request: FareRequest): number {
++    const fare = this.inner.calculate(request);
++    const hour = istHour(request.startDate);
++    const peak = (hour >= 8 && hour < 11) || (hour >= 17 && hour < 21);
++    return peak ? Math.round(fare * PeakHourSurcharge.MULTIPLIER) : fare;
++  }
++}
++
++/** +20% when fewer than 3 drivers are available near the pickup. */
++export class LowSupplySurcharge extends FareDecorator {
++  static readonly MULTIPLIER = 1.2;
++  static readonly THRESHOLD = 3;
++  calculate(request: FareRequest): number {
++    const fare = this.inner.calculate(request);
++    const lowSupply = request.availableDrivers !== undefined && request.availableDrivers < LowSupplySurcharge.THRESHOLD;
++    return lowSupply ? Math.round(fare * LowSupplySurcharge.MULTIPLIER) : fare;
++  }
++}
+diff --git a/src/domain/pricing/FareStrategy.ts b/src/domain/pricing/FareStrategy.ts
+new file mode 100644
+index 0000000..64ad31b
+--- /dev/null
++++ b/src/domain/pricing/FareStrategy.ts
+@@ -0,0 +1,68 @@
++import { BookingType } from "../models/Booking";
++import { AuthError } from "../errors/Autherror";
++import { HTTP_STATUS_CODES } from "../../constants/HttpStatusCode";
++
++export interface FareRequest {
++  bookingType: BookingType;
++  estimatedKm?: number;
++  startDate: Date;
++  endDate?: Date;
++  /** Drivers that can take the ride near the pickup; unknown for a plain estimate. */
++  availableDrivers?: number;
++}
++
++/** Strategy: one fare algorithm per ride type. */
++export interface FareStrategy {
++  calculate(request: FareRequest): number;
++  /** Rate charged per extra km reported by the driver when the ride completes. */
++  readonly extraKmRate: number;
++}
++
++const DAY_MS = 1000 * 60 * 60 * 24;
++const HOUR_MS = 1000 * 60 * 60;
++
++const invalid = (message: string): never => {
++  throw new AuthError(message, HTTP_STATUS_CODES.BAD_REQUEST);
++};
++
++const calendarDays = (startDate: Date, endDate: Date) =>
++  Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / DAY_MS) + 1;
++
++/** ONE_WAY: Rs 10 per km, minimum Rs 450 (baseline rule). */
++export class OneWayFare implements FareStrategy {
++  readonly extraKmRate = 10;
++  calculate({ estimatedKm }: FareRequest): number {
++    if (!estimatedKm) return invalid("Estimated KM is required for ONE_WAY booking");
++    return Math.max(450, estimatedKm * 10);
++  }
++}
++
++/** ROUND_TRIP (range of dates): Rs 1000 per calendar day, inclusive (baseline rule). */
++export class RoundTripFare implements FareStrategy {
++  readonly extraKmRate = 10;
++  calculate({ startDate, endDate }: FareRequest): number {
++    if (!endDate) return invalid("End date is required for ROUND_TRIP booking");
++    return calendarDays(startDate, endDate) * 1000;
++  }
++}
++
++/** HOURLY: Rs 200 per started hour, minimum 4 hours. */
++export class HourlyFare implements FareStrategy {
++  readonly extraKmRate = 10;
++  calculate({ startDate, endDate }: FareRequest): number {
++    if (!endDate) return invalid("End time is required for HOURLY booking");
++    const hours = Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / HOUR_MS);
++    if (hours <= 0) return invalid("End time must be after start time");
++    return Math.max(4, hours) * 200;
++  }
++}
++
++/** OUTSTATION: Rs 12 per km plus Rs 300 driver allowance per calendar day. */
++export class OutstationFare implements FareStrategy {
++  readonly extraKmRate = 12;
++  calculate({ estimatedKm, startDate, endDate }: FareRequest): number {
++    if (!estimatedKm) return invalid("Estimated KM is required for OUTSTATION booking");
++    if (!endDate) return invalid("End date is required for OUTSTATION booking");
++    return estimatedKm * 12 + calendarDays(startDate, endDate) * 300;
++  }
++}
+diff --git a/src/infrastructure/services/FareCalculatorService.ts b/src/infrastructure/services/FareCalculatorService.ts
+index dbac7a7..186a778 100644
+--- a/src/infrastructure/services/FareCalculatorService.ts
++++ b/src/infrastructure/services/FareCalculatorService.ts
+@@ -2,37 +2,35 @@ import { injectable } from "tsyringe";
+ import { IFareCalculatorService } from "../../application/services/FareCalculatorService";
+ import { BookingType } from "../../domain/models/Booking";
+ import { AuthError } from "../../domain/errors/Autherror";
++import { FareRequest, FareStrategy, HourlyFare, OneWayFare, OutstationFare, RoundTripFare } from "../../domain/pricing/FareStrategy";
++import { LowSupplySurcharge, PeakHourSurcharge } from "../../domain/pricing/DynamicPricing";
+ 
++/** Strategy context: picks the fare strategy for the ride type and applies dynamic pricing on top. */
+ @injectable()
+ export class FareCalculatorService implements IFareCalculatorService {
+-  private readonly PER_KM_RATE = 10; // move to env/config later
+-  private readonly PER_DAY_RATE = 1000;
++  private readonly strategies = new Map<BookingType, FareStrategy>([
++    [BookingType.ONE_WAY, new OneWayFare()],
++    [BookingType.ROUND_TRIP, new RoundTripFare()],
++    [BookingType.HOURLY, new HourlyFare()],
++    [BookingType.OUTSTATION, new OutstationFare()],
++  ]);
+ 
+-  calculate(params: {
+-    bookingType: BookingType;
+-    estimatedKm?: number;
+-    startDate: Date;
+-    endDate?: Date;
+-  }): number {
+-    const { bookingType, estimatedKm, startDate, endDate } = params;
+-let fare = 0;
+- console.log(params)
+-    if (bookingType === BookingType.ONE_WAY) {
+-      if (!estimatedKm) throw new Error("Estimated KM is required for ONE_WAY booking");
+-      fare= estimatedKm * this.PER_KM_RATE;
+-   
+-      return fare < 450 ? 450 : fare;
+-    }
+-   
+-    if (bookingType === BookingType.ROUND_TRIP) {
+-      if (!endDate) throw new Error("End date is required for ROUND_TRIP booking");
+-      const start = new Date(startDate).getTime();
+-      const end = new Date(endDate).getTime();
+-      const dayCount = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+-      
+-      return dayCount * this.PER_DAY_RATE;
+-    }
++  register(bookingType: BookingType, strategy: FareStrategy): void {
++    this.strategies.set(bookingType, strategy);
++  }
++
++  calculate(params: FareRequest): number {
++    const priced = new LowSupplySurcharge(new PeakHourSurcharge(this.strategyFor(params.bookingType)));
++    return priced.calculate(params);
++  }
++
++  finalFare({ bookingType, estimatedFare, finalKm }: { bookingType: BookingType; estimatedFare?: number; finalKm: number }): number {
++    return (estimatedFare || 0) + finalKm * this.strategyFor(bookingType).extraKmRate;
++  }
+ 
+-    throw new AuthError("Invalid booking type", 400);
++  private strategyFor(bookingType: BookingType): FareStrategy {
++    const strategy = this.strategies.get(bookingType);
++    if (!strategy) throw new AuthError("Invalid booking type", 400);
++    return strategy;
+   }
+ }
+diff --git a/tests/booking.test.ts b/tests/booking.test.ts
+index 4c3140b..72a52d7 100644
+--- a/tests/booking.test.ts
++++ b/tests/booking.test.ts
+@@ -10,27 +10,27 @@ import { BookingStatus, BookingType } from "../src/domain/models/Booking";
+ import { FakeBookingRepo, FakeDriverRepo, FakeNotifier, FakeDistance, makeBooking, id } from "./helpers/fakes";
+ 
+ const future = new Date(Date.now() + 5 * 24 * 3600 * 1000);
++// CH03: fixed off-peak start (12:00 IST) so dynamic pricing does not apply to the baseline expectation
++const offPeak = new Date("2027-01-15T06:30:00.000Z");
+ 
+ test("BookDriver broadcasts only to drivers within 20 km road distance and saves a PENDING trip", async () => {
+   const bookings = new FakeBookingRepo();
+   const drivers = new FakeDriverRepo();
+-  const [near, far] = [id(), id()];
+-  drivers.nearby = [
+-    { _id: near, latitude: 10.01, longitude: 76.3 },
+-    { _id: far, latitude: 10.2, longitude: 76.3 },
+-  ];
++  // CH03: three drivers in range = normal supply, so the low-supply surcharge does not apply
++  const [n1, n2, n3, far] = [id(), id(), id(), id()];
++  drivers.nearby = [n1, n2, n3, far].map((d) => ({ _id: d, latitude: 10.01, longitude: 76.3 }));
+   const notifier = new FakeNotifier();
+   const useCase = new BookDriver(bookings as any, drivers as any, new FareCalculatorService(), notifier as any,
+-    new FakeDistance({ [near]: 4, [far]: 25 }) as any);
++    new FakeDistance({ [n1]: 4, [n2]: 9, [n3]: 19, [far]: 25 }) as any);
+ 
+   const saved = await useCase.execute({
+-    userId: id(), fromLocation: "Kochi", toLocation: "Aluva", startDate: future,
++    userId: id(), fromLocation: "Kochi", toLocation: "Aluva", startDate: offPeak,
+     estimatedKm: 30, bookingType: BookingType.ONE_WAY, fromLat: 10, fromLng: 76.3,
+   });
+ 
+   assert.equal(saved.status, BookingStatus.PENDING);
+   assert.equal(saved.estimatedFare, 450);
+-  assert.deepEqual(notifier.calls.map((c) => [c[0], c[1]]), [["broadcastBookingNotification", near]]);
++  assert.deepEqual(notifier.calls.map((c) => [c[0], c[1]]), [["broadcastBookingNotification", [n1, n2, n3].join(",")]]);
+ });
+ 
+ test("BookDriver refuses the request when no driver is within 20 km by road", async () => {
+@@ -69,7 +69,7 @@ test("rider cancelling a CONFIRMED trip notifies the assigned driver", async ()
+ test("driver completing a trip stores finalFare = estimatedFare + finalKm * 10", async () => {
+   const bookings = new FakeBookingRepo();
+   const b = bookings.seed(makeBooking({ status: BookingStatus.CONFIRMED, driverId: new Types.ObjectId() }));
+-  const useCase = new UpdateBookingStatus(bookings as any, new FakeNotifier() as any);
++  const useCase = new UpdateBookingStatus(bookings as any, new FakeNotifier() as any, new FareCalculatorService());
+   await useCase.execute({ bookingId: String(b._id), status: BookingStatus.COMPLETED, finalKm: 12 });
+   assert.equal((await bookings.findBookingById(String(b._id)))?.finalFare, 570);
+ });
+@@ -77,6 +77,6 @@ test("driver completing a trip stores finalFare = estimatedFare + finalKm * 10",
+ test("completing a trip without finalKm is rejected", async () => {
+   const bookings = new FakeBookingRepo();
+   const b = bookings.seed(makeBooking({ status: BookingStatus.CONFIRMED }));
+-  const useCase = new UpdateBookingStatus(bookings as any, new FakeNotifier() as any);
++  const useCase = new UpdateBookingStatus(bookings as any, new FakeNotifier() as any, new FareCalculatorService());
+   await assert.rejects(useCase.execute({ bookingId: String(b._id), status: BookingStatus.COMPLETED }));
+ });
+diff --git a/tests/cancellation.test.ts b/tests/cancellation.test.ts
+index eddd866..71e3ae0 100644
+--- a/tests/cancellation.test.ts
++++ b/tests/cancellation.test.ts
+@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
+ import { Types } from "mongoose";
+ import { CancelBookingInputUseCase } from "../src/application/use_cases/User/CancelBooking";
+ import { UpdateBookingStatus } from "../src/application/use_cases/Driver/UpdateBookingstatus";
++import { FareCalculatorService } from "../src/infrastructure/services/FareCalculatorService";
+ import { TripLifecycle, TripEvent } from "../src/domain/booking/TripState";
+ import { RiderCancellationPolicy, DriverCancellationPolicy, cancellationCutoff } from "../src/domain/booking/CancellationPolicy";
+ import { InvalidTransitionError } from "../src/domain/errors/InvalidTransitionError";
+@@ -122,7 +123,7 @@ test("CH02 cancelling an unaccepted broadcast request dismisses the drivers' pop
+ test("CH02 driver status update follows the trip state (cannot complete a PENDING ride)", async () => {
+   const bookings = new FakeBookingRepo();
+   const b = bookings.seed(makeBooking({ status: BookingStatus.PENDING }));
+-  const useCase = new UpdateBookingStatus(bookings as any, new FakeNotifier() as any);
++  const useCase = new UpdateBookingStatus(bookings as any, new FakeNotifier() as any, new FareCalculatorService());
+   await assert.rejects(useCase.execute({ bookingId: String(b._id), status: BookingStatus.COMPLETED, finalKm: 5 }),
+     InvalidTransitionError);
+   await assert.rejects(useCase.execute({ bookingId: String(b._id), status: BookingStatus.CANCELLED }), /cancel endpoint/);
+diff --git a/tests/pricing.test.ts b/tests/pricing.test.ts
+new file mode 100644
+index 0000000..788c1bf
+--- /dev/null
++++ b/tests/pricing.test.ts
+@@ -0,0 +1,82 @@
++import "reflect-metadata";
++import { test } from "node:test";
++import assert from "node:assert/strict";
++import { FareCalculatorService } from "../src/infrastructure/services/FareCalculatorService";
++import { BookDriver } from "../src/application/use_cases/User/BookDriver";
++import { FareStrategy, OneWayFare } from "../src/domain/pricing/FareStrategy";
++import { PeakHourSurcharge, LowSupplySurcharge } from "../src/domain/pricing/DynamicPricing";
++import { BookingType } from "../src/domain/models/Booking";
++import { FakeBookingRepo, FakeDriverRepo, FakeNotifier, FakeDistance, id } from "./helpers/fakes";
++
++// CH03 - multiple ride types (Strategy) and dynamic pricing (Decorator).
++
++const calc = new FareCalculatorService();
++const noon = new Date("2027-01-15T06:30:00.000Z"); // 12:00 IST, off-peak
++const plusHours = (d: Date, h: number) => new Date(d.getTime() + h * 3600 * 1000);
++const plusDays = (d: Date, n: number) => new Date(d.getTime() + n * 24 * 3600 * 1000);
++
++// Same fixtures as Part3/test-cases/strategy_spec.md (S1-S8), expressed with dates.
++test("CH03 ride-type strategies S1-S8", () => {
++  assert.equal(calc.calculate({ bookingType: BookingType.ONE_WAY, estimatedKm: 30, startDate: noon }), 450);
++  assert.equal(calc.calculate({ bookingType: BookingType.ONE_WAY, estimatedKm: 60, startDate: noon }), 600);
++  assert.equal(calc.calculate({ bookingType: BookingType.ROUND_TRIP, startDate: noon, endDate: plusDays(noon, 2) }), 3000);
++  assert.equal(calc.calculate({ bookingType: BookingType.HOURLY, startDate: noon, endDate: plusHours(noon, 3) }), 800);
++  assert.equal(calc.calculate({ bookingType: BookingType.HOURLY, startDate: noon, endDate: plusHours(noon, 5.5) }), 1200);
++  assert.equal(calc.calculate({ bookingType: BookingType.OUTSTATION, estimatedKm: 200, startDate: noon,
++    endDate: plusDays(noon, 1) }), 3000);
++  assert.throws(() => calc.calculate({ bookingType: BookingType.ONE_WAY, estimatedKm: 0, startDate: noon }), /required/);
++  assert.throws(() => calc.calculate({ bookingType: "SHUTTLE" as BookingType, estimatedKm: 10, startDate: noon }),
++    /Invalid booking type/);
++});
++
++test("CH03 peak hours add 25% through the calculator (08:00 IST)", () => {
++  assert.equal(calc.calculate({ bookingType: BookingType.ONE_WAY, estimatedKm: 60,
++    startDate: new Date("2027-01-15T02:30:00.000Z") }), 750);
++});
++
++test("CH03 peak boundary check by IST hour", () => {
++  const peak = new PeakHourSurcharge(new OneWayFare());
++  const fare = (utc: string) => peak.calculate({ bookingType: BookingType.ONE_WAY, estimatedKm: 60, startDate: new Date(utc) });
++  assert.equal(fare("2027-01-15T02:29:00.000Z"), 600); // 07:59 IST
++  assert.equal(fare("2027-01-15T05:29:00.000Z"), 750); // 10:59 IST
++  assert.equal(fare("2027-01-15T05:30:00.000Z"), 600); // 11:00 IST
++  assert.equal(fare("2027-01-15T11:30:00.000Z"), 750); // 17:00 IST
++  assert.equal(fare("2027-01-15T15:30:00.000Z"), 600); // 21:00 IST
++});
++
++test("CH03 fewer than 3 nearby drivers adds 20%; unknown supply adds nothing", () => {
++  const f = (availableDrivers?: number) =>
++    calc.calculate({ bookingType: BookingType.ONE_WAY, estimatedKm: 60, startDate: noon, availableDrivers });
++  assert.deepEqual([f(undefined), f(1), f(2), f(3)], [600, 720, 720, 600]);
++});
++
++test("CH03 decorators stack: peak + low supply", () => {
++  const evening = new Date("2027-01-15T12:30:00.000Z"); // 18:00 IST
++  assert.equal(calc.calculate({ bookingType: BookingType.ONE_WAY, estimatedKm: 60, startDate: evening, availableDrivers: 1 }), 900);
++});
++
++test("CH03 a new ride type is added by registering a strategy, without editing existing ones", () => {
++  const custom = new FareCalculatorService();
++  const flat: FareStrategy = { extraKmRate: 10, calculate: () => 999 };
++  custom.register("AIRPORT" as BookingType, flat);
++  assert.equal(custom.calculate({ bookingType: "AIRPORT" as BookingType, startDate: noon }), 999);
++  assert.equal(custom.calculate({ bookingType: BookingType.ONE_WAY, estimatedKm: 60, startDate: noon }), 600);
++});
++
++test("CH03 final fare uses the ride type's extra-km rate (baseline Rs 10, outstation Rs 12)", () => {
++  assert.equal(calc.finalFare({ bookingType: BookingType.ONE_WAY, estimatedFare: 450, finalKm: 12 }), 570);
++  assert.equal(calc.finalFare({ bookingType: BookingType.OUTSTATION, estimatedFare: 3000, finalKm: 10 }), 3120);
++});
++
++test("CH03 BookDriver applies the low-supply surcharge when only one driver is in range", async () => {
++  const drivers = new FakeDriverRepo();
++  const near = id();
++  drivers.nearby = [{ _id: near, latitude: 10.01, longitude: 76.3 }];
++  const useCase = new BookDriver(new FakeBookingRepo() as any, drivers as any, calc, new FakeNotifier() as any,
++    new FakeDistance({ [near]: 5 }) as any);
++  const saved = await useCase.execute({
++    userId: id(), fromLocation: "Kochi", startDate: noon, endDate: plusHours(noon, 6),
++    bookingType: BookingType.HOURLY, fromLat: 10, fromLng: 76.3,
++  });
++  assert.equal(saved.estimatedFare, 1440); // 6 h * 200 = 1200, +20%
++});

@@ -1,0 +1,62 @@
+﻿PART 1 - APPLICATION ANALYSIS
+
+Application:
+Warehouse & Transportation Management System (WTMS)
+
+Framework:
+FastAPI
+
+Database:
+PostgreSQL
+
+Inspected modules:
+- app/api/warehouses.py
+- app/api/inventory.py
+- app/api/orders.py
+- app/api/transportation.py
+- app/repositories/warehouses_repositories.py
+- app/repositories/inventory_repositories.py
+- app/repositories/order_repositories.py
+- app/repositories/shipment_repositories.py
+- app/database.py
+
+Confirmed architectural pattern:
+Repository Pattern
+
+Confirmed Repository instances:
+1. WarehouseRepository
+2. InventoryRepository
+3. OrderRepository
+4. TransportationRepository
+
+Evidence:
+The API modules obtain repository objects through FastAPI dependency injection and delegate database-related operations to repository classes. The repository classes hold a Database object and perform database operations through that abstraction.
+
+Additional architectural mechanisms observed:
+- FastAPI dependency injection using Depends()
+- Database abstraction and connection pooling
+- Transaction context manager
+- Router-based API organization
+- JWT/OAuth2 authentication
+- Custom exception hierarchy
+
+Patterns NOT counted as confirmed:
+- Singleton
+- Factory
+- Strategy
+- Service Layer
+
+Reason:
+The inspected source code did not provide sufficient implementation evidence to classify these as implemented design patterns.
+
+Runtime baseline:
+- PostgreSQL 18.6
+- PostgreSQL port: 5433
+- Database: wtms
+- FastAPI application successfully started
+- Swagger UI available at /docs
+- GET /api/v1/warehouses/?skip=0&limit=100 returned HTTP 200
+- Database initialized successfully with 4 warehouses
+
+Part 1 conclusion:
+The strongest formally evidenced pattern in the inspected application is the Repository Pattern, with four confirmed repository instances covering warehouse, inventory, order, and transportation operations.

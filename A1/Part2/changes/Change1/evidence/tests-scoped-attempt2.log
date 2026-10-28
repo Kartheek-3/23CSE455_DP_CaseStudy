@@ -1,0 +1,151 @@
+Creating test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...
+Found 37 test(s).
+Operations to perform:
+  Synchronize unmigrated apps: allauth, channels, corsheaders, google, messages, staticfiles
+  Apply all migrations: account, admin, auth, canteenapp, contenttypes, sessions, sites, social_django, socialaccount
+Synchronizing apps without migrations:
+  Creating tables...
+    Running deferred SQL...
+Running migrations:
+  Applying contenttypes.0001_initial... OK
+  Applying contenttypes.0002_remove_content_type_name... OK
+  Applying auth.0001_initial... OK
+  Applying auth.0002_alter_permission_name_max_length... OK
+  Applying auth.0003_alter_user_email_max_length... OK
+  Applying auth.0004_alter_user_username_opts... OK
+  Applying auth.0005_alter_user_last_login_null... OK
+  Applying auth.0006_require_contenttypes_0002... OK
+  Applying auth.0007_alter_validators_add_error_messages... OK
+  Applying auth.0008_alter_user_username_max_length... OK
+  Applying auth.0009_alter_user_last_name_max_length... OK
+  Applying auth.0010_alter_group_name_max_length... OK
+  Applying auth.0011_update_proxy_permissions... OK
+  Applying auth.0012_alter_user_first_name_max_length... OK
+  Applying canteenapp.0001_initial... OK
+  Applying account.0001_initial... OK
+  Applying account.0002_email_max_length... OK
+  Applying account.0003_alter_emailaddress_create_unique_verified_email... OK
+  Applying account.0004_alter_emailaddress_drop_unique_email... OK
+  Applying account.0005_emailaddress_idx_upper_email... OK
+  Applying account.0006_emailaddress_lower... OK
+  Applying account.0007_emailaddress_idx_email... OK
+  Applying account.0008_emailaddress_unique_primary_email_fixup... OK
+  Applying account.0009_emailaddress_unique_primary_email... OK
+  Applying admin.0001_initial... OK
+  Applying admin.0002_logentry_remove_auto_add... OK
+  Applying admin.0003_logentry_add_action_flag_choices... OK
+  Applying canteenapp.0002_remove_payment_created_at_payment_initiated_at... OK
+  Applying canteenapp.0003_rename_initiated_at_payment_created_at_and_more... OK
+  Applying canteenapp.0004_device... OK
+  Applying canteenapp.0005_delete_device... OK
+  Applying canteenapp.0006_userfcmtoken... OK
+  Applying canteenapp.0007_delete_userfcmtoken... OK
+  Applying canteenapp.0008_userdevicetoken... OK
+  Applying canteenapp.0009_adminnotification_deliverypersonnotification_and_more... OK
+  Applying canteenapp.0010_item_count... OK
+  Applying canteenapp.0011_alter_item_count... OK
+  Applying canteenapp.0012_alter_order_customer_status... OK
+  Applying canteenapp.0013_alter_order_delivery_type... OK
+  Applying canteenapp.0014_restaurant_restaurant_description... OK
+  Applying canteenapp.0015_order_order_pin... OK
+  Applying canteenapp.0016_alter_order_order_pin... OK
+  Applying sessions.0001_initial... OK
+  Applying sites.0001_initial... OK
+  Applying sites.0002_alter_domain_unique... OK
+  Applying social_django.0001_initial... OK
+  Applying social_django.0002_add_related_name... OK
+  Applying social_django.0003_alter_email_max_length... OK
+  Applying social_django.0004_auto_20160423_0400... OK
+  Applying social_django.0005_auto_20160727_2333... OK
+  Applying social_django.0006_partial... OK
+  Applying social_django.0007_code_timestamp... OK
+  Applying social_django.0008_partial_timestamp... OK
+  Applying social_django.0009_auto_20191118_0520... OK
+  Applying social_django.0010_uid_db_index... OK
+  Applying social_django.0011_alter_id_fields... OK
+  Applying social_django.0012_usersocialauth_extra_data_new... OK
+  Applying social_django.0013_migrate_extra_data... OK
+  Applying social_django.0014_remove_usersocialauth_extra_data... OK
+  Applying social_django.0015_rename_extra_data_new_usersocialauth_extra_data... OK
+  Applying social_django.0016_alter_usersocialauth_extra_data... OK
+  Applying social_django.0017_usersocialauth_user_social_auth_uid_required... OK
+  Applying socialaccount.0001_initial... OK
+  Applying socialaccount.0002_token_max_lengths... OK
+  Applying socialaccount.0003_extra_data_default_dict... OK
+  Applying socialaccount.0004_app_provider_id_settings... OK
+  Applying socialaccount.0005_socialtoken_nullable_app... OK
+  Applying socialaccount.0006_alter_socialaccount_extra_data...Destroying test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...
+ OK
+Traceback (most recent call last):
+  File "/workspace/scratch/ac905c27eac1/ch01/working/manage.py", line 22, in <module>
+    main()
+  File "/workspace/scratch/ac905c27eac1/ch01/working/manage.py", line 18, in main
+    execute_from_command_line(sys.argv)
+  File "/workspace/scratch/ac905c27eac1/ch01/venv/lib/python3.12/site-packages/django/core/management/__init__.py", line 443, in execute_from_command_line
+    utility.execute()
+  File "/workspace/scratch/ac905c27eac1/ch01/venv/lib/python3.12/site-packages/django/core/management/__init__.py", line 437, in execute
+    self.fetch_command(subcommand).run_from_argv(self.argv)
+  File "/workspace/scratch/ac905c27eac1/ch01/venv/lib/python3.12/site-packages/django/core/management/commands/test.py", line 24, in run_from_argv
+    super().run_from_argv(argv)
+  File "/workspace/scratch/ac905c27eac1/ch01/venv/lib/python3.12/site-packages/django/core/management/base.py", line 420, in run_from_argv
+    self.execute(*args, **cmd_options)
+  File "/workspace/scratch/ac905c27eac1/ch01/venv/lib/python3.12/site-packages/django/core/management/base.py", line 464, in execute
+    output = self.handle(*args, **options)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/ac905c27eac1/ch01/venv/lib/python3.12/site-packages/django/core/management/commands/test.py", line 63, in handle
+    failures = test_runner.run_tests(test_labels)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/ac905c27eac1/ch01/venv/lib/python3.12/site-packages/django/test/runner.py", line 1133, in run_tests
+    self.run_checks(databases)
+  File "/workspace/scratch/ac905c27eac1/ch01/venv/lib/python3.12/site-packages/django/test/runner.py", line 1055, in run_checks
+    call_command("check", verbosity=self.verbosity, databases=databases)
+  File "/workspace/scratch/ac905c27eac1/ch01/venv/lib/python3.12/site-packages/django/core/management/__init__.py", line 195, in call_command
+    return command.execute(*args, **defaults)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/ac905c27eac1/ch01/venv/lib/python3.12/site-packages/django/core/management/base.py", line 464, in execute
+    output = self.handle(*args, **options)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/ac905c27eac1/ch01/venv/lib/python3.12/site-packages/django/core/management/commands/check.py", line 81, in handle
+    self.check(
+  File "/workspace/scratch/ac905c27eac1/ch01/venv/lib/python3.12/site-packages/django/core/management/base.py", line 496, in check
+    all_issues = checks.run_checks(
+                 ^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/ac905c27eac1/ch01/venv/lib/python3.12/site-packages/django/core/checks/registry.py", line 89, in run_checks
+    new_errors = check(app_configs=app_configs, databases=databases)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/ac905c27eac1/ch01/venv/lib/python3.12/site-packages/django/core/checks/urls.py", line 44, in check_url_namespaces_unique
+    all_namespaces = _load_all_namespaces(resolver)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/ac905c27eac1/ch01/venv/lib/python3.12/site-packages/django/core/checks/urls.py", line 63, in _load_all_namespaces
+    url_patterns = getattr(resolver, "url_patterns", [])
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/ac905c27eac1/ch01/venv/lib/python3.12/site-packages/django/utils/functional.py", line 47, in __get__
+    res = instance.__dict__[self.name] = self.func(instance)
+                                         ^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/ac905c27eac1/ch01/venv/lib/python3.12/site-packages/django/urls/resolvers.py", line 729, in url_patterns
+    patterns = getattr(self.urlconf_module, "urlpatterns", self.urlconf_module)
+                       ^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/ac905c27eac1/ch01/venv/lib/python3.12/site-packages/django/utils/functional.py", line 47, in __get__
+    res = instance.__dict__[self.name] = self.func(instance)
+                                         ^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/ac905c27eac1/ch01/venv/lib/python3.12/site-packages/django/urls/resolvers.py", line 722, in urlconf_module
+    return import_module(self.urlconf_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 999, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/workspace/scratch/ac905c27eac1/ch01/working/canteen/urls.py", line 5, in <module>
+    from canteenapp import views
+  File "/workspace/scratch/ac905c27eac1/ch01/working/canteenapp/views.py", line 58, in <module>
+    import payu_sdk
+  File "/workspace/scratch/ac905c27eac1/ch01/venv/lib/python3.12/site-packages/payu_sdk/__init__.py", line 4, in <module>
+    from payu_sdk.payuClient import payUClient
+  File "/workspace/scratch/ac905c27eac1/ch01/venv/lib/python3.12/site-packages/payu_sdk/payuClient.py", line 3, in <module>
+    import pkg_resources
+ModuleNotFoundError: No module named 'pkg_resources'

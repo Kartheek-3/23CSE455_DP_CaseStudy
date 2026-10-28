@@ -1,0 +1,32 @@
+Pattern: Composite
+Instance: Visibility Condition Tree
+Language: C++
+Compiler/Runtime: g++ MinGW GCC 6.3.0 (-O2 -std=c++14)
+Warmup + 5 Runs Raw Output:
+--- Run 1 ---
+RESULT: 6/6 passed
+TIME_MS: 0.0313
+
+
+--- Run 2 ---
+RESULT: 6/6 passed
+TIME_MS: 0.0466
+
+
+--- Run 3 ---
+RESULT: 6/6 passed
+TIME_MS: 0.0341
+
+
+--- Run 4 ---
+RESULT: 6/6 passed
+TIME_MS: 0.0692
+
+
+--- Run 5 ---
+RESULT: 6/6 passed
+TIME_MS: 0.0585
+
+
+Measured Milliseconds: [0.0313, 0.0466, 0.0341, 0.0692, 0.0585]
+Computed Median Milliseconds: 0.047

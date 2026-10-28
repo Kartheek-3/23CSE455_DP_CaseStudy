@@ -1,0 +1,6 @@
+# case|commands (separated by ;)|expected (output lines joined by ~)
+default_backend|log info starting|info: starting
+switch_to_pretty|set pretty;log warn disk low|[WARN] disk low
+switch_to_json|set json;log error boom|{"level":"error","message":"boom"}
+runtime_swap|log info a;set json;log info b;set pretty;log info c|info: a~{"level":"info","message":"b"}~[INFO] c
+null_backend_rejected|set null;log info still works|ERR:backend is required~info: still works

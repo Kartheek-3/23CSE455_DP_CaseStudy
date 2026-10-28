@@ -1,0 +1,386 @@
+﻿   1: // features/ai-assistant/llmService.ts
+   2: import Anthropic from '@anthropic-ai/sdk'
+   3: import { GoogleGenAI } from '@google/genai'
+   4: import OpenAI from 'openai'
+   5: import type { AIMessage, GeneratedPostData, LLMProvider } from './types'
+   6: import { AVAILABLE_MODELS } from './types'
+   7: 
+   8: // ─── Types ───────────────────────────────────────────────────────────────────
+   9: 
+  10: type SendMessageParams = {
+  11:   model: string
+  12:   provider: LLMProvider
+  13:   messages: AIMessage[]
+  14:   extractedText: string
+  15:   apiKey: string
+  16: }
+  17: 
+  18: type GenerateBlogPostParams = {
+  19:   model: string
+  20:   messages: Pick<AIMessage, 'role' | 'content'>[]
+  21:   extractedText: string
+  22:   apiKey: string
+  23: }
+  24: 
+  25: // ─── Prompts ─────────────────────────────────────────────────────────────────
+  26: 
+  27: const GENERATE_POST_PROMPT = `Based on the following conversation about the uploaded document, generate a complete, publish-ready blog post.
+  28: 
+  29: Return ONLY a valid JSON object with NO markdown formatting, NO code blocks, just raw JSON:
+  30: {
+  31:   "title": "Compelling blog post title",
+  32:   "meta_title": "SEO meta title (max 60 chars)",
+  33:   "meta_description": "SEO meta description (max 160 chars)",
+  34:   "excerpt": "2-3 sentence plain text summary",
+  35:   "content": "Full post content as HTML using <h2>, <p>, <ul>, <strong> tags",
+  36:   "tags": ["tag1", "tag2", "tag3"],
+  37:   "category": "most appropriate category"
+  38: }
+  39: 
+  40: The post should be well-structured, SEO-friendly, and between 800-1500 words.`
+  41: 
+  42: // ─── System Prompt Builder ────────────────────────────────────────────────────
+  43: 
+  44: export function buildSystemPrompt(extractedText: string, modelId: string): string {
+  45:   const model = AVAILABLE_MODELS.find((m) => m.id === resolveGeminiModel(modelId))
+  46:   const contextWindow = model?.contextWindow ?? 128000
+  47:   const reservedTokens = 8000
+  48:   const availableTokens = contextWindow - reservedTokens
+  49:   const maxChars = availableTokens * 4 // ~4 chars per token
+  50: 
+  51:   const truncated = extractedText.length > maxChars
+  52:   const text = truncated
+  53:     ? extractedText.slice(0, maxChars) +
+  54:       '\n\n[Book text truncated to fit model context window.]'
+  55:     : extractedText
+  56: 
+  57:   return `You are an expert blog writing assistant. The user has uploaded a book or document and wants to create blog posts inspired by its content.
+  58: 
+  59: Here is the full text of the uploaded document:
+  60: ---
+  61: ${text}
+  62: ---
+  63: 
+  64: Help the user explore ideas, discuss themes, and craft compelling blog content based on this material. Be conversational, insightful, and practical.`
+  65: }
+  66: 
+  67: // ─── Claude streaming ─────────────────────────────────────────────────────────
+  68: 
+  69: async function* streamClaude(params: SendMessageParams): AsyncGenerator<string> {
+  70:   const client = new Anthropic({ apiKey: params.apiKey })
+  71: 
+  72:   const stream = client.messages.stream({
+  73:     model: params.model,
+  74:     max_tokens: 4096,
+  75:     system: buildSystemPrompt(params.extractedText, params.model),
+  76:     messages: params.messages.map((msg) => ({
+  77:       role: msg.role,
+  78:       content: msg.content,
+  79:     })),
+  80:   })
+  81: 
+  82:   for await (const event of stream) {
+  83:     if (
+  84:       event.type === 'content_block_delta' &&
+  85:       event.delta.type === 'text_delta'
+  86:     ) {
+  87:       yield event.delta.text
+  88:     }
+  89:   }
+  90: }
+  91: 
+  92: // ─── OpenAI streaming ─────────────────────────────────────────────────────────
+  93: 
+  94: async function* streamOpenAI(params: SendMessageParams): AsyncGenerator<string> {
+  95:   const client = new OpenAI({ apiKey: params.apiKey })
+  96: 
+  97:   const stream = await client.chat.completions.create({
+  98:     model: params.model,
+  99:     stream: true,
+ 100:     messages: [
+ 101:       {
+ 102:         role: 'system',
+ 103:         content: buildSystemPrompt(params.extractedText, params.model),
+ 104:       },
+ 105:       ...params.messages.map((msg) => ({
+ 106:         role: msg.role as 'user' | 'assistant',
+ 107:         content: msg.content,
+ 108:       })),
+ 109:     ],
+ 110:     max_tokens: 4096,
+ 111:     temperature: 0.7,
+ 112:   })
+ 113: 
+ 114:   for await (const chunk of stream) {
+ 115:     const delta = chunk.choices[0]?.delta?.content ?? ''
+ 116:     if (delta) yield delta
+ 117:   }
+ 118: }
+ 119: 
+ 120: // Persisted chats can still contain retired Gemini 1.5 model IDs.
+ 121: function resolveGeminiModel(model: string): string {
+ 122:   if (model === 'gemini-1.5-flash') return 'gemini-3.5-flash-lite'
+ 123:   if (model === 'gemini-1.5-pro') return 'gemini-3.8-flash'
+ 124:   return model
+ 125: }
+ 126: 
+ 127: // ─── Gemini streaming ─────────────────────────────────────────────────────────
+ 128: 
+ 129: async function* streamGemini(params: SendMessageParams): AsyncGenerator<string> {
+ 130:   const genAI = new GoogleGenAI({ apiKey: params.apiKey })
+ 131: 
+ 132:   const contents = params.messages.map((msg) => ({
+ 133:     role: msg.role === 'assistant' ? 'model' : 'user',
+ 134:     parts: [{ text: msg.content }],
+ 135:   }))
+ 136: 
+ 137:   const stream = await genAI.models.generateContentStream({
+ 138:     model: resolveGeminiModel(params.model),
+ 139:     contents,
+ 140:     config: { systemInstruction: buildSystemPrompt(params.extractedText, params.model) },
+ 141:   })
+ 142:   for await (const chunk of stream) {
+ 143:     const text = chunk.text
+ 144:     if (text) yield text
+ 145:   }
+ 146: }
+ 147: 
+ 148: // ─── Public API ───────────────────────────────────────────────────────────────
+ 149: 
+ 150: export function sendMessage(params: SendMessageParams): AsyncGenerator<string> {
+ 151:   if (params.provider === 'claude') return streamClaude(params)
+ 152:   if (params.provider === 'openai') return streamOpenAI(params)
+ 153:   if (params.provider === 'gemini') return streamGemini(params)
+ 154:   throw new Error(`Unsupported provider: ${params.provider}`)
+ 155: }
+ 156: 
+ 157: export async function generateBlogPost(
+ 158:   params: GenerateBlogPostParams
+ 159: ): Promise<GeneratedPostData> {
+ 160:   const provider: LLMProvider = params.model.startsWith('gemini')
+ 161:     ? 'gemini'
+ 162:     : params.model.startsWith('gpt')
+ 163:       ? 'openai'
+ 164:       : 'claude'
+ 165: 
+ 166:   const historyText = params.messages
+ 167:     .map((m) => `${m.role.toUpperCase()}: ${m.content}`)
+ 168:     .join('\n\n')
+ 169: 
+ 170:   const systemPrompt = buildSystemPrompt(params.extractedText, params.model)
+ 171:   const prompt = `${GENERATE_POST_PROMPT}\n\nConversation history:\n${historyText}`
+ 172: 
+ 173:   let rawJson: string
+ 174: 
+ 175:   if (provider === 'claude') {
+ 176:     const client = new Anthropic({ apiKey: params.apiKey })
+ 177:     const response = await client.messages.create({
+ 178:       model: params.model,
+ 179:       max_tokens: 4096,
+ 180:       system: systemPrompt,
+ 181:       messages: [{ role: 'user', content: prompt }],
+ 182:     })
+ 183:     const block = response.content.find((b) => b.type === 'text')
+ 184:     if (!block || block.type !== 'text') throw new Error('No text in Claude response')
+ 185:     rawJson = block.text
+ 186:   } else if (provider === 'openai') {
+ 187:     const client = new OpenAI({ apiKey: params.apiKey })
+ 188:     const response = await client.chat.completions.create({
+ 189:       model: params.model,
+ 190:       stream: false,
+ 191:       response_format: { type: 'json_object' },
+ 192:       messages: [
+ 193:         { role: 'system', content: 'You are a blog post generator. Always respond with valid JSON.' },
+ 194:         { role: 'user', content: `${systemPrompt}\n\n${prompt}` },
+ 195:       ],
+ 196:       max_tokens: 4096,
+ 197:       temperature: 0.7,
+ 198:     })
+ 199:     rawJson = response.choices[0].message.content ?? '{}'
+ 200:     // OpenAI json_object mode guarantees valid JSON — return directly
+ 201:     try {
+ 202:       return JSON.parse(rawJson) as GeneratedPostData
+ 203:     } catch {
+ 204:       throw new Error(`LLM returned invalid JSON: ${rawJson.slice(0, 200)}`)
+ 205:     }
+ 206:   } else {
+ 207:     const genAI = new GoogleGenAI({ apiKey: params.apiKey })
+ 208:     const result = await genAI.models.generateContent({
+ 209:       model: resolveGeminiModel(params.model),
+ 210:       contents: prompt,
+ 211:       config: { systemInstruction: systemPrompt, responseMimeType: 'application/json' },
+ 212:     })
+ 213:     rawJson = result.text ?? '{}'
+ 214:   }
+ 215: 
+ 216:   const cleaned = rawJson.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
+ 217: 
+ 218:   try {
+ 219:     return JSON.parse(cleaned) as GeneratedPostData
+ 220:   } catch {
+ 221:     throw new Error(`LLM returned invalid JSON: ${cleaned.slice(0, 200)}`)
+ 222:   }
+ 223: }
+ 224: 
+ 225: export type HeadlessGenerateParams = {
+ 226:   topic: string
+ 227:   context?: string
+ 228:   tone: string
+ 229:   wordCount: number
+ 230:   model: string
+ 231:   provider: LLMProvider
+ 232:   apiKey: string
+ 233: }
+ 234: 
+ 235: export async function generateBlogPostHeadless(
+ 236:   params: HeadlessGenerateParams
+ 237: ): Promise<GeneratedPostData> {
+ 238:   const contextLine = params.context ? `Additional context:\n${params.context}\n\n` : ''
+ 239: 
+ 240:   const prompt = `Write a complete, SEO-optimized blog post about the following topic:
+ 241: 
+ 242: Topic: ${params.topic}
+ 243: 
+ 244: ${contextLine}Tone: ${params.tone}
+ 245: Target word count: ${params.wordCount} words
+ 246: 
+ 247: Return ONLY a valid JSON object with NO markdown, NO code blocks:
+ 248: {
+ 249:   "title": "Compelling blog post title",
+ 250:   "meta_title": "SEO meta title (max 60 chars)",
+ 251:   "meta_description": "SEO meta description (max 160 chars)",
+ 252:   "excerpt": "2-3 sentence plain text summary",
+ 253:   "content": "Full post content as HTML using <h2>, <p>, <ul>, <strong> tags. Minimum ${params.wordCount} words.",
+ 254:   "tags": ["tag1", "tag2", "tag3"],
+ 255:   "category": "most appropriate category"
+ 256: }`
+ 257: 
+ 258:   let rawJson: string
+ 259: 
+ 260:   if (params.provider === 'claude') {
+ 261:     const client = new Anthropic({ apiKey: params.apiKey })
+ 262:     const response = await client.messages.create({
+ 263:       model: params.model,
+ 264:       max_tokens: 4096,
+ 265:       messages: [{ role: 'user', content: prompt }],
+ 266:     })
+ 267:     const block = response.content.find((b) => b.type === 'text')
+ 268:     if (!block || block.type !== 'text') throw new Error('No text in Claude response')
+ 269:     rawJson = block.text
+ 270:   } else if (params.provider === 'openai') {
+ 271:     const client = new OpenAI({ apiKey: params.apiKey })
+ 272:     const response = await client.chat.completions.create({
+ 273:       model: params.model,
+ 274:       stream: false,
+ 275:       response_format: { type: 'json_object' },
+ 276:       messages: [
+ 277:         { role: 'system', content: 'You are a blog post generator. Always respond with valid JSON.' },
+ 278:         { role: 'user', content: prompt },
+ 279:       ],
+ 280:       max_tokens: 4096,
+ 281:       temperature: 0.7,
+ 282:     })
+ 283:     rawJson = response.choices[0].message.content ?? '{}'
+ 284:     try {
+ 285:       return JSON.parse(rawJson) as GeneratedPostData
+ 286:     } catch {
+ 287:       throw new Error(`LLM returned invalid JSON: ${rawJson.slice(0, 200)}`)
+ 288:     }
+ 289:   } else {
+ 290:     const genAI = new GoogleGenAI({ apiKey: params.apiKey })
+ 291:     const result = await genAI.models.generateContent({
+ 292:       model: resolveGeminiModel(params.model),
+ 293:       contents: prompt,
+ 294:       config: { responseMimeType: 'application/json' },
+ 295:     })
+ 296:     rawJson = result.text ?? '{}'
+ 297:   }
+ 298: 
+ 299:   const cleaned = rawJson.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
+ 300: 
+ 301:   try {
+ 302:     return JSON.parse(cleaned) as GeneratedPostData
+ 303:   } catch {
+ 304:     throw new Error(`LLM returned invalid JSON: ${cleaned.slice(0, 200)}`)
+ 305:   }
+ 306: }
+ 307: 
+ 308: export async function generateChatTitle(
+ 309:   firstMessage: string,
+ 310:   model: string,
+ 311:   apiKey: string
+ 312: ): Promise<string> {
+ 313:   const prompt = `Generate a 4-6 word title for a chat that starts with this message. Reply with ONLY the title, no punctuation:\n\n"${firstMessage}"`
+ 314: 
+ 315:   if (model.startsWith('gpt')) {
+ 316:     const client = new OpenAI({ apiKey })
+ 317:     const response = await client.chat.completions.create({
+ 318:       model,
+ 319:       max_tokens: 32,
+ 320:       messages: [{ role: 'user', content: prompt }],
+ 321:     })
+ 322:     return response.choices[0].message.content?.trim() || 'New Chat'
+ 323:   }
+ 324: 
+ 325:   if (model.startsWith('gemini')) {
+ 326:     const genAI = new GoogleGenAI({ apiKey })
+ 327:     const result = await genAI.models.generateContent({ model: resolveGeminiModel(model), contents: prompt })
+ 328:     return result.text?.trim() || 'New Chat'
+ 329:   }
+ 330: 
+ 331:   const client = new Anthropic({ apiKey })
+ 332:   const response = await client.messages.create({
+ 333:     model,
+ 334:     max_tokens: 32,
+ 335:     messages: [{ role: 'user', content: prompt }],
+ 336:   })
+ 337:   const block = response.content.find((b) => b.type === 'text')
+ 338:   return (block && block.type === 'text' ? block.text.trim() : 'New Chat')
+ 339: }
+ 340: 
+ 341: export function isRateLimitError(err: unknown): boolean {
+ 342:   // Anthropic and OpenAI SDK errors both expose a numeric `status` field
+ 343:   if (typeof err === 'object' && err !== null && 'status' in err) {
+ 344:     if ((err as { status: unknown }).status === 429) return true
+ 345:   }
+ 346:   if (err instanceof Error) {
+ 347:     const msg = err.message.toLowerCase()
+ 348:     if (
+ 349:       msg.includes('rate limit') ||
+ 350:       msg.includes('resource_exhausted') ||
+ 351:       msg.includes('quota') ||
+ 352:       msg.includes('429')
+ 353:     ) return true
+ 354:   }
+ 355:   return false
+ 356: }
+ 357: 
+ 358: export async function validateProviderKey(
+ 359:   provider: LLMProvider,
+ 360:   apiKey: string
+ 361: ): Promise<boolean> {
+ 362:   try {
+ 363:     if (provider === 'claude') {
+ 364:       const client = new Anthropic({ apiKey })
+ 365:       await client.messages.create({
+ 366:         model: 'claude-haiku-4-5-20251001',
+ 367:         max_tokens: 1,
+ 368:         messages: [{ role: 'user', content: 'hi' }],
+ 369:       })
+ 370:     } else if (provider === 'openai') {
+ 371:       const client = new OpenAI({ apiKey })
+ 372:       await client.chat.completions.create({
+ 373:         model: 'gpt-4o-mini',
+ 374:         max_tokens: 1,
+ 375:         messages: [{ role: 'user', content: 'hi' }],
+ 376:       })
+ 377:     } else {
+ 378:       const genAI = new GoogleGenAI({ apiKey })
+ 379:       const model = AVAILABLE_MODELS.find((entry) => entry.provider === 'gemini')!.id
+ 380:       await genAI.models.generateContent({ model, contents: 'hi' })
+ 381:     }
+ 382:     return true
+ 383:   } catch {
+ 384:     return false
+ 385:   }
+ 386: }

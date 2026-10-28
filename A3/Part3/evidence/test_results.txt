@@ -1,0 +1,20 @@
+Adapter/Java: PASS 3/3
+Adapter/Python: PASS 3/3
+Adapter/JavaScript: PASS 3/3
+Adapter/C++: PASS 3/3
+Builder/Java: PASS 4/4
+Builder/Python: PASS 4/4
+Builder/JavaScript: PASS 4/4
+Builder/C++: PASS 4/4
+Service Layer/Java: PASS 5/5
+Service Layer/Python: PASS 5/5
+Service Layer/JavaScript: PASS 5/5
+Service Layer/C++: PASS 5/5
+Strategy/Java: PASS 4/4
+Strategy/Python: PASS 4/4
+Strategy/JavaScript: PASS 4/4
+Strategy/C++: PASS 4/4
+Chain of Responsibility/Java: PASS 7/7
+Chain of Responsibility/Python: PASS 7/7
+Chain of Responsibility/JavaScript: PASS 7/7
+Chain of Responsibility/C++: PASS 7/7

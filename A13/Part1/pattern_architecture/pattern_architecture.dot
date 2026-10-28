@@ -1,0 +1,38 @@
+digraph MisskeyPatterns {
+ graph [label="Misskey Part 1 — Confirmed Pattern Architecture\nBaseline: 5f501341d49d2bc3fa7e817ce7548a82174326eb | 22 collaborations", labelloc=t, fontsize=22, fontname="DejaVu Sans", bgcolor="#ffffff", ranksep=1.0, nodesep=0.35, pad=0.35, splines=ortho];
+ node [shape=box, style="rounded,filled", fontname="DejaVu Sans", fontsize=11, color="#9bb3c8", fillcolor="#eff6fc", margin="0.18,0.13"];
+ edge [color="#8399ad", arrowsize=0.7, penwidth=1.4];
+ subgraph cluster_frontend {label="Frontend / UI"; style="rounded,filled"; fillcolor="#edf7f4"; color="#80b6a8";
+ frontend [label="Nirax Router\nRouter (1)"];
+ events [label="Global Events • Note Events\nTheme • Deck Drag • Preferences\nObserver (5)"];
+ plugins [label="Frontend Plugin Host\nPlugin Architecture (1)"];
+ analytics [label="AnalyticsProxy\nProxy (1)"];
+ }
+ subgraph cluster_stream {label="Misskey.js Streaming Client"; style="rounded,filled"; fillcolor="#f1edfa"; color="#a49ac9";
+ stream [label="Stream Connection Coordination\nMediator (1)"];
+ sfactory [label="Connection Creation\nFactory (1)"];
+ pool [label="Shared Channel Connection Pool\nObject Pool (1)"];
+ }
+ subgraph cluster_api {label="Backend API and Core Services"; style="rounded,filled"; fillcolor="#fff4e9"; color="#e3b27f";
+ api [label="API Request Handling\nFront Controller (1)"];
+ services [label="Core Application Services\nService Layer (1)"];
+ repo [label="Persistence Repositories\nRepository (1)"];
+ cacheaside [label="Federated Instance Cache\nCache-Aside (1)"];
+ chart [label="Chart Processing Framework\nTemplate Method (1)"];
+ }
+ subgraph cluster_infra {label="Backend Infrastructure"; style="rounded,filled"; fillcolor="#eaf1fb"; color="#8babe0";
+ pubsub [label="Redis Event Publication / Streaming\nPublish-Subscribe (1)"];
+ queue [label="Federation Delivery Queue\nAsynchronous Job Queue (1)"];
+ twocache [label="Memory + Redis Cache\nTwo-Level Cache (1)"];
+ logfactory [label="Logging Backend Creation\nFactory (1)"];
+ logstrategy [label="Logging Output Backends\nStrategy (1)"];
+ telemetry [label="Sentry Telemetry Integration\nAdapter (1)"];
+ }
+ frontend -> api [label=" API requests ", fontname="DejaVu Sans", fontsize=9];
+ frontend -> stream [label=" live channels ", fontname="DejaVu Sans", fontsize=9];
+ stream -> sfactory; sfactory -> pool;
+ api -> services; services -> repo; services -> cacheaside; services -> queue;
+ services -> pubsub; services -> chart; cacheaside -> twocache;
+ logfactory -> logstrategy; services -> telemetry [style=dashed];
+ pubsub -> stream [style=dashed, label=" streamed events ", fontname="DejaVu Sans", fontsize=9];
+}

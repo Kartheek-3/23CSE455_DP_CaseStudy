@@ -1,0 +1,319 @@
+# Part 3 — Adapter (GoF) Cross-Language Implementation
+
+Completed — 40/40 tests passed
+
+Pattern ID: S2-N01 Pattern: Adapter (GoF) Confirmed instance: Multiple Booking Provider Normalization
+
+The fifth and final selected pattern has been implemented and tested in Java, Python, JavaScript and C++.
+
+All four implementations use the same frozen A01–A10 fixtures, identical expected outputs and deterministic error codes.
+
+Adapter implementations
+
+# 4/4
+
+All required languages
+
+Shared Adapter cases passed
+
+# 40/40
+
+Zero failures or errors
+
+## 1. Download the completed Adapter package
+
+Complete Adapter Cross-Language Package
+
+Cumulative Part3 ZIP · 181 files · Approximately 183 KB
+
+Download Adapter S2-N01 ZIP
+
+Adapter Verification Summary
+
+Four Append-Ready Records
+
+Shared Adapter Cases · Expected Results
+
+The ZIP passed integrity verification and contains the previous four patterns unchanged.
+
+## 2. Exact Adapter files created
+
+```
+Part3/
+├── ADAPTER_VERIFICATION_SUMMARY.md
+├── common_specs/
+│   ├── ADAPTER_README.md
+│   ├── adapter_cases.tsv
+│   ├── adapter_expected.tsv
+│   ├── atlas_raw.tsv
+│   ├── beacon_raw.tsv
+│   └── adapter_invalid_fixtures/
+│       ├── atlas_invalid_category.tsv
+│       ├── atlas_invalid_price.tsv
+│       ├── atlas_missing_structure.tsv
+│       ├── beacon_invalid_type.tsv
+│       └── beacon_missing_structure.tsv
+├── adapter/
+│   ├── adapter_append_ready.json
+│   ├── frozen_before_sha256.json
+│   ├── frozen_fixtures_sha256.json
+│   ├── java/
+│   │   ├── Main.java
+│   │   ├── TestMain.java
+│   │   ├── README.md
+│   │   ├── test_result.txt
+│   │   └── timings.csv
+│   ├── python/
+│   │   ├── main.py
+│   │   ├── test_main.py
+│   │   ├── README.md
+│   │   ├── test_result.txt
+│   │   └── timings.csv
+│   ├── javascript/
+│   │   ├── main.js
+│   │   ├── test_main.js
+│   │   ├── README.md
+│   │   ├── test_result.txt
+│   │   └── timings.csv
+│   └── cpp/
+│       ├── main.hpp
+│       ├── main.cpp
+│       ├── test_main.cpp
+│       ├── README.md
+│       ├── test_result.txt
+│       └── timings.csv
+└── evidence/
+    ├── adapter_measure_complexity.py
+    ├── adapter_run_verification.py
+    ├── adapter_static_metrics.json
+    ├── adapter_environment_versions.json
+    ├── adapter_compilation_results.json
+    ├── adapter_execution_results.json
+    ├── adapter_preservation_check.txt
+    └── adapter_source_manifest.sha256
+```
+
+These are 43 new Adapter-related source, fixture, documentation and evidence files.
+
+## 3. Frozen A01–A10 fixture validation
+
+The shared inputs and expected results were written and checksummed before implementation.
+
+| Case | Scenario                              | Verified result             |
+| ---- | ------------------------------------- | --------------------------- |
+| A01  | Atlas Rome walking sampler            | `do`, 2400 cents, EUR       |
+| A02  | Beacon Rome museum sampler            | `do`, 1600 cents, EUR       |
+| A03  | Atlas Paris market browsing           | `shop`, 0 cents             |
+| A04  | Beacon Paris pastry stop              | `eat`, 1250 cents           |
+| A05  | Unknown provider                      | `ERROR UNKNOWN_PROVIDER`    |
+| A06  | Unsupported destination               | `ERROR UNKNOWN_DESTINATION` |
+| A07  | Atlas selected with Beacon offer ID   | `ERROR UNKNOWN_OFFER`       |
+| A08  | Unsupported Atlas category            | `ERROR INVALID_OFFER`       |
+| A09  | Malformed Atlas compound price        | `ERROR INVALID_OFFER`       |
+| A10  | Missing required Atlas fixture column | `ERROR INVALID_FIXTURE`     |
+
+All four implementations produced identical outputs matching `adapter_expected.tsv`.
+
+The fixture hashes are stored in `adapter/frozen_fixtures_sha256.json` and `common_specs/ADAPTER_README.md`.
+
+## 4. Atlas and Beacon normalization
+
+The two provider formats are structurally different.
+
+| Property    | Atlas Demo                 | Beacon Demo                      |
+| ----------- | -------------------------- | -------------------------------- |
+| Structure   | Destination-scoped records | Flat offer records               |
+| ID          | `id`                       | `code`                           |
+| Name        | `title`                    | `label`                          |
+| Category    | `category`                 | `type`                           |
+| Location    | `location`                 | `address`                        |
+| Description | `details`                  | `summary`                        |
+| Price       | Compound, e.g. `EUR:24.00` | Separate `amount` and `currency` |
+| Destination | First column               | Final column                     |
+
+Atlas maps `activity → do`, `shopping → shop` and `dining → eat`.
+
+Beacon independently maps `experience → do`, `retail → shop` and `dining → eat`.
+
+Both adapters produce the same normalized fields:
+
+`provider_code`, `provider_name`, `offer_id`, `name`, `kind`, `address`, `description`, `sample_amount_cents`, `currency`.
+
+Amounts are stored as integer cents. Neither adapter creates a booking or confirmation reference.
+
+## 5. Adapter collaboration and role mapping
+
+BookingOfferClient
+
+Uses the common provider contract
+
+OfferProvider Target Interface
+
+offersFor(destination)
+
+AtlasAdapter
+
+Interprets Atlas raw TSV and compound price
+
+BeaconAdapter
+
+Interprets Beacon raw TSV and separate price fields
+
+NormalizedOffer
+
+One common, validated output representation
+
+| Adapter role      | Participant in all four implementations |
+| ----------------- | --------------------------------------- |
+| Client            | `BookingOfferClient`                    |
+| Target            | `OfferProvider`                         |
+| ConcreteAdapter 1 | `AtlasAdapter`                          |
+| ConcreteAdapter 2 | `BeaconAdapter`                         |
+| Adaptees          | Atlas and Beacon raw TSV formats        |
+| Selection         | `ProviderRegistry`                      |
+| Target output     | `NormalizedOffer`                       |
+
+Python uses the method name `offers_for`; Java, JavaScript and C++ use `offersFor`.
+
+Why this is Adapter rather than Strategy: The key responsibility is translating incompatible source structures into a common client-facing contract. The two implementations do not represent competing cancellation or booking algorithms.
+
+`ProviderRegistry` is a fixed whitelist and is not counted as a Factory.
+
+## 6. Actual compilation and test results
+
+| Language   | Runtime/compiler          | Test command           | Passed | Failures | Errors | Exit |
+| ---------- | ------------------------- | ---------------------- | ------ | -------- | ------ | ---- |
+| Java       | OpenJDK / javac 21.0.12.1 | `java TestMain`        | 10/10  | 0        | 0      | 0    |
+| Python     | Python 3.13.5             | `python3 test_main.py` | 10/10  | 0        | 0      | 0    |
+| JavaScript | Node.js v22.16.0          | `node test_main.js`    | 10/10  | 0        | 0      | 0    |
+| C++        | g++ 14.2.0, C++17         | `./adapter_tests`      | 10/10  | 0        | 0      | 0    |
+
+Java compilation:
+
+```
+javac Main.java TestMain.java
+java TestMain
+```
+
+C++ compilation:
+
+```
+g++ -std=c++17 -O2 -Wall -Wextra -pedantic main.cpp test_main.cpp -o adapter_tests
+./adapter_tests
+```
+
+Both compilation commands succeeded. Python and JavaScript required no compilation step.
+
+Total: 40/40 shared cases passed.
+
+## 7. Provider isolation verification
+
+Additional assertions beyond A01–A10 checked:
+
+- Atlas cannot retrieve Beacon offer IDs.
+- Beacon cannot retrieve Atlas offer IDs.
+- Rome and Paris filtering works.
+- Malformed Atlas data does not prevent valid Beacon lookup.
+- Malformed Beacon data does not prevent valid Atlas lookup.
+- Invalid Beacon kinds produce `INVALID_OFFER`.
+- Missing Beacon schema fields produce `INVALID_FIXTURE`.
+- Provider selection does not depend on mutable global state.
+
+These additional isolation checks passed in all four languages. They are not included as additional numbered A01–A10 cases.
+
+## 8. Production LOC and cyclomatic complexity
+
+| Language   | Production LOC | Maximum function CC |
+| ---------- | -------------- | ------------------- |
+| Java       | 120            | 12                  |
+| Python     | 93             | 7                   |
+| JavaScript | 67             | 8                   |
+| C++        | 141            | 12                  |
+
+LOC excludes tests, blank lines, comments, fixture files and generated artifacts. C++ includes `main.hpp` and `main.cpp`.
+
+Cyclomatic complexity uses the same frozen McCabe-style counting helper used for Strategy, Observer, Controller and Information Expert. Only function discovery was adapted for the new class names and signatures.
+
+These are reproducible source-level approximations, not runtime profiler results.
+
+## 9. Five measured execution times and medians
+
+Each language completed one warm-up followed by five measured fresh-process runs. Every measured run passed all ten cases and the additional isolation assertions.
+
+All values in milliseconds; medians exclude the warm-up.
+
+| Language   | Run 1   | Run 2   | Run 3   | Run 4   | Run 5   | Median  |
+| ---------- | ------- | ------- | ------- | ------- | ------- | ------- |
+| Java       | 70.547  | 76.930  | 66.132  | 71.668  | 93.365  | 71.668  |
+| Python     | 865.774 | 866.613 | 835.154 | 852.240 | 846.508 | 852.240 |
+| JavaScript | 35.454  | 38.800  | 35.246  | 33.097  | 34.354  | 35.246  |
+| C++        | 2.522   | 2.698   | 2.706   | 3.606   | 3.631   | 2.706   |
+
+Median fresh-process runtime
+
+Complete fixture-based test runner, not isolated adapter performance
+
+0ms250ms500ms750ms1KmsJavaPythonJavaScriptC++
+
+These timings include startup, fixture reading, normalization, error handling, isolation assertions and expected-output comparisons. They are not pure Adapter-algorithm benchmarks.
+
+Full-precision values and the warm-up measurement are available in each language's `timings.csv`.
+
+## 10. Four append-ready faculty records
+
+Download Adapter Append-Ready JSON
+
+The file contains four records using exactly the faculty fields:
+
+`pattern_name`, `instance_name`, `language`, `snippet_path`, `source_loc`, `max_function_cc`, `runtime_compiler`, `test_command`, `test_result`, `median_process_ms`, `language_notes`.
+
+All four use:
+
+- `pattern_name = Adapter`
+- `instance_name = Multiple Booking Provider Normalization`
+
+The records contain the actual measured LOC, complexity, compiler/runtime versions, test results and median process times.
+
+The final `cross_language.csv` has deliberately not been generated.
+
+## 11. Preservation verification
+
+Before implementation, the existing Part3 files were checksummed. Afterward, they were checked again.
+
+| Preservation check                     | Result                     |
+| -------------------------------------- | -------------------------- |
+| Existing Part3 files                   | 138/138 unchanged          |
+| Previous cumulative ZIP entries        | 137/137 byte-identical     |
+| New Adapter fixture files              | 9/9 unchanged after freeze |
+| Strategy source and evidence           | Preserved                  |
+| Observer source and evidence           | Preserved                  |
+| Controller source and evidence         | Preserved                  |
+| Information Expert source and evidence | Preserved                  |
+| DaPlanStan application source          | Not modified               |
+| Final Adapter ZIP integrity            | Passed                     |
+
+The cumulative ZIP includes all five completed patterns, fixtures, append-ready records and verification evidence, excluding compiled binaries and caches.
+
+## 12. Remaining limitations
+
+This is a dependency-free demonstration of the verified Adapter collaboration. It does not reproduce Rails, Active Record, actual provider APIs or a real booking transaction.
+
+The example is restricted to two fictional providers, two destinations, three normalized kinds and the fixed test inputs. It handles malformed local fixtures deterministically but does not test live network failures, concurrency or production provider changes.
+
+The execution times are machine-specific and heavily influenced by process startup and fixture handling.
+
+## 13. Final Part 3 implementation progress
+
+| Pattern                    | Source ID | Status                 |
+| -------------------------- | --------- | ---------------------- |
+| Strategy (GoF)             | S3-N01    | Completed and frozen   |
+| Observer (GoF)             | P08       | Completed and frozen   |
+| Controller (GRASP)         | P03       | Completed and frozen   |
+| Information Expert (GRASP) | P01       | Completed and frozen   |
+| Adapter (GoF)              | S2-N01    | Completed and verified |
+
+All 20 required cross-language implementations are now complete.
+
+The remaining stage is final Part 3 aggregation and cross-language report validation, using the five frozen append-ready datasets.
+
+No final `cross_language.csv` has been generated, and no other pattern work or DaPlanStan source changes were performed.

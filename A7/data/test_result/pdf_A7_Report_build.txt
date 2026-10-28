@@ -1,0 +1,11 @@
+Final report rebuild receipt
+Date: 2026-10-11
+Source: A7_Report.tex
+Output: A7_Report.pdf
+Compiler: XeLaTeX (system TeX Live), two passes
+Command (each pass): xelatex -interaction=nonstopmode -halt-on-error A7_Report.tex
+First pass exit code: 0
+Second pass exit code: 0
+Final physical page count: 29
+Purpose: rebuilt after moving original source and test evidence under data/ per the prescribed repository hierarchy, and updated the report's relative source/evidence references.
+Remaining warning: XeLaTeX reports that inputenc is ignored under a UTF-8 engine. Build succeeds; no undefined-reference warning remained on the second pass.

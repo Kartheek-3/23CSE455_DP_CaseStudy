@@ -1,0 +1,12 @@
+PASS claude_text_and_irrelevant_event
+PASS openai_text_and_empty_chunk
+PASS gemini_text_and_non_string
+PASS empty_stream
+PASS irrelevant_events
+PASS unknown_provider
+PASS prototype_named_provider
+PASS input_not_object
+PASS missing_provider
+PASS events_not_array
+PASS event_not_object
+11/11 cases passed

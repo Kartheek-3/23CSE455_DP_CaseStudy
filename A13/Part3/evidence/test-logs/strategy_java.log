@@ -1,0 +1,16 @@
+# strategy / java
+# working folder: Part3/code/pattern_strategy/java
+# runtime: OpenJDK 17.0.19 (javac 17.0.19)
+$ javac -d build *.java
+
+
+$ java -cp build LogManagerTest ../../../test-cases/strategy.txt
+PASS default_backend
+PASS switch_to_pretty
+PASS switch_to_json
+PASS runtime_swap
+PASS null_backend_rejected
+passed 5/5
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 90.0, 75.3, 84.8, 80.2, 76.4 -> median 80.2

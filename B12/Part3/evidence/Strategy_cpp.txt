@@ -1,0 +1,10 @@
+﻿PATTERN/SUITE   : Strategy_cpp
+RUNTIME/COMPILER: g++.exe (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r1) 16.2.0
+WORKDIR         : C:\Users\eswar\OneDrive\Documents\Visual Studio Code\23CSE455_DP_CaseStudy\B12\Part3\Strategy\cpp
+BUILD COMMAND   : & 'C:\Users\eswar\AppData\Local\Microsoft\WinGet\Packages\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\mingw64\bin\g++.exe' -O2 -static strategy_test.cpp -o strategy_test.exe
+BUILD OUTPUT    : 
+RUN COMMAND     : .\strategy_test.exe 
+PROGRAM OUTPUT  : STRATEGY_CPP PASS 5/5
+TIME INCLUDES   : whole process wall time (runtime startup + program execution), after 1 unmeasured warm-up
+TIMING SAMPLES  : 5 measured runs (ms): 17.0683, 16.6266, 20.1003, 19.4165, 18.9774
+MEDIAN_MS       : 18.977

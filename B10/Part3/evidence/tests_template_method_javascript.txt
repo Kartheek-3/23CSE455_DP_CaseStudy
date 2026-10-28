@@ -1,0 +1,6 @@
+# Template Method / javascript
+working folder: Part3/template_method_setpoint_interpolation/javascript
+$ node test_setpoint_interpolation.js
+Template Method tests: 12/12 passed
+
+[exit code: 0]

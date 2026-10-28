@@ -1,0 +1,20 @@
+digraph G {
+ rankdir=LR; fontname="Helvetica"; labelloc=t; label="Exception Translation - HTTP Error Translation";
+ node [shape=box, style="rounded,filled", fillcolor="#eef3fb", color="#4a6fa5", fontname="Helvetica", fontsize=10];
+ edge [fontname="Helvetica", fontsize=9, color="#555555"];
+ n_BadRequestException [label="&laquo;TranslatedException&raquo;\nBadRequestException", fillcolor="#eef3fb"];
+ n_NotFoundException [label="&laquo;TranslatedException&raquo;\nNotFoundException", fillcolor="#eef3fb"];
+ n__JAX_RS_runtime___dependency__not_in_application_source_ [label="&laquo;Translator&raquo;\n\n(JAX-RS runtime - dependency, not in application source)", fillcolor="#fff4d6"];
+ n_AccountService_depositToAccount [label="AccountService.depositToAccount", fillcolor="#fff4d6"];
+ n_AccountService_depositToAccount -> n_BadRequestException [label="throws"];
+ n_AccountService_withdraw [label="AccountService.withdraw", fillcolor="#fff4d6"];
+ n_AccountService_withdraw -> n_BadRequestException [label="throws"];
+ n_AccountService_depositToAccount -> n_NotFoundException [label="throws"];
+ n_AccountService_withdraw -> n_NotFoundException [label="throws"];
+ n_AccountDAO_findById [label="AccountDAO.findById", fillcolor="#fff4d6"];
+ n_AccountDAO_findById -> n_NotFoundException [label="throws"];
+ n_UserService_getUserDetails [label="UserService.getUserDetails", fillcolor="#fff4d6"];
+ n_UserService_getUserDetails -> n_NotFoundException [label="throws"];
+ n_BadRequestException -> n__JAX_RS_runtime___dependency__not_in_application_source_ [label="status+body read by", style=dashed];
+ n_NotFoundException -> n__JAX_RS_runtime___dependency__not_in_application_source_ [label="status+body read by", style=dashed];
+}

@@ -1,0 +1,166 @@
+@startuml
+!pragma layout smetana
+skinparam style strictuml
+skinparam monochrome false
+skinparam roundcorner 8
+skinparam classAttributeIconSize 0
+skinparam defaultFontName SansSerif
+skinparam classFontStyle bold
+
+title Misskey First-Class Audio Posts with Transcription Architecture (Change 2 - CH02)
+
+package "Server / API Layer" {
+    abstract class Endpoint {
+        +meta: Object
+        +paramDef: Object
+        +{abstract} exec(params, user): Promise<any>
+    }
+
+    class AudioTranscribeEndpoint {
+        +exec(params, user): Promise<Object>
+    }
+    class AudioTranscriptShowEndpoint {
+        +exec(params, user): Promise<Object>
+    }
+    class AudioTranscriptUpdateEndpoint {
+        +exec(params, user): Promise<Object>
+    }
+    class AudioTranscriptApproveEndpoint {
+        +exec(params, user): Promise<Object>
+    }
+    class AudioTranscriptSearchEndpoint {
+        +exec(params, user): Promise<Object>
+    }
+
+    Endpoint <|-- AudioTranscribeEndpoint
+    Endpoint <|-- AudioTranscriptShowEndpoint
+    Endpoint <|-- AudioTranscriptUpdateEndpoint
+    Endpoint <|-- AudioTranscriptApproveEndpoint
+    Endpoint <|-- AudioTranscriptSearchEndpoint
+}
+
+package "Core Domain Layer" {
+    class AudioTranscriptService <<Injectable>> {
+        -audioTranscriptsRepository: MiRepository<MiAudioTranscript>
+        -driveFilesRepository: MiRepository<MiDriveFile>
+        -notesRepository: MiRepository<MiNote>
+        -idService: IdService
+        -provider: AudioTranscriptionProvider
+        +setProvider(provider: AudioTranscriptionProvider): void
+        +requestTranscription(fileId: string, user: MiUser, noteId?: string): Promise<MiAudioTranscript>
+        +getTranscript(fileId: string, requester: MiUser | null): Promise<MiAudioTranscript | null>
+        +updateDraft(fileId: string, user: MiUser, text: string): Promise<MiAudioTranscript>
+        +approveTranscript(fileId: string, user: MiUser): Promise<MiAudioTranscript>
+        +rejectTranscript(fileId: string, user: MiUser): Promise<void>
+        +search(query: string, requester: MiUser | null, limit?: number): Promise<MiAudioTranscript[]>
+    }
+
+    class AudioTranscriptStateMachine <<State Manager>> {
+        -{static} ALLOWED_TRANSITIONS: Record<AudioTranscriptStatus, AudioTranscriptStatus[]>
+        +{static} canTransition(current: AudioTranscriptStatus, next: AudioTranscriptStatus): boolean
+        +{static} assertTransition(current: AudioTranscriptStatus, next: AudioTranscriptStatus): void
+    }
+
+    interface AudioTranscriptionProvider <<Strategy>> {
+        +name: string
+        +transcribe(file: AudioFileContext): Promise<AudioTranscriptionResult>
+    }
+
+    class MockTranscriptionProvider <<Strategy Implementation>> {
+        +name: string = "mock"
+        +transcribe(file: AudioFileContext): Promise<AudioTranscriptionResult>
+    }
+
+    class LocalWhisperTranscriptionProvider <<Strategy Implementation>> {
+        +name: string = "local-whisper"
+        +transcribe(file: AudioFileContext): Promise<AudioTranscriptionResult>
+    }
+
+    class DisabledTranscriptionProvider <<Strategy Implementation>> {
+        +name: string = "none"
+        +transcribe(file: AudioFileContext): Promise<AudioTranscriptionResult>
+    }
+
+    AudioTranscriptionProvider <|.. MockTranscriptionProvider
+    AudioTranscriptionProvider <|.. LocalWhisperTranscriptionProvider
+    AudioTranscriptionProvider <|.. DisabledTranscriptionProvider
+
+    AudioTranscriptService o--> AudioTranscriptionProvider : delegates transcription
+    AudioTranscriptService ..> AudioTranscriptStateMachine : validates transitions
+}
+
+package "Persistence / Models" {
+    class MiDriveFile <<Entity>> {
+        +id: ID
+        +userId: ID
+        +name: string
+        +type: string
+        +size: number
+        +url: string
+    }
+
+    class MiAudioTranscript <<Entity>> {
+        +id: ID
+        +fileId: ID
+        +userId: ID
+        +noteId: ID | null
+        +text: string
+        +status: AudioTranscriptStatus
+        +provider: string
+        +errorMessage: string | null
+        +createdAt: Date
+        +updatedAt: Date
+    }
+
+    enum AudioTranscriptStatus <<Enum>> {
+        queued
+        processing
+        draft
+        approved
+        failed
+    }
+
+    MiDriveFile "1" *-- "0..1" MiAudioTranscript : has
+    MiAudioTranscript --> AudioTranscriptStatus : status
+}
+
+package "Frontend Layer" {
+    class AudioRecorder <<Utility>> {
+        +{static} isSupported(): boolean
+        +start(): Promise<void>
+        +stop(): Promise<AudioRecordingResult>
+        +cancel(): void
+    }
+
+    class MkAudioPlayer <<Vue Component>> {
+        +file: MiDriveFile
+        +canManage: boolean
+        +togglePlay(): void
+        +toggleTranscript(): void
+        +requestTranscription(): Promise<void>
+        +saveDraft(): Promise<void>
+        +approveTranscript(): Promise<void>
+    }
+
+    class MkMediaAudio <<Vue Component>> {
+        +audio: MiDriveFile
+        +hide: boolean
+    }
+
+    MkMediaAudio *-- MkAudioPlayer : embeds
+}
+
+' Interactions
+AudioTranscribeEndpoint --> AudioTranscriptService : invokes
+AudioTranscriptShowEndpoint --> AudioTranscriptService : invokes
+AudioTranscriptUpdateEndpoint --> AudioTranscriptService : invokes
+AudioTranscriptApproveEndpoint --> AudioTranscriptService : invokes
+AudioTranscriptSearchEndpoint --> AudioTranscriptService : invokes
+
+AudioTranscriptService --> MiAudioTranscript : persists & queries
+AudioTranscriptService --> MiDriveFile : verifies audio asset
+MkAudioPlayer ..> AudioTranscriptShowEndpoint : HTTP POST
+MkAudioPlayer ..> AudioTranscribeEndpoint : HTTP POST
+MkAudioPlayer ..> AudioTranscriptApproveEndpoint : HTTP POST
+
+@enduml

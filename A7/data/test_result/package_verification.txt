@@ -1,0 +1,1 @@
+Archive validation is performed after ZIP creation with tools/check_submission.py --zip; see the external A7_Final_Submission.validation.txt receipt.

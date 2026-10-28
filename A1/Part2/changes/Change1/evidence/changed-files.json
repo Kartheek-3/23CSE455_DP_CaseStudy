@@ -1,0 +1,26 @@
+[
+  {
+    "path": "canteenapp/delivery_assignment.py",
+    "change": "added",
+    "baseline_sha256": null,
+    "working_sha256": "3755495d6b75e394758fb4239c7d0d17a933b3d5fd06adc3d5d44624ebfd22d5"
+  },
+  {
+    "path": "canteenapp/templates/adminassignorder.html",
+    "change": "modified",
+    "baseline_sha256": "d2ac76dd003a650ef52432ffe1ac4d857d8073639510dc11d5dcd39413c787d7",
+    "working_sha256": "7de4a37512c4e3937c878d7ab3bacc6150eb0144e9ba1512a4fc845a452fcf00"
+  },
+  {
+    "path": "canteenapp/test_delivery_assignment.py",
+    "change": "added",
+    "baseline_sha256": null,
+    "working_sha256": "4ddfd76a06b188a4500fa6327c2414faa7fe0b8546e3d2f6b1fe8605e23af4ee"
+  },
+  {
+    "path": "canteenapp/views.py",
+    "change": "modified",
+    "baseline_sha256": "08a439b859c8a452b57b29dcabad9dca992b8eec5c8e25093ba81db89537532e",
+    "working_sha256": "f7489298c3cf9f0db7165be1cc6141b2f3af84eaed8c1aae910f51459a14fc1c"
+  }
+]

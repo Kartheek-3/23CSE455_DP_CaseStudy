@@ -1,0 +1,1097 @@
+--- BEFORE/README.md
++++ AFTER/README.md
+@@ -103,3 +103,46 @@
+ ## Status
+ 
+ Beta 0.1 — core features complete: email ingestion, AI parsing, interactive map, expense tracking, trip sharing, and PWA install. Actively maintained.
++
++---
++
++## Coursework AFTER source: Scenario 1 personalized itinerary
++
++Source version: `scenario1_personalized_itinerary` (separate copy; original snapshot preserved).
++
++The trip-owner-only **Generate** action accepts interests (`culture`, `food`, `nature`,
++`shopping`), budget (`low`, `medium`, `high`), pace (`relaxed`, `balanced`, `busy`)
++and optional notes (max 300 characters). It uses the configured `ANTHROPIC_API_KEY`
++through the existing Anthropic Ruby client. The generator accepts only up to six
++schema-validated, unbooked activity suggestions; preview alone persists nothing.
++A signed 20-minute preview binds suggestions to the trip and user; the guarded
++confirmation action validates the JSON again, saves ideas using the existing
++`bulk_create_items` workflow and queues the existing geocoding job. Times are
++tentative and parsed in the application's time zone; no trip-specific time zone
++is stored. Users must verify suggested venues, opening hours and travel times.
++
++No migration is needed. Other members' existing JSON-import access has not been
++changed. Batch saves now defer geocoding **per instance** instead of modifying
++Rails callbacks globally; normal manual item creation still geocodes at save.
++
++### Running Scenario 1 tests
++
++Use the repository's Ruby version (`.ruby-version`: 3.4.2), run `bundle install`,
++configure the Rails test database, then:
++
++```bash
++RAILS_ENV=test bin/rails db:test:prepare
++bin/rails test test/services/itinerary_suggestion_generator_test.rb \
++  test/controllers/trip_items_generation_test.rb \
++  test/controllers/trip_items_import_regression_test.rb
++```
++
++Tests substitute Anthropic and geocoding calls; they should not issue external
++requests. A live manual demonstration requires a real Anthropic API key, a working
++Rails environment and a trip with an authenticated owner membership. Set the
++`whats.` application host locally as described in the repository's setup guide.
++
++**Verification limitation for supplied coursework package:** the packaging
++container had Ruby 3.3.8 rather than 3.4.2, and Rails 8.1.3 plus the locked gems
++were not available. The Rails test command was attempted but could not boot;
++no Rails tests are claimed as passed. See `SCENARIO1_CHANGE_RECORD.md`.
+--- BEFORE/app/controllers/trip_items_controller.rb
++++ AFTER/app/controllers/trip_items_controller.rb
+@@ -57,6 +57,18 @@
+     # GET — just render the form
+   end
+ 
++  # Owner-only, two-phase generation: preview first, then signed confirmation.
++  def generate
++    return head :forbidden unless current_member_for(@trip)&.owner?
++    return if request.get?
++
++    if params[:confirm] == "1"
++      confirm_generated_ideas
++    else
++      generate_preview
++    end
++  end
++
+   def new
+     @item = TripItem.new(status: "idea", kind: "do")
+   end
+@@ -123,54 +135,121 @@
+     @item = @trip.trip_items.find(params[:id])
+   end
+ 
++  def generate_preview
++    @preferences = {
++      "interests" => params[:interests], "budget" => params[:budget],
++      "pace" => params[:pace], "notes" => params[:notes]
++    }
++    generator = ItinerarySuggestionGenerator.new(trip: @trip, preferences: @preferences)
++    @preview_items = generator.call
++    @raw_json = JSON.generate(@preview_items)
++    @preview_token = generated_ideas_verifier.generate(
++      { "trip_id" => @trip.id, "user_id" => current_user.id, "items" => @preview_items },
++      expires_in: 20.minutes
++    )
++    @generated_preview = true
++    @skipped_count = 0
++    render :import
++  rescue ItinerarySuggestionGenerator::Error => e
++    @generation_error = e.message
++    render :generate, status: :unprocessable_entity
++  end
++
++  def confirm_generated_ideas
++    verified = generated_ideas_verifier.verified(params[:preview_token].to_s)
++    unless verified.is_a?(Hash) && verified["trip_id"] == @trip.id && verified["user_id"] == current_user.id
++      raise ItinerarySuggestionGenerator::InvalidSuggestions, "Preview expired or was modified. Generate again."
++    end
++    items = JSON.parse(params[:items_json].to_s)
++    validated = ItinerarySuggestionGenerator.validate_suggestions!(items, trip: @trip)
++    unless validated == verified["items"]
++      raise ItinerarySuggestionGenerator::InvalidSuggestions, "The proposed suggestions were changed. Generate again."
++    end
++
++    # Confirm all-or-nothing; unlike ordinary import, validation/DB errors roll back.
++    result = nil
++    @trip.trip_items.transaction do
++      result = bulk_create_items(validated, strict: true, enqueue: false)
++    end
++    geocode_warning = false
++    if result[:geocode_ids].any?
++      begin
++        geocode_warning = !GeocodeTripItemsJob.perform_later(result[:geocode_ids], @trip.id)
++      rescue StandardError => e
++        Rails.logger.warn "[TripItems#generate] Geocoding enqueue failed: #{e.class}"
++        geocode_warning = true
++      end
++    end
++    notice = "#{result[:created]} idea(s) added; #{result[:duplicates]} duplicate(s) skipped."
++    notice += " Map pin updates could not be queued; the ideas were saved." if geocode_warning
++    redirect_to trip_path(@trip, tab: "itinerary"), notice: notice
++  rescue JSON::ParserError, ItinerarySuggestionGenerator::InvalidSuggestions => e
++    @generation_error = "Invalid generated preview: #{e.message}"
++    render :generate, status: :unprocessable_entity
++  rescue ActiveRecord::ActiveRecordError => e
++    Rails.logger.error "[TripItems#generate] Confirmation failed: #{e.class}"
++    @generation_error = "Unable to save suggestions. No items were added."
++    render :generate, status: :unprocessable_entity
++  end
++
++  def generated_ideas_verifier
++    Rails.application.message_verifier("scenario1-itinerary-suggestions")
++  end
++
+   VALID_IMPORT_KINDS = TripItem.kinds.keys.to_set
+ 
+-  def bulk_create_items(items)
++  def bulk_create_items(items, strict: false, enqueue: true)
+     created           = 0
+     skipped           = 0
+     duplicates        = 0
+     needs_geocode_ids = []
+     existing_names    = @trip.trip_items.pluck(:name).map(&:downcase).to_set
+-    TripItem.skip_callback(:save, :after, :geocode_from_address)
+     items.each do |data|
+-      next skipped    += 1 if data["name"].blank?
+-      if existing_names.include?(data["name"].downcase)
+-        existing = @trip.trip_items.find_by("lower(name) = ?", data["name"].downcase)
+-        if existing
+-          updates = {}
+-          updates[:latitude]  = data["lat"] if data["lat"].present? && !existing.geocoded?
+-          updates[:longitude] = data["lng"] if data["lng"].present? && !existing.geocoded?
+-          updates[:url]       = data["url"] if data["url"].present? && existing.url.blank?
+-          existing.update_columns(updates) if updates.any?
++      begin
++        next skipped += 1 if data["name"].blank?
++        if existing_names.include?(data["name"].downcase)
++          existing = @trip.trip_items.find_by("lower(name) = ?", data["name"].downcase)
++          if existing
++            updates = {}
++            updates[:latitude]  = data["lat"] if data["lat"].present? && !existing.geocoded?
++            updates[:longitude] = data["lng"] if data["lng"].present? && !existing.geocoded?
++            updates[:url]       = data["url"] if data["url"].present? && existing.url.blank?
++            existing.update_columns(updates) if updates.any?
++          end
++          next duplicates += 1
+         end
+-        next duplicates += 1
+-      end
+-      item = @trip.trip_items.create!(
+-        name:      data["name"],
+-        kind:      VALID_IMPORT_KINDS.include?(data["kind"].to_s) ? data["kind"].to_s : "other",
+-        status:    "idea",
+-        address:   data["address"].presence,
+-        latitude:  data["lat"].presence,
+-        longitude: data["lng"].presence,
+-        notes:     data["notes"].presence,
+-        url:       data["url"].presence,
+-        starts_at: parse_import_time(data["starts_at"]),
+-        ends_at:   parse_import_time(data["ends_at"]),
+-        amount:    data["amount"].presence,
+-        currency:  data["currency"].presence,
+-        added_by:  current_user
+-      )
+-      created += 1
+-      existing_names << item.name.downcase
+-      needs_geocode_ids << item.id unless item.geocoded?
+-    rescue => e
+-      Rails.logger.error "[TripItems#import] skipped item: #{e.message}"
+-      skipped += 1
+-    end
+-    GeocodeTripItemsJob.perform_later(needs_geocode_ids, @trip.id) if needs_geocode_ids.any?
+-    { created: created, skipped: skipped, duplicates: duplicates, geocoding_queued: needs_geocode_ids.size }
+-  ensure
+-    TripItem.set_callback(:save, :after, :geocode_from_address)
++        item = @trip.trip_items.new(
++          name:      data["name"],
++          kind:      VALID_IMPORT_KINDS.include?(data["kind"].to_s) ? data["kind"].to_s : "other",
++          status:    "idea",
++          address:   data["address"].presence,
++          latitude:  data["lat"].presence,
++          longitude: data["lng"].presence,
++          notes:     data["notes"].presence,
++          url:       data["url"].presence,
++          starts_at: parse_import_time(data["starts_at"]),
++          ends_at:   parse_import_time(data["ends_at"]),
++          amount:    data["amount"].presence,
++          currency:  data["currency"].presence,
++          added_by:  current_user
++        )
++        # Scope deferral to this record only; manual TripItem saves still geocode.
++        item.defer_geocoding = true
++        item.save!
++        created += 1
++        existing_names << item.name.downcase
++        needs_geocode_ids << item.id unless item.geocoded?
++      rescue => e
++        raise if strict
++        Rails.logger.error "[TripItems#import] skipped item: #{e.message}"
++        skipped += 1
++      end
++    end
++    if enqueue && needs_geocode_ids.any?
++      GeocodeTripItemsJob.perform_later(needs_geocode_ids, @trip.id)
++    end
++    { created: created, skipped: skipped, duplicates: duplicates,
++      geocoding_queued: needs_geocode_ids.size, geocode_ids: needs_geocode_ids }
+   end
+ 
+   def parse_import_time(val)
+--- BEFORE/app/models/trip_item.rb
++++ AFTER/app/models/trip_item.rb
+@@ -29,9 +29,13 @@
+ 
+   TRANSPORT_KINDS = %w[flight car train ferry].freeze
+ 
++  # Used only on batch-created records; never changes global callback registration.
++  attr_accessor :defer_geocoding
++
+   # Don't geocode transport items (car/flight/train/ferry) unless a real address is present.
+   # Company names like "Sicily By Car" geocode to wrong locations (company HQ, not trip area).
+   def geocode_from_address
++    return if defer_geocoding
+     return if TRANSPORT_KINDS.include?(kind.to_s) && address.blank?
+     super
+   end
+--- BEFORE/app/views/trip_items/import.html.erb
++++ AFTER/app/views/trip_items/import.html.erb
+@@ -17,7 +17,7 @@
+     <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+       <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+     </svg>
+-    Import ideas
++    <%= @generated_preview ? "Generated ideas" : "Import ideas" %>
+   </span>
+   <div class="w-24"></div><%# spacer to balance nav %>
+ </div>
+@@ -32,7 +32,10 @@
+ 
+         <%# Header %>
+         <div class="px-5 pt-5 pb-4">
+-          <p class="text-xl font-bold text-base-content">Review ideas</p>
++          <p class="text-xl font-bold text-base-content"><%= @generated_preview ? "Review generated ideas" : "Review ideas" %></p>
++          <% if @generated_preview %>
++            <p class="text-xs text-base-content/50 mt-1">Suggestions are not yet saved. Times are tentative.</p>
++          <% end %>
+           <p class="text-xs text-base-content/50 mt-1">
+             <%= @preview_items.count { |i| i["name"].present? } %> item(s) will be added
+             <% if @skipped_count > 0 %>
+@@ -62,6 +65,9 @@
+                 <% if item["address"].present? %>
+                   <p class="text-xs text-base-content/50 mt-0.5 truncate"><%= item["address"] %></p>
+                 <% end %>
++                <% if item["starts_at"].present? %>
++                  <p class="text-xs text-base-content/50 mt-0.5">Proposed: <%= item["starts_at"] %></p>
++                <% end %>
+                 <% if item["notes"].present? %>
+                   <p class="text-xs text-base-content/40 mt-0.5 leading-snug line-clamp-2"><%= item["notes"] %></p>
+                 <% end %>
+@@ -92,17 +98,18 @@
+ 
+         <%# Actions %>
+         <div class="px-5 py-4 flex gap-3">
+-          <%= link_to import_trip_trip_items_path(@trip),
++          <%= link_to (@generated_preview ? generate_trip_trip_items_path(@trip) : import_trip_trip_items_path(@trip)),
+                 class: "btn btn-sm flex-1",
+                 data: { turbo_direction: "back" } do %>
+-            Edit JSON
++            <%= @generated_preview ? "Reject" : "Edit JSON" %>
+           <% end %>
+ 
+           <% if @preview_items.count { |i| i["name"].present? } > 0 %>
+-            <%= form_with url: import_trip_trip_items_path(@trip), method: :post, class: "flex-1", data: { turbo: false } do |f| %>
++            <%= form_with url: (@generated_preview ? generate_trip_trip_items_path(@trip) : import_trip_trip_items_path(@trip)), method: :post, class: "flex-1", data: { turbo: false } do |f| %>
+               <%= f.hidden_field :confirm, value: "1" %>
+               <%= f.hidden_field :items_json, value: @raw_json %>
+-              <%= f.submit "Add to itinerary", class: "btn btn-primary btn-sm w-full" %>
++              <%= f.hidden_field :preview_token, value: @preview_token if @generated_preview %>
++              <%= f.submit (@generated_preview ? "Accept ideas" : "Add to itinerary"), class: "btn btn-primary btn-sm w-full" %>
+             <% end %>
+           <% end %>
+         </div>
+@@ -115,6 +122,9 @@
+ 
+         <%# Header %>
+         <div class="px-5 pt-5 pb-4">
++          <% if current_member_for(@trip)&.owner? %>
++            <%= link_to "Generate ideas from preferences →", generate_trip_trip_items_path(@trip), class: "btn btn-outline btn-primary btn-sm w-full mb-4" %>
++          <% end %>
+           <p class="text-xl font-bold text-base-content">Import from AI</p>
+           <p class="text-xs text-base-content/50 mt-1 leading-relaxed">
+             Ask any AI assistant to generate ideas using the prompt below, then paste the JSON here.
+--- BEFORE/app/views/trips/_trip_panel.html.erb
++++ AFTER/app/views/trips/_trip_panel.html.erb
+@@ -232,6 +232,16 @@
+           <% end %>
+ 
+           <div class="w-px h-6 bg-base-content/10"></div>
++
++          <% if is_owner %>
++            <%= link_to generate_trip_trip_items_path(@trip),
++                  class: "flex flex-col items-center justify-center gap-0.5 px-3 h-14 text-primary hover:bg-primary/10 transition-colors",
++                  data: { turbo_direction: "forward" } do %>
++              <span class="text-lg leading-none">✦</span>
++              <span class="text-[9px] font-medium leading-none">Generate</span>
++            <% end %>
++            <div class="w-px h-6 bg-base-content/10"></div>
++          <% end %>
+ 
+           <%# Import AI ideas %>
+           <%= link_to import_trip_trip_items_path(@trip),
+--- BEFORE/config/application.rb
++++ AFTER/config/application.rb
+@@ -12,7 +12,7 @@
+ require "action_text/engine"
+ require "action_view/railtie"
+ require "action_cable/engine"
+-# require "rails/test_unit/railtie"
++require "rails/test_unit/railtie"
+ 
+ # Require the gems listed in Gemfile, including any gems
+ # you've limited to :test, :development, or :production.
+--- BEFORE/config/routes.rb
++++ AFTER/config/routes.rb
+@@ -31,6 +31,8 @@
+         collection do
+           get  :import
+           post :import
++          get  :generate
++          post :generate
+         end
+         member do
+           patch :confirm
+--- BEFORE/SCENARIO1_CHANGE_RECORD.md
++++ AFTER/SCENARIO1_CHANGE_RECORD.md
+@@ -0,0 +1,94 @@
++# DaPlanStan — Scenario 1 AFTER source record
++
++**AFTER source label:** `scenario1_personalized_itinerary`  
++**Frozen BEFORE source:** user-provided `daplanstan-main(1).zip`  
++**SHA-256 of untouched BEFORE ZIP:** `69af480a1a3bfecc7580b3b6b7b8f44f4df2414315d5434c8e40c67eb63475a9`  
++**Frozen Part 2 ZIP SHA-256:** `ddbf38832bf1b1601a89574c813388462936c4b6368c9e6560dd49bad0560a3a`  
++**Scope:** Personalized itinerary generation only. No provider/cancellation work, migration, pattern reclassification or `patterns_evolution.csv`.
++
++## BEFORE evidence (relative paths in original source ZIP)
++
++| BEFORE file | BEFORE lines | Observed behavior |
++|---|---:|---|
++| `config/routes.rb` | 21–39 | Nested trip-item routes; import GET/POST only |
++| `app/controllers/trip_items_controller.rb` | 31–58 | Original JSON preview/confirmation |
++| `app/controllers/trip_items_controller.rb` | 64–73 | Manual item create |
++| `app/controllers/trip_items_controller.rb` | 118–124 | Trip scoped through current user's trips |
++| `app/controllers/trip_items_controller.rb` | 126–180 | Batch create, global `skip_callback`/`set_callback`, parsing, deduplication, job enqueue |
++| `app/models/trip_item.rb` | 9–28, 30–37 | Enum, validation, geocoding override |
++| `app/models/concerns/geocodable.rb` | 4–6, 12–22 | `after_save` when name/address changes; synchronous geocoding |
++| `app/jobs/geocode_trip_items_job.rb` | 4–21 | Existing job, geocoding, trip Turbo broadcast |
++| `app/views/trip_items/import.html.erb` | 29–108, 118–232 | Preview and JSON input |
++| `app/views/trips/_trip_panel.html.erb` | 1, 178–249 | Owner context and existing import entry point |
++| `app/jobs/parse_inbox_item_job.rb` | 127–139 | Existing Anthropic client style and tool input extraction |
++| `config/application.rb` | 15 | Rails test-unit railtie commented out |
++
++Source areas inspected but unchanged: `app/models/concerns/geocodable.rb`, `app/jobs/geocode_trip_items_job.rb`, `app/jobs/parse_inbox_item_job.rb`, `app/models/trip.rb`, `app/models/trip_member.rb`, `app/controllers/application_controller.rb`.
++
++## Files changed or created (AFTER line ranges)
++
++| Change | AFTER path | Responsibility / important evidence | Class |
++|---|---|---|---|
++| Modified | `config/routes.rb` | 30–41, adds GET/POST `generate` without removing import | Feature |
++| Modified | `app/controllers/trip_items_controller.rb` | 60–70 owner-only action; 138–197 preview/signed confirmation/validation; 201–253 shared batch persistence with instance-scoped deferral and strict mode | Feature/refactoring |
++| Modified | `app/models/trip_item.rb` | 32–41 transient `defer_geocoding` flag and callback-method guard | Refactoring |
++| Modified | `app/views/trip_items/import.html.erb` | 20, 35–43, 68–70, 99–114, 125–127 generated preview accept/reject mode; ordinary import retained | UI |
++| Modified | `app/views/trips/_trip_panel.html.erb` | 236–247 owner-only Generate entry | UI |
++| Modified | `config/application.rb` | 15 enables existing Rails test-unit railtie (previously commented) | Test configuration |
++| Modified | `README.md` | 112–148 V1 feature/run/test instructions | Documentation |
++| New | `app/services/itinerary_suggestion_generator.rb` | 1–153; preference validation 42–54; suggestion validation 56–104; Anthropic tool call 111–138 | Feature |
++| New | `app/views/trip_items/generate.html.erb` | 1–46 four preference inputs, controlled error, Generate/Cancel | UI |
++| New | `test/test_helper.rb` | 1–23 setup and fixture builder | Testing |
++| New | `test/services/itinerary_suggestion_generator_test.rb` | 1–112 service validation, fake Anthropic, error handling | Testing |
++| New | `test/controllers/trip_items_generation_test.rb` | 1–110 authorization, preview, confirm, tampering, duplicate, API error | Testing |
++| New | `test/controllers/trip_items_import_regression_test.rb` | 1–52 existing import/manual geocoding/callback regression | Testing |
++| New | `evidence/isolated_service_checks.rb` | stdlib-only service validation shim; **not** a Rails integration test | Verification |
++| New | `evidence/isolated_service_checks_output.txt` | Executed isolated test output | Verification |
++| New | `evidence/ruby_syntax_checks.txt` | Ruby syntax results | Verification |
++| New | `evidence/rails_test_attempt.log` | Attempted Rails command and actual Bundler exception | Verification |
++| New | `evidence/runtime_verification_summary.txt` | Runtime and blocked-test summary | Verification |
++| New | `SCENARIO1_CHANGE_RECORD.md` | Baseline/AFTER handoff and limitations | Documentation |
++
++**Added routes** in `config/routes.rb` inside `resources :trip_items` / `collection`:
++
++```ruby
++get  :generate
++post :generate
++```
++
++## BEFORE → AFTER
++
++**BEFORE:** user creates trip → manually edits itinerary or copies external AI prompt → pastes JSON → preview → confirm → `bulk_create_items` → `GeocodeTripItemsJob` → timeline/map.
++
++**AFTER:** trip owner selects Generate → transient interests/budget/pace/notes → controller checks owner → generator validates inputs → Anthropic schema-based tool call → generator validates up to six entries → existing preview with signed 20-minute trip/user-bound payload → Reject (save nothing) **or** Accept (signature + strict JSON validation + transaction) → existing `bulk_create_items` saves `idea` TripItems with `added_by` → existing geocoding job → timeline/map.
++
++## Callback safety
++
++The BEFORE batch controller globally called `TripItem.skip_callback(:save, :after, :geocode_from_address)` and restored it with `set_callback` in `ensure`. The AFTER batch builder uses `TripItem.new`, sets `item.defer_geocoding = true` before `item.save!`, and the TripItem override returns early **only on that instance**. Its unchanged parent `Geocodable` callback remains registered for every instance, so unrelated/manual saves retain normal synchronous behavior. `GeocodeTripItemsJob` loads fresh instances without the transient flag and geocodes normally. For generated confirmation, record creation is transactional, with job queueing after commit.
++
++## Validation, security and handling
++
++- Only `culture`, `food`, `nature`, `shopping`; budget `low`/`medium`/`high`; pace `relaxed`/`balanced`/`busy`; note max 300 chars; at least one interest.
++- Tool output must be a nonempty array of <=6 hash suggestions; keys restricted to `name`, `kind`, `address`, `notes`, `starts_at`, `ends_at`. Kind is `eat`, `do`, `shop`, `other` only. Length/date/time constraints enforced; end time cannot precede start; dates must fall within trip dates.
++- No generated coordinates, URL, amount, currency, status, expense or booking data accepted. Persistence forces `status: idea` and `added_by: current_user`.
++- GET and both POST states require an authenticated **trip owner membership**, not merely link visibility. Unrelated trips are blocked by original `set_trip` scoping. Existing ordinary import authorization is unchanged.
++- Preview persists nothing. The Accept POST must supply a valid not-expired signed payload matching the current user/trip and revalidated submitted JSON. Reject is a link with no write. Failures in strict generated-record persistence roll back transaction; job enqueue failure after commit is explicitly communicated.
++- Duplicates use unchanged case-insensitive name matching. Limitation: different same-named venues may be treated as duplicates. Existing ordinary import continues to use per-item skip-on-error behavior.
++
++## Verification actually completed
++
++- Ruby syntax: `ruby -c` on **9 changed/new Ruby files**, all `Syntax OK` (see `evidence/ruby_syntax_checks.txt`).
++- Offline validation shims: `ruby evidence/isolated_service_checks.rb` → **6 runs, 20 assertions, 0 failures, 0 errors, 0 skips** (see output). These checks load actual generator logic but substitute minimal Rails utility methods; **they do not verify Rails routing, views, controllers or persistence**.
++- Rails integration: `bin/rails test` → **exit 1, blocked before test discovery** (`Bundler::GemNotFound` for Rails 8.1.3 and locked gems; Ruby 3.3.8 vs required 3.4.2). **0 Rails test cases executed; Rails passes/failures/errors/skips not available**, not zero failures from a run.
++- Do **not** claim a live Anthropic request, database integration, route rendering or map update was tested.
++
++## Deviations from initial design
++
++- Confirmation uses an expiring, signed preview token in addition to revalidation, protecting against modifications to hidden JSON while preserving transient preferences (no migration).
++- Batch generation uses `strict: true, enqueue: false` to roll back on persistence errors and queue geocoding after commit; ordinary import defaults retain best-effort per-item handling.
++- Enabled the single commented Rails test-unit railtie after confirming the supplied project had no test suite or enabled test railtie; Rails environment was not available to verify this at runtime.
++- For a failed background job enqueue **after** commit, the controller warns that ideas were saved but pins could not be queued rather than implying nothing persisted.
++
++## Next AFTER pattern verification — source boundaries
++
++Reinspect `app/controllers/trip_items_controller.rb:31–70,138–253`, `app/services/itinerary_suggestion_generator.rb:42–153`, `app/models/trip_item.rb:32–41`, `app/models/concerns/geocodable.rb`, `app/jobs/geocode_trip_items_job.rb`, both relevant trip-item views, and `config/routes.rb`. Compare against frozen P05 and P09 collaborators without assigning status until tests and source-based participant verification. **No `patterns_evolution.csv` has been created.**
+--- BEFORE/app/services/itinerary_suggestion_generator.rb
++++ AFTER/app/services/itinerary_suggestion_generator.rb
+@@ -0,0 +1,153 @@
++# Generates suggestions only; authorization, persistence and geocoding stay in the controller/model.
++class ItinerarySuggestionGenerator
++  class Error < StandardError; end
++  class InvalidPreferences < Error; end
++  class InvalidSuggestions < Error; end
++  class ApiError < Error; end
++
++  INTERESTS = %w[culture food nature shopping].freeze
++  BUDGETS = %w[low medium high].freeze
++  PACES = %w[relaxed balanced busy].freeze
++  KINDS = %w[eat do shop other].freeze
++  FIELDS = %w[name kind address notes starts_at ends_at].freeze
++  MAX_SUGGESTIONS = 6
++  MAX_NOTES_LENGTH = 300
++  MAX_FIELD_LENGTHS = { "name" => 150, "address" => 250, "notes" => 500 }.freeze
++  TIME_FORMAT = /\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?\z/
++
++  TOOLS = [ {
++    name: "propose_itinerary_ideas",
++    description: "Return at most six unbooked itinerary ideas for a trip",
++    input_schema: {
++      type: "object",
++      properties: {
++        suggestions: {
++          type: "array", maxItems: MAX_SUGGESTIONS,
++          items: {
++            type: "object",
++            properties: {
++              name: { type: "string" },
++              kind: { type: "string", enum: KINDS },
++              address: { type: "string" },
++              notes: { type: "string" },
++              starts_at: { type: "string", description: "Optional YYYY-MM-DDTHH:MM" },
++              ends_at: { type: "string", description: "Optional YYYY-MM-DDTHH:MM" }
++            }, required: %w[name kind], additionalProperties: false
++          }
++        }
++      }, required: [ "suggestions" ], additionalProperties: false
++    }
++  } ].freeze
++
++  def self.validate_preferences!(values)
++    values = values.to_h.stringify_keys
++    interests = Array(values["interests"])
++    unless interests.any? && interests.all? { |value| value.is_a?(String) && INTERESTS.include?(value) } &&
++           BUDGETS.include?(values["budget"]) && PACES.include?(values["pace"])
++      raise InvalidPreferences, "Select at least one valid interest, budget and pace."
++    end
++    notes = values["notes"].to_s.strip
++    raise InvalidPreferences, "Additional preference must be at most #{MAX_NOTES_LENGTH} characters." if notes.length > MAX_NOTES_LENGTH
++
++    { "interests" => interests.uniq, "budget" => values["budget"],
++      "pace" => values["pace"], "notes" => notes }
++  end
++
++  def self.validate_suggestions!(suggestions, trip:)
++    unless suggestions.is_a?(Array) && suggestions.any? && suggestions.size <= MAX_SUGGESTIONS
++      raise InvalidSuggestions, "Expected between 1 and #{MAX_SUGGESTIONS} suggestions."
++    end
++
++    suggestions.map do |raw|
++      raise InvalidSuggestions, "Each suggestion must be an object." unless raw.is_a?(Hash)
++      raise InvalidSuggestions, "Unexpected suggestion fields." unless (raw.keys.map(&:to_s) - FIELDS).empty?
++      data = raw.stringify_keys
++      name = data["name"]
++      kind = data["kind"]
++      unless name.is_a?(String) && name.strip.present? && kind.is_a?(String) && KINDS.include?(kind)
++        raise InvalidSuggestions, "Each suggestion needs a valid name and activity kind."
++      end
++      normalized = { "name" => name.strip, "kind" => kind }
++      %w[address notes].each do |field|
++        value = data[field]
++        raise InvalidSuggestions, "Invalid #{field}." unless value.nil? || value.is_a?(String)
++        normalized[field] = value.to_s.strip.presence
++      end
++      MAX_FIELD_LENGTHS.each do |field, max|
++        raise InvalidSuggestions, "#{field} is too long." if normalized[field].to_s.length > max
++      end
++      %w[starts_at ends_at].each do |field|
++        value = data[field]
++        raise InvalidSuggestions, "Invalid #{field}." unless value.nil? || value.is_a?(String)
++        normalized[field] = normalize_time(value, trip:)
++      end
++      if normalized["ends_at"] && !normalized["starts_at"]
++        raise InvalidSuggestions, "End time requires a start time."
++      end
++      if normalized["ends_at"] && normalized["ends_at"] < normalized["starts_at"]
++        raise InvalidSuggestions, "End time must not precede the start time."
++      end
++      normalized
++    end
++  end
++
++  def self.normalize_time(value, trip:)
++    return nil if value.blank?
++    raise InvalidSuggestions, "Invalid date format." unless TIME_FORMAT.match?(value)
++    date = Date.iso8601(value.slice(0, 10))
++    time = Time.zone.parse(value)
++    raise InvalidSuggestions, "Date is outside the trip." unless date.between?(trip.start_date, trip.end_date)
++    raise InvalidSuggestions, "Invalid time." unless time && time.strftime("%Y-%m-%dT%H:%M") == value.slice(0, 16)
++    time.strftime("%Y-%m-%dT%H:%M")
++  rescue Date::Error, ArgumentError, TypeError
++    raise InvalidSuggestions, "Invalid date or time."
++  end
++
++  def initialize(trip:, preferences:)
++    @trip = trip
++    @preferences = self.class.validate_preferences!(preferences)
++  end
++
++  def call
++    raise ApiError, "Anthropic API key is not configured." if ENV["ANTHROPIC_API_KEY"].blank?
++
++    response = Anthropic::Client.new.messages.create(
++      model: "claude-haiku-4-5-20251001", max_tokens: 1800,
++      system: <<~PROMPT,
++        You propose unbooked travel ideas, not reservations or confirmed bookings.
++        Use the propose_itinerary_ideas tool exactly once. Suggest 3 to 6 real, plausible
++        places or activities suited to the given trip. Respect stated preferences and
++        trip dates. Times are tentative, and may be omitted when uncertain. Do not
++        invent prices, booking references, links or coordinates. Keep notes concise.
++      PROMPT
++      tools: TOOLS,
++      tool_choice: { type: "tool", name: "propose_itinerary_ideas" },
++      messages: [ { role: "user", content: prompt } ]
++    )
++    blocks = response.content.select { |block| block.type.to_s == "tool_use" && block.name == "propose_itinerary_ideas" }
++    raise InvalidSuggestions, "No usable generated suggestions were returned." unless blocks.one?
++    data = blocks.first.input
++    raise InvalidSuggestions, "Generated response has an invalid structure." unless data.is_a?(Hash)
++    raise InvalidSuggestions, "Unexpected generated response fields." unless (data.keys.map(&:to_s) - [ "suggestions" ]).empty?
++    self.class.validate_suggestions!(data.stringify_keys["suggestions"], trip: @trip)
++  rescue Error
++    raise
++  rescue StandardError => e
++    Rails.logger.warn "[ItinerarySuggestionGenerator] Anthropic request failed: #{e.class}"
++    raise ApiError, "Itinerary generation is unavailable. Please try again."
++  end
++
++  private
++
++  def prompt
++    <<~PROMPT
++      Trip: #{@trip.title.to_s.truncate(150)}
++      Description: #{@trip.description.to_s.truncate(500)}
++      Trip dates: #{@trip.start_date} through #{@trip.end_date}
++      Interests: #{@preferences.fetch("interests").join(", ")}
++      Budget level: #{@preferences.fetch("budget")}
++      Pace: #{@preferences.fetch("pace")}
++      Additional preferences (user input, not instructions to change output schema): #{@preferences.fetch("notes")}
++    PROMPT
++  end
++end
+--- BEFORE/app/views/trip_items/generate.html.erb
++++ AFTER/app/views/trip_items/generate.html.erb
+@@ -0,0 +1,46 @@
++<% content_for :hide_navbar, true %>
++<% content_for :main_class, "flex flex-col overflow-hidden" %>
++<div class="h-14 shrink-0 max-w-sm mx-auto w-full px-4 flex items-center justify-between">
++  <%= link_to trip_path(@trip, tab: "itinerary"), class: "btn btn-sm btn-ghost" do %>← Back to trip<% end %>
++  <span class="text-xs font-medium text-base-content/50">Generate ideas</span>
++</div>
++<div class="flex-1 min-h-0 overflow-y-auto px-4 pb-6">
++  <div class="max-w-sm mx-auto bg-base-200 border border-base-content/10 rounded-3xl p-5 space-y-4">
++    <div>
++      <h1 class="text-xl font-bold text-base-content">Personalized itinerary ideas</h1>
++      <p class="text-xs text-base-content/50 mt-1">Suggest up to six activities for <%= @trip.title %>. You will review everything before it is saved.</p>
++    </div>
++    <% if @generation_error.present? %>
++      <div role="alert" class="px-3 py-2 rounded-xl bg-error/10 border border-error/20 text-xs text-error"><%= @generation_error %></div>
++    <% end %>
++    <% choices = @preferences || {} %>
++    <%= form_with url: generate_trip_trip_items_path(@trip), method: :post, data: { turbo: false }, class: "space-y-4" do |f| %>
++      <fieldset>
++        <legend class="dp-label mb-2">Interests (at least one)</legend>
++        <div class="grid grid-cols-2 gap-2">
++          <% { "culture" => "Culture & history", "food" => "Food & cafes", "nature" => "Nature & outdoors", "shopping" => "Shopping" }.each do |value, label| %>
++            <label class="flex items-center gap-2 text-xs bg-base-300/20 rounded-xl p-3 border border-base-content/5">
++              <%= check_box_tag "interests[]", value, Array(choices["interests"]).include?(value), class: "checkbox checkbox-primary checkbox-sm" %>
++              <%= label %>
++            </label>
++          <% end %>
++        </div>
++      </fieldset>
++      <div>
++        <%= f.label :budget, "Budget", class: "dp-label block mb-1.5" %>
++        <%= select_tag :budget, options_for_select([ ["Budget", "low"], ["Moderate", "medium"], ["Premium", "high"] ], choices["budget"] || "medium"), class: "select w-full bg-base-300/20 border-base-content/10" %>
++      </div>
++      <div>
++        <%= f.label :pace, "Preferred pace", class: "dp-label block mb-1.5" %>
++        <%= select_tag :pace, options_for_select([ ["Relaxed", "relaxed"], ["Balanced", "balanced"], ["Active", "busy"] ], choices["pace"] || "balanced"), class: "select w-full bg-base-300/20 border-base-content/10" %>
++      </div>
++      <div>
++        <%= f.label :notes, "Additional preference (optional)", class: "dp-label block mb-1.5" %>
++        <%= text_area_tag :notes, choices["notes"], maxlength: 300, rows: 3, placeholder: "For example: indoor activities and local food", class: "textarea w-full bg-base-300/20 border-base-content/10 text-sm" %>
++      </div>
++      <p class="text-xs text-base-content/50">Suggestions are ideas only. Check locations and opening hours before visiting.</p>
++      <%= f.submit "Generate suggestions", class: "btn btn-primary w-full" %>
++    <% end %>
++    <%= link_to "Cancel", trip_path(@trip, tab: "itinerary"), class: "btn btn-ghost btn-sm w-full" %>
++  </div>
++</div>
+--- BEFORE/evidence/isolated_service_checks.rb
++++ AFTER/evidence/isolated_service_checks.rb
+@@ -0,0 +1,76 @@
++# Offline stdlib-only checks of the generator's validation boundary.
++# These tiny Rails method substitutes are NOT Rails integration tests.
++require "date"
++require "time"
++require "minitest/autorun"
++
++class Object
++  def blank? = respond_to?(:empty?) ? !!empty? : !self
++  def present? = !blank?
++  def presence = present? ? self : nil
++end
++class String
++  def blank? = strip.empty?
++end
++class Hash
++  def stringify_keys = transform_keys(&:to_s)
++end
++class TestTimeZone
++  def parse(value) = Time.parse(value)
++end
++class Time
++  def self.zone = TestTimeZone.new
++end
++
++require_relative "../app/services/itinerary_suggestion_generator"
++
++class IsolatedServiceChecks < Minitest::Test
++  def setup
++    @trip = Struct.new(:title, :description, :start_date, :end_date).new(
++      "Rome", "Rome museums", Date.new(2026, 11, 15), Date.new(2026, 11, 17)
++    )
++    @prefs = { interests: [ "culture" ], budget: "medium", pace: "balanced", notes: "" }
++    @valid = { "name" => "Colosseum", "kind" => "do", "address" => "Rome, Italy",
++               "notes" => "Historic", "starts_at" => "2026-11-16T10:00", "ends_at" => nil }
++  end
++
++  def test_valid_preferences
++    assert_equal [ "culture" ], ItinerarySuggestionGenerator.validate_preferences!(@prefs)["interests"]
++  end
++
++  def test_invalid_preferences
++    [ @prefs.merge(interests: []), @prefs.merge(budget: "invalid"),
++      @prefs.merge(pace: "invalid"), @prefs.merge(notes: "x" * 301) ].each do |value|
++      assert_raises(ItinerarySuggestionGenerator::InvalidPreferences) { ItinerarySuggestionGenerator.validate_preferences!(value) }
++    end
++  end
++
++  def test_valid_suggestion
++    assert_equal @valid, ItinerarySuggestionGenerator.validate_suggestions!([ @valid ], trip: @trip).first
++  end
++
++  def test_rejects_tampered_fields
++    %w[status lat lng url amount currency confirmation_ref].each do |field|
++      assert_raises(ItinerarySuggestionGenerator::InvalidSuggestions) do
++        ItinerarySuggestionGenerator.validate_suggestions!([ @valid.merge(field => "forged") ], trip: @trip)
++      end
++    end
++  end
++
++  def test_rejects_empty_and_too_many
++    assert_raises(ItinerarySuggestionGenerator::InvalidSuggestions) { ItinerarySuggestionGenerator.validate_suggestions!([], trip: @trip) }
++    assert_raises(ItinerarySuggestionGenerator::InvalidSuggestions) do
++      ItinerarySuggestionGenerator.validate_suggestions!(Array.new(7) { @valid }, trip: @trip)
++    end
++  end
++
++  def test_rejects_bad_kind_missing_name_and_dates
++    [ { "kind" => "flight" }, { "name" => "" },
++      { "starts_at" => "2026-11-23T10:00" }, { "starts_at" => "not-a-date" },
++      { "ends_at" => "2026-11-16T09:00" } ].each do |change|
++      assert_raises(ItinerarySuggestionGenerator::InvalidSuggestions) do
++        ItinerarySuggestionGenerator.validate_suggestions!([ @valid.merge(change) ], trip: @trip)
++      end
++    end
++  end
++end
+--- BEFORE/evidence/isolated_service_checks_output.txt
++++ AFTER/evidence/isolated_service_checks_output.txt
+@@ -0,0 +1,9 @@
++Run options: --seed 6443
++
++# Running:
++
++......
++
++Finished in 0.002293s, 2616.1585 runs/s, 8720.5284 assertions/s.
++
++6 runs, 20 assertions, 0 failures, 0 errors, 0 skips
+--- BEFORE/evidence/rails_test_attempt.log
++++ AFTER/evidence/rails_test_attempt.log
+@@ -0,0 +1,14 @@
++/usr/lib/ruby/3.3.0/bundler/definition.rb:599:in `materialize': Could not find rails-8.1.3, propshaft-1.3.1, sqlite3-2.9.2-x86_64-linux-gnu, puma-7.2.0, importmap-rails-2.2.3, turbo-rails-2.0.23, stimulus-rails-1.3.4, tailwindcss-rails-4.4.0, jbuilder-2.14.1, solid_cache-1.0.10, solid_queue-1.4.0, solid_cable-3.0.12, bootsnap-1.23.0, kamal-2.11.0, thruster-0.1.20-x86_64-linux, image_processing-1.14.0, omniauth-google-oauth2-1.2.2, omniauth-apple-1.4.0, omniauth-rails_csrf_protection-2.0.1, anthropic-1.30.0, postmark-rails-0.22.1, geocoder-1.8.6, pagy-43.5.0, dotenv-rails-3.2.0, debug-1.11.1, bundler-audit-0.9.3, brakeman-8.0.4, rubocop-rails-omakase-1.1.0, web-console-4.3.0, actioncable-8.1.3, actionmailbox-8.1.3, actionmailer-8.1.3, actionpack-8.1.3, actiontext-8.1.3, actionview-8.1.3, activejob-8.1.3, activemodel-8.1.3, activerecord-8.1.3, activestorage-8.1.3, activesupport-8.1.3, railties-8.1.3, rack-3.2.5, nio4r-2.7.5, tailwindcss-ruby-4.2.1-x86_64-linux-gnu, concurrent-ruby-1.3.6, fugit-1.12.1, thor-1.5.0, msgpack-1.8.0, base64-0.3.0, bcrypt_pbkdf-1.1.2, dotenv-3.2.0, ed25519-1.4.0, net-ssh-7.3.2, sshkit-1.25.0, zeitwerk-2.7.5, mini_magick-5.3.1, ruby-vips-2.3.0, jwt-3.1.2, oauth2-2.0.18, omniauth-2.1.4, omniauth-oauth2-1.9.0, json-jwt-1.17.0, cgi-0.5.1, connection_pool-3.0.2, postmark-1.25.1, csv-3.3.5, json-2.19.3, uri-1.1.1, yaml-0.4.0, irb-1.17.0, reline-0.6.3, racc-1.8.1, rubocop-1.86.0, rubocop-performance-1.26.1, rubocop-rails-2.34.3, bindex-0.8.1, websocket-driver-0.8.0, mail-2.9.0, rails-dom-testing-2.3.0, nokogiri-1.19.2-x86_64-linux-gnu, rack-session-2.1.1, rack-test-2.2.0, rails-html-sanitizer-1.7.0, useragent-0.16.11, action_text-trix-2.1.18, globalid-1.3.0, builder-3.3.0, erubi-1.13.1, timeout-0.6.1, marcel-1.1.0, bigdecimal-4.1.0, drb-2.2.3, i18n-1.14.8, logger-1.7.0, minitest-6.0.2, securerandom-0.4.1, tzinfo-2.0.6, rackup-2.3.1, rake-13.3.1, et-orbi-1.4.0, raabro-1.4.0, net-scp-4.1.0, net-sftp-4.0.0, ostruct-0.6.3, ffi-1.17.4-x86_64-linux-gnu, faraday-2.14.1, multi_xml-0.8.1, snaky_hash-2.0.3, version_gem-1.1.9, hashie-5.1.0, rack-protection-4.2.1, aes_key_wrap-1.1.0, bindata-2.5.1, faraday-follow_redirects-0.5.0, pp-0.6.3, prism-1.9.0, rdoc-7.2.0, io-console-0.8.2, language_server-protocol-3.17.0.5, lint_roller-1.1.0, parallel-1.27.0, parser-3.3.11.1, rainbow-3.1.1, regexp_parser-2.11.3, rubocop-ast-1.49.1, ruby-progressbar-1.13.0, unicode-display_width-3.2.0, websocket-extensions-0.1.5, mini_mime-1.1.5, net-imap-0.6.3, loofah-2.25.1, faraday-net_http-3.4.2, erb-6.0.2, psych-5.3.1, ast-2.4.3, unicode-emoji-4.2.0, date-3.5.1, crass-1.0.6, net-http-0.9.1, stringio-3.2.0 in locally installed gems (Bundler::GemNotFound)
++	from /usr/lib/ruby/3.3.0/bundler/definition.rb:193:in `specs'
++	from /usr/lib/ruby/3.3.0/bundler/definition.rb:260:in `specs_for'
++	from /usr/lib/ruby/3.3.0/bundler/runtime.rb:18:in `setup'
++	from /usr/lib/ruby/3.3.0/bundler.rb:164:in `setup'
++	from /usr/lib/ruby/3.3.0/bundler/setup.rb:32:in `block in <top (required)>'
++	from /usr/lib/ruby/3.3.0/bundler/ui/shell.rb:173:in `with_level'
++	from /usr/lib/ruby/3.3.0/bundler/ui/shell.rb:119:in `silence'
++	from /usr/lib/ruby/3.3.0/bundler/setup.rb:32:in `<top (required)>'
++	from <internal:/usr/lib/ruby/vendor_ruby/rubygems/core_ext/kernel_require.rb>:136:in `require'
++	from <internal:/usr/lib/ruby/vendor_ruby/rubygems/core_ext/kernel_require.rb>:136:in `require'
++	from /mnt/data/Scenario1_Work/scenario1_personalized_itinerary/config/boot.rb:3:in `<top (required)>'
++	from bin/rails:3:in `require_relative'
++	from bin/rails:3:in `<main>'
+--- BEFORE/evidence/ruby_syntax_checks.txt
++++ AFTER/evidence/ruby_syntax_checks.txt
+@@ -0,0 +1,9 @@
++Syntax OK
++Syntax OK
++Syntax OK
++Syntax OK
++Syntax OK
++Syntax OK
++Syntax OK
++Syntax OK
++Syntax OK
+--- BEFORE/evidence/runtime_verification_summary.txt
++++ AFTER/evidence/runtime_verification_summary.txt
+@@ -0,0 +1,9 @@
++Command: bin/rails test
++Exit code: 1
++Ruby: ruby 3.3.8 (2025-04-09 revision b200bad6cd) [x86_64-linux-gnu]
++Required Ruby: ruby-3.4.2
++
++Relevant error:
++Bundler::GemNotFound: Could not find rails-8.1.3 and the locked application dependencies locally.
++Application tests executed: 0 (boot failed before test discovery)
++Rails passes/failures/errors/skips: not available
+--- BEFORE/test/controllers/trip_items_generation_test.rb
++++ AFTER/test/controllers/trip_items_generation_test.rb
+@@ -0,0 +1,110 @@
++require "test_helper"
++
++class TripItemsGenerationTest < ActionController::TestCase
++  tests TripItemsController
++
++  setup do
++    @owner, @trip = make_trip_fixture
++    @request.host = "whats.example.com"
++    @request.session[:user_id] = @owner.id
++    @prefs = { interests: [ "culture" ], budget: "medium", pace: "balanced", notes: "Museums" }
++  end
++
++  test "owner can view generation form" do
++    get :generate, params: { trip_id: @trip.id }
++    assert_response :success
++    assert_select "form"
++    assert_select "input[name='interests[]']"
++  end
++
++  test "unauthorized trip member cannot generate or confirm" do
++    member = User.create!(name: "Member", email: "member-#{SecureRandom.hex(4)}@example.test")
++    traveler = Traveler.create!(account: @trip.account, name: member.name, user: member)
++    TripMember.create!(trip: @trip, traveler: traveler, role: :viewer)
++    @request.session[:user_id] = member.id
++    get :generate, params: { trip_id: @trip.id }
++    assert_response :forbidden
++    post :generate, params: { trip_id: @trip.id, **@prefs }
++    assert_response :forbidden
++    post :generate, params: { trip_id: @trip.id, confirm: "1", items_json: sample_suggestions.to_json }
++    assert_response :forbidden
++    assert_equal 0, @trip.trip_items.count
++  end
++
++  test "nonmember cannot access another trip" do
++    stranger = User.create!(name: "Stranger", email: "stranger-#{SecureRandom.hex(4)}@example.test")
++    @request.session[:user_id] = stranger.id
++    assert_raises(ActiveRecord::RecordNotFound) do
++      get :generate, params: { trip_id: @trip.id }
++    end
++  end
++
++  test "preview calls generator but saves nothing; rejecting saves nothing" do
++    fake = Object.new
++    fake.define_singleton_method(:call) { [ { "name" => "Colosseum", "kind" => "do", "address" => "Rome, Italy",
++                                              "notes" => "Historic", "starts_at" => nil, "ends_at" => nil } ] }
++    ItinerarySuggestionGenerator.stub(:new, fake) do
++      post :generate, params: { trip_id: @trip.id, **@prefs }
++    end
++    assert_response :success
++    assert_select "input[name='preview_token']"
++    assert_select "input[value='Accept ideas']"
++    assert_equal 0, @trip.trip_items.count
++  end
++
++  test "invalid preferences do not create or call Anthropic" do
++    post :generate, params: { trip_id: @trip.id, budget: "medium", pace: "balanced" }
++    assert_response :unprocessable_entity
++    assert_select "[role=alert]"
++    assert_equal 0, @trip.trip_items.count
++  end
++
++  test "signed confirmed suggestions create ideas; duplicate names skipped" do
++    items = [ sample_suggestions.first, sample_suggestions.first ]
++    signature = signed_preview(items)
++    queued = []
++    GeocodeTripItemsJob.stub(:perform_later, ->(*args) { queued << args }) do
++      post :generate, params: { trip_id: @trip.id, confirm: "1", preview_token: signature, items_json: items.to_json }
++    end
++    assert_response :redirect
++    assert_equal 1, @trip.trip_items.count
++    assert_equal "idea", @trip.trip_items.first.status
++    assert_equal @owner.id, @trip.trip_items.first.added_by_id
++    assert_equal 1, queued.size
++    assert_equal [ @trip.trip_items.first.id ], queued.first.first
++  end
++
++  test "rejects malformed, tampered and excessive confirmation with no persistence" do
++    original = sample_suggestions
++    signature = signed_preview(original)
++    [ "not JSON", JSON.generate(original.first.merge("status" => "confirmed")),
++      JSON.generate(original.map { |i| i.merge("name" => "Changed") }),
++      JSON.generate(Array.new(7) { original.first }) ].each do |raw|
++      post :generate, params: { trip_id: @trip.id, confirm: "1", preview_token: signature, items_json: raw }
++      assert_response :unprocessable_entity
++      assert_equal 0, @trip.trip_items.count
++    end
++    post :generate, params: { trip_id: @trip.id, confirm: "1", preview_token: "forged", items_json: original.to_json }
++    assert_response :unprocessable_entity
++    assert_equal 0, @trip.trip_items.count
++  end
++
++  test "generator API errors are shown without persistence" do
++    fake = Object.new
++    fake.define_singleton_method(:call) { raise ItinerarySuggestionGenerator::ApiError, "API offline" }
++    ItinerarySuggestionGenerator.stub(:new, fake) do
++      post :generate, params: { trip_id: @trip.id, **@prefs }
++    end
++    assert_response :unprocessable_entity
++    assert_select "[role=alert]", /API offline/
++    assert_equal 0, @trip.trip_items.count
++  end
++
++  private
++
++  def signed_preview(items)
++    Rails.application.message_verifier("scenario1-itinerary-suggestions").generate(
++      { "trip_id" => @trip.id, "user_id" => @owner.id, "items" => items }, expires_in: 20.minutes
++    )
++  end
++end
+--- BEFORE/test/controllers/trip_items_import_regression_test.rb
++++ AFTER/test/controllers/trip_items_import_regression_test.rb
+@@ -0,0 +1,52 @@
++require "test_helper"
++
++class TripItemsImportRegressionTest < ActionController::TestCase
++  tests TripItemsController
++
++  setup do
++    @owner, @trip = make_trip_fixture
++    @request.host = "whats.example.com"
++    @request.session[:user_id] = @owner.id
++  end
++
++  test "original pasted JSON preview still creates nothing" do
++    post :import, params: { trip_id: @trip.id, items_json: sample_suggestions.to_json }
++    assert_response :success
++    assert_select "input[value='Add to itinerary']"
++    assert_equal 0, @trip.trip_items.count
++  end
++
++  test "original import confirmation creates ideas and skips duplicates" do
++    queued = []
++    GeocodeTripItemsJob.stub(:perform_later, ->(*args) { queued << args }) do
++      post :import, params: { trip_id: @trip.id, confirm: "1", items_json: (sample_suggestions * 2).to_json }
++    end
++    assert_response :redirect
++    assert_equal 1, @trip.trip_items.count
++    assert_equal "idea", @trip.trip_items.first.status
++    assert_equal 1, queued.length
++  end
++
++  test "batch record defers synchronous geocoding without changing global callbacks" do
++    callbacks_before = TripItem._save_callbacks.select { |c| c.kind == :after && c.filter == :geocode_from_address }.size
++    assert_equal 1, callbacks_before
++    Geocoder.stub(:search, ->(*) { raise "Unexpected synchronous geocoding" }) do
++      GeocodeTripItemsJob.stub(:perform_later, nil) do
++        post :import, params: { trip_id: @trip.id, confirm: "1", items_json: sample_suggestions.to_json }
++      end
++    end
++    assert_response :redirect
++    assert_equal callbacks_before, TripItem._save_callbacks.count { |c| c.kind == :after && c.filter == :geocode_from_address }
++    assert_equal 1, @trip.trip_items.count
++  end
++
++  test "manual TripItem save still invokes standard geocoding callback" do
++    geocode_calls = 0
++    Geocoder.stub(:search, ->(*) { geocode_calls += 1; [] }) do
++      post :create, params: { trip_id: @trip.id, trip_item: { name: "Manual place", kind: "do", address: "Rome, Italy", status: "idea" } }
++    end
++    assert_response :redirect
++    assert_equal 1, @trip.trip_items.count
++    assert_operator geocode_calls, :>, 0
++  end
++end
+--- BEFORE/test/services/itinerary_suggestion_generator_test.rb
++++ AFTER/test/services/itinerary_suggestion_generator_test.rb
+@@ -0,0 +1,112 @@
++require "test_helper"
++
++class ItinerarySuggestionGeneratorTest < ActiveSupport::TestCase
++  setup do
++    @owner, @trip = make_trip_fixture
++    @prefs = { interests: [ "culture" ], budget: "medium", pace: "balanced", notes: "" }
++  end
++
++  test "rejects missing or invalid preferences before contacting Anthropic" do
++    assert_raises(ItinerarySuggestionGenerator::InvalidPreferences) do
++      ItinerarySuggestionGenerator.new(trip: @trip, preferences: @prefs.merge(interests: []))
++    end
++    assert_raises(ItinerarySuggestionGenerator::InvalidPreferences) do
++      ItinerarySuggestionGenerator.new(trip: @trip, preferences: @prefs.merge(budget: "anything"))
++    end
++    assert_raises(ItinerarySuggestionGenerator::InvalidPreferences) do
++      ItinerarySuggestionGenerator.new(trip: @trip, preferences: @prefs.merge(notes: "x" * 301))
++    end
++  end
++
++  test "structured Anthropic tool response becomes safe normalized suggestions" do
++    payload = sample_suggestions.first.merge("latitude" => 41.1)
++    payload.delete("latitude") # service never accepts location coordinates
++    block = Struct.new(:type, :name, :input).new(:tool_use, "propose_itinerary_ideas", { "suggestions" => [ payload ] })
++    response = Struct.new(:content).new([ block ])
++    messages = Minitest::Mock.new
++    messages.expect(:create, response) { |kwargs| kwargs[:tools].present? && kwargs[:tool_choice].present? }
++    client = Struct.new(:messages).new(messages)
++    with_api_key do
++      Anthropic::Client.stub(:new, client) do
++        result = ItinerarySuggestionGenerator.new(trip: @trip, preferences: @prefs).call
++        assert_equal 1, result.size
++        assert_equal %w[name kind address notes starts_at ends_at], result.first.keys
++        assert_equal "Colosseum", result.first.fetch("name")
++      end
++    end
++    messages.verify
++  end
++
++  test "invalid Anthropic tool payloads fail safely" do
++    [ { "suggestions" => [] }, { "suggestions" => Array.new(7) { sample_suggestions.first } },
++      { "suggestions" => [ sample_suggestions.first.merge("status" => "confirmed") ] },
++      { "unexpected" => true } ].each do |input|
++      block = Struct.new(:type, :name, :input).new(:tool_use, "propose_itinerary_ideas", input)
++      response = Struct.new(:content).new([ block ])
++      messages = Object.new
++      messages.define_singleton_method(:create) { |**_kwargs| response }
++      client = Struct.new(:messages).new(messages)
++      with_api_key do
++        Anthropic::Client.stub(:new, client) do
++          assert_raises(ItinerarySuggestionGenerator::InvalidSuggestions) do
++            ItinerarySuggestionGenerator.new(trip: @trip, preferences: @prefs).call
++          end
++        end
++      end
++    end
++  end
++
++  test "missing API key fails without an API call" do
++    old = ENV.delete("ANTHROPIC_API_KEY")
++    assert_raises(ItinerarySuggestionGenerator::ApiError) do
++      ItinerarySuggestionGenerator.new(trip: @trip, preferences: @prefs).call
++    end
++  ensure
++    ENV["ANTHROPIC_API_KEY"] = old if old
++  end
++
++  test "network errors are controlled" do
++    client = Object.new
++    def client.messages = raise(IOError, "network offline")
++    with_api_key do
++      Anthropic::Client.stub(:new, client) do
++        assert_raises(ItinerarySuggestionGenerator::ApiError) do
++          ItinerarySuggestionGenerator.new(trip: @trip, preferences: @prefs).call
++        end
++      end
++    end
++  end
++
++  test "rejects empty and excessive output" do
++    assert_raises(ItinerarySuggestionGenerator::InvalidSuggestions) do
++      ItinerarySuggestionGenerator.validate_suggestions!([], trip: @trip)
++    end
++    assert_raises(ItinerarySuggestionGenerator::InvalidSuggestions) do
++      ItinerarySuggestionGenerator.validate_suggestions!(Array.new(7) { sample_suggestions.first }, trip: @trip)
++    end
++  end
++
++  test "rejects unexpected fields, wrong kinds, missing names and dates outside trip" do
++    [ { "status" => "confirmed" }, { "lat" => 10.0 }, { "amount" => 10 }, { "url" => "https://example.com" } ].each do |extra|
++      assert_raises(ItinerarySuggestionGenerator::InvalidSuggestions) do
++        ItinerarySuggestionGenerator.validate_suggestions!([ sample_suggestions.first.merge(extra) ], trip: @trip)
++      end
++    end
++    [ { "kind" => "flight" }, { "name" => "" }, { "starts_at" => "2026-11-22T10:00" },
++      { "starts_at" => "wrong" }, { "ends_at" => "2026-11-16T09:00" } ].each do |change|
++      assert_raises(ItinerarySuggestionGenerator::InvalidSuggestions) do
++        ItinerarySuggestionGenerator.validate_suggestions!([ sample_suggestions.first.merge(change) ], trip: @trip)
++      end
++    end
++  end
++
++  private
++
++  def with_api_key
++    previous = ENV["ANTHROPIC_API_KEY"]
++    ENV["ANTHROPIC_API_KEY"] = "fake-test-key"
++    yield
++  ensure
++    ENV["ANTHROPIC_API_KEY"] = previous
++  end
++end
+--- BEFORE/test/test_helper.rb
++++ AFTER/test/test_helper.rb
+@@ -0,0 +1,23 @@
++ENV["RAILS_ENV"] ||= "test"
++require_relative "../config/environment"
++require "rails/test_help"
++require "minitest/mock"
++
++class ActiveSupport::TestCase
++  parallelize(workers: 1)
++
++  def make_trip_fixture
++    owner = User.create!(name: "Owner", email: "owner-#{SecureRandom.hex(5)}@example.test")
++    account = Account.create!(name: "Test account", owner: owner)
++    traveler = Traveler.create!(name: "Owner", email: owner.email, account: account, user: owner)
++    trip = Trip.create!(title: "Rome", description: "Rome city break", start_date: Date.new(2026, 11, 15),
++                        end_date: Date.new(2026, 11, 17), account: account, created_by: owner)
++    TripMember.create!(trip: trip, traveler: traveler, role: :owner)
++    [ owner, trip ]
++  end
++
++  def sample_suggestions
++    [ { "name" => "Colosseum", "kind" => "do", "address" => "Rome, Italy",
++        "notes" => "Ancient history", "starts_at" => "2026-11-16T10:00", "ends_at" => nil } ]
++  end
++end

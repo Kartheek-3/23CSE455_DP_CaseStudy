@@ -1,0 +1,15 @@
+@startuml
+skinparam componentStyle rectangle
+[REST Resource / CDI] --> [WalletService facade]
+[WalletService facade] --> [CurrencyStrategyFactory]
+[CurrencyStrategyFactory] --> [CurrencyConversionStrategy]
+[WalletService facade] --> [FraudCheckChain]
+[FraudCheckChain] --> [DenyListCheck]
+[FraudCheckChain] --> [VelocityCheck]
+[WalletService facade] --> [DailyLimitDecorator]
+[DailyLimitDecorator] --> [PerTransferLimit]
+[WalletService facade] --> [TransferRepository]
+[WalletService facade] --> [NotificationPublisher]
+[NotificationPublisher] --> [EmailNotification]
+[NotificationPublisher] --> [AuditNotification]
+@enduml

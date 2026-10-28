@@ -1,0 +1,22 @@
+pattern_name,language,source_file,function_or_method,decision_points,calculation,cyclomatic_complexity,basis
+Strategy,Java,Part3/strategy/java/Strategy.java,ClaudeStrategy.stream,0,1 + 0,1,Straight-line method; no branch or loop.
+Strategy,Java,Part3/strategy/java/Strategy.java,OpenAIStrategy.stream,0,1 + 0,1,Straight-line method; no branch or loop.
+Strategy,Java,Part3/strategy/java/Strategy.java,GeminiStrategy.stream,0,1 + 0,1,Straight-line method; no branch or loop.
+Strategy,Java,Part3/strategy/java/Strategy.java,LlmContext.select,3,1 + 3 non-default case labels,4,"Switch cases claude, openai, gemini each count as one decision; default is not counted separately."
+Strategy,Java,Part3/strategy/java/Strategy.java,LlmContext.stream,0,1 + 0,1,Straight-line delegation.
+Strategy,C++,Part3/strategy/cpp/strategy.hpp,ClaudeStrategy::stream,0,1 + 0,1,Straight-line method; no branch or loop.
+Strategy,C++,Part3/strategy/cpp/strategy.hpp,OpenAIStrategy::stream,0,1 + 0,1,Straight-line method; no branch or loop.
+Strategy,C++,Part3/strategy/cpp/strategy.hpp,GeminiStrategy::stream,0,1 + 0,1,Straight-line method; no branch or loop.
+Strategy,C++,Part3/strategy/cpp/strategy.hpp,LlmContext::stream,3,1 + 3 if statements,4,"Three independent if decisions for Claude, OpenAI, and Gemini; unsupported provider is the fall-through path."
+Observer,Java,Part3/observer/java/AuthObserver.java,AuthEventSource.subscribe,0,1 + 0,1,Straight-line list append.
+Observer,Java,Part3/observer/java/AuthObserver.java,AuthEventSource.unsubscribe,0,1 + 0,1,Straight-line list removal; library internals are not counted as decisions in this method.
+Observer,Java,Part3/observer/java/AuthObserver.java,AuthEventSource.publish,1,1 + 1 for loop,2,One loop decision.
+Observer,Java,Part3/observer/java/AuthObserver.java,RecordingAuthListener constructor,0,1 + 0,1,Straight-line field assignment.
+Observer,Java,Part3/observer/java/AuthObserver.java,RecordingAuthListener.onAuthStateChanged,0,1 + 0,1,Straight-line list append.
+Observer,Java,Part3/observer/java/AuthObserver.java,RecordingAuthListener.received,0,1 + 0,1,Straight-line getter.
+Observer,C++,Part3/observer/cpp/observer.hpp,AuthEventSource::subscribe,0,1 + 0,1,Straight-line vector append.
+Observer,C++,Part3/observer/cpp/observer.hpp,AuthEventSource::unsubscribe,0,1 + 0,1,Authored body delegates to std::remove/erase; standard-library internal control flow is outside the function body and excluded.
+Observer,C++,Part3/observer/cpp/observer.hpp,AuthEventSource::publish,1,1 + 1 for loop,2,One loop decision.
+Observer,C++,Part3/observer/cpp/observer.hpp,RecordingAuthListener constructor,0,1 + 0,1,Straight-line member initialization.
+Observer,C++,Part3/observer/cpp/observer.hpp,RecordingAuthListener::onAuthStateChanged,0,1 + 0,1,Straight-line vector append.
+Observer,C++,Part3/observer/cpp/observer.hpp,RecordingAuthListener::received,0,1 + 0,1,Straight-line getter.

@@ -1,0 +1,35 @@
+
+(process:22004): VIPS-WARNING **: 18:06:19.313: unable to load "C:\Ruby34-x64\msys64\ucrt64/lib/vips-modules-8.18\vips-heif.dll" -- 'C:\Ruby34-x64\msys64\ucrt64/lib/vips-modules-8.18\vips-heif.dll': The specified module could not be found.
+
+(process:22004): VIPS-WARNING **: 18:06:19.313: unable to load "C:\Ruby34-x64\msys64\ucrt64/lib/vips-modules-8.18\vips-jxl.dll" -- 'C:\Ruby34-x64\msys64\ucrt64/lib/vips-modules-8.18\vips-jxl.dll': The specified module could not be found.
+
+(process:22004): VIPS-WARNING **: 18:06:19.314: unable to load "C:\Ruby34-x64\msys64\ucrt64/lib/vips-modules-8.18\vips-magick.dll" -- 'C:\Ruby34-x64\msys64\ucrt64/lib/vips-modules-8.18\vips-magick.dll': The specified module could not be found.
+
+(process:22004): VIPS-WARNING **: 18:06:19.315: unable to load "C:\Ruby34-x64\msys64\ucrt64/lib/vips-modules-8.18\vips-openslide.dll" -- 'C:\Ruby34-x64\msys64\ucrt64/lib/vips-modules-8.18\vips-openslide.dll': The specified module could not be found.
+
+(process:22004): VIPS-WARNING **: 18:06:19.315: unable to load "C:\Ruby34-x64\msys64\ucrt64/lib/vips-modules-8.18\vips-poppler.dll" -- 'C:\Ruby34-x64\msys64\ucrt64/lib/vips-modules-8.18\vips-poppler.dll': The specified module could not be found.
+C:/Ruby34-x64/lib/ruby/3.4.0/win32/registry.rb:2: warning: C:/Ruby34-x64/lib/ruby/3.4.0/fiddle/import.rb is found in fiddle, which will no longer be part of the default gems starting from Ruby 3.5.0.
+You can add fiddle to your Gemfile or gemspec to silence this warning.
+[3m[1m[34m≈[39m[22m[23m tailwindcss [34mv4.2.1[39m
+
+/*! 🌼 daisyUI 5.5.19 */
+Found 1 warning while optimizing generated CSS:
+
+[2m│   }[22m
+[2m│ }[22m
+[2m│[22m $ios-enter: cubic-bezier(0.32, 0.72, 0, 1);
+[2m┆[22m [33m[2m^--[22m Invalid empty selector[39m
+[2m┆[22m
+[2m│ $ios-exit: cubic-bezier(0.32, 0, 0.67, 0);[22m
+[2m│ ::view-transition-old(root) {[22m
+
+Done in [33m314ms[39m
+
+Run options: --seed 64510
+
+# Running:
+
+...........................................................
+
+Finished in 1.698339s, 34.7398 runs/s, 211.3830 assertions/s.
+59 runs, 359 assertions, 0 failures, 0 errors, 0 skips

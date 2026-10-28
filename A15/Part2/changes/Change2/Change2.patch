@@ -1,0 +1,327 @@
+diff --git a/src/main/java/br/com/michaelcruz/event/HighValueAlertObserver.java b/src/main/java/br/com/michaelcruz/event/HighValueAlertObserver.java
+new file mode 100644
+index 0000000..555826f
+--- /dev/null
++++ b/src/main/java/br/com/michaelcruz/event/HighValueAlertObserver.java
+@@ -0,0 +1,33 @@
++package br.com.michaelcruz.event;
++
++import jakarta.enterprise.context.ApplicationScoped;
++import jakarta.enterprise.event.Observes;
++
++import java.util.ArrayList;
++import java.util.List;
++import java.util.logging.Logger;
++
++/** Observer: flags transactions at or above the alert threshold. */
++@ApplicationScoped
++public class HighValueAlertObserver {
++
++    public static final double THRESHOLD = 10_000.0;
++    private static final Logger LOG = Logger.getLogger(HighValueAlertObserver.class.getName());
++
++    private final List<TransactionEvent> alerts = new ArrayList<>();
++
++    void onTransaction(@Observes TransactionEvent event) {
++        if (event.amount() >= THRESHOLD) {
++            LOG.warning("High-value " + event.kind() + " of " + event.amount() + " on account " + event.accountId());
++            synchronized (alerts) {
++                alerts.add(event);
++            }
++        }
++    }
++
++    public List<TransactionEvent> alerts() {
++        synchronized (alerts) {
++            return List.copyOf(alerts);
++        }
++    }
++}
+diff --git a/src/main/java/br/com/michaelcruz/event/TransactionAuditLog.java b/src/main/java/br/com/michaelcruz/event/TransactionAuditLog.java
+new file mode 100644
+index 0000000..4982880
+--- /dev/null
++++ b/src/main/java/br/com/michaelcruz/event/TransactionAuditLog.java
+@@ -0,0 +1,29 @@
++package br.com.michaelcruz.event;
++
++import jakarta.enterprise.context.ApplicationScoped;
++import jakarta.enterprise.event.Observes;
++
++import java.util.ArrayList;
++import java.util.Collections;
++import java.util.HashMap;
++import java.util.List;
++import java.util.Map;
++
++/** Observer: keeps an in-memory audit trail per account (not durable across restarts). */
++@ApplicationScoped
++public class TransactionAuditLog {
++
++    private final Map<Long, List<TransactionEvent>> entries = new HashMap<>();
++
++    void onTransaction(@Observes TransactionEvent event) {
++        synchronized (entries) {
++            entries.computeIfAbsent(event.accountId(), id -> new ArrayList<>()).add(event);
++        }
++    }
++
++    public List<TransactionEvent> entriesFor(Long accountId) {
++        synchronized (entries) {
++            return List.copyOf(entries.getOrDefault(accountId, Collections.emptyList()));
++        }
++    }
++}
+diff --git a/src/main/java/br/com/michaelcruz/event/TransactionEvent.java b/src/main/java/br/com/michaelcruz/event/TransactionEvent.java
+new file mode 100644
+index 0000000..8526b96
+--- /dev/null
++++ b/src/main/java/br/com/michaelcruz/event/TransactionEvent.java
+@@ -0,0 +1,7 @@
++package br.com.michaelcruz.event;
++
++import java.time.Instant;
++
++/** Published after a deposit or withdrawal has been applied (the observable state change). */
++public record TransactionEvent(Long accountId, TransactionKind kind, double amount, double balanceAfter, Instant at) {
++}
+diff --git a/src/main/java/br/com/michaelcruz/event/TransactionKind.java b/src/main/java/br/com/michaelcruz/event/TransactionKind.java
+new file mode 100644
+index 0000000..aafa0c8
+--- /dev/null
++++ b/src/main/java/br/com/michaelcruz/event/TransactionKind.java
+@@ -0,0 +1,6 @@
++package br.com.michaelcruz.event;
++
++public enum TransactionKind {
++    DEPOSIT,
++    WITHDRAWAL
++}
+diff --git a/src/main/java/br/com/michaelcruz/rest/AccountController.java b/src/main/java/br/com/michaelcruz/rest/AccountController.java
+index 833f84b..519f215 100644
+--- a/src/main/java/br/com/michaelcruz/rest/AccountController.java
++++ b/src/main/java/br/com/michaelcruz/rest/AccountController.java
+@@ -1,5 +1,6 @@
+ package br.com.michaelcruz.rest;
+ 
++import br.com.michaelcruz.event.TransactionEvent;
+ import br.com.michaelcruz.persistence.dto.AccountDTO;
+ import br.com.michaelcruz.persistence.dto.TransactionDTO;
+ import br.com.michaelcruz.persistence.model.Account;
+@@ -47,4 +48,11 @@ public class AccountController {
+         return Response.status(Response.Status.OK).entity(accounts).build();
+     }
+ 
++    @Path("/{accountId}/audit")
++    @GET
++    public Response listAudit(@PathParam("accountId") Long accountId) {
++        List<TransactionEvent> trail = this.accountService.getAuditTrail(accountId);
++        return Response.status(Response.Status.OK).entity(trail).build();
++    }
++
+ }
+diff --git a/src/main/java/br/com/michaelcruz/service/AccountService.java b/src/main/java/br/com/michaelcruz/service/AccountService.java
+index 5e04635..ca292e0 100644
+--- a/src/main/java/br/com/michaelcruz/service/AccountService.java
++++ b/src/main/java/br/com/michaelcruz/service/AccountService.java
+@@ -1,5 +1,8 @@
+ package br.com.michaelcruz.service;
+ 
++import br.com.michaelcruz.event.TransactionAuditLog;
++import br.com.michaelcruz.event.TransactionEvent;
++import br.com.michaelcruz.event.TransactionKind;
+ import br.com.michaelcruz.exception.BadRequestException;
+ import br.com.michaelcruz.exception.NotFoundException;
+ import br.com.michaelcruz.persistence.dao.AccountDAO;
+@@ -9,9 +12,11 @@ import br.com.michaelcruz.persistence.dto.AccountDTO;
+ import br.com.michaelcruz.persistence.dto.UserDTO;
+ import br.com.michaelcruz.persistence.model.Account;
+ import jakarta.enterprise.context.ApplicationScoped;
++import jakarta.enterprise.event.Event;
+ import jakarta.inject.Inject;
+ import jakarta.validation.Valid;
+ 
++import java.time.Instant;
+ import java.util.List;
+ import java.util.Optional;
+ 
+@@ -29,6 +34,12 @@ public class AccountService {
+     @Inject
+     AccountPolicyResolver policyResolver;
+ 
++    @Inject
++    Event<TransactionEvent> transactionEvents;
++
++    @Inject
++    TransactionAuditLog auditLog;
++
+ 
+     public void createAccount(@Valid AccountDTO accountDTO) {
+         UserDTO userDTO = userService.getUserDetails(accountDTO.getUserId());
+@@ -49,6 +60,7 @@ public class AccountService {
+ 
+                 account.setBalance(newBalance);
+                 accountDAO.update(account);
++                transactionEvents.fire(new TransactionEvent(accountId, TransactionKind.DEPOSIT, amount, newBalance, Instant.now()));
+             } else {
+                 throw new BadRequestException("Valor do depósito precisa ser maior que zero");
+             }
+@@ -70,6 +82,7 @@ public class AccountService {
+                 account.setBalance(newBalance);
+ 
+                 accountDAO.update(account);
++                transactionEvents.fire(new TransactionEvent(accountId, TransactionKind.WITHDRAWAL, amount, newBalance, Instant.now()));
+             } else {
+                 throw new BadRequestException("Valor do saque indisponível na conta");
+             }
+@@ -78,6 +91,11 @@ public class AccountService {
+         }
+     }
+ 
++    public List<TransactionEvent> getAuditTrail(Long accountId) {
++        accountDAO.findById(accountId);                 // 404 when the account does not exist
++        return auditLog.entriesFor(accountId);
++    }
++
+     public List<Account> listAllAccounts(){
+         return this.accountDAO.getAll();
+     }
+diff --git a/src/test/java/br/com/michaelcruz/Change2ObserverTest.java b/src/test/java/br/com/michaelcruz/Change2ObserverTest.java
+new file mode 100644
+index 0000000..e28a8e5
+--- /dev/null
++++ b/src/test/java/br/com/michaelcruz/Change2ObserverTest.java
+@@ -0,0 +1,112 @@
++package br.com.michaelcruz;
++
++import br.com.michaelcruz.event.*;
++import br.com.michaelcruz.persistence.dto.AccountDTO;
++import br.com.michaelcruz.persistence.dto.TransactionDTO;
++import br.com.michaelcruz.persistence.dto.UserDTO;
++import br.com.michaelcruz.persistence.model.AccountType;
++import br.com.michaelcruz.support.TestApp;
++import jakarta.ws.rs.WebApplicationException;
++import jakarta.ws.rs.core.Response;
++import org.junit.jupiter.api.BeforeEach;
++import org.junit.jupiter.api.Test;
++
++import java.util.List;
++
++import static org.junit.jupiter.api.Assertions.*;
++
++/** CH02 acceptance: transaction events with an audit-log observer and a high-value-alert observer. */
++class Change2ObserverTest {
++
++    TestApp app;
++    TransactionAuditLog audit;
++    HighValueAlertObserver alerts;
++
++    @BeforeEach
++    void setUp() {
++        app = new TestApp();
++        audit = app.c.get(TransactionAuditLog.class);
++        alerts = app.c.get(HighValueAlertObserver.class);
++        UserDTO u = new UserDTO();
++        u.setName("Caio"); u.setAge(22); u.setPhone("555-0102"); u.setAddress("Rua C");
++        app.users.createUser(u);
++        open(AccountType.CONTA_CORRENTE, 100.0);
++        open(AccountType.CONTA_POUPANCA, 50.0);
++    }
++
++    private void open(AccountType type, double balance) {
++        AccountDTO dto = new AccountDTO();
++        dto.setType(type); dto.setBalance(balance); dto.setUserId(1L);
++        app.accounts.createAccount(dto);
++    }
++
++    private static TransactionDTO tx(double a) { TransactionDTO t = new TransactionDTO(); t.setAmount(a); return t; }
++
++    @Test
++    void ac1DepositPublishesOneEventWithTheResultingBalance() {
++        app.accounts.depositToAccount(1L, tx(25.0));
++        List<TransactionEvent> e = audit.entriesFor(1L);
++        assertEquals(1, e.size());
++        assertEquals(TransactionKind.DEPOSIT, e.get(0).kind());
++        assertEquals(25.0, e.get(0).amount(), 0.0001);
++        assertEquals(125.0, e.get(0).balanceAfter(), 0.0001);
++        assertNotNull(e.get(0).at());
++    }
++
++    @Test
++    void ac2WithdrawalPublishesAWithdrawalEvent() {
++        app.accounts.withdraw(1L, tx(40.0));
++        List<TransactionEvent> e = audit.entriesFor(1L);
++        assertEquals(1, e.size());
++        assertEquals(TransactionKind.WITHDRAWAL, e.get(0).kind());
++        assertEquals(60.0, e.get(0).balanceAfter(), 0.0001);
++    }
++
++    @Test
++    void ac3FailedOperationsPublishNothing() {
++        assertThrows(WebApplicationException.class, () -> app.accounts.depositToAccount(1L, tx(0)));
++        assertThrows(WebApplicationException.class, () -> app.accounts.withdraw(2L, tx(9999)));
++        assertThrows(WebApplicationException.class, () -> app.accounts.depositToAccount(77L, tx(5)));
++        assertEquals(0, audit.entriesFor(1L).size());
++        assertEquals(0, audit.entriesFor(2L).size());
++    }
++
++    @Test
++    void ac4AuditTrailIsPerAccountAndChronological() {
++        app.accounts.depositToAccount(1L, tx(1.0));
++        app.accounts.depositToAccount(2L, tx(2.0));
++        app.accounts.withdraw(1L, tx(3.0));
++        List<TransactionEvent> a = audit.entriesFor(1L);
++        assertEquals(2, a.size());
++        assertEquals(TransactionKind.DEPOSIT, a.get(0).kind());
++        assertEquals(TransactionKind.WITHDRAWAL, a.get(1).kind());
++        assertEquals(1, audit.entriesFor(2L).size());
++    }
++
++    @Test
++    void ac5AuditEndpointReturnsTheTrailAndNotFoundForUnknownAccount() {
++        app.accounts.depositToAccount(1L, tx(10.0));
++        Response r = app.accounts.listAudit(1L);
++        assertEquals(200, r.getStatus());
++        assertEquals(1, ((List<?>) r.getEntity()).size());
++        assertEquals(404, assertThrows(WebApplicationException.class, () -> app.accounts.listAudit(99L)).getResponse().getStatus());
++    }
++
++    @Test
++    void ac6HighValueTransactionsRaiseAnAlertAtTheThreshold() {
++        app.accounts.depositToAccount(1L, tx(HighValueAlertObserver.THRESHOLD - 0.01));
++        assertEquals(0, alerts.alerts().size());
++        app.accounts.depositToAccount(1L, tx(HighValueAlertObserver.THRESHOLD));
++        assertEquals(1, alerts.alerts().size());
++        assertEquals(HighValueAlertObserver.THRESHOLD, alerts.alerts().get(0).amount(), 0.0001);
++    }
++
++    @Test
++    void ac7AccountServiceKnowsNoConcreteObserver() throws Exception {
++        // the publisher depends only on Event<TransactionEvent> and the audit log used for reading
++        boolean referencesAlert = false;
++        for (var f : br.com.michaelcruz.service.AccountService.class.getDeclaredFields())
++            if (f.getType() == HighValueAlertObserver.class) referencesAlert = true;
++        assertFalse(referencesAlert);
++    }
++}
+diff --git a/src/test/java/br/com/michaelcruz/support/TestApp.java b/src/test/java/br/com/michaelcruz/support/TestApp.java
+index 8996eb7..221ddf8 100644
+--- a/src/test/java/br/com/michaelcruz/support/TestApp.java
++++ b/src/test/java/br/com/michaelcruz/support/TestApp.java
+@@ -1,6 +1,8 @@
+ package br.com.michaelcruz.support;
+ 
+ import br.com.michaelcruz.domain.policy.AccountPolicyResolver;
++import br.com.michaelcruz.event.HighValueAlertObserver;
++import br.com.michaelcruz.event.TransactionAuditLog;
+ import br.com.michaelcruz.persistence.dao.AccountDAO;
+ import br.com.michaelcruz.persistence.dao.UserDAO;
+ import br.com.michaelcruz.rest.AccountController;
+@@ -24,6 +26,7 @@ public final class TestApp {
+         c.add(UserDAO.class); c.add(AccountDAO.class);
+         c.add(UserUtil.class); c.add(AccountUtil.class);
+         c.add(AccountPolicyResolver.class);
++        c.add(TransactionAuditLog.class); c.add(HighValueAlertObserver.class);
+         c.add(UserService.class); c.add(AccountService.class);
+         c.add(UserController.class); c.add(AccountController.class);
+         c.wire();

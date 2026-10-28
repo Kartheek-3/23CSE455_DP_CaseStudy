@@ -1,0 +1,50 @@
+%% Evolved architecture after CH01-CH03 (Part2/code). New elements are marked NEW.
+flowchart TB
+    UI["Flask web UI (outside scope)"] --> DC
+    CLI["mycodo_client.py __main__ CLI"] --> DC
+    DC["DaemonControl - Proxy 'Daemon RPC Client'"] -->|"Pyro5.api.Proxy RPC"| DAEMON["Daemon process (outside scope)"]
+
+    DAEMON --> IC["InputController"]
+    DAEMON --> CC["ConditionalController"]
+    DAEMON -.->|"loads / runs (outside scope)"| BB
+    DAEMON -.->|"loads / runs (outside scope)"| OUT
+    DAEMON -.->|"executes actions (outside scope)"| ACT
+
+    IC -->|"parse_input_information / load_module_from_file"| REG["utils/inputs.py + utils/modules.py (Plugin)"]
+    IC -->|"measure_input.next()"| IN["AbstractInput: adafruit_i2c_soil / weather_openweathermap_weather"]
+    IN --> HW["Seesaw I2C driver / OpenWeatherMap HTTP"]
+    IC -->|"add_measurements_influxdb (outside scope)"| TSDB[("InfluxDB")]
+
+    subgraph IRR["Irrigation controller: functions/bang_bang.py CustomModule"]
+        BB["CustomModule.initialize / loop"]
+        CROP["NEW CH01 utils/crop_profiles.py<br/>CropProfile, get_crop_profile, register_crop_profile"]
+        STRAT["NEW CH02 utils/irrigation_strategies.py - Strategy<br/>IrrigationStrategy: RaiseHysteresisStrategy, LowerHysteresisStrategy"]
+        DEC["NEW CH02 - Decorator<br/>IrrigationRestriction: TimeWindowStrategy, RainSkipStrategy<br/>build_irrigation_strategy"]
+        ALERT["NEW CH03 utils/sensor_alerts.py - Observer<br/>SensorAlertNotifier"]
+        LOGL["NEW CH03 LogAlertListener"]
+        MAILL["NEW CH03 EmailAlertListener"]
+        BB -->|"_apply_crop_profile()"| CROP
+        BB -->|"_build_irrigation_strategy() / strategy.decide(IrrigationContext)"| STRAT
+        DEC -->|"wraps inner"| STRAT
+        BB -->|"raise_alert / clear"| ALERT
+        ALERT -->|"on_alert"| LOGL
+        ALERT -->|"on_alert"| MAILL
+    end
+
+    BB -->|"get_last_measurement: soil moisture + rain indicator (utils/influx, outside scope)"| TSDB
+    BB -->|"output_state / output_on / output_off"| DC
+    MAILL -->|"DaemonControl.send_email -> utils/send_data.send_email"| SMTP[("SMTP server")]
+
+    OUT["AbstractOutput: pump_gpio / on_off_gpio (Template Method)"] --> GPIO["RPi.GPIO"]
+    OUT -->|"trigger_all_actions"| DC
+    CC -->|"ConditionalRun user code (outside scope)"| COND["AbstractConditional"]
+    COND -->|"trigger_action"| DC
+    ACT["AbstractFunctionAction: email / output_on_off (Command)"] -->|"output_on_off"| DC
+    METH["utils/method.py setpoint methods (Strategy, Template Method)"]
+
+    BASE["AbstractBaseController (Layer Supertype)"] -.->|"supertype of"| IN
+    BASE -.->|"supertype of"| OUT
+    BASE -.->|"supertype of via AbstractFunction"| BB
+    BASE -.->|"supertype of"| ACT
+    BASE -.->|"supertype of"| IC
+    MODELS["User / Role + CRUDMixin (Active Record)"] --> SQL[("SQL settings DB via db (outside scope)")]

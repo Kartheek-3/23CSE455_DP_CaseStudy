@@ -1,0 +1,22 @@
+# adapter / cpp
+# working folder: Part3/code/pattern_adapter/cpp
+# runtime: g++ 16.1.1 20260625, -std=c++17
+$ mkdir -p build
+
+
+$ g++ -std=c++17 -Wall -Wextra -o build/test telemetry.test.cpp
+
+
+$ build/test ../../../test-cases/adapter.txt
+PASS no_adapter_runs_function
+PASS message_with_user
+PASS message_without_user
+PASS span_returns_value
+PASS span_propagates_error
+PASS shutdown_has_time_limit
+PASS two_adapters_fan_out
+PASS two_adapters_nest_spans
+passed 8/8
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 3.6, 3.7, 3.9, 3.9, 3.6 -> median 3.7

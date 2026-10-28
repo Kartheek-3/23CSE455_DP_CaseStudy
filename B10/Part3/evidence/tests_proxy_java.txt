@@ -1,0 +1,9 @@
+# Proxy / java
+working folder: Part3/proxy_daemon_rpc/java
+$ javac -d out DaemonControl.java DaemonRpcTest.java
+
+[compile exit code: 0]
+$ java -cp out DaemonRpcTest
+Proxy tests: 12/12 passed
+
+[exit code: 0]

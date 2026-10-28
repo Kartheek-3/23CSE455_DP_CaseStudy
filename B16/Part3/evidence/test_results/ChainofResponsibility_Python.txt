@@ -1,0 +1,11 @@
+$ (cd Part3/chain-of-responsibility-interceptors/python) python3 -m unittest -v test_chain
+test_a_handler_can_stop_the_chain_before_later_links (test_chain.ChainTest.test_a_handler_can_stop_the_chain_before_later_links) ... ok
+test_invalid_input_is_rejected_with_expected_error (test_chain.ChainTest.test_invalid_input_is_rejected_with_expected_error) ... ok
+test_report_matches_expected_output (test_chain.ChainTest.test_report_matches_expected_output) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK
+[exit 0]
+result: 3/3 passed

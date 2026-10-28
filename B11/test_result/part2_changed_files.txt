@@ -1,0 +1,13 @@
+ .../java/com/dcm/config/SecurityConfiguration.java | 21 +----------
+ src/main/java/com/dcm/observer/CaseRegister.java   | 25 +++++++++++++
+ .../com/dcm/observer/EmailReminderObserver.java    | 17 +++++++++
+ .../java/com/dcm/observer/HearingObserver.java     | 10 ++++++
+ .../java/com/dcm/observer/SmsReminderObserver.java | 16 +++++++++
+ src/main/java/com/dcm/strategy/AdvocateFine.java   | 14 ++++++++
+ src/main/java/com/dcm/strategy/FinePolicy.java     | 11 ++++++
+ src/main/java/com/dcm/strategy/FineService.java    | 27 ++++++++++++++
+ src/main/java/com/dcm/strategy/RegularFine.java    | 13 +++++++
+ .../java/com/dcm/config/PasswordEncoderTest.java   | 29 +++++++++++++++
+ .../java/com/dcm/observer/CaseRegisterTest.java    | 41 ++++++++++++++++++++++
+ .../java/com/dcm/strategy/FineServiceTest.java     | 34 ++++++++++++++++++
+ 12 files changed, 238 insertions(+), 20 deletions(-)

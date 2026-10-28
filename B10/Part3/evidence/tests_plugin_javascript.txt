@@ -1,0 +1,6 @@
+# Plugin / javascript
+working folder: Part3/plugin_module_loading/javascript
+$ node test_module_loading.js
+Plugin tests: 9/9 passed
+
+[exit code: 0]

@@ -1,0 +1,27 @@
+digraph G {
+ rankdir=LR; fontname="Helvetica"; labelloc=t; label="Data Transfer Object - API Payload DTO Assembly";
+ node [shape=box, style="rounded,filled", fillcolor="#eef3fb", color="#4a6fa5", fontname="Helvetica", fontsize=10];
+ edge [fontname="Helvetica", fontsize=9, color="#555555"];
+ n_UserDTO [label="&laquo;DataTransferObject&raquo;\nUserDTO", fillcolor="#eef3fb"];
+ n_AccountDTO [label="&laquo;DataTransferObject&raquo;\nAccountDTO", fillcolor="#eef3fb"];
+ n_TransactionDTO [label="&laquo;DataTransferObject&raquo;\nTransactionDTO", fillcolor="#eef3fb"];
+ n_User [label="&laquo;DomainObject&raquo;\nUser", fillcolor="#eef3fb"];
+ n_Account [label="&laquo;DomainObject&raquo;\nAccount", fillcolor="#eef3fb"];
+ n_AccountController_createAccount [label="AccountController.createAccount", fillcolor="#fff4d6"];
+ n_AccountController_createAccount -> n_AccountDTO [label="receives"];
+ n_AccountController_depositToAccount [label="AccountController.depositToAccount", fillcolor="#fff4d6"];
+ n_AccountController_depositToAccount -> n_TransactionDTO [label="receives"];
+ n_AccountController_withdraw [label="AccountController.withdraw", fillcolor="#fff4d6"];
+ n_AccountController_withdraw -> n_TransactionDTO [label="receives"];
+ n_UserController_createUser [label="UserController.createUser", fillcolor="#fff4d6"];
+ n_UserController_createUser -> n_UserDTO [label="receives"];
+ n_UserUtil_convertToUserDTO [label="UserUtil.convertToUserDTO", fillcolor="#fff4d6"];
+ n_UserUtil_convertToUserDTO -> n_UserDTO [label="builds"];
+ n_UserUtil_convertToUserDTO -> n_User [label="reads"];
+ n_AccountUtil_convertToAccount [label="AccountUtil.convertToAccount", fillcolor="#fff4d6"];
+ n_AccountUtil_convertToAccount -> n_Account [label="builds"];
+ n_AccountUtil_convertToAccount -> n_AccountDTO [label="reads"];
+ n_UserService_createUser [label="UserService.createUser", fillcolor="#fff4d6"];
+ n_UserService_createUser -> n_User [label="builds"];
+ n_UserService_createUser -> n_UserDTO [label="reads"];
+}

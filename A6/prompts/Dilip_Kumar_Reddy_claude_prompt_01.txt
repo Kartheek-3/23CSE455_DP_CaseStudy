@@ -1,0 +1,68 @@
+[Tool: Claude Code desktop app, model Claude Opus 5.5 (claude-opus-5-5), 2026-10-11. Prompt typed by Dilip.
+Attachments supplied with the prompt: DP_Csestudy-1_261010_192730.pdf (case-study instructions) and
+DP_Csestudy_261010_192706.pdf (report template). The model also cloned the two repositories named in the prompt.]
+
+@"C:\Users\nbhar\Downloads\DP_Csestudy-1_261010_192730.pdf" @"C:\Users\nbhar\Downloads\DP_Csestudy_261010_192706.pdf"
+i have to work on a project that was assgined by our maam
+i will provide the topic and guidelines lets discuss what to do
+
+THIS IS THE TOPIC THAT WE WERE GIVEN
+
+Ride-Sharing Application using Node.js/Express
+Case Study Title
+Design Pattern Analysis in a Node.js/Express Ride-Sharing Application
+Part 1
+Study a ride-sharing or transportation application developed using Node.js/Express.
+Investigate:
+•	rider
+•	driver
+•	trip
+•	payment
+•	driver matching
+•	location
+•	notification
+Identify the design patterns actually used.
+Part 2
+Introduce:
+•	new driver status
+•	ride cancellation
+•	multiple ride types
+•	dynamic pricing
+Study how patterns change under these requirements.
+Part 3
+Select significant patterns and compare Java, Python, JavaScript and C++ implementations.
+Expected Outputs
+•	Application study
+•	Framework architecture
+•	Pattern identification
+•	UML
+•	Source-code evidence
+•	Three Agile change scenarios
+•	Refactoring results
+•	Cross-language comparison
+•	LLM evaluation dataset
+
+One submission per team
+1. Open the repository.
+2. Click Fork → Create fork.
+3. In your fork, click Add file → Upload files.
+4. Drag your complete team folder—such as A1—into the upload area. Verify that all files are inside A1/, then click Commit changes.
+5. Click Contribute → Open pull request.
+6. Set the destination to the original repository’s main branch.
+7. Title it “A1: Final submission” using your team name, then click Create pull request.
+
+
+Upload only your own team’s folder. One team member should submit on behalf of the whole team.
+
+
+THESE ARE THE GIT GUIDELINES
+
+THE TASK IS WE NEED TO SELECT A GIT REPO AS PER GIVEN PROJECT - I HAVE CHOOSEN THIS
+https://github.com/AkhilMM2000/sarathi-backend.git
+
+AND WE NEED TO MAKE SOMETHING THIS IS MY FRIENDS PROJECT HE SHARED ME FOR REFERENCE
+https://github.com/siddarth2304/23CSE455_DP_CaseStudy/tree/b4-final-submission
+
+AND THIS IS NEEDS TO BE DONE AS A TEAM PROJECT BUT EVERYONE IS BUSY SO I TOOK THE RESPNSIBILIT SO IF THERE IS ANYHTING WHERE WE NEED TO ASSIGN OR SEGEATE NAME IN THE PROJECT WE WORK AND ADDIGN THERE NAME
+
+IF U HAVE ANY DOUBTS ASK ME

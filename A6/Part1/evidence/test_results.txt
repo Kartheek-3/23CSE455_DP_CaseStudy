@@ -1,0 +1,23 @@
+# Baseline characterization tests
+# upstream baseline commit: c8766f4c88b9f36235d5f4399ef9b4cf20df3c8a (src unchanged)
+# harness commit: 168ef00003dfcba41e9939c1f4887e125ed79638 (adds tests/ and the npm test script only)
+# command (from repo root): npm test
+# node v22.18.0, ts-node 10.9.2 transpile-only, 2026-10-11T15:16:01Z
+
+ok 1 - DEFECT (baseline): a COMPLETED trip can still be cancelled
+ok 2 - DEFECT (baseline): an admin can move a rejected driver straight to approved
+ok 3 - BookDriver broadcasts only to drivers within 20 km road distance and saves a PENDING trip
+ok 4 - BookDriver refuses the request when no driver is within 20 km by road
+ok 5 - rider cancelling a PENDING trip sets CANCELLED and stores the reason
+ok 6 - rider cancelling a CONFIRMED trip notifies the assigned driver
+ok 7 - driver completing a trip stores finalFare = estimatedFare + finalKm * 10
+ok 8 - completing a trip without finalKm is rejected
+ok 9 - ONE_WAY below the minimum is charged Rs 450
+ok 10 - ONE_WAY is Rs 10 per km above the minimum
+ok 11 - ONE_WAY without km is rejected
+ok 12 - ROUND_TRIP (range of dates) is Rs 1000 per calendar day, inclusive
+ok 13 - ROUND_TRIP without end date is rejected
+ok 14 - unknown booking type is rejected
+# tests 14
+# pass 14
+# fail 0

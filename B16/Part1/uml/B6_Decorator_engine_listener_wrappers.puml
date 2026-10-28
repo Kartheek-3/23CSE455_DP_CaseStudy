@@ -1,0 +1,36 @@
+@startuml B6
+!pragma layout smetana
+title B6 Decorator: engine-listener wrappers
+
+interface EngineExecutionListener <<Component>> {
+  +executionStarted(TestDescriptor)
+  +executionFinished(TestDescriptor, TestExecutionResult)
+}
+class DelegatingEngineExecutionListener <<Decorator>> {
+  -delegate : EngineExecutionListener
+}
+class StackTracePruningEngineExecutionListener <<ConcreteDecorator>>
+class OutcomeDelayingEngineExecutionListener <<ConcreteDecorator>>
+class MemoryCleanupListener <<ConcreteDecorator>>
+class EngineExecutionOrchestrator <<Assembler>>
+
+DelegatingEngineExecutionListener ..|> EngineExecutionListener
+DelegatingEngineExecutionListener o--> EngineExecutionListener : delegate
+StackTracePruningEngineExecutionListener --|> DelegatingEngineExecutionListener
+OutcomeDelayingEngineExecutionListener --|> DelegatingEngineExecutionListener
+MemoryCleanupListener --|> DelegatingEngineExecutionListener
+EngineExecutionOrchestrator ..> StackTracePruningEngineExecutionListener : wraps
+EngineExecutionOrchestrator ..> OutcomeDelayingEngineExecutionListener : wraps
+EngineExecutionOrchestrator ..> MemoryCleanupListener : wraps
+' aligned-with-record
+legend right
+  <b>Counted participants</b> (record in the dataset)
+  Component: EngineExecutionListener
+  Decorator: DelegatingEngineExecutionListener
+  ConcreteDecorator: StackTracePruningEngineExecutionListener
+  ConcreteDecorator: OutcomeDelayingEngineExecutionListener
+  ConcreteDecorator: MemoryCleanupListener
+  Assembler: EngineExecutionOrchestrator#executeEngine
+  Grey classes: real, shown for context, not counted
+endlegend
+@enduml

@@ -1,0 +1,21 @@
+digraph G {
+ rankdir=LR; fontname="Helvetica"; labelloc=t; label="Data Access Object - Account and User Persistence DAO";
+ node [shape=box, style="rounded,filled", fillcolor="#eef3fb", color="#4a6fa5", fontname="Helvetica", fontsize=10];
+ edge [fontname="Helvetica", fontsize=9, color="#555555"];
+ n_DAO [label="&laquo;DataAccessObject&raquo;\nDAO", fillcolor="#eef3fb"];
+ n_AccountDAO [label="&laquo;ConcreteDAO&raquo;\nAccountDAO", fillcolor="#eef3fb"];
+ n_UserDAO [label="&laquo;ConcreteDAO&raquo;\nUserDAO", fillcolor="#eef3fb"];
+ n_Account [label="&laquo;TransferObject&raquo;\nAccount", fillcolor="#eef3fb"];
+ n_User [label="&laquo;TransferObject&raquo;\nUser", fillcolor="#eef3fb"];
+ n_AccountService [label="&laquo;BusinessObject&raquo;\nAccountService", fillcolor="#eef3fb"];
+ n_UserService [label="&laquo;BusinessObject&raquo;\nUserService", fillcolor="#eef3fb"];
+ n_AccountService -> n_AccountDAO [label="calls"];
+ n_UserService -> n_UserDAO [label="calls"];
+ n_AccountDAO -> n_DAO [label="implements", style=dashed];
+ n_UserDAO -> n_DAO [label="implements", style=dashed];
+ n_AccountDAO -> n_Account [label="persists"];
+ n_UserDAO -> n_User [label="persists"];
+ n_EntityManager [label="EntityManager", fillcolor="#fff4d6"];
+ n_AccountDAO -> n_EntityManager [label="uses (injected)"];
+ n_UserDAO -> n_EntityManager [label="uses (injected)"];
+}

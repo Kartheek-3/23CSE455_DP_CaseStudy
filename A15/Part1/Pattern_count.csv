@@ -1,0 +1,10 @@
+source_version,summary,pattern_name,count
+Original code,per_pattern,Data Access Object,1
+Original code,per_pattern,Data Transfer Object,1
+Original code,per_pattern,Service Layer,1
+Original code,per_pattern,Transaction Script,1
+Original code,per_pattern,Controller,1
+Original code,per_pattern,Dependency Injection,1
+Original code,per_pattern,Exception Translation,1
+Original code,total_pattern_types,,7
+Original code,total_pattern_instances,,7

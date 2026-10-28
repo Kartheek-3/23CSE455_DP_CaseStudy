@@ -1,0 +1,1 @@
+Historical retained metadata previously asserted the date 6 September 2027, but the date cannot be independently verified from the retained inputs. That assertion is not treated as confirmed. Current report, README and slides should consistently label the submission date as unverified unless the team confirms the actual date.

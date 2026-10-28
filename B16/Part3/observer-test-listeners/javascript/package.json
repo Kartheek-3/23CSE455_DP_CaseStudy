@@ -1,0 +1,9 @@
+{
+  "name": "observer-test-listeners",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/main.js ../test-data/events.txt",
+    "test": "node --test test/observer.test.js"
+  }
+}

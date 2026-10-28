@@ -1,0 +1,9 @@
+case_id	user_id	owner_traveler_id	title	start_date	end_date
+C01	user-01	traveler-01	Autumn Rome Trip	2026-11-16	2026-11-18
+C02	~	traveler-02	Unauthenticated Trip	2026-11-16	2026-11-18
+C03	user-03	~	Owner Missing Trip	2026-11-16	2026-11-18
+C04	user-04	traveler-04	   	2026-11-16	2026-11-18
+C05	user-05	traveler-05	Impossible Date	2026-02-30	2026-03-02
+C06	user-06	traveler-06	Backward Trip	2026-11-18	2026-11-16
+C07	user-07	traveler-07	Same Day Trip	2026-11-16	2026-11-16
+C08	user-08	traveler-08	  City Break  	2026-11-16	2026-11-18

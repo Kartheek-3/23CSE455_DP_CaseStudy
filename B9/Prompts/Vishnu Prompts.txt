@@ -1,0 +1,122 @@
+DESIGN PATTERNS CASE STUDY — REFINED PROMPT LOG
+Project: Design Pattern Identification and Evolution in a Quarkus-Based Digital Wallet Application
+
+IMPORTANT NOTE
+This file contains refined, reusable versions of the prompts used for the case study workflow. They are cleaned-up prompts, not a verbatim export of every original chat message. Use them to document the workflow clearly. Do not claim that any generated answer, measurement, test result, or source reference is verified unless the corresponding evidence file supports it.
+
+PROMPT 1 — BLIND DESIGN-PATTERN IDENTIFICATION
+You are evaluating design-pattern identification from Java source code for an academic case study.
+
+Inspect every Java source file in the supplied source_files folder. Use only evidence visible in the source code. Do not infer a pattern from a class name alone or from framework conventions. If evidence is insufficient, state that explicitly.
+
+Allowed labels (use zero or more per file):
+Repository, Strategy, Observer, Service Layer, Pessimistic Locking, Exception Mapper, Filter/Interceptor, Chain of Responsibility.
+
+For each file, return:
+1. File path
+2. Assigned label(s), or None/Insufficient Evidence
+3. Exact source evidence (class/method/annotation and line range if available)
+4. A concise explanation linking the evidence to the label
+5. Confidence: High, Medium, or Low
+6. Any plausible alternative label and why it was not selected
+
+Do not invent line numbers. Separate direct evidence from interpretation. Return machine-readable CSV or JSON only if requested; otherwise use a clear table. Do not force a label when the source does not support it.
+
+PROMPT 2 — SUMMARIZE PATTERN INVENTORY
+Using the supplied patterns.csv and pattern_counts.csv, summarize the detected pattern categories and counts. Preserve the dataset's terminology and values. Distinguish the number of pattern categories from the number of instances. Do not silently change classifications or claim that all listed items are classic Gang of Four patterns. Explain each category briefly using only evidence available in the project. Flag inconsistencies or classifications that may need human review.
+
+PROMPT 3 — CREATE / REVIEW UML DIAGRAMS
+Using the actual application source code and the supplied PlantUML files, review the diagrams for consistency with the implementation.
+
+Required diagrams:
+1. Overall architecture
+2. Transfer sequence
+3. Chain of Responsibility / request-filter flow
+4. Repository
+5. Exception Mapper
+6. Pessimistic Locking
+7. Service Layer
+8. Observer
+
+For each diagram, check that the participants, relationships, and calls are supported by source code. Do not invent classes or relationships. Keep the editable .puml source and a rendered .png for each diagram. If rendering cannot be verified, state that the PNG is missing or unverified.
+
+PROMPT 4 — REVIEW PART 2 FEATURE EVOLUTION
+Review the three feature changes to the Quarkus fund-transfer application:
+- Change 1: multi-currency support using a fixed/demo exchange-rate provider
+- Change 2: transaction limits
+- Change 3: fraud detection using a strategy abstraction
+
+For each change:
+1. Identify the actual files changed.
+2. Explain the design impact and any patterns introduced, reused, or affected.
+3. List the tests that exercise the change.
+4. Report only test results shown in actual logs.
+5. Identify edge cases and limitations.
+6. Do not describe fixed demo exchange rates as live rates.
+7. Do not claim a feature is production-ready without evidence.
+
+Compare the baseline, each change stage, and the final integrated version. Preserve independent test coverage and disclose any test changes made to get a suite passing. Do not hide test modifications or failures.
+
+PROMPT 5 — CROSS-LANGUAGE PATTERN COMPARISON
+Compare the supplied Repository and Strategy examples implemented in Java, Python, JavaScript, and C++.
+
+Use the actual source files and generated cross_language.csv. Check that each implementation produces the expected fixture output. Report:
+- Language and runtime/compiler version
+- Pattern
+- Lines of code and complexity values, with the method used to calculate them
+- Warm-up and timed-run counts
+- Median runtime and units
+- Whether output matches the fixture
+
+State that timings include process startup if that is how the benchmark is measured. Do not compare runtimes as a fair language-performance ranking unless the methodology supports it. Mark manually estimated cyclomatic-complexity values as manual estimates and verify them against source before publication.
+
+PROMPT 6 — REVIEW LLM CLASSIFICATION RESULTS
+Review llm.csv and manual_ground_truth.csv. Calculate exact-match accuracy from the actual rows. Compare predicted labels with human-reviewed labels and cite source evidence for each judgment.
+
+For every disagreement:
+1. Show the predicted label and human label.
+2. Identify the relevant source evidence.
+3. Explain whether it is a genuine classification error, a taxonomy/mapping difference, or an ambiguous case.
+4. Preserve the original model output.
+5. Do not invent the model name, model tier, date, prompt, or output. If metadata is absent, mark it as missing and ask for it to be filled from the actual session.
+
+PROMPT 7 — GENERATE ACADEMIC CASE-STUDY REPORT
+Prepare a report for “Design Pattern Identification and Evolution in a Quarkus-Based Digital Wallet Application” using the official assignment template and the supplied project artifacts.
+
+Organize the report around:
+1. Application and architecture
+2. Part 1: pattern discovery
+3. Part 2: evolution/refactoring across three changes
+4. Part 3: cross-language comparison
+5. LLM records and human verification
+6. Findings, contributions, limitations, and references
+7. Required team folder, datasets, screenshots, and evidence
+
+Use only verified project data. Include tables for counts, evolution, cross-language results, and LLM evaluation when the relevant CSVs support them. Do not invent exact source line ranges, student details, faculty approval, repository URLs, licenses, access dates, model metadata, or results. Clearly mark unresolved fields as TODO/NEEDS VERIFICATION. Provide both PDF and editable LaTeX when possible.
+
+PROMPT 8 — CHECK THE FINAL SUBMISSION PACKAGE
+Inspect the final case-study folder and compare it with the official assignment requirements.
+
+Check for:
+- Part 1 source evidence, pattern inventory/counts, editable PlantUML, rendered diagrams, and screenshots
+- Part 2 baseline and all three change snapshots, integrated source, test code, and actual test logs
+- Part 3 source implementations, fixture files, scripts, results CSV, runtime versions, and benchmark notes
+- llm.csv, actual prompts/model outputs, manual ground truth, and review notes
+- Report PDF and LaTeX source, README, references, and team/student information
+
+Return a checklist with statuses: Present and verified, Present but needs review, Missing, or Not verifiable from the supplied files. Do not claim that the package is complete based only on successful tests. Do not invent files or file paths.
+
+PROMPT 9 — VERIFY THE WINDOWS PROJECT
+From the root of the extracted project folder, run the supplied verification script in PowerShell:
+.\scripts\verify_all.ps1
+
+Inspect the complete output and both logs. Report separately:
+- Maven build/test status and exact test totals
+- Cross-language output-match count
+- Warnings, script errors, skipped checks, or missing artifacts
+- Any remaining report/evidence tasks
+
+A final “Finished” message alone is not proof of success. Use the actual test summary and output-match count. Do not state that every submission requirement is satisfied merely because automated tests pass.
+
+PROMPT 10 — FINAL EXPLANATION FOR A NON-EXPERT TEAM MEMBER
+Explain the current status in plain language and give the next actions in priority order. Be direct, calm, and specific. Separate what is confirmed by logs from what still needs checking. Avoid asking the user to redo completed work. Never promise that the entire assignment is ready until the report, evidence, and required folder contents have been checked.

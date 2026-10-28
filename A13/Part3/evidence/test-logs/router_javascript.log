@@ -1,0 +1,15 @@
+# router / javascript
+# working folder: Part3/code/pattern_router/javascript
+# runtime: Node.js v24.15.0
+$ node nirax.test.js ../../../test-cases/router.txt
+PASS home
+PASS param_route
+PASS query_and_hash
+PASS login_required_logged_out
+PASS login_required_logged_in
+PASS unmatched_has_no_change_event
+PASS two_navigations
+passed 7/7
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 45.2, 48.7, 42.9, 59.5, 42.9 -> median 45.2

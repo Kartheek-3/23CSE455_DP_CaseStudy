@@ -1,0 +1,63 @@
+Part 2 - files read as input
+============================
+Original code ("data/code"): Mycodo/ (git clone of https://github.com/kizniche/Mycodo.git),
+HEAD = ee70a111c622e2a81026fd5c1553a948acf8161e, clean working tree, never modified.
+Part2/work = local `git clone Mycodo Part2/work`, branch case-study, starting at the same commit.
+Files under Part2/work that were read before being changed are identical to Mycodo/ at that commit
+unless noted.
+
+1. Part 1 results
+   - Part1/patterns.csv ................. NOT PRESENT in the workspace (searched the parent folder of the team folder)
+   - Part1/Pattern_count.csv ............ NOT PRESENT in the workspace
+   Used instead (unverified Part 1 LLM drafts):
+   - Part1/llm_output/patterns_llm_draft.csv
+   - Part1/llm_output/pattern_counts_llm_draft.csv
+   - Part1/llm_output/part1_raw_output.md
+
+2. Part 1 scope files, read completely (commit ee70a111c622e2a81026fd5c1553a948acf8161e)
+   mycodo/abstract_base_controller.py
+   mycodo/databases/__init__.py
+   mycodo/inputs/base_input.py
+   mycodo/inputs/adafruit_i2c_soil.py
+   mycodo/controllers/base_controller.py
+   mycodo/controllers/controller_input.py
+   mycodo/utils/inputs.py
+   mycodo/inputs/weather_openweathermap_weather.py
+   mycodo/outputs/base_output.py
+   mycodo/outputs/pump_gpio.py
+   mycodo/outputs/on_off_gpio.py
+   mycodo/utils/outputs.py
+   mycodo/functions/base_function.py
+   mycodo/functions/bang_bang.py
+   mycodo/utils/method.py
+   mycodo/utils/modules.py
+   mycodo/controllers/base_conditional.py
+   mycodo/controllers/controller_conditional.py
+   mycodo/actions/base_action.py
+   mycodo/actions/email.py
+   mycodo/actions/output_on_off.py
+   mycodo/mycodo_client.py
+   mycodo/databases/models/user.py
+   mycodo/databases/models/role.py
+
+3. Additional files read partially (commit ee70a111c622e2a81026fd5c1553a948acf8161e)
+   install/requirements.txt (whole) ............... package pins for the venv
+   install/requirements-testing.txt (whole) ....... pytest pin
+   mycodo/config.py (lines 1-40) .................. import side effects
+   mycodo/utils/influx.py (lines 310-420) ......... return value of get_last_measurement ([None, None] when no data, line 398)
+   mycodo/utils/functions.py (lines 33-63) ........ Function plugin scanner (excluded_files) -> new helpers go to mycodo/utils/
+   mycodo/functions/bang_bang_on_off.py (lines 16-17) .. the newer module named in bang_bang.py's TODO
+   mycodo/inputs/weather_openweathermap_onecall.py (lines 1-80, grep) .. measurement list: no precipitation (CH02 rain indicator)
+   mycodo/utils/send_data.py (lines 19-60) ........ send_email signature / recipients handling (CH03)
+   mycodo/utils/actions.py (lines 1-30 imports, 106-130 check_allowed_to_email) .. e-mail rate limit, heavy imports (CH03)
+   import statements only (grep "^import|^from"): mycodo/mycodo_flask/extensions.py,
+     mycodo/databases/models/*.py, mycodo/utils/database.py, mycodo/utils/constraints_pass.py,
+     mycodo/utils/send_data.py, mycodo/utils/widget_generate_html.py, mycodo/databases/utils.py,
+     mycodo/utils/system_pi.py, mycodo/config_translations.py, mycodo/utils/widgets.py,
+     mycodo/config_devices_units.py ............... minimal packages; Windows blockers grp/pwd
+   mycodo/__init__.py, mycodo/tests/__init__.py (size only), .gitignore (grep) .. test package layout
+
+4. Own intermediate files re-read during the run (Part2/work, branch case-study)
+   mycodo/functions/bang_bang.py after each step (commits dee5d7d76 ... bce41febb)
+   Part2/changes/Change1/code/, Change2/code/, Change3/code/ snapshots (grep / ast) for line numbers
+   Part2/changes/metrics.log (lizard output) for metrics.csv rows

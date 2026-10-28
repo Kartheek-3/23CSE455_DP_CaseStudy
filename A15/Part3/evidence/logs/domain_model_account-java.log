@@ -1,0 +1,15 @@
+# javac -d out Snippet.java Runner.java && java -cp out Runner ../test-cases/cases.txt (working folder Part3/domain_model_account/java)
+# runtime: OpenJDK 21.0.12.1 (javac --release default)
+PASS case1
+PASS case2
+PASS case3
+PASS case4
+PASS case5
+PASS case6
+PASS case7
+PASS case8
+PASS case9
+PASS case10
+PASS case11
+PASS case12
+RESULT passed=12 total=12

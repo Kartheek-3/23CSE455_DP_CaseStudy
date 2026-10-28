@@ -1,0 +1,6 @@
+# Proxy / python
+working folder: Part3/proxy_daemon_rpc/python
+$ python test_daemon_rpc.py
+Proxy tests: 12/12 passed
+
+[exit code: 0]

@@ -1,0 +1,32 @@
+Picked up JAVA_TOOL_OPTIONS: 
+/home/claude/work/snaps/c0/src/main/java/br/com/michaelcruz/rest/UserController.java:5: warning: extraneous semicolon
+import jakarta.inject.Inject;;
+                             ^
+1 warning
+Picked up JAVA_TOOL_OPTIONS: 
+br.com.michaelcruz.persistence.dto.AccountDTO@7291c18f
+PASS BaselineBehaviourTest.createAccountEndpointReturns201
+br.com.michaelcruz.persistence.dto.AccountDTO@7cd84586
+PASS BaselineBehaviourTest.createAccountLinksUserAndKeepsBalance
+PASS BaselineBehaviourTest.createUserStoresAllFields
+PASS BaselineBehaviourTest.defectCreatingAnAccountForAnUnknownUserFailsWithNullPointerNotNotFound
+PASS BaselineBehaviourTest.defectUserDaoGetAllReturnsNull
+br.com.michaelcruz.persistence.dto.AccountDTO@66a29884
+PASS BaselineBehaviourTest.depositOfZeroOrNegativeIsBadRequestAndBalanceUnchanged
+br.com.michaelcruz.persistence.dto.AccountDTO@6e2c634b
+PASS BaselineBehaviourTest.depositToCheckingAddsExactAmount
+br.com.michaelcruz.persistence.dto.AccountDTO@37a71e93
+PASS BaselineBehaviourTest.depositToSavingsAddsAmountPlusHalfBonus
+PASS BaselineBehaviourTest.depositToUnknownAccountIsNotFound
+PASS BaselineBehaviourTest.errorsAreCarriedAsHttpResponsesByTheCustomExceptions
+br.com.michaelcruz.persistence.dto.AccountDTO@7106e68e
+br.com.michaelcruz.persistence.dto.AccountDTO@7eda2dbb
+PASS BaselineBehaviourTest.listAccountsReturnsAllAccounts
+PASS BaselineBehaviourTest.withdrawFromUnknownAccountIsNotFound
+br.com.michaelcruz.persistence.dto.AccountDTO@76fb509a
+PASS BaselineBehaviourTest.withdrawMoreThanBalanceOrNonPositiveIsBadRequest
+br.com.michaelcruz.persistence.dto.AccountDTO@4d405ef7
+PASS BaselineBehaviourTest.withdrawOfExactlyTheBalanceIsRejectedInBaseline
+br.com.michaelcruz.persistence.dto.AccountDTO@2e817b38
+PASS BaselineBehaviourTest.withdrawReducesBalance
+RESULT passed=15 failed=0 total=15

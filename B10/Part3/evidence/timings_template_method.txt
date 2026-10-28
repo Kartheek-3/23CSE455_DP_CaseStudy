@@ -1,0 +1,55 @@
+# Timings for Template Method (template_method_setpoint_interpolation)
+# time.perf_counter() around subprocess.run(); 1 warmup + 5 measured runs; milliseconds
+# machine: <host>, measured with Python 3.12.7
+
+[java]
+working folder: B10\Part3\template_method_setpoint_interpolation\java
+compile command: javac -d out DateMethod.java SetpointInterpolationTest.java
+run command: java -cp out SetpointInterpolationTest
+warmup_ms: 209.573
+run_1_ms: 155.382
+run_2_ms: 157.771
+run_3_ms: 158.375
+run_4_ms: 158.311
+run_5_ms: 156.441
+median_ms: 157.771
+last run exit code: 0; last line: Template Method tests: 12/12 passed
+
+[python]
+working folder: B10\Part3\template_method_setpoint_interpolation\python
+compile command: (none)
+run command: python test_setpoint_interpolation.py
+warmup_ms: 72.077
+run_1_ms: 69.835
+run_2_ms: 71.285
+run_3_ms: 83.827
+run_4_ms: 72.495
+run_5_ms: 74.272
+median_ms: 72.495
+last run exit code: 0; last line: Template Method tests: 12/12 passed
+
+[javascript]
+working folder: B10\Part3\template_method_setpoint_interpolation\javascript
+compile command: (none)
+run command: node test_setpoint_interpolation.js
+warmup_ms: 90.142
+run_1_ms: 90.926
+run_2_ms: 89.299
+run_3_ms: 102.620
+run_4_ms: 87.145
+run_5_ms: 94.251
+median_ms: 90.926
+last run exit code: 0; last line: Template Method tests: 12/12 passed
+
+[cpp]
+working folder: B10\Part3\template_method_setpoint_interpolation\cpp
+compile command: g++ -std=c++14 -O2 -Wall -o test_setpoint_interpolation.exe test_setpoint_interpolation.cpp
+run command: B10\Part3\template_method_setpoint_interpolation\cpp\test_setpoint_interpolation.exe
+warmup_ms: 450.431
+run_1_ms: 33.060
+run_2_ms: 30.163
+run_3_ms: 41.644
+run_4_ms: 36.456
+run_5_ms: 31.895
+median_ms: 33.060
+last run exit code: 0; last line: Template Method tests: 12/12 passed

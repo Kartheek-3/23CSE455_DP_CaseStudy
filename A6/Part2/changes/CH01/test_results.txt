@@ -1,0 +1,33 @@
+# CH01 test run
+# commit: f6353555bedbe0a9bcd083b4967ce7699498c027 (parent 168ef00003dfcba41e9939c1f4887e125ed79638)
+# command (repo root): npm test
+# node v22.18.0, ts-node 10.9.2 transpile-only, run 2026-10-11T15:23:21Z
+
+ok 1 - DEFECT (baseline): a COMPLETED trip can still be cancelled
+ok 2 - BookDriver broadcasts only to drivers within 20 km road distance and saves a PENDING trip
+ok 3 - BookDriver refuses the request when no driver is within 20 km by road
+ok 4 - rider cancelling a PENDING trip sets CANCELLED and stores the reason
+ok 5 - rider cancelling a CONFIRMED trip notifies the assigned driver
+ok 6 - driver completing a trip stores finalFare = estimatedFare + finalKm * 10
+ok 7 - completing a trip without finalKm is rejected
+ok 8 - CH01 state table: allowed admin transitions
+ok 9 - CH01 state table: illegal admin transitions are refused
+ok 10 - CH01 suspending requires a reason
+ok 11 - CH01 only approved drivers can receive rides
+ok 12 - CH01 admin suspends an approved driver: saved and driver notified
+ok 13 - CH01 (fixes baseline defect) a rejected driver cannot jump straight to approved; nothing saved or sent
+ok 14 - CH01 a suspended driver cannot accept a booking
+ok 15 - CH01 an approved driver accepts a PENDING booking through the repository (refactored)
+ok 16 - CH01 a rider cannot request a suspended driver directly
+ok 17 - ONE_WAY below the minimum is charged Rs 450
+ok 18 - ONE_WAY is Rs 10 per km above the minimum
+ok 19 - ONE_WAY without km is rejected
+ok 20 - ROUND_TRIP (range of dates) is Rs 1000 per calendar day, inclusive
+ok 21 - ROUND_TRIP without end date is rejected
+ok 22 - unknown booking type is rejected
+# tests 22
+# pass 22
+# fail 0
+
+# type check: npx tsc --noEmit -p .  (baseline has 7 pre-existing dependency-drift errors)
+# tsc errors: 7

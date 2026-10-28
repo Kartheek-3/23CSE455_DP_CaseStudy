@@ -1,0 +1,11 @@
+$ (cd Part3/template-method-engine/python) python3 -m unittest -v test_template
+test_invalid_input_is_rejected_with_expected_error (test_template.TemplateMethodTest.test_invalid_input_is_rejected_with_expected_error) ... ok
+test_new_engine_gets_the_whole_skeleton_from_one_primitive (test_template.TemplateMethodTest.test_new_engine_gets_the_whole_skeleton_from_one_primitive) ... ok
+test_report_matches_expected_output (test_template.TemplateMethodTest.test_report_matches_expected_output) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK
+[exit 0]
+result: 3/3 passed

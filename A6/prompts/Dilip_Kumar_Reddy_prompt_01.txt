@@ -1,0 +1,415 @@
+Context: Sarathi is an open-source Node.js/Express/TypeScript ride-sharing backend (github.com/AkhilMM2000/sarathi-backend, commit c8766f4) using MongoDB/Mongoose, tsyringe DI, Socket.IO, Redis, Stripe and the Google Distance Matrix API. Source lines are numbered on the left.
+
+Task: identify the design patterns that are ACTUALLY implemented in the excerpts below (GoF, enterprise/PoEAA, architectural, framework idioms). They cover trip booking, driver matching, location, notification, payment and the HTTP pipeline.
+Give a table with: pattern | category | instance name | participants (role = class/function, file:lines) | evidence (which calls prove it). Then list patterns that someone might wrongly claim here and why they are not present. Do not invent classes that are not shown.
+
+--- src/domain/repositories/IBaseRepository.ts (lines 1-8) ---
+   1 export interface IBaseRepository<T> {
+   2   create(data: Partial<T>): Promise<T>;
+   3   findById(id: string): Promise<T | null>;
+   4   findOne(filter: Record<string, any>): Promise<T | null>;
+   5   findAll(filter?: Record<string, any>): Promise<T[]>;
+   6   update(id: string, updates: Record<string, any>): Promise<T | null>;
+   7   delete(id: string): Promise<boolean>;
+   8 }
+
+--- src/infrastructure/database/BaseRepository.ts (lines 5-23) ---
+   5 export abstract class BaseRepository<T, U extends Document> implements IBaseRepository<T> {
+   6   constructor(protected readonly model: Model<U>) {}
+   7 
+   8   async create(data: Partial<T>): Promise<T> {
+   9     try {
+  10       const createdItem = new this.model(data);
+  11       const result = await createdItem.save();
+  12       return result.toObject<T>();
+  13     } catch (error: any) {
+  14       if (error.code === 11000) {
+  15         throw new ConflictError("Resource with this data already exists");
+  16       }
+  17       throw error;
+  18     }
+  19   }
+  20 
+  21   async findById(id: string): Promise<T | null> {
+  22     return this.model.findById(id).lean() as Promise<T | null>;
+  23   }
+
+--- src/domain/repositories/IBookingrepository.ts (lines 23-45) ---
+  23 export interface IBookingRepository {
+  24   GetAllBookings(
+  25     page: number,
+  26     limit: number
+  27   ): Promise<PaginatedResult<BookingWithUsername>>;
+  28   createBooking(booking: Booking): Promise<Booking>;
+  29   findBookingById(id: string): Promise<Booking | null>;
+  30   findBookingsByUser(
+  31     userId: string,
+  32     page: number,
+  33     limit: number
+  34   ): Promise<PaginatedResult<BookingWithUsername>>;
+  35   findBookingsByDriver(
+  36     driverId: string,
+  37     page: number,
+  38     limit: number
+  39   ): Promise<PaginatedResult<rideHistory>>;
+  40   updateBooking(id: string, updates: Partial<Booking>): Promise<Booking | null>;
+  41   checkDriverAvailability(
+  42     driverId: string,
+  43     start: Date,
+  44     end?: Date
+  45   ): Promise<boolean>;
+
+--- src/infrastructure/database/MongoBookingRepository.ts (lines 12-24) ---
+  12 @injectable()
+  13 export class MongoBookingRepository extends BaseRepository<Booking, BookingDocument> implements IBookingRepository {
+  14   constructor() {
+  15     super(BookingModel);
+  16   }
+  17 
+  18   async createBooking(booking: Booking): Promise<Booking> {
+  19     return super.create(booking);
+  20   }
+  21   
+  22   async findBookingById(id: string): Promise<Booking | null> {
+  23     return super.findById(id);
+  24   }
+
+--- src/application/services/NotificationService.ts (lines 1-17) ---
+   1 
+   2 export interface INotificationService {
+   3     sendBookingNotification(driverId: string, data: any): void;
+   4     broadcastBookingNotification(driverIds: string[], data: any): void;
+   5     cancelBookingNotification(driverId:string,data:any):void
+   6     paymentNotification(driverId:string,data:any):void
+   7     bookingAssignedNotification(bookingId: string, driverId?: string): void;
+   8     sendBookingConfirmation(userId: string, data: any): void;
+   9     rejectBookingNotification(userId:string,data:any):void;
+  10     adminChangeDriverStatusNotification(
+  11         driverId: string, 
+  12        data: any
+  13     ): void;
+  14 
+  15 
+  16   }
+  17   
+
+--- src/infrastructure/services/SocketNotification.ts (lines 1-33) ---
+   1 // src/infrastructure/services/SocketNotificationService.ts
+   2 import { injectable } from "tsyringe";
+   3 import { INotificationService } from "../../application/services/NotificationService";
+   4 import { getIO } from "../socket/socket"; 
+   5 import { redis } from "../../config/redisconfig";
+   6 @injectable()
+   7 export class SocketNotificationService implements INotificationService {
+   8    private get io() {
+   9     return getIO();   // <-- Lazy getter, now getIO() is called ONLY when socket is ready
+  10   }
+  11   async sendBookingNotification(driverId: string, data: any):Promise< void >{
+  12     const socketId = await redis.get<string>(`driver:socket:${driverId}`);
+  13     console.log('booking notifciation',socketId)
+  14     if (socketId) {
+  15       this.io.to(socketId).emit("booking:new", data);
+  16     }
+  17   }
+  18   async broadcastBookingNotification(driverIds: string[], data: any): Promise<void> {
+  19     for (const driverId of driverIds) {
+  20       const socketId = await redis.get<string>(`driver:socket:${driverId}`);
+  21       console.log('booking notification broadcast to driver', driverId, socketId)
+  22       if (socketId) {
+  23         this.io.to(socketId).emit("booking:new", data);
+  24       }
+  25     }
+  26   }
+  27 async cancelBookingNotification(driverId: string, data: any):Promise< void> {
+  28   const socketId = await redis.get<string>(`driver:socket:${driverId}`);
+  29   console.log('booking notifciationcancel',socketId)
+  30   if (socketId) {
+  31     this.io.to(socketId).emit("cancel:booking", data);
+  32   }
+  33 }
+
+--- src/infrastructure/socket/socket.ts (lines 9-16) ---
+   9 let io: Server;
+  10 export const initializeSocket = (server: HttpServer): void => {
+  11   io = new Server(server, {
+  12     cors: {
+  13       origin: process.env.FRONTEND_URL,
+  14       credentials: true,
+  15     },
+  16   });
+
+--- src/infrastructure/socket/socket.ts (lines 181-184) ---
+ 181 export const getIO = (): Server => {
+ 182   if (!io) throw new Error("Socket.io server not initialized");
+ 183   return io;
+ 184 };
+
+--- src/infrastructure/socket/SocketNotification.ts (lines 16-20) ---
+  16   io.on("connection", (socket: Socket) => {
+  17  
+  18     socket.on("driver:online", async(driverId: string) => {
+  19       await redis.set(`driver:socket:${driverId}`, socket.id);
+  20       await redis.set(`socket:driver:${socket.id}`, driverId);
+
+--- src/infrastructure/services/FareCalculatorService.ts (lines 1-38) ---
+   1 import { injectable } from "tsyringe";
+   2 import { IFareCalculatorService } from "../../application/services/FareCalculatorService";
+   3 import { BookingType } from "../../domain/models/Booking";
+   4 import { AuthError } from "../../domain/errors/Autherror";
+   5 
+   6 @injectable()
+   7 export class FareCalculatorService implements IFareCalculatorService {
+   8   private readonly PER_KM_RATE = 10; // move to env/config later
+   9   private readonly PER_DAY_RATE = 1000;
+  10 
+  11   calculate(params: {
+  12     bookingType: BookingType;
+  13     estimatedKm?: number;
+  14     startDate: Date;
+  15     endDate?: Date;
+  16   }): number {
+  17     const { bookingType, estimatedKm, startDate, endDate } = params;
+  18 let fare = 0;
+  19  console.log(params)
+  20     if (bookingType === BookingType.ONE_WAY) {
+  21       if (!estimatedKm) throw new Error("Estimated KM is required for ONE_WAY booking");
+  22       fare= estimatedKm * this.PER_KM_RATE;
+  23    
+  24       return fare < 450 ? 450 : fare;
+  25     }
+  26    
+  27     if (bookingType === BookingType.ROUND_TRIP) {
+  28       if (!endDate) throw new Error("End date is required for ROUND_TRIP booking");
+  29       const start = new Date(startDate).getTime();
+  30       const end = new Date(endDate).getTime();
+  31       const dayCount = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+  32       
+  33       return dayCount * this.PER_DAY_RATE;
+  34     }
+  35 
+  36     throw new AuthError("Invalid booking type", 400);
+  37   }
+  38 }
+
+--- src/application/use_cases/User/BookDriver.ts (lines 27-57) ---
+  27 @injectable()
+  28 export class BookDriver implements IBookDriverUseCase  {
+  29   constructor(
+  30     @inject(TOKENS.IBOOKING_REPO) private _bookingRepo: IBookingRepository,
+  31     @inject(TOKENS.IDRIVER_REPO) private _driverRepo: IDriverRepository,
+  32     @inject(TOKENS.IFARE_CALCULATE_SERVICE) private _fareCalculator: IFareCalculatorService,
+  33     @inject(TOKENS.NOTIFICATION_SERVICE) private _notificationService: INotificationService,
+  34     @inject(TOKENS.GOOGLE_DISTANCE_SERVICE) private _distanceService: GoogleDistanceService
+  35   ) {}
+  36 
+  37   async execute(data: BookDriverInput): Promise<Booking> {
+  38     const { driverId, startDate, endDate, bookingType} = data;
+  39 
+  40     if (endDate && startDate > endDate) {
+  41       throw new AuthError("End date must be greater than start date", HTTP_STATUS_CODES.BAD_REQUEST);
+  42     }
+  43 
+  44     // Check availability only if a specific driver was requested
+  45     if (driverId) {
+  46       const isBooked = await this._bookingRepo.checkDriverAvailability(driverId, startDate, endDate);
+  47       if (!isBooked) {
+  48         throw new AuthError("Driver is already booked for the selected time.", HTTP_STATUS_CODES.BAD_REQUEST);
+  49       }
+  50     }
+  51 
+  52     const estimatedFare = this._fareCalculator.calculate({
+  53       bookingType,
+  54       estimatedKm: data.estimatedKm,
+  55       startDate,
+  56       endDate,
+  57     });
+
+--- src/domain/services/IStripeService.ts (lines 9-22) ---
+   9   export interface IStripeService {
+  10     createPaymentIntent(params: CreatePaymentIntentParams): Promise<{
+  11       clientSecret: string;
+  12       paymentIntentId: string
+  13     }>
+  14   
+  15   retrievePaymentIntent(paymentIntentId: string): Promise<Stripe.PaymentIntent>;
+  16   transferToDriverFromWallet(
+  17   rideId: string,
+  18   amount: number,
+  19   driverStripeAccountId: string
+  20 ): Promise<Stripe.Transfer>;
+  21 
+  22   }
+
+--- src/infrastructure/services/StripeService.ts (lines 8-41) ---
+   8 @injectable()
+   9 export class PaymentService  implements IStripeService {
+  10   private stripe: Stripe;
+  11 
+  12   constructor() {
+  13     this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  14       apiVersion: '2025-03-31.basil',
+  15     });
+  16   }
+  17 
+  18   async createPaymentIntent({
+  19     amount,
+  20     driverStripeAccountId,
+  21     platformFee,
+  22   }: CreatePaymentIntentParams): Promise<{ clientSecret: string; paymentIntentId: string }> {
+  23     try {
+  24      
+  25       const account =await this.stripe.accounts.retrieve(driverStripeAccountId);
+  26      
+  27       const paymentIntent = await this.stripe.paymentIntents.create(
+  28         {
+  29           amount, 
+  30           currency: 'inr', // Use INR for testing
+  31           automatic_payment_methods: { enabled: true }, // Supports cards, Google Pay, etc.
+  32           application_fee_amount: platformFee, // Platform fee (10%)
+  33           transfer_data: {
+  34             destination: driverStripeAccountId, // Transfer to the driver’s connected account
+  35           },
+  36         }
+  37       );
+  38 
+  39       return { clientSecret: paymentIntent.client_secret!,
+  40         paymentIntentId: paymentIntent.id,
+  41        };
+
+--- src/middleware/authMiddleware.ts (lines 15-50) ---
+  15 export const protectRoute = (
+  16   allowedRoles: ('user' | 'driver' | 'admin')[] = []
+  17 ) => {
+  18   return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  19     const authHeader = req.headers.authorization;
+  20  
+  21    
+  22    
+  23     if (!authHeader || !authHeader.startsWith('Bearer')) {
+  24       res.status(HTTP_STATUS_CODES.UNAUTHORIZED).json({ message: 'No token provided' });
+  25       return  
+  26     }
+  27    
+  28 
+  29     const token = authHeader.split(' ')[1];
+  30 
+  31 
+  32   
+  33     try {
+  34     
+  35       const decoded = jwt.verify(
+  36         token,
+  37         process.env.ACCESS_TOKEN_SECRET as string
+  38       ) as { id: string; email: string; role: 'user' | 'driver' | 'admin' };
+  39 
+  40       
+  41       
+  42       
+  43       req.user = decoded;
+  44 
+  45       if (allowedRoles.length > 0 && !allowedRoles.includes(decoded.role)) {
+  46         res.status(HTTP_STATUS_CODES.FORBIDDEN).json({ message: 'Not authorized to access this route' });
+  47         return;
+  48       }
+  49 
+  50       next();
+
+--- src/middleware/checkBlocked.ts (lines 17-57) ---
+  17   async handle(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  18     try {
+  19       const userId = req.user?.id;
+  20       const role = req.user?.role; 
+  21      
+  22       
+  23       if (!userId || !role) {
+  24         res.status(HTTP_STATUS_CODES.UNAUTHORIZED).json({ message: "Unauthorized" });
+  25         return 
+  26         
+  27       }
+  28    
+  29 
+  30       let userOrDriver;
+  31       if (role === "user") {
+  32         if (!isValidObjectId(userId)) {
+  33         
+  34           
+  35           res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({ message: "Invalid user ID format" });
+  36           return;
+  37         }
+  38         userOrDriver = await this.userRepository.getUserById(userId);
+  39       }
+  40        else if (role === "driver") {
+  41         userOrDriver = await this.driverRepository.findDriverById(userId);
+  42       } else {
+  43        res.status(HTTP_STATUS_CODES.FORBIDDEN).json({ message: "Invalid role" });
+  44        return 
+  45       }
+  46 
+  47       if (!userOrDriver) {
+  48          res.status(HTTP_STATUS_CODES.UNAUTHORIZED).json({ message: "Account not found" });
+  49          return 
+  50       }
+  51 
+  52       if (userOrDriver.isBlock) {
+  53         res.status(HTTP_STATUS_CODES.FORBIDDEN).json({ blocked: true, message: "Your account is blocked. Contact support." });
+  54         return;
+  55       }
+  56       
+  57  next(); 
+
+--- src/infrastructure/utils/catchAsync.ts (lines 1-13) ---
+   1 import { Request, Response, NextFunction, RequestHandler } from "express";
+   2 
+   3 /**
+   4  * Wraps an asynchronous controller function and catches any errors,
+   5  * passing them to the next middleware (global error handler).
+   6  */
+   7 export const catchAsync = (
+   8   fn: (req: Request, res: Response, next: NextFunction) => Promise<any>
+   9 ): RequestHandler => {
+  10   return (req, res, next) => {
+  11     fn(req, res, next).catch(next);
+  12   };
+  13 };
+
+--- src/presentation/routes/BookingRoute.ts (lines 10-17) ---
+  10 const router = Router();
+  11 const checkBlockedMiddleware = container.resolve(CheckBlockedUserOrDriver);
+  12 export const bookingController=container.resolve<BookingController>(TOKENS.BOOKING_CONTROLLER);
+  13 // Booking endpoint
+  14 router.post(ROUTES.BOOKING.SLOT,protectRoute(["user"]), checkBlockedMiddleware.handle.bind(checkBlockedMiddleware),bookingController.bookDriver.bind(bookingController));
+  15 router.post(ROUTES.BOOKING.ESTIMATE_FARE,protectRoute(["user"]), checkBlockedMiddleware.handle.bind(checkBlockedMiddleware), bookingController.getEstimatedFare.bind(bookingController));
+  16 router.patch(ROUTES.BOOKING.ACCEPT, protectRoute(["driver"]), checkBlockedMiddleware.handle.bind(checkBlockedMiddleware), bookingController.acceptBooking.bind(bookingController));
+  17 export default router;
+
+--- src/infrastructure/config/container.ts (lines 44-48) ---
+  44 // Register repositories
+  45 container.registerSingleton<IUserRepository>(TOKENS.IUSER_REPO,  MongoUserRepository );
+  46 container.registerSingleton<IDriverRepository>(TOKENS.IDRIVER_REPO,MongoDriverRepository )
+  47 container.registerSingleton<IVehicleRepository>(TOKENS.VEHICLE_REPO,MongoVehicleRepository)
+  48 container.registerSingleton<IBookingRepository>(TOKENS.IBOOKING_REPO, MongoBookingRepository);
+
+--- src/infrastructure/config/container.ts (lines 68-90) ---
+  68   container.registerSingleton<IFareCalculatorService>(TOKENS.IFARE_CALCULATE_SERVICE,
+  69    FareCalculatorService,
+  70   );
+  71 
+  72   container.register<IStripeAccountService>(TOKENS.STRIPE_SERVICE, {
+  73     useClass: StripeService,
+  74   });
+  75   container.registerSingleton<IStripeService>(TOKENS.PAYMENT_SERVICE,
+  76    PaymentService
+  77   );
+  78   container.registerSingleton<IChatRepository>(TOKENS.CHAT_REPO, 
+  79     MongoChatRepository,
+  80   );
+  81   container.registerSingleton<ChatService>(ChatService);
+  82 
+  83   //wallet service
+  84   container.registerSingleton<IWalletRepository>(TOKENS.WALLET_REPO,
+  85     MongoWalletRepository,  
+  86   );
+  87 
+  88   container.registerSingleton<INotificationService>(TOKENS.NOTIFICATION_SERVICE,
+  89     SocketNotificationService,
+  90   );

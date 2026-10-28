@@ -1,0 +1,32 @@
+Pattern: Memento
+Instance: Hearth Config History & Edit Transaction
+Language: JavaScript
+Compiler/Runtime: Node.js v22.16.0 (V8 12.4.254.20)
+Warmup + 5 Runs Raw Output:
+--- Run 1 ---
+RESULT: 6/6 passed
+TIME_MS: 0.170
+
+
+--- Run 2 ---
+RESULT: 6/6 passed
+TIME_MS: 0.194
+
+
+--- Run 3 ---
+RESULT: 6/6 passed
+TIME_MS: 0.139
+
+
+--- Run 4 ---
+RESULT: 6/6 passed
+TIME_MS: 0.167
+
+
+--- Run 5 ---
+RESULT: 6/6 passed
+TIME_MS: 0.261
+
+
+Measured Milliseconds: [0.17, 0.194, 0.139, 0.167, 0.261]
+Computed Median Milliseconds: 0.170

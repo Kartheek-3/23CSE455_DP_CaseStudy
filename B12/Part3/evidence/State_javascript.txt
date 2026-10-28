@@ -1,0 +1,8 @@
+﻿PATTERN/SUITE   : State_javascript
+RUNTIME/COMPILER: Node.js v24.18.0
+WORKDIR         : C:\Users\eswar\OneDrive\Documents\Visual Studio Code\23CSE455_DP_CaseStudy\B12\Part3\State\javascript
+RUN COMMAND     : node test_state.js
+PROGRAM OUTPUT  : STATE_JS PASS 13/13
+TIME INCLUDES   : whole process wall time (runtime startup + program execution), after 1 unmeasured warm-up
+TIMING SAMPLES  : 5 measured runs (ms): 80.6872, 77.4471, 70.6368, 73.1542, 69.7966
+MEDIAN_MS       : 73.154

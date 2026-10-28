@@ -1,0 +1,10 @@
+# deposit/withdraw <account> <amount> print ok or BAD_REQUEST; audit <account> and alerts print what the two observers recorded ('-' if nothing)
+# audit entries look like KIND:amount; alerts (amount >= 10000.00) look like KIND:amount@account
+deposit 1 25;audit 1 => DEPOSIT:25.00
+deposit 1 25;withdraw 1 5;audit 1 => DEPOSIT:25.00,WITHDRAWAL:5.00
+deposit 1 10000;alerts => DEPOSIT:10000.00@1
+deposit 1 9999.99;alerts => -
+deposit 1 0;audit 1 => -
+deposit 1 5;deposit 2 6;audit 2 => DEPOSIT:6.00
+withdraw 3 20000;alerts => WITHDRAWAL:20000.00@3
+deposit 1 0 => BAD_REQUEST

@@ -1,0 +1,22 @@
+You are assisting with a university Design Patterns case study (course 23CSE455).
+
+INPUT: the numbered Java source of a Quarkus bank REST API (baseline version), supplied as
+input_source_numbered.txt. Every source line starts with its real line number followed by '|'.
+
+TASK (Part 1, pattern discovery) - restricted to the scope given below:
+1. Find every pattern candidate in your scope: GoF patterns, GRASP patterns, enterprise/architecture
+   patterns, and framework idioms. Give the exact recognised pattern name and its category.
+2. For each candidate give a meaningful instance name (one collaboration, e.g. "Book Return Notification",
+   not just "Strategy").
+3. Map every pattern role to the ACTUAL class / interface / method in the code. Do not invent classes.
+   If a role is combined or absent, say "not separately declared".
+4. Give a file path and line range for every participant, using this exact row format:
+       ROLE | SYMBOL | path:start-end
+   where path is relative to src/main/java/br/com/michaelcruz/ (or src/main/resources/).
+5. Give concise evidence from the code (relationships, calls, delegation, behaviour).
+   A class name or an annotation alone is NOT sufficient evidence.
+6. Give a verdict for each candidate: CONFIRMED, REJECTED or UNCERTAIN, with a reason.
+   Two concrete classes in one collaboration are ONE instance.
+7. Finish with the counts for your scope: confirmed pattern types, confirmed instances,
+   concrete participant classes, rejected candidates, uncertain candidates.
+Do not use any knowledge about this repository other than the supplied code.

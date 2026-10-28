@@ -1,0 +1,9 @@
+# Active Record / cpp
+working folder: Part3/active_record_user_role/cpp
+$ g++ -std=c++14 -O2 -Wall -o test_user_role.exe test_user_role.cpp
+
+[compile exit code: 0]
+$ test_user_role.exe
+Active Record tests: 12/12 passed
+
+[exit code: 0]

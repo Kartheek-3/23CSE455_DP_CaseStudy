@@ -1,0 +1,9 @@
+Collecting cryptography==50.0.1 (from -r ch01/verification/requirements-runtime-extras.txt (line 2))
+  Downloading cryptography-50.0.1-cp311-abi3-manylinux_2_34_x86_64.whl.metadata (4.3 kB)
+Downloading cryptography-50.0.1-cp311-abi3-manylinux_2_34_x86_64.whl (4.7 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.7/4.7 MB 20.1 MB/s eta 0:00:00
+Installing collected packages: cryptography
+Successfully installed cryptography-50.0.1
+
+[notice] A new release of pip is available: 25.0.1 -> 26.2.1
+[notice] To update, run: python -m pip install --upgrade pip

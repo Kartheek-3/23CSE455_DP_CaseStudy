@@ -1,0 +1,3 @@
+Final PDF visual review (2026-10-11)
+A7_Report.pdf: rebuilt with two XeLaTeX passes, exit code 0 on both; 29 pages. All pages were rendered from the final PDF to data/test_result/pdf_pages/report-*.png. Contact sheet: data/test_result/pdf_pages/report_final_contact.png. Source-path changes were reviewed; no pagination change from the prior 29-page build.
+Part3/llm/A7_slide.pdf: rebuilt with two XeLaTeX passes, exit code 0 on both; 13 pages. All pages were rendered from the final PDF to data/test_result/pdf_pages/slides-*.png. Contact sheet: data/test_result/pdf_pages/slides_final_contact.png. The former Tectonic nullfont/missing-character warning is absent; no clipping or overlap observed.

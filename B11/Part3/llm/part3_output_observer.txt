@@ -1,0 +1,5 @@
+[Model: Claude Opus 4.8 | 2026-10-10 | Part 3 Observer | owner: Nithilesh]
+All 4 languages implemented and run; output identical (email+sms lines per hearing).
+Measured on submission machine (median ms): C++ 4.3 | Python 17.7 | JavaScript 46.2 | Java 45.9.
+Source LOC: Java 31, Python 30, JS 21, C++ 32. Max function CC: 1-2.
+Verified: outputs diffed identical across the four languages.

@@ -1,0 +1,8 @@
+# case|commands: install <name>; abort <name>; view <text>; actions (plugins: upper, exclaim, share, bad)|expected
+no_plugins_no_change|view hello|hello
+interruptors_run_in_install_order|install upper;install exclaim;view hello|HELLO!
+abort_removes_handlers|install upper;install exclaim;abort upper;view hello|hello!
+actions_collected|install share;actions|Share
+reinstall_after_abort|install upper;abort upper;install upper;view a|A
+failed_install_keeps_handlers|install exclaim;install bad;view hi|ERR:boom~hi!?
+abort_cleans_failed_plugin|install bad;abort bad;view hi|ERR:boom~hi

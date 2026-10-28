@@ -1,0 +1,28 @@
+digraph G {
+ rankdir=LR; fontname="Helvetica"; labelloc=t; label="Dependency Injection - CDI Field Injection Wiring";
+ node [shape=box, style="rounded,filled", fillcolor="#eef3fb", color="#4a6fa5", fontname="Helvetica", fontsize=10];
+ edge [fontname="Helvetica", fontsize=9, color="#555555"];
+ n__Quarkus_ArC_CDI_container___dependency__not_in_application_source_ [label="&laquo;Container&raquo;\n\n(Quarkus ArC CDI container - dependency, not in application source)", fillcolor="#fff4d6"];
+ n_AccountController [label="&laquo;ManagedBean&raquo;\nAccountController", fillcolor="#eef3fb"];
+ n_UserController [label="&laquo;ManagedBean&raquo;\nUserController", fillcolor="#eef3fb"];
+ n_AccountService [label="&laquo;ManagedBean&raquo;\nAccountService", fillcolor="#eef3fb"];
+ n_UserService [label="&laquo;ManagedBean&raquo;\nUserService", fillcolor="#eef3fb"];
+ n_AccountUtil [label="&laquo;ManagedBean&raquo;\nAccountUtil", fillcolor="#eef3fb"];
+ n_UserUtil [label="&laquo;ManagedBean&raquo;\nUserUtil", fillcolor="#eef3fb"];
+ n_AccountDAO [label="&laquo;ManagedBean&raquo;\nAccountDAO", fillcolor="#eef3fb"];
+ n_UserDAO [label="&laquo;ManagedBean&raquo;\nUserDAO", fillcolor="#eef3fb"];
+ n__Quarkus_ArC_CDI_container___dependency__not_in_application_source_ -> n_AccountController [label="creates + injects all beans"];
+ n__Quarkus_ArC_CDI_container___dependency__not_in_application_source_ -> n_UserController [label=""];
+ n_AccountController -> n_AccountService [label="@Inject"];
+ n_UserController -> n_UserService [label="@Inject"];
+ n_AccountService -> n_AccountDAO [label="@Inject"];
+ n_AccountService -> n_UserService [label="@Inject"];
+ n_AccountService -> n_AccountUtil [label="@Inject"];
+ n_UserService -> n_UserDAO [label="@Inject"];
+ n_UserService -> n_UserUtil [label="@Inject"];
+ n_EntityManager [label="EntityManager", fillcolor="#fff4d6"];
+ n_AccountDAO -> n_EntityManager [label="@Inject"];
+ n_UserDAO -> n_EntityManager [label="@Inject"];
+ n_AccountUtil -> n_AccountDAO [label="@Inject (unused)", style=dashed];
+ n_UserUtil -> n_UserDAO [label="@Inject (unused)", style=dashed];
+}

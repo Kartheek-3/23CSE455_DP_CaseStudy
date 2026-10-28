@@ -1,0 +1,637 @@
+# DaPlanStan — External Integrations and Account Identity
+
+Source Investigation 05 · Original uploaded ZIP · Static source analysis
+
+Pattern classifications unconfirmed
+
+## 1. Overview of the source findings
+
+The three integration areas have different responsibilities.
+
+- Cover images: DaPlanStan constructs its own HTTP request to Pexels, interprets the JSON response and stores the selected image URL on `Trip`.
+- OAuth authentication: OmniAuth handles provider-specific authentication. DaPlanStan receives normalized authentication information and implements user lookup, identity linking, account provisioning, invitation acceptance and session creation.
+- Outbound email: DaPlanStan selects recipients and constructs invitation or notification messages. Rails Action Mailer and the configured delivery service handle message processing and transport.
+
+The source also contains an important supporting component that was not in the initial file list: `config/initializers/mail_logger.rb`. It registers an application-defined delivery observer with Action Mailer. That behavior is relevant to candidate discovery, but it must be evaluated separately from ordinary outbound mail delivery.
+
+The investigation below distinguishes application-written coordination from Rails conventions and third-party APIs before considering pattern classifications.
+
+## 2. Cover-image retrieval
+
+### 2.1 Entry points
+
+The same `FetchTripCoverImageJob` is invoked from three actions in `TripsController`.
+
+| Trigger                                                  | Source                                      | Invocation                |
+| -------------------------------------------------------- | ------------------------------------------- | ------------------------- |
+| Successful trip creation                                 | `app/controllers/trips_controller.rb:35–48` | `perform_later(@trip.id)` |
+| Successful trip update when a title parameter is present | `app/controllers/trips_controller.rb:68–75` | `perform_later(@trip.id)` |
+| Explicit Fetch from Pexels action                        | `app/controllers/trips_controller.rb:87–92` | `perform_now(@trip.id)`   |
+
+The manual refresh is initiated by a POST form in `app/views/trips/cover.html.erb:65–76`, corresponding to `config/routes.rb:27–28`.
+
+Important distinction: Manual refresh invokes `perform_now` synchronously, whereas creation and update call `perform_later`.
+
+Additionally, the update condition tests whether `trip_params[:title]` is present, not whether the title actually changed. Therefore, a successful request containing an unchanged but nonblank title can still enqueue a new image lookup.&#x20;
+
+### 2.2 Complete control flow
+
+\#chatgpt-mermaid-\_r_28u\_{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;fill:rgb(237, 237, 237);}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#chatgpt-mermaid-\_r_28u\_ .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-\_r_28u\_ .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-\_r_28u\_ .error-icon{fill:rgb(48, 48, 48);}#chatgpt-mermaid-\_r_28u\_ .error-text{fill:rgb(237, 237, 237);stroke:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_28u\_ .edge-thickness-normal{stroke-width:1px;}#chatgpt-mermaid-\_r_28u\_ .edge-thickness-thick{stroke-width:3.5px;}#chatgpt-mermaid-\_r_28u\_ .edge-pattern-solid{stroke-dasharray:0;}#chatgpt-mermaid-\_r_28u\_ .edge-thickness-invisible{stroke-width:0;fill:none;}#chatgpt-mermaid-\_r_28u\_ .edge-pattern-dashed{stroke-dasharray:3;}#chatgpt-mermaid-\_r_28u\_ .edge-pattern-dotted{stroke-dasharray:2;}#chatgpt-mermaid-\_r_28u\_ .marker{fill:rgb(175, 175, 175);stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_28u\_ .marker.cross{stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_28u\_ svg{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;}#chatgpt-mermaid-\_r_28u\_ p{margin:0;}#chatgpt-mermaid-\_r_28u\_ .label{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_28u\_ .cluster-label text{fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_28u\_ .cluster-label span{color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_28u\_ .cluster-label span p{background-color:transparent;}#chatgpt-mermaid-\_r_28u\_ .label text,#chatgpt-mermaid-\_r_28u\_ span{fill:rgb(237, 237, 237);color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_28u\_ .node rect,#chatgpt-mermaid-\_r_28u\_ .node circle,#chatgpt-mermaid-\_r_28u\_ .node ellipse,#chatgpt-mermaid-\_r_28u\_ .node polygon,#chatgpt-mermaid-\_r_28u\_ .node path{fill:rgb(9, 23, 44);stroke:rgb(31, 78, 148);stroke-width:1px;}#chatgpt-mermaid-\_r_28u\_ .rough-node .label text,#chatgpt-mermaid-\_r_28u\_ .node .label text,#chatgpt-mermaid-\_r_28u\_ .image-shape .label,#chatgpt-mermaid-\_r_28u\_ .icon-shape .label{text-anchor:middle;}#chatgpt-mermaid-\_r_28u\_ .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#chatgpt-mermaid-\_r_28u\_ .rough-node .label,#chatgpt-mermaid-\_r_28u\_ .node .label,#chatgpt-mermaid-\_r_28u\_ .image-shape .label,#chatgpt-mermaid-\_r_28u\_ .icon-shape .label{text-align:center;}#chatgpt-mermaid-\_r_28u\_ .node.clickable{cursor:pointer;}#chatgpt-mermaid-\_r_28u\_ .root .anchor path{fill:rgb(175, 175, 175)!important;stroke-width:0;stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_28u\_ .arrowheadPath{fill:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_28u\_ .edgePath .path{stroke:rgb(175, 175, 175);stroke-width:1px;}#chatgpt-mermaid-\_r_28u\_ .flowchart-link{stroke:rgb(175, 175, 175);fill:none;}#chatgpt-mermaid-\_r_28u\_ .edgeLabel{background-color:rgb(0, 0, 0);text-align:center;}#chatgpt-mermaid-\_r_28u\_ .edgeLabel p{background-color:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_28u\_ .edgeLabel rect{opacity:0.5;background-color:rgb(0, 0, 0);fill:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_28u\_ .labelBkg{background-color:rgba(0, 0, 0, 0.5);}#chatgpt-mermaid-\_r_28u\_ .cluster rect{fill:rgb(48, 48, 48);stroke:rgba(255, 255, 255, 0.15);stroke-width:1px;}#chatgpt-mermaid-\_r_28u\_ .cluster text{fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_28u\_ .cluster span{color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_28u\_ div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:12px;background:rgb(48, 48, 48);border:1px solid rgba(255, 255, 255, 0.15);border-radius:2px;pointer-events:none;z-index:100;}#chatgpt-mermaid-\_r_28u\_ .flowchartTitleText{text-anchor:middle;font-size:18px;fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_28u\_ rect.text{fill:none;stroke-width:0;}#chatgpt-mermaid-\_r_28u\_ .icon-shape,#chatgpt-mermaid-\_r_28u\_ .image-shape{background-color:rgb(0, 0, 0);text-align:center;}#chatgpt-mermaid-\_r_28u\_ .icon-shape p,#chatgpt-mermaid-\_r_28u\_ .image-shape p{background-color:rgb(0, 0, 0);padding:2px;}#chatgpt-mermaid-\_r_28u\_ .icon-shape .label rect,#chatgpt-mermaid-\_r_28u\_ .image-shape .label rect{opacity:0.5;background-color:rgb(0, 0, 0);fill:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_28u\_ .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#chatgpt-mermaid-\_r_28u\_ .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#chatgpt-mermaid-\_r_28u\_ .node .neo-node{stroke:rgb(31, 78, 148);}#chatgpt-mermaid-\_r_28u\_ [data-look="neo"].node rect,#chatgpt-mermaid-\_r_28u\_ [data-look="neo"].cluster rect,#chatgpt-mermaid-\_r_28u\_ [data-look="neo"].node polygon{stroke:url(#chatgpt-mermaid-\_r_28u\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_28u\_ [data-look="neo"].swimlane.cluster rect{filter:none;}#chatgpt-mermaid-\_r_28u\_ [data-look="neo"].node path{stroke:url(#chatgpt-mermaid-\_r_28u\_-gradient);stroke-width:1px;}#chatgpt-mermaid-\_r_28u\_ [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_28u\_ [data-look="neo"].node .neo-line path{stroke:rgb(31, 78, 148);filter:none;}#chatgpt-mermaid-\_r_28u\_ [data-look="neo"].node circle{stroke:url(#chatgpt-mermaid-\_r_28u\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_28u\_ [data-look="neo"].node circle .state-start{fill:#000000;}#chatgpt-mermaid-\_r_28u\_ [data-look="neo"].icon-shape .icon{fill:url(#chatgpt-mermaid-\_r_28u\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_28u\_ [data-look="neo"].icon-shape .icon-neo path{stroke:url(#chatgpt-mermaid-\_r_28u\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_28u\_ .node text{font-size:14px;font-weight:600;letter-spacing:normal;fill:rgb(153, 206, 255);}#chatgpt-mermaid-\_r_28u\_ .edgeLabels text{font-size:13px;font-weight:600;letter-spacing:-0.08px;fill:rgb(153, 206, 255);}#chatgpt-mermaid-\_r_28u\_ .node tspan[font-weight="normal"],#chatgpt-mermaid-\_r_28u\_ .edgeLabels tspan[font-weight="normal"]{font-weight:600;}#chatgpt-mermaid-\_r_28u\_ .edgeLabel .label rect{opacity:1;rx:13px;ry:13px;fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-width:1px;}#chatgpt-mermaid-\_r_28u\_ .node rect,#chatgpt-mermaid-\_r_28u\_ .node circle,#chatgpt-mermaid-\_r_28u\_ .node ellipse,#chatgpt-mermaid-\_r_28u\_ .node polygon,#chatgpt-mermaid-\_r_28u\_ .node path{fill:rgb(0, 40, 77);stroke:rgba(255, 255, 255, 0.1);stroke-width:1px;}#chatgpt-mermaid-\_r_28u\_ .node rect{rx:16px;ry:16px;}#chatgpt-mermaid-\_r_28u\_ .node.mermaid-decision .label-container{fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-dasharray:2,2;}#chatgpt-mermaid-\_r_28u\_ .edgePaths .flowchart-link{stroke:rgb(175, 175, 175);stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;}#chatgpt-mermaid-\_r_28u\_ .marker{fill:rgb(175, 175, 175);stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_28u\_ :root{--mermaid-font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";}Trip createdFetchTripCoverImageJobTrip updated with titleparameterUser requests Pexels refreshClear uploaded image and URLFind Trip by IDTrip and API key available?ReturnBuild landscape search queryNet::HTTP GET to PexelsHTTP success?Log warning and returnParse JSONRead first photo's large2x URLImage URL present?Trip.update_columnsLeave URL unchangedNoYesNoYesYesNo
+
+### 2.3 What the job actually does
+
+`FetchTripCoverImageJob#perform`, `app/jobs/fetch_trip_cover_image_job.rb:4–32`, implements the following steps.
+
+Locate the trip. It retrieves `Trip.find_by(id: trip_id)` and returns if no matching record exists.
+
+Check configuration. It reads `ENV["PEXELS_API_KEY"]`. If missing or blank, it logs that information and returns.
+
+Construct a search. It removes four-digit years from the trip title, compresses whitespace and appends `travel landscape`.
+
+For example, a trip titled `Japan 2026` would produce a query based on `Japan travel landscape`.
+
+Construct the request. The application creates a GET request to:
+
+`https://api.pexels.com/v1/search`
+
+It supplies the URL parameters `query`, `per_page=1` and `orientation=landscape`, with the API key placed in the `Authorization` header.
+
+Process the response. On an HTTP success response, it parses the JSON and retrieves:
+
+```
+data.dig("photos", 0, "src", "large2x")
+```
+
+Persist the result. If an image URL exists, the job calls:
+
+```
+trip.update_columns(cover_image_url: image_url)
+```
+
+The job rescues errors and logs warnings. It does not propagate its rescued failures to the controller through a custom result object.&#x20;
+
+
+
+### 2.4 Image storage versus image display
+
+The job stores the returned URL, not downloaded image bytes.
+
+`Trip` also declares an Active Storage cover attachment at `app/models/trip.rb:2`.
+
+The application's `trip_cover_src` helper prefers an uploaded Active Storage image over the Pexels URL:
+
+```
+def trip_cover_src(trip)
+  return url_for(trip.cover_image) if trip.cover_image.attached?
+  trip.cover_image_url.presence
+end
+```
+
+Source: `app/helpers/application_helper.rb:44–47`.
+
+A user can separately upload a custom cover through `TripsController#update_cover`, which attaches the upload and clears the Pexels URL.
+
+The manual refresh operation does the reverse: it purges the uploaded image, clears the URL and invokes the Pexels job synchronously.
+
+### 2.5 Responsibility allocation
+
+| Participant              | Responsibility                                                 |
+| ------------------------ | -------------------------------------------------------------- |
+| `TripsController`        | Decide when cover retrieval is needed                          |
+| `FetchTripCoverImageJob` | Prepare request, invoke Pexels and interpret result            |
+| `Trip`                   | Hold the image URL and optional attachment                     |
+| Active Record            | Perform persistence                                            |
+| Active Job               | Provide asynchronous/synchronous job invocation infrastructure |
+| Ruby `Net::HTTP`         | Perform HTTP transport                                         |
+| Pexels                   | Search its image catalogue and return image metadata           |
+| Active Storage           | Store manually uploaded cover attachments                      |
+
+The application does not use a Pexels-specific SDK in this method. It constructs the HTTP request directly using Ruby libraries.
+
+### 2.6 Collaboration boundary
+
+This image-retrieval operation was already encountered as a supporting participant in the previously reviewed `Trip Creation Coordination` instance.
+
+The additional edit and manual-refresh callers do not, by themselves, create new pattern instances.
+
+The actual Pexels integration is a direct HTTP lookup with response processing and persistence. No interchangeable provider implementation or incompatible-interface translation has been established.
+
+Preliminary conclusion: The cover-image retrieval flow is independently understandable as external API integration. No genuinely new pattern candidate is warranted from this job alone.
+
+## 3. OAuth sign-in and identity linking
+
+### 3.1 Provider configuration and entry
+
+`config/initializers/omniauth.rb:1–16` registers two OmniAuth providers:
+
+| Provider | Configuration                                        |
+| -------- | ---------------------------------------------------- |
+| Google   | `:google_oauth2`, client ID and client secret        |
+| Apple    | `:apple`, client ID, team ID, key ID and private key |
+
+The initializer also specifies that OAuth requests begin using POST.
+
+The application routes:
+
+- `GET /auth/:provider/callback` to `SessionsController#create`.
+- `GET /auth/failure` to `SessionsController#failure`.
+- `DELETE /auth/sign_out` to `SessionsController#destroy`.
+
+These routes are at `config/routes.rb:12–15`, within the `whats.` hostname constraint.
+
+The actual provider authentication protocol is implemented by OmniAuth and its provider integrations, not by `SessionsController`.&#x20;
+
+
+
+### Important provider distinction
+
+Although both Google and Apple are configured, the inspected sign-in interfaces contain Google-specific forms:
+
+- `app/views/home/app.html.erb:50–68`
+- `app/views/invites/accept.html.erb:19–31`
+- `app/views/layouts/_navbar.html.erb:68–71`
+
+No corresponding Apple sign-in button was found in the inspected application views.
+
+Therefore, the source establishes Apple provider configuration but does not establish a working Apple sign-in user journey.
+
+### 3.2 How authenticated provider data reaches the application
+
+`SessionsController#create`, `app/controllers/sessions_controller.rb:4–40`, begins with:
+
+```
+auth = request.env["omniauth.auth"]
+```
+
+The controller expects the normalized OmniAuth authentication result to expose fields such as:
+
+- `auth.provider`
+- `auth.uid`
+- `auth.info.email`
+- `auth.info.name`
+- `auth.info.image`
+- `auth.credentials.token`
+
+DaPlanStan reads these fields. It does not itself implement Google's or Apple's token exchange or provider-specific response parsing in this controller.
+
+### 3.3 Complete sign-in decision flow
+
+\#chatgpt-mermaid-\_r_2ad\_{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;fill:rgb(237, 237, 237);}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#chatgpt-mermaid-\_r_2ad\_ .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-\_r_2ad\_ .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-\_r_2ad\_ .error-icon{fill:rgb(48, 48, 48);}#chatgpt-mermaid-\_r_2ad\_ .error-text{fill:rgb(237, 237, 237);stroke:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2ad\_ .edge-thickness-normal{stroke-width:1px;}#chatgpt-mermaid-\_r_2ad\_ .edge-thickness-thick{stroke-width:3.5px;}#chatgpt-mermaid-\_r_2ad\_ .edge-pattern-solid{stroke-dasharray:0;}#chatgpt-mermaid-\_r_2ad\_ .edge-thickness-invisible{stroke-width:0;fill:none;}#chatgpt-mermaid-\_r_2ad\_ .edge-pattern-dashed{stroke-dasharray:3;}#chatgpt-mermaid-\_r_2ad\_ .edge-pattern-dotted{stroke-dasharray:2;}#chatgpt-mermaid-\_r_2ad\_ .marker{fill:rgb(175, 175, 175);stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_2ad\_ .marker.cross{stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_2ad\_ svg{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;}#chatgpt-mermaid-\_r_2ad\_ p{margin:0;}#chatgpt-mermaid-\_r_2ad\_ .label{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2ad\_ .cluster-label text{fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2ad\_ .cluster-label span{color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2ad\_ .cluster-label span p{background-color:transparent;}#chatgpt-mermaid-\_r_2ad\_ .label text,#chatgpt-mermaid-\_r_2ad\_ span{fill:rgb(237, 237, 237);color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2ad\_ .node rect,#chatgpt-mermaid-\_r_2ad\_ .node circle,#chatgpt-mermaid-\_r_2ad\_ .node ellipse,#chatgpt-mermaid-\_r_2ad\_ .node polygon,#chatgpt-mermaid-\_r_2ad\_ .node path{fill:rgb(9, 23, 44);stroke:rgb(31, 78, 148);stroke-width:1px;}#chatgpt-mermaid-\_r_2ad\_ .rough-node .label text,#chatgpt-mermaid-\_r_2ad\_ .node .label text,#chatgpt-mermaid-\_r_2ad\_ .image-shape .label,#chatgpt-mermaid-\_r_2ad\_ .icon-shape .label{text-anchor:middle;}#chatgpt-mermaid-\_r_2ad\_ .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#chatgpt-mermaid-\_r_2ad\_ .rough-node .label,#chatgpt-mermaid-\_r_2ad\_ .node .label,#chatgpt-mermaid-\_r_2ad\_ .image-shape .label,#chatgpt-mermaid-\_r_2ad\_ .icon-shape .label{text-align:center;}#chatgpt-mermaid-\_r_2ad\_ .node.clickable{cursor:pointer;}#chatgpt-mermaid-\_r_2ad\_ .root .anchor path{fill:rgb(175, 175, 175)!important;stroke-width:0;stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_2ad\_ .arrowheadPath{fill:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_2ad\_ .edgePath .path{stroke:rgb(175, 175, 175);stroke-width:1px;}#chatgpt-mermaid-\_r_2ad\_ .flowchart-link{stroke:rgb(175, 175, 175);fill:none;}#chatgpt-mermaid-\_r_2ad\_ .edgeLabel{background-color:rgb(0, 0, 0);text-align:center;}#chatgpt-mermaid-\_r_2ad\_ .edgeLabel p{background-color:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_2ad\_ .edgeLabel rect{opacity:0.5;background-color:rgb(0, 0, 0);fill:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_2ad\_ .labelBkg{background-color:rgba(0, 0, 0, 0.5);}#chatgpt-mermaid-\_r_2ad\_ .cluster rect{fill:rgb(48, 48, 48);stroke:rgba(255, 255, 255, 0.15);stroke-width:1px;}#chatgpt-mermaid-\_r_2ad\_ .cluster text{fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2ad\_ .cluster span{color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2ad\_ div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:12px;background:rgb(48, 48, 48);border:1px solid rgba(255, 255, 255, 0.15);border-radius:2px;pointer-events:none;z-index:100;}#chatgpt-mermaid-\_r_2ad\_ .flowchartTitleText{text-anchor:middle;font-size:18px;fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2ad\_ rect.text{fill:none;stroke-width:0;}#chatgpt-mermaid-\_r_2ad\_ .icon-shape,#chatgpt-mermaid-\_r_2ad\_ .image-shape{background-color:rgb(0, 0, 0);text-align:center;}#chatgpt-mermaid-\_r_2ad\_ .icon-shape p,#chatgpt-mermaid-\_r_2ad\_ .image-shape p{background-color:rgb(0, 0, 0);padding:2px;}#chatgpt-mermaid-\_r_2ad\_ .icon-shape .label rect,#chatgpt-mermaid-\_r_2ad\_ .image-shape .label rect{opacity:0.5;background-color:rgb(0, 0, 0);fill:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_2ad\_ .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#chatgpt-mermaid-\_r_2ad\_ .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#chatgpt-mermaid-\_r_2ad\_ .node .neo-node{stroke:rgb(31, 78, 148);}#chatgpt-mermaid-\_r_2ad\_ [data-look="neo"].node rect,#chatgpt-mermaid-\_r_2ad\_ [data-look="neo"].cluster rect,#chatgpt-mermaid-\_r_2ad\_ [data-look="neo"].node polygon{stroke:url(#chatgpt-mermaid-\_r_2ad\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_2ad\_ [data-look="neo"].swimlane.cluster rect{filter:none;}#chatgpt-mermaid-\_r_2ad\_ [data-look="neo"].node path{stroke:url(#chatgpt-mermaid-\_r_2ad\_-gradient);stroke-width:1px;}#chatgpt-mermaid-\_r_2ad\_ [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_2ad\_ [data-look="neo"].node .neo-line path{stroke:rgb(31, 78, 148);filter:none;}#chatgpt-mermaid-\_r_2ad\_ [data-look="neo"].node circle{stroke:url(#chatgpt-mermaid-\_r_2ad\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_2ad\_ [data-look="neo"].node circle .state-start{fill:#000000;}#chatgpt-mermaid-\_r_2ad\_ [data-look="neo"].icon-shape .icon{fill:url(#chatgpt-mermaid-\_r_2ad\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_2ad\_ [data-look="neo"].icon-shape .icon-neo path{stroke:url(#chatgpt-mermaid-\_r_2ad\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_2ad\_ .node text{font-size:14px;font-weight:600;letter-spacing:normal;fill:rgb(153, 206, 255);}#chatgpt-mermaid-\_r_2ad\_ .edgeLabels text{font-size:13px;font-weight:600;letter-spacing:-0.08px;fill:rgb(153, 206, 255);}#chatgpt-mermaid-\_r_2ad\_ .node tspan[font-weight="normal"],#chatgpt-mermaid-\_r_2ad\_ .edgeLabels tspan[font-weight="normal"]{font-weight:600;}#chatgpt-mermaid-\_r_2ad\_ .edgeLabel .label rect{opacity:1;rx:13px;ry:13px;fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-width:1px;}#chatgpt-mermaid-\_r_2ad\_ .node rect,#chatgpt-mermaid-\_r_2ad\_ .node circle,#chatgpt-mermaid-\_r_2ad\_ .node ellipse,#chatgpt-mermaid-\_r_2ad\_ .node polygon,#chatgpt-mermaid-\_r_2ad\_ .node path{fill:rgb(0, 40, 77);stroke:rgba(255, 255, 255, 0.1);stroke-width:1px;}#chatgpt-mermaid-\_r_2ad\_ .node rect{rx:16px;ry:16px;}#chatgpt-mermaid-\_r_2ad\_ .node.mermaid-decision .label-container{fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-dasharray:2,2;}#chatgpt-mermaid-\_r_2ad\_ .edgePaths .flowchart-link{stroke:rgb(175, 175, 175);stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;}#chatgpt-mermaid-\_r_2ad\_ .marker{fill:rgb(175, 175, 175);stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_2ad\_ :root{--mermaid-font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";}Google or configured AppleOAuthOmniAuth providermiddlewareSessionsController#createRead omniauth.authUserIdentity for provider andUID?Use associated User, optionallyupdate avatarFind or initialize User by emailSave UserCreate UserIdentitySet session user IDAccept pending Travelerrecords matching emailOwn Account?Go to tripsLinked Traveler profiles?OPEN_SIGNUP enabled?Create Account and ownerTravelerValid stored beta invite?Create Account and mark inviteusedClear session and redirect towaitlistYesNoYesNoYesNoYesNoYesNo
+
+### 3.4 Existing identity lookup
+
+At `app/controllers/sessions_controller.rb:7–11`:
+
+```
+identity = UserIdentity.find_by(
+  provider: auth.provider,
+  provider_uid: auth.uid
+)
+```
+
+When an identity exists, the controller uses `identity.user` and updates the avatar URL if the provider supplies an image.
+
+It does not repeat the user-by-email lookup for this branch.
+
+`UserIdentity`, at `app/models/user_identity.rb:1–8`, belongs to `User`, validates the provider and UID and declares encryption for `access_token`.
+
+The database defines a unique index on `(provider, provider_uid)` at `db/structure.sql:25`.
+
+### 3.5 New provider identity linking
+
+If the exact provider identity does not exist, the controller calls:
+
+```
+user = User.find_or_initialize_by(email: auth.info.email)
+```
+
+This has two possible outcomes.
+
+Existing user email: The controller reuses the matching `User`, fills a missing name if necessary, updates the avatar and saves.
+
+New user email: It initializes and saves a new `User` with the available provider profile information.
+
+In both cases, the controller then creates a new associated `UserIdentity`, recording the provider, UID, provider email and access token.
+
+That is the key identity-linking rule: provider-and-UID lookup takes precedence, and email is used when introducing a provider identity not already linked.
+
+There is no separate application-level Google-specific or Apple-specific account-linking algorithm in this method.&#x20;
+
+
+
+### 3.6 Session establishment and pending invitations
+
+Once a user has been resolved, the controller writes:
+
+```
+session[:user_id] = user.id
+```
+
+`ApplicationController#current_user`, at `app/controllers/application_controller.rb:14–16`, subsequently resolves the session ID to a `User` record.
+
+Next, `SessionsController#create:28–31` retrieves all `Traveler` records with the signed-in user's email and no associated user:
+
+```
+pending_travelers =
+  Traveler.where(user_id: nil, email: user.email).to_a
+
+pending_travelers.each { |t| t.accept!(user) }
+```
+
+`Traveler#accept!`, `app/models/traveler.rb:26–28`, associates the traveler with the user and records `invite_accepted_at`.
+
+This links previously created email-only traveler records to the newly authenticated identity.
+
+It is not equivalent to assigning a new trip membership. Those memberships were already established by the membership-management workflow.
+
+### 3.7 Account provisioning and invite gate
+
+After processing pending travelers, the controller checks:
+
+| Condition                                       | Application decision                   |
+| ----------------------------------------------- | -------------------------------------- |
+| User already owns an account                    | Redirect to trips                      |
+| User has traveler profiles but no owned account | Redirect to trips as an invited member |
+| Neither condition holds                         | Invoke `provision_account_or_gate`     |
+
+`SessionsController#provision_account_or_gate`, lines 54–76, handles first-time independent account access.
+
+When `OPEN_SIGNUP=true`, it creates an account without requiring a beta-invite token.
+
+Otherwise it consumes `session[:invite_token]` and searches for the corresponding `Invite`.
+
+A valid invite must be usable and match the signed-in user's email, unless the invite is unrestricted.
+
+If valid, the controller creates an account, marks the invite used and redirects to trips. Otherwise, it clears `session[:user_id]` and redirects to the waitlist.
+
+`create_account_for`, lines 78–81, performs:
+
+```
+account = Account.create!(owner: user, name: user.name)
+
+account.travelers.create!(
+  user: user,
+  name: user.name,
+  email: user.email,
+  avatar_url: user.avatar_url
+)
+```
+
+The invite's predicates are implemented by `Invite#usable?` and `#email_matches?`, at `app/models/invite.rb:12–17`.
+
+Important: An invitation to join a trip and an invite to create a new account are not identical records or workflows. A user already linked to a traveler profile can access trips without receiving a separate owned account.
+
+The key source locations are `app/controllers/sessions_controller.rb:26–81` and `app/models/traveler.rb:18–28`. &#x20;
+
+
+
+### 3.8 Application decisions versus provider behavior
+
+| Concern                | DaPlanStan application                                            | OmniAuth / Rails                                        |
+| ---------------------- | ----------------------------------------------------------------- | ------------------------------------------------------- |
+| Provider configuration | Register Google and Apple with credentials                        | Provide provider strategies and OAuth protocol handling |
+| Provider response      | Read `omniauth.auth`                                              | Produce the normalized authentication result            |
+| Identity lookup        | Match provider/UID first, then email when necessary               | Execute Active Record queries                           |
+| Identity linking       | Associate a new `UserIdentity` with the selected user             | Persist associations and encrypt configured attributes  |
+| Signed-in session      | Assign user ID and choose redirect                                | Manage HTTP session infrastructure                      |
+| Invitation acceptance  | Find pending travelers by email and call `accept!`                | Persist traveler associations                           |
+| Account eligibility    | Check owned account, memberships, open signup and invite validity | Supply persistence and controller mechanisms            |
+
+The application uses a common callback for both configured providers. No application-defined interchangeable provider-specific algorithms are visible.
+
+Preliminary conclusion: This is primarily OmniAuth-backed authentication with application-owned identity resolution and account-provisioning rules. The account-linking behavior is meaningful, but merely configuring Google and Apple does not establish an application-implemented Strategy, Adapter or Factory.
+
+## 4. Outbound mail
+
+### 4.1 Types of outgoing email
+
+The inspected application contains three relevant mailer actions.
+
+| Email                               | Originating call site                                         | Mailer                                   |
+| ----------------------------------- | ------------------------------------------------------------- | ---------------------------------------- |
+| Account traveler invitation         | `TravelersController#create`, lines 18–26                     | `InvitationMailer#invite`                |
+| Trip membership invitation          | `TripMembersController#resolve_and_add_by_email`, lines 46–65 | `InvitationMailer#invite_to_trip`        |
+| Unknown inbound sender notification | `TripMailbox#notify_owners_of_pending_sender`, lines 55–60    | `TripMailer#pending_sender_notification` |
+
+They share Action Mailer infrastructure but have different application-defined recipient decisions and message content.&#x20;
+
+
+
+### 4.2 Account traveler invitation
+
+`TravelersController#create` handles addition of a traveler to the current account.
+
+When an email is provided, it checks whether the address belongs to the acting user or an existing account traveler, then looks up a registered `User`.
+
+For an existing user, it creates a linked `Traveler`. Otherwise, it creates an email-only traveler.
+
+The controller then invokes:
+
+```
+InvitationMailer.invite(current_user, email).deliver_later
+```
+
+`InvitationMailer#invite`, `app/mailers/invitation_mailer.rb:2–6`, stores the inviter and sign-in URL for the template, then sets the recipient and subject.
+
+The template at `app/views/invitation_mailer/invite.text.erb:1–12` instructs the recipient to sign in to DaPlanStan.
+
+This path was encountered during earlier membership analysis, but the account-level invitation caller is distinct from the trip-specific invitation caller.
+
+### 4.3 Trip membership invitation
+
+`TripMembersController#resolve_and_add_by_email` looks up or creates the relevant `Traveler`.
+
+If the supplied email does not correspond to an existing account traveler or registered user, the controller creates an email-only traveler and calls:
+
+```
+InvitationMailer.invite_to_trip(
+  account.owner, email, @trip
+).deliver_later
+```
+
+`InvitationMailer#invite_to_trip`, lines 8–13, constructs a trip-specific invitation.
+
+The template at `app/views/invitation_mailer/invite_to_trip.text.erb:1–9` includes the inviter's name, trip title and application sign-in URL.
+
+The source uses `account.owner` as the displayed inviter even when a planner performs the membership-management action. It does not pass the acting planner as the inviter.
+
+This is an application decision, not Action Mailer behavior.
+
+### 4.4 Unknown-sender notification
+
+The inbound-email workflow previously established that `TripMailbox#process` creates an `InboxItem` even when its sender is not approved.
+
+The unapproved branch calls `notify_owners_of_pending_sender`.
+
+That method:
+
+1. Finds members of the relevant trip with `role: :owner`.
+2. Loads the associated traveler information.
+3. Calls `TripMailer.pending_sender_notification(member, inbox_item).deliver_later` for each owner.
+
+`TripMailer#pending_sender_notification`, `app/mailers/trip_mailer.rb:2–10`, uses the trip member's `traveler.display_email` as recipient and constructs a subject identifying an unknown sender.
+
+Its template, `app/views/trip_mailer/pending_sender_notification.text.erb:1–13`, includes the trip title, sender name/email, subject, receipt date and an approval-related URL.
+
+This is the same pending-sender notification collaboration already traced during inbound-email intake. It must not be counted again as a new GRASP Controller instance.&#x20;
+
+
+
+### 4.5 Mail delivery configuration
+
+`ApplicationMailer`, `app/mailers/application_mailer.rb:1–5`, specifies default sender and reply-to addresses from environment variables and uses the `mailer` layout.
+
+Delivery is environment-dependent:
+
+| Environment                        | Configured behavior                          |
+| ---------------------------------- | -------------------------------------------- |
+| Production                         | Postmark delivery using `POSTMARK_API_TOKEN` |
+| Development with Postmark token    | Postmark delivery                            |
+| Development without Postmark token | Write email output to `tmp/mails`            |
+
+The relevant configuration is `config/environments/production.rb:63–69` and `config/environments/development.rb:40–50`.
+
+`deliver_later` is supplied by Rails Action Mailer/Active Job, while Postmark supplies external delivery when configured. DaPlanStan's mailers do not implement the SMTP or Postmark transport protocol.&#x20;
+
+
+
+### 4.6 Additional delivery logging
+
+`config/initializers/mail_logger.rb:1–14` contains an explicit registration:
+
+```
+
+module MailLogger
+  def self.delivered_email(message)
+    Rails.logger.info(
+      "[Mailer] Sent '#{message.subject}' to #{Array(message.to).join(', ')}"
+    )
+  end
+end
+
+ActionMailer::Base.register_observer(MailLogger)
+
+```
+
+This is different from the standard mailer methods above.
+
+DaPlanStan defines the `MailLogger` module and registers it with Rails' Action Mailer notification machinery. The logger receives a mail message and records its subject and recipients.
+
+The framework supplies the delivery notification and observer registration mechanism. DaPlanStan supplies the registered callback implementation.
+
+This is a concrete source-defined collaboration worth considering during the candidate stage, although actual invocation has not been runtime-verified.&#x20;
+
+
+
+## 5. Consolidated participant and source-evidence table
+
+All paths are relative to the root of the uploaded `daplanstan-main.zip`. Line ranges were checked against the extracted archive rather than inferred from the Part 1 handoff.
+
+| Participant / method                             | Source path and lines                                             | Observed responsibility                                  |
+| ------------------------------------------------ | ----------------------------------------------------------------- | -------------------------------------------------------- |
+| `TripsController#create`                         | `app/controllers/trips_controller.rb:35–48`                       | Enqueue cover retrieval after trip creation              |
+| `TripsController#update`                         | Same file, `68–75`                                                | Enqueue retrieval when the title parameter is present    |
+| `TripsController#refresh_cover`                  | Same file, `87–92`                                                | Clear cover and run retrieval synchronously              |
+| `FetchTripCoverImageJob#perform`                 | `app/jobs/fetch_trip_cover_image_job.rb:4–32`                     | Call Pexels and store selected URL                       |
+| `Trip`                                           | `app/models/trip.rb:1–5`                                          | Store cover URL and attachment association               |
+| `trip_cover_src`                                 | `app/helpers/application_helper.rb:44–47`                         | Select uploaded cover or remote URL                      |
+| OmniAuth configuration                           | `config/initializers/omniauth.rb:1–16`                            | Register Google and Apple providers                      |
+| Authentication routes                            | `config/routes.rb:12–15`                                          | Route callbacks, failure and sign-out                    |
+| `SessionsController#create`                      | `app/controllers/sessions_controller.rb:4–40`                     | Resolve identity, establish session and determine access |
+| `SessionsController#provision_account_or_gate`   | Same file, `54–76`                                                | Apply open-signup or invite eligibility                  |
+| `SessionsController#create_account_for`          | Same file, `78–81`                                                | Create account and owner traveler                        |
+| `SessionsController#destroy`, `#failure`         | Same file, `43–49`                                                | Sign out or handle authentication failure                |
+| `UserIdentity`                                   | `app/models/user_identity.rb:1–8`                                 | Store provider association and encrypted token           |
+| `User`                                           | `app/models/user.rb:11–22`                                        | User, identity, account and traveler associations        |
+| `Traveler#accept!`                               | `app/models/traveler.rb:26–28`                                    | Link pending traveler to signed-in user                  |
+| `Invite#usable?`, `#email_matches?`              | `app/models/invite.rb:12–17`                                      | Evaluate beta-invite eligibility                         |
+| `InvitesController#accept`                       | `app/controllers/invites_controller.rb:5–15`                      | Store invite token in session                            |
+| `ApplicationController#current_user`             | `app/controllers/application_controller.rb:14–16`                 | Resolve authenticated session user                       |
+| `TravelersController#create`                     | `app/controllers/travelers_controller.rb:5–35`                    | Manage account traveler invitation                       |
+| `TripMembersController#resolve_and_add_by_email` | `app/controllers/trip_members_controller.rb:46–65`                | Coordinate trip-specific invitation                      |
+| `TripMailbox#notify_owners_of_pending_sender`    | `app/mailboxes/trip_mailbox.rb:55–60`                             | Select owners and request notifications                  |
+| `InvitationMailer#invite`                        | `app/mailers/invitation_mailer.rb:2–6`                            | Construct account invitation                             |
+| `InvitationMailer#invite_to_trip`                | Same file, `8–13`                                                 | Construct trip invitation                                |
+| `TripMailer#pending_sender_notification`         | `app/mailers/trip_mailer.rb:2–10`                                 | Construct pending-sender notification                    |
+| `ApplicationMailer`                              | `app/mailers/application_mailer.rb:1–5`                           | Default sender, reply-to and layout                      |
+| `MailLogger.delivered_email`                     | `config/initializers/mail_logger.rb:1–7`                          | Register application logging callback                    |
+| Outbound delivery configuration                  | `config/environments/production.rb:63–69`; `development.rb:40–50` | Select Postmark or file delivery                         |
+
+Supporting view evidence includes `app/views/home/app.html.erb:50–68`, `app/views/invites/accept.html.erb:19–31`, `app/views/trips/cover.html.erb:49–76`, and the three outbound email templates.
+
+## 6. New pattern candidates
+
+Only two newly encountered collaborations are worth retaining as pattern candidates.
+
+Neither is confirmed in this investigation.
+
+Candidate A — GRASP Controller
+
+UNCONFIRMED
+
+Provisional instance: OAuth Sign-in and Identity Linking Coordination
+
+Category: GRASP · Origin: Mixed, with application-owned decisions
+
+Participants: `SessionsController#create`, `#provision_account_or_gate`, `#create_account_for`, `UserIdentity`, `User`, `Traveler`, `Account` and `Invite`.
+
+Why it might fit: `SessionsController#create` receives a sign-in completion event and coordinates several application-level responsibilities: provider identity lookup, email-based account association, session establishment, traveler acceptance and account eligibility.
+
+It is a coherent use case with identifiable domain outcomes, not merely a call to `User.create!`.
+
+Strongest false-positive explanation: The controller may be performing an ordinary Rails authentication callback with all decisions concentrated in one procedural method. OmniAuth already supplies the external authentication workflow, and the application code may simply be post-authentication account maintenance.
+
+What requires verification: Determine whether the application-owned sign-in coordination meets the same GRASP Controller standard previously applied to trip creation and membership management, while acknowledging that the controller directly performs much of its identity-linking logic.
+
+Status: UNCONFIRMED.
+
+Candidate B — Observer
+
+UNCONFIRMED
+
+Provisional instance: Outbound Mail Delivery Logging
+
+Category: GoF Behavioral / Framework-mediated · Origin: Mixed
+
+Participants:
+
+- Framework-provided subject/publisher: `ActionMailer::Base`.
+- Application-defined observer: `MailLogger`.
+- Notification operation: `MailLogger.delivered_email(message)`.
+- Registration: `ActionMailer::Base.register_observer(MailLogger)`.
+
+Why it might fit: The source contains an explicit observer registration and a method designed to receive a delivery notification. This is much stronger structural evidence than merely discovering a background job or callback.
+
+The mailers themselves do not need to know about `MailLogger`; the registration is made through Action Mailer infrastructure.
+
+Strongest false-positive explanation: The observer infrastructure is implemented by Action Mailer rather than DaPlanStan. The application registers a logging callback through a framework API, so the classification may be a framework idiom rather than an independently implemented GoF Observer.
+
+What requires verification: Inspect the installed Action Mailer observer contract and run a successful delivery through the configured environment to establish notification behavior. Then determine whether application-defined observers registered through framework infrastructure qualify under the faculty's accepted pattern scope.
+
+Status: UNCONFIRMED.
+
+### Why not propose provider-specific Strategy, Adapter or Factory?
+
+The source does not establish the mechanisms required for those classifications.
+
+For OAuth, Google and Apple are registered through OmniAuth configuration. `SessionsController` uses one common authentication result and one shared identity-linking algorithm. No application-defined provider-specific strategy implementations or common selectable algorithm interface are demonstrated.
+
+For Pexels, the job constructs a direct HTTP request and reads provider-specific JSON. There is no explicit adapter contract or abstraction allowing interchangeable image providers.
+
+For outbound email, `InvitationMailer` and `TripMailer` use Action Mailer's existing `mail` and `deliver_later` APIs. Merely constructing two different message types does not establish a Factory or other creation pattern.
+
+The explicit `MailLogger` registration is a different matter because the source actually contains a notification subscription relationship.
+
+## 7. Previously examined collaborations — no duplicate counts
+
+| Existing collaboration                                        | Where it reappears                                          | Counting decision  |
+| ------------------------------------------------------------- | ----------------------------------------------------------- | ------------------ |
+| `Trip Creation Coordination` — GRASP Controller               | The trip-creation action queues `FetchTripCoverImageJob`    | Do not count again |
+| `Trip Membership Management Coordination` — GRASP Controller  | Membership addition sends `InvitationMailer#invite_to_trip` | Do not count again |
+| `Inbound Travel Email Intake Coordination` — GRASP Controller | Unknown-sender branch requests `TripMailer` notifications   | Do not count again |
+
+The possible `Outbound Mail Delivery Logging` Observer is not a relabeling of those use cases. It concerns a separate registration between Action Mailer and `MailLogger` that can apply across mailer actions.
+
+It is also distinct from the previously uncertain trip-scoped Turbo Observer candidate. One concerns email delivery notifications; the other concerns UI refresh subscriptions. They should not automatically be merged, but neither should enter confirmed counts yet.
+
+## 8. Strongest non-pattern explanation
+
+The overall source area is best explained as:
+
+Conventional Rails integration with external services, together with application-owned identity and notification rules.
+
+Specifically:
+
+- Pexels retrieval is direct HTTP integration coordinated by a background job.
+- Google and Apple sign-in are configured through OmniAuth, followed by application-defined identity and account operations.
+- Outbound email uses Action Mailer templates and Postmark or file delivery.
+- Delivery logging uses an Action Mailer observer-registration API.
+
+This explanation covers the observed behavior without inventing provider strategies, adapter hierarchies or factory objects.
+
+Only the sign-in responsibility assignment and explicit delivery observer registration merit further pattern verification.
+
+## 9. Source-level issues requiring verification
+
+These observations concern correctness, completeness and pattern boundaries. They are not additional pattern claims.
+
+| Issue                            | Source evidence                                              | What needs checking                                                                                                                    |
+| -------------------------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Apple authentication journey     | `omniauth.rb:6–12`; Google-only UI forms                     | Whether Apple callbacks can complete without a visible Apple initiation flow                                                           |
+| OAuth callback method            | `config/routes.rb:12–15`                                     | Whether the configured Apple provider's callback method is compatible with the GET-only application route                              |
+| Identity linking by email        | `sessions_controller.rb:7–23`                                | Whether provider email verification and normalization are sufficient before linking to an existing user                                |
+| Incomplete signup persistence    | `sessions_controller.rb:13–23, 54–75`                        | Whether a user and identity remain stored when beta signup is subsequently denied                                                      |
+| Account-provisioning consistency | `sessions_controller.rb:78–81`                               | Whether failure of traveler creation leaves a newly created account without its expected owner traveler                                |
+| Invitation semantics             | `invitation_mailer.rb:2–13`; `invites_controller.rb:5–15`    | Distinguish ordinary traveler sign-in invitations from beta-invite-token acceptance                                                    |
+| Pexels result accuracy           | `fetch_trip_cover_image_job.rb:12–27`                        | Whether the first returned photo is suitable and persisted successfully                                                                |
+| Pexels failure visibility        | `fetch_trip_cover_image_job.rb:19–32`                        | Failed requests are logged, but no user-visible failure status is stored                                                               |
+| Cover replacement race           | `trips_controller.rb:43, 70, 87–92`                          | Whether an earlier queued lookup can overwrite a later manual refresh result                                                           |
+| Approval email URL               | `pending_sender_notification.text.erb:10–11`; `routes.rb:45` | The template links to the approved-senders collection URL, but only create/destroy actions are routed; its GET behavior needs checking |
+| Mail delivery logging            | `mail_logger.rb:1–7`                                         | Whether registration produces the expected callback for successful delivery                                                            |
+| Error handling                   | `mail_logger.rb:9–14`                                        | Whether the Action Mailer exception handler changes the expected failure behavior                                                      |
+| Runtime evidence                 | Provider configuration and calls                             | No successful OAuth callback, Pexels response or Postmark delivery was executed during this investigation                              |
+
+The source supports identifying these risks, but not claiming that they have been reproduced as runtime defects.
+
+## 10. Final investigation outcome
+
+Source Investigation 05
+
+Candidate verification pending
+
+# 3
+
+Integration flows traced
+
+# 2
+
+New candidates
+
+# 0
+
+New confirmed instances
+
+### Candidate-review record
+
+### External Integrations and Account Identity — Preliminary Candidate Review
+
+**Source:** DaPlanStan original uploaded ZIP\
+**Method:** Static source inspection\
+**Baseline commit correspondence:** Unverified\
+**Runtime tests:** Not performed
+
+**Cover-image retrieval**
+
+`FetchTripCoverImageJob` performs direct HTTP integration with Pexels. It constructs a search based on the trip title, retrieves image metadata and saves the selected image URL. Its invocation during trip creation is already part of the previously identified Trip Creation Coordination collaboration. No additional design-pattern candidate was established by the provider integration.
+
+**OAuth and identity linking**
+
+OmniAuth supplies Google and Apple authentication infrastructure. `SessionsController#create` resolves provider identities, links users by email when necessary, establishes a session, accepts pending traveler invitations and applies account-provisioning rules.
+
+New candidate: GRASP Controller — OAuth Sign-in and Identity Linking Coordination — UNCONFIRMED.
+
+**Outbound email**
+
+DaPlanStan uses `InvitationMailer` and `TripMailer` to construct invitation and pending-sender notifications. Rails Action Mailer and the configured Postmark or file delivery method supply message delivery infrastructure.
+
+The source also defines `MailLogger.delivered_email` and registers `MailLogger` using `ActionMailer::Base.register_observer`.
+
+New candidate: Observer — Outbound Mail Delivery Logging — UNCONFIRMED.
+
+**Strongest alternative explanation**
+
+The source primarily demonstrates standard Rails external-service integration, application-owned account-linking logic and framework-supported mail delivery. Provider configuration and ordinary API calls do not independently prove application-implemented GoF patterns.
+
+**Duplicate-count prevention**
+
+Do not recount Trip Creation Coordination, Trip Membership Management Coordination or Inbound Travel Email Intake Coordination merely because their cover-image and mailer collaborators reappear.
+
+**Inventory decision**
+
+No new confirmed pattern records or count changes from this investigation. Preserve the two unconfirmed candidates for separate verification.
+
+**Limitations**
+
+Provider callback behavior, identity-linking assumptions, signup consistency, mail delivery notifications and external-service responses have not been runtime-tested. Human verification remains pending.
+
+Conclusion: Of these three flows, identity-linking coordination and the explicit Action Mailer observer registration are the only genuinely new pattern candidates supported by the inspected code. Both remain unconfirmed until their defining responsibility or notification mechanism is verified.

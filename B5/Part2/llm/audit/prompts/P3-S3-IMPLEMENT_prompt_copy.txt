@@ -1,0 +1,554 @@
+Now implement Scenario 3 — Different Cancellation Policies.
+
+Start ONLY from the completed Scenario 2 AFTER source:
+
+scenario2_multiple_booking_providers
+
+Create a separate working copy named:
+
+scenario3_cancellation_policies
+
+Preserve Scenario 2 completely unchanged.
+
+The approved Scenario 3 design is frozen:
+
+- Quote-only cancellation feature
+- No actual external cancellation
+- No cancelled status
+- No database migration
+- No Expense modification
+- No booking modification
+- Three demonstration policies:
+  Flexible
+  Moderate
+  Strict
+- Eligible items must be genuine confirmed email-linked bookings
+- All results must be clearly labelled hypothetical
+- Existing Scenario 1 and Scenario 2 behavior must remain intact
+
+Do not redesign the scope unless an actual source incompatibility requires a small correction. If so, document it.
+
+1. Reinspect the Scenario 2 AFTER source before editing.
+
+Verify the current source and line ranges for:
+
+- app/models/trip_item.rb
+- app/controllers/trip_items_controller.rb
+- app/models/inbox_item.rb
+- app/controllers/inbox_items_controller.rb
+- app/controllers/expenses_controller.rb
+- app/controllers/booking_options_controller.rb
+- app/services/booking_providers/*
+- app/services/itinerary_suggestion_generator.rb
+- app/mailboxes/trip_mailbox.rb
+- app/jobs/parse_inbox_item_job.rb
+- config/routes.rb
+- app/views/trip_items/show.html.erb
+- db/structure.sql
+- existing Scenario 1 and Scenario 2 tests
+
+Record the Scenario 2 BEFORE line ranges affected by this change.
+
+2. Implement the three cancellation policies.
+
+Create:
+
+app/services/cancellation_policies/flexible.rb
+app/services/cancellation_policies/moderate.rb
+app/services/cancellation_policies/strict.rb
+
+Each policy must expose the same public method:
+
+fee_rate(seconds_until_start:)
+
+The policy classes must:
+
+- be stateless
+- perform no database access
+- know nothing about Rails controllers
+- make no network calls
+- return deterministic decimal fee rates
+
+Implement the frozen rules exactly.
+
+Flexible:
+
+- >= 72 hours before start → 0%
+- >= 24 and < 72 hours → 0%
+- > 0 and < 24 hours → 10%
+- at or after start → 100%
+
+Moderate:
+
+- >= 72 hours → 0%
+- >= 24 and < 72 hours → 50%
+- > 0 and < 24 hours → 100%
+- at or after start → 100%
+
+Strict:
+
+- all time ranges → 100%
+
+Be precise at exactly 72 hours and exactly 24 hours.
+
+3. Implement CancellationPolicies::QuoteEvaluator.
+
+Create:
+
+app/services/cancellation_policies/quote_evaluator.rb
+
+Public API:
+
+call(
+  trip_item:,
+  policy_code:,
+  evaluated_at:
+)
+
+The evaluator must independently verify eligibility.
+
+A TripItem is eligible only when:
+
+- item.confirmed? is true
+- inbox_item_id is present
+- the associated InboxItem exists
+- associated InboxItem.review_status is confirmed
+- the TripItem's own confirmation_ref is present
+- starts_at is present
+- amount is present
+- amount is nonnegative
+- currency is one of EUR, GBP or USD
+- evaluated_at is supplied and valid
+
+Do not use the display fallback confirmation reference from another TripItem.
+
+Do not infer missing start times from Trip dates.
+
+Scenario 1 generated ideas and Scenario 2 demo offers must remain ineligible even if a user manually toggles their status.
+
+4. Policy selection.
+
+QuoteEvaluator should map only these approved codes:
+
+flexible
+moderate
+strict
+
+to the three policy implementations.
+
+Do not use constantize on user input.
+
+Unknown policy codes must raise a controlled application error.
+
+A fixed map/case statement is sufficient.
+
+Do not create a separate Factory or Registry unless an actual source need appears.
+
+5. Implement money handling safely.
+
+Use BigDecimal.
+
+Use the stored TripItem amount and currency.
+
+Never trust an amount or currency submitted from the browser.
+
+Calculate:
+
+fee_amount =
+round(original_amount × fee_rate, 2)
+
+Use an explicit documented rounding mode such as:
+
+BigDecimal::ROUND_HALF_UP
+
+Then calculate:
+
+refund_amount =
+original_amount - fee_amount
+
+Ensure:
+
+fee_amount + refund_amount == original_amount
+
+Zero amount is valid.
+
+Negative amount is invalid.
+
+Preserve the original supported currency unchanged.
+
+6. Return one normalized quote structure.
+
+Include:
+
+policy_code
+policy_name
+original_amount
+fee_amount
+refund_amount
+currency
+refundable
+explanation
+
+`refundable` means:
+
+refund_amount > 0
+
+Do not treat zero-cost bookings as positively refundable.
+
+7. Implement controlled errors.
+
+Use appropriate custom errors for cases such as:
+
+- ineligible item
+- unknown policy
+- missing amount
+- negative amount
+- missing start time
+- missing confirmation information
+- unsupported currency
+- invalid evaluation time
+
+The controller should present a safe user-facing message.
+
+Do not expose raw internal exceptions.
+
+8. Implement CancellationQuotesController.
+
+Create:
+
+app/controllers/cancellation_quotes_controller.rb
+
+Actions:
+
+new
+create
+
+Load records using the existing application authorization structure:
+
+@trip = current_user.trips.find(params[:trip_id])
+@item = @trip.trip_items.find(params[:trip_item_id])
+
+Require:
+
+current_member_for(@trip)&.owner?
+
+for both GET and POST.
+
+Do not rely on the visibility of the UI link as authorization.
+
+NEW:
+
+- display booking information
+- display the three demonstration policy choices
+- establish eligibility
+- persist nothing
+
+CREATE:
+
+- accept only policy selection from the browser
+- supply Time.current as evaluated_at
+- call QuoteEvaluator
+- display the resulting quote
+- persist nothing
+
+Do not allow browser-submitted:
+
+- amount
+- currency
+- start time
+- confirmation reference
+- booking state
+- fee
+- refund
+
+to influence calculation.
+
+9. Add routes.
+
+Modify config/routes.rb.
+
+Inside the existing nested TripItem routes add a singular nested resource equivalent to:
+
+resource :cancellation_quote, only: [:new, :create]
+
+Preserve:
+
+- JSON import
+- personalized generation
+- booking_options
+- ordinary TripItem actions
+- inbox workflows
+
+10. Create the UI.
+
+Create:
+
+app/views/cancellation_quotes/new.html.erb
+
+Display:
+
+- booking/item name
+- start date/time
+- original amount
+- currency
+- confirmation reference where appropriate
+- Flexible
+- Moderate
+- Strict policy choices
+- Estimate action
+- returned fee
+- returned hypothetical refund
+- explanation
+- back link
+
+Prominently show:
+
+“This is a hypothetical cancellation estimate based on a demonstration policy. No reservation has been cancelled and no actual refund is guaranteed. Check your booking provider's terms.”
+
+Do not use language suggesting an actual cancellation was sent.
+
+11. Add the TripItem entry point.
+
+Modify:
+
+app/views/trip_items/show.html.erb
+
+Add an owner-only:
+
+Estimate cancellation (demo)
+
+action for eligible items.
+
+The service/controller must still enforce eligibility independently.
+
+Do not make UI visibility the only protection.
+
+Do not alter existing Edit/Delete/Confirm behavior.
+
+12. Do not persist cancellation state.
+
+After GET or POST:
+
+- TripItem must remain unchanged
+- status must remain unchanged
+- InboxItem must remain unchanged
+- Expense must remain unchanged
+- no cancellation record should exist
+- no refund transaction should exist
+
+No migration should be created.
+
+13. Do not make external cancellation calls.
+
+Scenario 3 must make:
+
+- no provider cancellation API request
+- no payment/refund request
+- no email cancellation request
+
+The feature is only a deterministic estimate.
+
+14. Add policy unit tests.
+
+Create:
+
+test/services/cancellation_policies_test.rb
+
+Use fixed evaluated_at timestamps.
+
+Test all three policies at minimum at:
+
+- more than 72 hours
+- exactly 72 hours
+- one second below 72 hours
+- exactly 24 hours
+- one second below 24 hours
+- one second before start
+- exactly at start
+- after start
+
+Also test:
+
+- unknown policy
+- zero amount
+- negative amount
+- missing amount
+- missing start time
+- missing confirmation reference
+- missing inbox link
+- unconfirmed InboxItem
+- idea status
+- unsupported currency
+- decimal rounding
+- currency preservation
+- normalized quote structure
+
+15. Add controller tests.
+
+Create:
+
+test/controllers/cancellation_quotes_controller_test.rb
+
+Test:
+
+- owner may open quote screen
+- non-owner denied
+- unrelated user denied
+- eligible booking accepted
+- each policy can be selected
+- unknown policy handled
+- Scenario 1 generated idea rejected
+- Scenario 2 provider-demo idea rejected
+- confirmed item without own confirmation_ref rejected
+- browser-submitted fake amount ignored
+- browser-submitted fake currency ignored
+- no TripItem mutation
+- no InboxItem mutation
+- no Expense mutation
+- no external request
+- result contains hypothetical disclaimer
+
+16. Preserve all existing regression behavior.
+
+Verify source-level preservation of:
+
+- Scenario 1 personalized itinerary generation
+- generated preview/confirmation
+- JSON import
+- manual TripItem creation
+- instance-scoped geocoding deferral
+- Scenario 2 Atlas/Beacon provider normalization
+- provider browsing and demo idea creation
+- provider duplicate handling
+- email confirmation ingestion
+- InboxItem linking
+- Expense creation for genuine confirmations
+- authentication and membership
+- geocoding/Turbo refresh
+- database schema
+
+Do not change unrelated files.
+
+17. Attempt actual Rails tests.
+
+Inspect the available Ruby environment first.
+
+Run the appropriate Scenario 3 tests and preferably the full suite if possible.
+
+Record exactly:
+
+- command
+- Ruby version
+- exit code
+- tests executed
+- passes
+- failures
+- errors
+- skips
+
+If the environment is still blocked by Ruby 3.3.8 / missing Rails 8.1.3 dependencies, preserve the exact failure.
+
+Do not claim unexecuted Rails tests passed.
+
+18. Run additional checks where possible.
+
+You may run:
+
+- Ruby syntax checks
+- isolated deterministic cancellation-policy checks
+
+Label them separately from Rails integration tests.
+
+Do not substitute standalone tests for Rails verification.
+
+19. Prepare source comparison.
+
+Compare:
+
+scenario2_multiple_booking_providers
+
+against:
+
+scenario3_cancellation_policies
+
+Record:
+
+- modified existing files
+- new files
+- removed files
+- migration count
+
+No unrelated cleanup should be included.
+
+20. Create:
+
+SCENARIO3_CHANGE_RECORD.md
+
+Include:
+
+- source version
+- Scenario 2 input snapshot
+- requirement
+- acceptance criteria
+- BEFORE behavior
+- AFTER flow
+- exact policy rules
+- eligibility rule
+- changed files and AFTER line ranges
+- test commands and actual results
+- regression status
+- limitations
+- runtime blocker if still present
+
+21. Do NOT perform final pattern classification yet.
+
+Do not yet confirm:
+
+- Strategy
+- Controller
+- Factory
+
+Do not change the current counts:
+
+Controller = 8
+Information Expert = 1
+Observer = 2
+Adapter = 1
+Total = 12
+Types = 4
+
+At the end identify only candidates for the next verification stage.
+
+22. Package the implementation.
+
+Create a complete Scenario 3 AFTER source ZIP.
+
+Also create a Scenario 2 → Scenario 3 unified source patch.
+
+Verify ZIP integrity.
+
+If possible, verify the patch applies cleanly/dry-runs against the Scenario 2 source.
+
+23. Do not start final cross-scenario aggregation or cross-language work yet.
+
+At the end give me:
+
+1. Implementation summary.
+2. Exact modified files.
+3. Exact new files.
+4. Eligibility implementation.
+5. Flexible policy behavior.
+6. Moderate policy behavior.
+7. Strict policy behavior.
+8. QuoteEvaluator behavior.
+9. Authorization behavior.
+10. Read-only/persistence verification.
+11. Test files written.
+12. Actual test/syntax results.
+13. Regression status.
+14. Remaining limitations.
+15. Pattern candidates for AFTER verification only.
+16. Downloadable complete Scenario 3 AFTER ZIP.
+17. Downloadable Scenario 2 → Scenario 3 patch.
+
+Do not begin final pattern verification yet.

@@ -1,0 +1,524 @@
+diff --git a/junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/support/ManagedResource.java b/junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/support/ManagedResource.java
+new file mode 100644
+index 0000000..76786b9
+--- /dev/null
++++ b/junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/support/ManagedResource.java
+@@ -0,0 +1,62 @@
++/*
++ * Copyright 2015-2026 the original author or authors.
++ *
++ * All rights reserved. This program and the accompanying materials are
++ * made available under the terms of the Eclipse Public License v2.0 which
++ * accompanies this distribution and is available at
++ *
++ * https://www.eclipse.org/legal/epl-v20.html
++ */
++
++package org.junit.jupiter.api.extension.support;
++
++import static java.lang.annotation.RetentionPolicy.RUNTIME;
++import static org.apiguardian.api.API.Status.EXPERIMENTAL;
++
++import java.lang.annotation.Documented;
++import java.lang.annotation.ElementType;
++import java.lang.annotation.Retention;
++import java.lang.annotation.Target;
++
++import org.apiguardian.api.API;
++import org.junit.jupiter.api.extension.ExtendWith;
++
++/**
++ * Injects a resource created by the given {@link ResourceFactory} into a
++ * method parameter and destroys it automatically.
++ *
++ * <p>The lifetime follows the method that first asks for the resource:
++ * <ul>
++ * <li>parameter of a {@code @BeforeAll} or {@code @AfterAll} method: one
++ * resource per test class, destroyed after the class (including its
++ * {@code @Nested} classes) has finished;</li>
++ * <li>parameter of a test, {@code @BeforeEach} or {@code @AfterEach} method:
++ * one resource per test, destroyed after the test and its
++ * {@code @AfterEach} methods.</li>
++ * </ul>
++ * A test that asks for a factory already used in {@code @BeforeAll} receives
++ * the class-wide resource. Constructor parameters are not supported.
++ *
++ * <pre class="code">
++ * class RepositoryTests {
++ *     &#64;Test
++ *     void saves(&#64;ManagedResource(InMemoryDatabaseFactory.class) DataSource db) { ... }
++ * }
++ * </pre>
++ *
++ * @since 6.2
++ * @see ResourceFactory
++ */
++@Target(ElementType.PARAMETER)
++@Retention(RUNTIME)
++@Documented
++@ExtendWith(ManagedResourceExtension.class)
++@API(status = EXPERIMENTAL, since = "6.2")
++public @interface ManagedResource {
++
++	/**
++	 * The factory that creates and destroys the resource.
++	 */
++	Class<? extends ResourceFactory<?>> value();
++
++}
+diff --git a/junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/support/ManagedResourceExtension.java b/junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/support/ManagedResourceExtension.java
+new file mode 100644
+index 0000000..ad29635
+--- /dev/null
++++ b/junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/support/ManagedResourceExtension.java
+@@ -0,0 +1,96 @@
++/*
++ * Copyright 2015-2026 the original author or authors.
++ *
++ * All rights reserved. This program and the accompanying materials are
++ * made available under the terms of the Eclipse Public License v2.0 which
++ * accompanies this distribution and is available at
++ *
++ * https://www.eclipse.org/legal/epl-v20.html
++ */
++
++package org.junit.jupiter.api.extension.support;
++
++import static org.apiguardian.api.API.Status.EXPERIMENTAL;
++import static org.junit.platform.commons.util.ExceptionUtils.throwAsUncheckedException;
++
++import java.lang.reflect.Method;
++
++import org.apiguardian.api.API;
++import org.junit.jupiter.api.extension.ExtensionContext;
++import org.junit.jupiter.api.extension.ExtensionContext.Namespace;
++import org.junit.jupiter.api.extension.ExtensionContext.Store;
++import org.junit.jupiter.api.extension.ParameterContext;
++import org.junit.jupiter.api.extension.ParameterResolutionException;
++import org.junit.jupiter.api.extension.ParameterResolver;
++import org.junit.platform.commons.support.ReflectionSupport;
++
++/**
++ * {@link ParameterResolver} behind {@link ManagedResource @ManagedResource}.
++ * Registered by the annotation itself; there is no need to use it directly.
++ *
++ * <p>Each resource is kept in the {@link Store} of the extension context in
++ * which it is first requested, keyed by its factory class, so it is shared
++ * within that context and its children and destroyed by the store when that
++ * context is closed.
++ *
++ * @since 6.2
++ */
++@API(status = EXPERIMENTAL, since = "6.2")
++public class ManagedResourceExtension implements ParameterResolver {
++
++	private static final Namespace NAMESPACE = Namespace.create(ManagedResourceExtension.class);
++
++	public ManagedResourceExtension() {
++	}
++
++	@Override
++	public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) {
++		return parameterContext.isAnnotated(ManagedResource.class);
++	}
++
++	@Override
++	public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) {
++		if (!(parameterContext.getDeclaringExecutable() instanceof Method)) {
++			throw new ParameterResolutionException(
++				"@ManagedResource is only supported on method parameters, not on " + parameterContext.getParameter()
++						+ " of " + parameterContext.getDeclaringExecutable());
++		}
++		Class<? extends ResourceFactory<?>> factoryType = parameterContext.findAnnotation(
++			ManagedResource.class).orElseThrow().value();
++		return extensionContext.getStore(NAMESPACE) //
++				.computeIfAbsent(factoryType, type -> Holder.create(type, extensionContext), Holder.class) //
++				.resource();
++	}
++
++	/**
++	 * Store value that destroys the resource when the store is closed. Also
++	 * implements the deprecated {@code CloseableResource} so it is destroyed
++	 * even if closing stored {@code AutoCloseable} values is disabled.
++	 */
++	@SuppressWarnings({ "deprecation", "try" })
++	private record Holder(Object resource, ResourceFactory<Object> factory)
++			implements AutoCloseable, Store.CloseableResource {
++
++		@SuppressWarnings("unchecked")
++		static Holder create(Class<? extends ResourceFactory<?>> factoryType, ExtensionContext context) {
++			var factory = (ResourceFactory<Object>) ReflectionSupport.newInstance(factoryType);
++			Object resource;
++			try {
++				resource = factory.create(context);
++			}
++			catch (Exception ex) {
++				throw throwAsUncheckedException(ex);
++			}
++			if (resource == null) {
++				throw new ParameterResolutionException(factoryType.getName() + ".create() returned null");
++			}
++			return new Holder(resource, factory);
++		}
++
++		@Override
++		public void close() throws Exception {
++			this.factory.destroy(this.resource);
++		}
++	}
++
++}
+diff --git a/junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/support/ResourceFactory.java b/junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/support/ResourceFactory.java
+new file mode 100644
+index 0000000..29aac7f
+--- /dev/null
++++ b/junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/support/ResourceFactory.java
+@@ -0,0 +1,53 @@
++/*
++ * Copyright 2015-2026 the original author or authors.
++ *
++ * All rights reserved. This program and the accompanying materials are
++ * made available under the terms of the Eclipse Public License v2.0 which
++ * accompanies this distribution and is available at
++ *
++ * https://www.eclipse.org/legal/epl-v20.html
++ */
++
++package org.junit.jupiter.api.extension.support;
++
++import static org.apiguardian.api.API.Status.EXPERIMENTAL;
++
++import org.apiguardian.api.API;
++import org.junit.jupiter.api.extension.ExtensionContext;
++
++/**
++ * Creates and destroys one kind of resource for {@link ManagedResource @ManagedResource}
++ * parameters.
++ *
++ * <p>Implementations must have a no-argument constructor. A new factory
++ * instance is created for each resource.
++ *
++ * @param <T> the type of resource
++ * @since 6.2
++ * @see ManagedResource
++ */
++@API(status = EXPERIMENTAL, since = "6.2")
++public interface ResourceFactory<T> {
++
++	/**
++	 * Create the resource.
++	 *
++	 * @param context the extension context in which the resource is first
++	 * requested; never {@code null}
++	 * @return the resource; never {@code null}
++	 */
++	T create(ExtensionContext context) throws Exception;
++
++	/**
++	 * Destroy the resource when its extension context is closed.
++	 *
++	 * <p>The default implementation closes the resource if it is
++	 * {@link AutoCloseable} and does nothing otherwise.
++	 */
++	default void destroy(T resource) throws Exception {
++		if (resource instanceof AutoCloseable closeable) {
++			closeable.close();
++		}
++	}
++
++}
+diff --git a/jupiter-tests/src/test/java/org/junit/jupiter/api/extension/support/ManagedResourceTests.java b/jupiter-tests/src/test/java/org/junit/jupiter/api/extension/support/ManagedResourceTests.java
+new file mode 100644
+index 0000000..5e27605
+--- /dev/null
++++ b/jupiter-tests/src/test/java/org/junit/jupiter/api/extension/support/ManagedResourceTests.java
+@@ -0,0 +1,289 @@
++/*
++ * Copyright 2015-2026 the original author or authors.
++ *
++ * All rights reserved. This program and the accompanying materials are
++ * made available under the terms of the Eclipse Public License v2.0 which
++ * accompanies this distribution and is available at
++ *
++ * https://www.eclipse.org/legal/epl-v20.html
++ */
++
++package org.junit.jupiter.api.extension.support;
++
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.junit.jupiter.api.Assertions.assertSame;
++import static org.junit.jupiter.api.Assertions.fail;
++import static org.junit.jupiter.api.Constants.CLOSING_STORED_AUTO_CLOSEABLE_ENABLED_PROPERTY_NAME;
++import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
++import static org.junit.platform.testkit.engine.EventConditions.event;
++import static org.junit.platform.testkit.engine.EventConditions.finishedWithFailure;
++import static org.junit.platform.testkit.engine.EventConditions.test;
++import static org.junit.platform.testkit.engine.TestExecutionResultConditions.instanceOf;
++import static org.junit.platform.testkit.engine.TestExecutionResultConditions.message;
++
++import java.util.List;
++import java.util.concurrent.CopyOnWriteArrayList;
++import java.util.concurrent.atomic.AtomicInteger;
++
++import org.junit.jupiter.api.AfterAll;
++import org.junit.jupiter.api.AfterEach;
++import org.junit.jupiter.api.BeforeAll;
++import org.junit.jupiter.api.BeforeEach;
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.api.extension.ExtensionContext;
++import org.junit.jupiter.api.extension.ParameterResolutionException;
++import org.junit.jupiter.engine.AbstractJupiterTestEngineTests;
++import org.opentest4j.AssertionFailedError;
++
++/**
++ * Acceptance tests for {@link ManagedResource} (CH02).
++ */
++class ManagedResourceTests extends AbstractJupiterTestEngineTests {
++
++	static final List<String> events = new CopyOnWriteArrayList<>();
++	static final AtomicInteger ids = new AtomicInteger();
++
++	@BeforeEach
++	void reset() {
++		events.clear();
++		ids.set(0);
++	}
++
++	@Test
++	void oneResourcePerTestSharedWithBeforeEachAndDestroyedAfterAfterEach() {
++		executeTestsForClass(PerTestTestCase.class).testEvents().assertStatistics(stats -> stats.succeeded(2));
++
++		assertThat(events).containsExactly( //
++			"create 1", "beforeEach 1", "test 1", "afterEach", "destroy 1", //
++			"create 2", "beforeEach 2", "test 2", "afterEach", "destroy 2");
++	}
++
++	@Test
++	void resourceRequestedInBeforeAllIsSharedByTheClassAndDestroyedAfterAfterAll() {
++		executeTestsForClass(ClassScopeTestCase.class).testEvents().assertStatistics(stats -> stats.succeeded(2));
++
++		assertThat(events).containsExactly("create 1", "beforeAll 1", "test 1", "test 1", "afterAll", "destroy 1");
++	}
++
++	@Test
++	void resourceIsDestroyedWhenTheTestFailsAndTheOriginalFailureIsReported() {
++		var results = executeTestsForClass(FailingTestCase.class);
++
++		results.testEvents().assertThatEvents().haveExactly(1,
++			event(test("fails"), finishedWithFailure(instanceOf(AssertionFailedError.class), message("boom"))));
++		assertThat(events).containsExactly("create 1", "destroy 1");
++	}
++
++	@Test
++	void failingCreateFailsTheTestAndNothingIsDestroyed() {
++		var results = executeTestsForClass(CreateFailsTestCase.class);
++
++		results.testEvents().assertThatEvents().haveExactly(1, event(test("usesResource"),
++			finishedWithFailure(instanceOf(ParameterResolutionException.class), message(m -> m.contains("no db")))));
++		assertThat(events).isEmpty();
++	}
++
++	@Test
++	void failingDestroyFailsTheTestThatOwnedTheResource() {
++		var results = executeTestsForClass(DestroyFailsTestCase.class);
++
++		results.testEvents().assertStatistics(stats -> stats.failed(1));
++		var failure = results.testEvents().failed().list().getFirst().getRequiredPayload(
++			org.junit.platform.engine.TestExecutionResult.class).getThrowable().orElseThrow();
++		assertThat(failure).hasRootCauseMessage("cannot stop server");
++	}
++
++	@Test
++	void invalidUsageIsReportedAsParameterResolutionException() {
++		var results = executeTestsForClass(InvalidUsageTestCase.class);
++
++		results.testEvents().assertThatEvents() //
++				.haveExactly(1, event(test("noDefaultConstructor"), finishedWithFailure(
++					instanceOf(ParameterResolutionException.class)))) //
++				.haveExactly(1, event(test("wrongType"), finishedWithFailure(
++					instanceOf(ParameterResolutionException.class), message(m -> m.contains("wrongType"))))) //
++				.haveExactly(1, event(test("nullResource"), finishedWithFailure(
++					instanceOf(ParameterResolutionException.class), message(m -> m.contains("returned null")))));
++		executeTestsForClass(ConstructorTestCase.class).testEvents().assertThatEvents() //
++				.haveExactly(1, event(test("test"), finishedWithFailure(instanceOf(ParameterResolutionException.class),
++					message(m -> m.contains("only supported on method parameters")))));
++	}
++
++	@Test
++	void resourceIsDestroyedEvenWhenClosingStoredAutoCloseablesIsDisabled() {
++		executeTests(request -> request.selectors(selectClass(PerTestTestCase.class)) //
++				.configurationParameter(CLOSING_STORED_AUTO_CLOSEABLE_ENABLED_PROPERTY_NAME, "false")) //
++						.testEvents().assertStatistics(stats -> stats.succeeded(2));
++
++		assertThat(events).contains("destroy 1", "destroy 2");
++	}
++
++	// --- resources and factories used by the fixtures
++
++	record Resource(int id) {
++	}
++
++	static class CountingFactory implements ResourceFactory<Resource> {
++
++		@Override
++		public Resource create(ExtensionContext context) {
++			var resource = new Resource(ids.incrementAndGet());
++			events.add("create " + resource.id());
++			return resource;
++		}
++
++		@Override
++		public void destroy(Resource resource) {
++			events.add("destroy " + resource.id());
++		}
++	}
++
++	static class CreateFailsFactory implements ResourceFactory<Resource> {
++
++		@Override
++		public Resource create(ExtensionContext context) throws Exception {
++			throw new IllegalStateException("no db");
++		}
++
++		@Override
++		public void destroy(Resource resource) {
++			events.add("destroy");
++		}
++	}
++
++	static class DestroyFailsFactory implements ResourceFactory<Resource> {
++
++		@Override
++		public Resource create(ExtensionContext context) {
++			return new Resource(1);
++		}
++
++		@Override
++		public void destroy(Resource resource) {
++			throw new IllegalStateException("cannot stop server");
++		}
++	}
++
++	static class NoDefaultConstructorFactory extends CountingFactory {
++
++		NoDefaultConstructorFactory(String unused) {
++		}
++	}
++
++	static class NullFactory implements ResourceFactory<Resource> {
++
++		@SuppressWarnings("NullAway")
++		@Override
++		public Resource create(ExtensionContext context) {
++			return null;
++		}
++	}
++
++	// --- fixtures
++
++	@SuppressWarnings("JUnitMalformedDeclaration")
++	static class PerTestTestCase {
++
++		Resource fromBeforeEach;
++
++		@BeforeEach
++		void beforeEach(@ManagedResource(CountingFactory.class) Resource resource) {
++			fromBeforeEach = resource;
++			events.add("beforeEach " + resource.id());
++		}
++
++		@Test
++		void first(@ManagedResource(CountingFactory.class) Resource resource) {
++			assertSame(fromBeforeEach, resource);
++			events.add("test " + resource.id());
++		}
++
++		@Test
++		void second(@ManagedResource(CountingFactory.class) Resource resource) {
++			assertSame(fromBeforeEach, resource);
++			events.add("test " + resource.id());
++		}
++
++		@AfterEach
++		void afterEach() {
++			events.add("afterEach");
++		}
++	}
++
++	@SuppressWarnings("JUnitMalformedDeclaration")
++	static class ClassScopeTestCase {
++
++		@BeforeAll
++		static void beforeAll(@ManagedResource(CountingFactory.class) Resource resource) {
++			events.add("beforeAll " + resource.id());
++		}
++
++		@Test
++		void first(@ManagedResource(CountingFactory.class) Resource resource) {
++			events.add("test " + resource.id());
++		}
++
++		@Test
++		void second(@ManagedResource(CountingFactory.class) Resource resource) {
++			events.add("test " + resource.id());
++		}
++
++		@AfterAll
++		static void afterAll() {
++			events.add("afterAll");
++		}
++	}
++
++	@SuppressWarnings("JUnitMalformedDeclaration")
++	static class FailingTestCase {
++
++		@Test
++		void fails(@ManagedResource(CountingFactory.class) Resource resource) {
++			fail("boom");
++		}
++	}
++
++	@SuppressWarnings("JUnitMalformedDeclaration")
++	static class CreateFailsTestCase {
++
++		@Test
++		void usesResource(@ManagedResource(CreateFailsFactory.class) Resource resource) {
++		}
++	}
++
++	@SuppressWarnings("JUnitMalformedDeclaration")
++	static class DestroyFailsTestCase {
++
++		@Test
++		void usesResource(@ManagedResource(DestroyFailsFactory.class) Resource resource) {
++		}
++	}
++
++	@SuppressWarnings("JUnitMalformedDeclaration")
++	static class InvalidUsageTestCase {
++
++		@Test
++		void noDefaultConstructor(@ManagedResource(NoDefaultConstructorFactory.class) Resource resource) {
++		}
++
++		@Test
++		void wrongType(@ManagedResource(CountingFactory.class) String resource) {
++		}
++
++		@Test
++		void nullResource(@ManagedResource(NullFactory.class) Resource resource) {
++		}
++	}
++
++	@SuppressWarnings("JUnitMalformedDeclaration")
++	static class ConstructorTestCase {
++
++		ConstructorTestCase(@ManagedResource(CountingFactory.class) Resource resource) {
++		}
++
++		@Test
++		void test() {
++		}
++	}
++
++}

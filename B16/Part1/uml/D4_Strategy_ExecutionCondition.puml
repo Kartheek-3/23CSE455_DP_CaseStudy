@@ -1,0 +1,34 @@
+@startuml D4
+!pragma layout smetana
+title D4 Strategy: ExecutionCondition
+
+interface ExecutionCondition <<Strategy>> {
+  +evaluateExecutionCondition(ExtensionContext) : ConditionEvaluationResult
+}
+class DisabledCondition <<ConcreteStrategy>>
+abstract class "AbstractOsBasedExecutionCondition<A>" as OsBased <<ConcreteStrategy>>
+class EnabledOnOsCondition <<ConcreteStrategy, not counted>> #E6E6E6
+class DisabledOnOsCondition <<ConcreteStrategy, not counted>> #E6E6E6
+class ConditionEvaluator <<Context>> {
+  +evaluate(ExtensionRegistry, JupiterConfiguration, ExtensionContext)
+}
+abstract class JupiterTestDescriptor <<Client>> {
+  {static} -conditionEvaluator : ConditionEvaluator
+}
+
+DisabledCondition ..|> ExecutionCondition
+OsBased ..|> ExecutionCondition
+EnabledOnOsCondition --|> OsBased
+DisabledOnOsCondition --|> OsBased
+ConditionEvaluator ..> ExecutionCondition : first disabled result wins
+JupiterTestDescriptor o--> ConditionEvaluator : conditionEvaluator
+' aligned-with-record
+legend right
+  <b>Counted participants</b> (record in the dataset)
+  Strategy: ExecutionCondition
+  ConcreteStrategy: DisabledCondition
+  Context: ConditionEvaluator#evaluate
+  Caller: JupiterTestDescriptor#shouldBeSkipped
+  Grey classes: real, shown for context, not counted
+endlegend
+@enduml

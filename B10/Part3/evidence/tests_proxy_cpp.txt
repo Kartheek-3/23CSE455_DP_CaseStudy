@@ -1,0 +1,9 @@
+# Proxy / cpp
+working folder: Part3/proxy_daemon_rpc/cpp
+$ g++ -std=c++14 -O2 -Wall -o test_daemon_rpc.exe test_daemon_rpc.cpp
+
+[compile exit code: 0]
+$ test_daemon_rpc.exe
+Proxy tests: 12/12 passed
+
+[exit code: 0]

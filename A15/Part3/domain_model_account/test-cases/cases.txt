@@ -1,0 +1,14 @@
+# open <S|C> <balance> prints the id; deposit/withdraw <id> <amount> print the new balance; transfer <from> <to> <amount> prints OK; balance <id>
+# errors: BAD_REQUEST (rule violated, nothing changes) or NOT_FOUND.  S: +0.50 deposit bonus, no overdraft.  C: overdraft up to 500.00.  Transfers pay no bonus.
+open C 100;deposit 1 50 => 150.00
+open S 10;deposit 1 5 => 15.50
+open S 100;withdraw 1 100 => 0.00
+open S 100;withdraw 1 100.01 => BAD_REQUEST
+open C 100;withdraw 1 600 => -500.00
+open C 100;open S 50;transfer 1 2 30;balance 2 => 80.00
+open C 100;open S 50;transfer 1 2 30;balance 1 => 70.00
+open S 50;open C 1;transfer 1 2 50.01 => BAD_REQUEST
+open S 50;open C 1;transfer 1 2 50.01;balance 1 => 50.00
+open C 1;transfer 1 1 5 => BAD_REQUEST
+open C 1;transfer 1 9 5 => NOT_FOUND
+deposit 3 5 => NOT_FOUND

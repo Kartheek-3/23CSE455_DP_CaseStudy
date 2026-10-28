@@ -1,0 +1,44 @@
+source_version,summary,pattern_name,count
+Original code,per_pattern,Template Method,6
+Original code,per_pattern,Strategy,1
+Original code,per_pattern,Adapter,1
+Original code,per_pattern,Proxy,1
+Original code,per_pattern,Command,1
+Original code,per_pattern,Plugin,1
+Original code,per_pattern,Layer Supertype,1
+Original code,per_pattern,Active Record,1
+Original code,total_pattern_types,,8
+Original code,total_pattern_instances,,13
+Code after Change1,per_pattern,Template Method,6
+Code after Change1,per_pattern,Strategy,1
+Code after Change1,per_pattern,Adapter,1
+Code after Change1,per_pattern,Proxy,1
+Code after Change1,per_pattern,Command,1
+Code after Change1,per_pattern,Plugin,1
+Code after Change1,per_pattern,Layer Supertype,1
+Code after Change1,per_pattern,Active Record,1
+Code after Change1,total_pattern_types,,8
+Code after Change1,total_pattern_instances,,13
+Code after Change2,per_pattern,Template Method,6
+Code after Change2,per_pattern,Strategy,2
+Code after Change2,per_pattern,Adapter,1
+Code after Change2,per_pattern,Proxy,1
+Code after Change2,per_pattern,Command,1
+Code after Change2,per_pattern,Plugin,1
+Code after Change2,per_pattern,Layer Supertype,1
+Code after Change2,per_pattern,Active Record,1
+Code after Change2,per_pattern,Decorator,1
+Code after Change2,total_pattern_types,,9
+Code after Change2,total_pattern_instances,,15
+Code after Change3,per_pattern,Template Method,6
+Code after Change3,per_pattern,Strategy,2
+Code after Change3,per_pattern,Adapter,1
+Code after Change3,per_pattern,Proxy,1
+Code after Change3,per_pattern,Command,1
+Code after Change3,per_pattern,Plugin,1
+Code after Change3,per_pattern,Layer Supertype,1
+Code after Change3,per_pattern,Active Record,1
+Code after Change3,per_pattern,Decorator,1
+Code after Change3,per_pattern,Observer,1
+Code after Change3,total_pattern_types,,10
+Code after Change3,total_pattern_instances,,16

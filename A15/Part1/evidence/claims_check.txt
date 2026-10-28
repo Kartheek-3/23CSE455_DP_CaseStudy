@@ -1,0 +1,83 @@
+# Claim checks against baseline source (commit baa96db); produced by shell greps
+
+## C1 (M1) controllers never reference a DAO or EntityManager
+no matches -> claim holds
+
+## C2 (M3) service/ and util/ never import EntityManager
+no matches -> claim holds
+
+## C3 (M2) every 'new' expression in main code
+util/UserUtil.java:19:        UserDTO userDTO = new UserDTO();
+util/AccountUtil.java:22:        Account account = new Account();
+util/AccountUtil.java:27:        var user = new User();
+persistence/dao/AccountDAO.java:24:            throw new NotFoundException("A conta com o ID citado não foi encontrada");
+persistence/dao/UserDAO.java:24:            throw new NotFoundException("Usuário não encontrado");
+service/AccountService.java:53:                throw new BadRequestException("Valor do depósito precisa ser maior que zero");
+service/AccountService.java:56:            throw new NotFoundException("Conta informada não encontrada");
+service/AccountService.java:74:                throw new BadRequestException("Valor do saque indisponível na conta");
+service/AccountService.java:77:            throw new NotFoundException("Conta informada não encontrada");
+service/UserService.java:26:        User user = new User();
+service/UserService.java:43:        throw new NotFoundException("Usuário não encontrado");
+
+## C4 (M2) dead injection points: uses of accountDAO in AccountUtil / userDAO in UserUtil (beyond the declaration)
+18:    AccountDAO accountDAO;
+15:    UserDAO userDAO;
+
+## C5 (M1) service calls and Response builders in controllers
+rest/AccountController.java:23:        this.accountService.createAccount(accountDTO);
+rest/AccountController.java:25:        return Response.status(Response.Status.CREATED).entity("Conta criada com sucesso").build();
+rest/AccountController.java:31:        double amount = depositDTO.getAmount();
+rest/AccountController.java:32:        this.accountService.depositToAccount(accountId, amount);
+rest/AccountController.java:33:        return Response.status(Response.Status.OK).entity("Depósito realizado com sucesso").build();
+rest/AccountController.java:39:        double amount = withdrawDTO.getAmount();
+rest/AccountController.java:40:        this.accountService.withdraw(accountId, amount);
+rest/AccountController.java:41:        return Response.status(Response.Status.OK).entity("Saque realizado com sucesso").build();
+rest/AccountController.java:46:        List<Account> accounts = this.accountService.listAllAccounts();
+rest/AccountController.java:47:        return Response.status(Response.Status.OK).entity(accounts).build();
+rest/UserController.java:18:        this.userService.createUser(userDTO);
+rest/UserController.java:19:        return Response.status(Response.Status.CREATED).entity("Usuário criado com sucesso").build();
+
+## C6 (M3) EntityManager calls in DAOs
+persistence/dao/AccountDAO.java:21:        Account account = this.entityManager.find(Account.class, id);
+persistence/dao/AccountDAO.java:32:        this.entityManager.persist(data);
+persistence/dao/AccountDAO.java:38:        this.entityManager.merge(account);
+persistence/dao/AccountDAO.java:43:        return entityManager.createQuery("SELECT a FROM Account a", Account.class).getResultList();
+persistence/dao/UserDAO.java:22:            return Optional.of(entityManager.find(User.class, id));
+persistence/dao/UserDAO.java:30:        this.entityManager.persist(data);
+
+## C7 (M3) UserDAO catch / null / Optional.of lines
+22:            return Optional.of(entityManager.find(User.class, id));
+23:        } catch (NotFoundException ex) {
+31:        return null;
+36:        return null;
+
+## C8 (M2) business rules inside AccountService
+43:            if (amount > 0){
+47:                    newBalance += 0.5;
+67:            if(amount > 0 && account.getBalance() > amount) {
+
+## C9 (M3) Account/User methods: anything other than get/set?
+only getters/setters -> claim holds
+
+## C10 DAO<T> interface members
+public interface DAO<T> {
+
+    Optional<T> findById(Long id);
+    List<T> getAll();
+
+}
+
+## C11 (M2) @Transactional locations
+persistence/dao/AccountDAO.java:30:    @Transactional
+persistence/dao/AccountDAO.java:35:    @Transactional
+persistence/dao/UserDAO.java:28:    @Transactional
+
+## C12 (M1) System.out
+rest/AccountController.java:24:        System.out.println(accountDTO);
+
+## C13 @Valid / @NotNull usage (is validation ever triggered?)
+      3 persistence/dto/AccountDTO.java
+      1 persistence/dto/TransactionDTO.java
+      4 persistence/dto/UserDTO.java
+      3 service/AccountService.java
+      1 service/UserService.java

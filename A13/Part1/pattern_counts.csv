@@ -1,0 +1,18 @@
+﻿pattern_name,pattern_type,count
+Asynchronous Message Queue / Job Queue,Architectural/Enterprise,1
+Cache-Aside / Lazy Loading,Architectural/Enterprise,1
+Front Controller,Architectural/Enterprise,1
+Plugin Architecture / Microkernel,Architectural/Enterprise,1
+Publish-Subscribe,Architectural/Enterprise,1
+Repository,Architectural/Enterprise,1
+Router,Architectural/Enterprise,1
+Service Layer,Architectural/Enterprise,1
+Two-Level Cache,Architectural/Enterprise,1
+Mediator,Behavioral,1
+Observer,Behavioral,5
+Strategy,Behavioral,1
+Template Method,Behavioral,1
+Factory,Creational,2
+Object Pool / Resource Pooling,Creational,1
+Adapter,Structural,1
+Proxy,Structural,1

@@ -1,0 +1,55 @@
+# Timings for Plugin (plugin_module_loading)
+# time.perf_counter() around subprocess.run(); 1 warmup + 5 measured runs; milliseconds
+# machine: <host>, measured with Python 3.12.7
+
+[java]
+working folder: B10\Part3\plugin_module_loading\java
+compile command: javac -d out InputController.java ModuleLoadingTest.java
+run command: java -cp out ModuleLoadingTest
+warmup_ms: 212.236
+run_1_ms: 155.826
+run_2_ms: 157.603
+run_3_ms: 156.021
+run_4_ms: 191.472
+run_5_ms: 151.808
+median_ms: 156.021
+last run exit code: 0; last line: Plugin tests: 9/9 passed
+
+[python]
+working folder: B10\Part3\plugin_module_loading\python
+compile command: (none)
+run command: python test_module_loading.py
+warmup_ms: 64.372
+run_1_ms: 72.633
+run_2_ms: 65.376
+run_3_ms: 65.257
+run_4_ms: 63.234
+run_5_ms: 63.453
+median_ms: 65.257
+last run exit code: 0; last line: Plugin tests: 9/9 passed
+
+[javascript]
+working folder: B10\Part3\plugin_module_loading\javascript
+compile command: (none)
+run command: node test_module_loading.js
+warmup_ms: 93.595
+run_1_ms: 95.859
+run_2_ms: 87.276
+run_3_ms: 99.692
+run_4_ms: 91.112
+run_5_ms: 85.381
+median_ms: 91.112
+last run exit code: 0; last line: Plugin tests: 9/9 passed
+
+[cpp]
+working folder: B10\Part3\plugin_module_loading\cpp
+compile command: g++ -std=c++14 -O2 -Wall -o test_module_loading.exe test_module_loading.cpp
+run command: B10\Part3\plugin_module_loading\cpp\test_module_loading.exe
+warmup_ms: 290.039
+run_1_ms: 33.766
+run_2_ms: 32.298
+run_3_ms: 31.876
+run_4_ms: 31.777
+run_5_ms: 33.985
+median_ms: 32.298
+last run exit code: 0; last line: Plugin tests: 9/9 passed

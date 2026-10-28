@@ -1,0 +1,17 @@
+%% Template Method - "Date/Daily Setpoint Interpolation"
+%% mycodo/utils/method.py (DateMethod.calculate_setpoint with hook ignore_date; DailyMethod)
+classDiagram
+    class AbstractMethod {
+        +calculate_setpoint(now, method_start_time)
+    }
+    class DateMethod {
+        +calculate_setpoint(now, method_start_time)
+        +ignore_date()
+        +get_plot(max_points_x)
+    }
+    class DailyMethod {
+        +ignore_date()
+        +get_plot(max_points_x)
+    }
+    AbstractMethod <|-- DateMethod
+    DateMethod <|-- DailyMethod

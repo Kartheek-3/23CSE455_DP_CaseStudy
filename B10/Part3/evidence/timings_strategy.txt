@@ -1,0 +1,55 @@
+# Timings for Strategy (strategy_setpoint_schedule)
+# time.perf_counter() around subprocess.run(); 1 warmup + 5 measured runs; milliseconds
+# machine: <host>, measured with Python 3.12.7
+
+[java]
+working folder: B10\Part3\strategy_setpoint_schedule\java
+compile command: javac -d out AbstractMethod.java SetpointScheduleTest.java
+run command: java -cp out SetpointScheduleTest
+warmup_ms: 149.144
+run_1_ms: 141.759
+run_2_ms: 156.784
+run_3_ms: 141.644
+run_4_ms: 157.357
+run_5_ms: 157.500
+median_ms: 156.784
+last run exit code: 0; last line: Strategy tests: 12/12 passed
+
+[python]
+working folder: B10\Part3\strategy_setpoint_schedule\python
+compile command: (none)
+run command: python test_setpoint_schedule.py
+warmup_ms: 71.706
+run_1_ms: 75.853
+run_2_ms: 73.142
+run_3_ms: 71.996
+run_4_ms: 73.589
+run_5_ms: 73.808
+median_ms: 73.589
+last run exit code: 0; last line: Strategy tests: 12/12 passed
+
+[javascript]
+working folder: B10\Part3\strategy_setpoint_schedule\javascript
+compile command: (none)
+run command: node test_setpoint_schedule.js
+warmup_ms: 103.999
+run_1_ms: 96.586
+run_2_ms: 96.294
+run_3_ms: 112.751
+run_4_ms: 91.674
+run_5_ms: 100.093
+median_ms: 96.586
+last run exit code: 0; last line: Strategy tests: 12/12 passed
+
+[cpp]
+working folder: B10\Part3\strategy_setpoint_schedule\cpp
+compile command: g++ -std=c++14 -O2 -Wall -o test_setpoint_schedule.exe test_setpoint_schedule.cpp
+run command: B10\Part3\strategy_setpoint_schedule\cpp\test_setpoint_schedule.exe
+warmup_ms: 315.783
+run_1_ms: 32.508
+run_2_ms: 31.403
+run_3_ms: 34.013
+run_4_ms: 30.533
+run_5_ms: 31.208
+median_ms: 31.403
+last run exit code: 0; last line: Strategy tests: 12/12 passed

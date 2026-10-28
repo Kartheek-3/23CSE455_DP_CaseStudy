@@ -1,0 +1,19 @@
+# publish_subscribe / cpp
+# working folder: Part3/code/pattern_publish_subscribe/cpp
+# runtime: g++ 16.1.1 20260625, -std=c++17
+$ mkdir -p build
+
+
+$ g++ -std=c++17 -Wall -Wextra -o build/test event_bus.test.cpp
+
+
+$ build/test ../../../test-cases/publish_subscribe.txt
+PASS subscriber_receives
+PASS only_matching_channel
+PASS subscribers_in_order
+PASS unsubscribe
+PASS no_subscriber_message_dropped
+passed 5/5
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 3.4, 3.6, 3.4, 3.3, 3.2 -> median 3.4

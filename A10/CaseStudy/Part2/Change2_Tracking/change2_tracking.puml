@@ -1,0 +1,44 @@
+@startuml
+title Change 2 - Real-Time Shipment Tracking
+
+class Shipment {
+    shipment_id
+    order_id
+    vehicle_id
+    driver_id
+    route_id
+    status
+}
+
+class ShipmentTracking {
+    tracking_id
+    shipment_id
+    latitude
+    longitude
+    location
+    status
+    recorded_at
+}
+
+class TransportationRepository {
+    +create_tracking_update(tracking)
+    +get_tracking_history(shipment_id, limit)
+}
+
+class TrackingAPI {
+    POST /delivery-tracking
+    GET /shipments/{shipment_id}/tracking
+}
+
+Shipment "1" --> "0..*" ShipmentTracking : has tracking records
+
+TrackingAPI --> TransportationRepository : uses
+TransportationRepository --> ShipmentTracking : persists / retrieves
+
+note right of ShipmentTracking
+    Separate tracking representation
+    allows multiple location updates
+    for the same shipment.
+end note
+
+@enduml

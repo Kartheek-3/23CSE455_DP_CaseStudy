@@ -1,0 +1,55 @@
+# Timings for Active Record (active_record_user_role)
+# time.perf_counter() around subprocess.run(); 1 warmup + 5 measured runs; milliseconds
+# machine: <host>, measured with Python 3.12.7
+
+[java]
+working folder: B10\Part3\active_record_user_role\java
+compile command: javac -d out CRUDMixin.java UserRoleTest.java
+run command: java -cp out UserRoleTest
+warmup_ms: 276.188
+run_1_ms: 235.049
+run_2_ms: 235.813
+run_3_ms: 237.451
+run_4_ms: 234.847
+run_5_ms: 234.999
+median_ms: 235.049
+last run exit code: 0; last line: Active Record tests: 12/12 passed
+
+[python]
+working folder: B10\Part3\active_record_user_role\python
+compile command: (none)
+run command: python test_user_role.py
+warmup_ms: 82.561
+run_1_ms: 77.952
+run_2_ms: 86.483
+run_3_ms: 88.349
+run_4_ms: 87.207
+run_5_ms: 83.873
+median_ms: 86.483
+last run exit code: 0; last line: Active Record tests: 12/12 passed
+
+[javascript]
+working folder: B10\Part3\active_record_user_role\javascript
+compile command: (none)
+run command: node test_user_role.js
+warmup_ms: 114.137
+run_1_ms: 115.303
+run_2_ms: 91.479
+run_3_ms: 96.217
+run_4_ms: 94.905
+run_5_ms: 95.829
+median_ms: 95.829
+last run exit code: 0; last line: Active Record tests: 12/12 passed
+
+[cpp]
+working folder: B10\Part3\active_record_user_role\cpp
+compile command: g++ -std=c++14 -O2 -Wall -o test_user_role.exe test_user_role.cpp
+run command: B10\Part3\active_record_user_role\cpp\test_user_role.exe
+warmup_ms: 260.722
+run_1_ms: 31.491
+run_2_ms: 35.938
+run_3_ms: 37.435
+run_4_ms: 33.528
+run_5_ms: 32.534
+median_ms: 33.528
+last run exit code: 0; last line: Active Record tests: 12/12 passed

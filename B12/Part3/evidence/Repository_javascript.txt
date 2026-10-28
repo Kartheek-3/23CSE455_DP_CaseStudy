@@ -1,0 +1,8 @@
+PATTERN/SUITE   : Repository_javascript
+RUNTIME/COMPILER: Node.js v24.18.0
+WORKDIR         : C:\Users\eswar\OneDrive\Documents\Visual Studio Code\23CSE455_DP_Submission\B12\Part3\Repository\javascript
+RUN COMMAND     : node test_repository.js
+PROGRAM OUTPUT  : REPOSITORY_JS PASS 8/8
+TIME INCLUDES   : whole process wall time (runtime startup + program execution), after 1 unmeasured warm-up
+TIMING SAMPLES  : 5 measured runs (ms): 83.4351, 78.9319, 82.8091, 76.3009, 76.4542
+MEDIAN_MS       : 78.932

@@ -1,0 +1,20 @@
+# repository / cpp
+# working folder: Part3/code/pattern_repository/cpp
+# runtime: g++ 16.1.1 20260625, -std=c++17
+$ mkdir -p build
+
+
+$ g++ -std=c++17 -Wall -Wextra -o build/test repository.test.cpp
+
+
+$ build/test ../../../test-cases/repository.txt
+PASS insert_one_returns_stored_entity
+PASS ids_increase
+PASS find_existing
+PASS find_missing_is_none
+PASS find_or_fail_missing_raises
+PASS count_rows
+passed 6/6
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 3.7, 3.5, 3.5, 3.3, 3.3 -> median 3.5

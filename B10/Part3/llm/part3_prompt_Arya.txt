@@ -1,0 +1,76 @@
+repo : https://github.com/kizniche/Mycodo.git
+# ROLE
+You are a polyglot software engineer (Java, Python, JavaScript, C++17) and a careful measurement analyst for a university Software Design Patterns course. You write small, equivalent, standard-library-only implementations of design patterns, test them against shared test cases, measure them with a fixed protocol, and compare the languages honestly. You never invent test results, measurements or sources.
+
+# TASK
+Perform "Part 3: Cross-Language Comparison" for the design patterns confirmed in my Mycodo project (https://github.com/kizniche/Mycodo.git). For EACH confirmed pattern type, write a small program in Java, Python, JavaScript and C++ that passes the same shared test cases, then test, measure and compare them. The attached PART3_GUIDE.md is the authoritative specification; follow its folder structure, file names, CSV headers, naming and measurement rules exactly. Package everything as one ZIP and summarise in chat.
+
+# INPUTS
+1. PART3_GUIDE.md (attached). Treat it as authoritative.
+2. Part1 results ZIP (patterns.csv, pattern_counts.csv): the confirmed pattern instances and their exact names/roles.
+3. Part2 results ZIP (patterns_evolution.csv, pattern_counts.csv): to include any pattern newly introduced in Part 2.
+4. Source: mycodo.zip (optional). Use it only to read the real class names behind each role. If it is unavailable or has no commit hash, write "[FILL BY STUDENT]" for the pin and continue.
+Pattern types to implement = every DISTINCT pattern type in Part 1 plus any newly introduced in Part 2. Do not guess these. Stop only if PART3_GUIDE.md or the Part 1 patterns.csv is missing. Everything else unknown becomes "[FILL BY STUDENT]".
+The "7 or more pattern types" rule still applies: if there are 7 or more, stop and tell me.
+check the the zip files Part1_Mycodo_arya.zip and Part2_Mycodod_arya.zip for the required files
+
+# STEP 0: PLAN (show me before coding, then continue)
+List each distinct pattern type (from inputs 2 and 3) and choose ONE representative instance per type: the clearest and best verified. For each give a one-sentence reason and the Mycodo roles-to-class mapping (e.g. Strategy=<real Mycodo class>). The programs are small stand-alone re-implementations that keep the same ROLES and role NAMES taken from Mycodo's real participants, simplified to the pattern's essence (30-90 lines of production code, no Mycodo imports, no hardware, no network).
+
+# TOOLS AND ACCESS RULES
+1. Use code execution to compile/run each language. Check availability first: `java -version`, `javac -version`, `python --version`, `node -v`, `g++ --version`, `lizard --version`, `cloc --version`. If a tool is missing, try to install it; if impossible, do NOT fake results. Mark the affected rows "not_run (reason)" with an empty median_process_ms, exactly as the guide describes.
+2. Standard library only (no Maven, pip packages or npm packages).
+3. ALL timings come from this single environment. Record the OS/CPU/language versions in README.md.
+4. Never write a measurement you did not obtain from a real run.
+
+# WORKFLOW
+1. Write `test-cases/SPEC.md` FIRST (before any code): per problem, a role table (Role | Name in every language | Job), inputs, outputs, rules, error cases.
+2. Write one shared CSV of test cases per problem in `test-cases/` (e.g. <problem>_cases.csv), with columns case_id, inputs..., expected (use ERROR for expected failures). Each problem needs at least 6 cases including at least 2 ERROR cases. For Observer-like problems, define a deterministic textual event-log output so all languages produce identical results.
+3. Write the production code in all four languages: same role names, same behaviour, composition over inheritance where the pattern says so, one file per language per pattern, named per the guide's convention (e.g. overdue_fine.py / OverdueFine.java / overdueFine.js / overdue_fine.hpp, adapted to the pattern's name).
+4. Write a SEPARATE test runner per language that reads the shared CSV, runs every case, and prints exactly one final line in this format in ALL languages: `<PatternName> tests: X/Y passed` (exit code non-zero on any failure). LOC is counted on production files only.
+5. Write a README.md in every language folder: tool version, how to compile/run/test, expected output line.
+6. Run all tests; save real output to `evidence/test_results/<pattern>_<language>.log` using the guide's log header format (Pattern, Language, Runtime, Working folder, Command, Captured output, Date). If any test fails, fix the code (not the test cases), re-run, and record in verification.md what was wrong and what you fixed.
+7. Measure LOC with `cloc` (code column; no blanks/comments/tests) using the same tool for every language. Measure max cyclomatic complexity per production file with `lizard` (maximum CCN over all functions). Put results in `evidence/metrics.md`. If a tool is unavailable, state the fallback and apply it to all languages.
+8. Measure running time with the guide's `evidence/time_runs.py` exactly as given: compile first (Java, C++; compile time excluded), 1 warmup, 5 measured runs, median in ms, all raw runs kept in `raw_timings.csv` (create it with header `pattern,language,run,elapsed_ms`). State once in README.md what the time includes (process startup + reading the case file + running all cases + printing; compile excluded) and that the numbers are for this small program on this machine, not general language speed.
+9. Fill `cross_language.csv` (see format below).
+10. Write `evidence/cross_language_analysis.md` comparing the four languages PER PATTERN on: participant structure, abstraction/contract enforcement, inheritance vs composition, memory/ownership, static vs dynamic typing (which errors are caught early), LOC and complexity (explain WHY numbers differ), and timing (explain, with the caveat above). Add a "Technology discussion" with real, checkable sources (GoF book: Gamma et al., 1994; Java Language Specification; Python `abc` docs; cppreference; MDN or ECMAScript spec). Cite only sources you are sure exist; otherwise say "Cannot confirm".
+11. Create `llm/slide.pdf`: a concise presentation (about 8-10 slides: goal, patterns chosen, method, per-pattern structure comparison, metrics table, timing table with caveats, key findings, limitations, takeaways). Use the numbers from your real measurements only.
+12. Write the llm/ record files and the `llm.csv` row.
+
+# EXACT OUTPUT STRUCTURE (follow PART3_GUIDE.md)
+Part3/
+ README.md
+ cross_language.csv, llm.csv
+ test-cases/ (SPEC.md + one *_cases.csv per pattern)
+ <pattern>_<instance>/ one folder per pattern type, each with java/, python/, javascript/, cpp/ (production file + separate test runner + README.md in each)
+ evidence/
+   test_results/ (one .log per pattern x language), time_runs.py, raw_timings.csv, metrics.md, cross_language_analysis.md
+ llm/
+   part3_prompt.txt (this exact prompt, verbatim), input.txt (SPEC.md + the case CSVs you worked from), output.txt (your first-pass code and design answer, saved unedited), run_info.txt (model name, today's date, tools, steps; "[FILL BY STUDENT]" where unknown), verification.md, slide.pdf
+
+# FILE FORMATS
+- cross_language.csv header (copy exactly): pattern_name,instance_name,language,snippet_path,source_loc,max_function_cc,runtime_compiler,test_command,test_result,median_process_ms,language_notes
+One row per pattern x language (N patterns -> 4N rows). snippet_path must be a real path starting at the team folder. test_result like "7/7 passed". language_notes: one concrete sentence about how the language expresses the pattern. If a run could not happen, test_result = "not_run (reason)" and median_process_ms empty. Wrap cells containing commas in double quotes. UTF-8.
+- llm.csv row (header: part,model_and_date,prompt_file,input_file,output_file,evaluation,verification_file): part = "Cross-language analysis".
+- verification.md: table | AI claim / code | Verdict | Evidence |, verdicts ONLY Correct / Partially correct / Incorrect / Cannot confirm. Include what you got wrong first and how you fixed it, and that you ran everything yourself. Any claim such as "Language X is faster" is "Cannot confirm" unless supported by the 5-run measurement scope.
+
+# ANTI-HALLUCINATION RULES
+- Do not invent measurements, versions, test results, or citations.
+- Do not edit the shared test cases to make code pass.
+- All four languages must give identical outputs for every case, including ERROR cases.
+- Same role names across languages (language idioms may change syntax, not roles).
+- No third-party libraries. No Mycodo imports.
+- Report negative results honestly (a failing run, a missing compiler).
+
+# QUALITY GATE (print PASS/FAIL for each; fix any FAIL)
+1. Every pattern has all four language folders, each with production file, separate test runner and README.
+2. All tests pass in every language that could run; logs are real and match what cross_language.csv says.
+3. Output line format is identical across languages.
+4. cross_language.csv has 4N rows, exactly 11 columns, parses with Python csv, and every snippet_path exists.
+5. LOC counts come from cloc (or the stated fallback); CC from lizard (or the stated fallback).
+6. raw_timings.csv has 5 rows per pattern x language; the median in cross_language.csv is recomputed from it by code.
+7. Folder tree matches EXACT OUTPUT STRUCTURE; slide.pdf exists.
+8. Nothing in the analysis claims general language superiority.
+
+# FINAL DELIVERY
+One ZIP (Part3_Mycodo.zip) with a download link. In chat show: the pattern plan, the folder tree, cross_language.csv, the metrics table, the timing medians, the quality-gate checklist, and an explicit list of anything not run or not verified.

@@ -1,0 +1,4 @@
+CH03 acceptance is covered by the final-snapshot native suite.
+26/26 feature cases passed; 129/129 original regression cases passed.
+Evidence: data/test_result/evolution.txt and data/test_result/regression.txt (team-root relative).
+Intermediate source snapshot full-suite run: not_run; final cumulative behavior tested.

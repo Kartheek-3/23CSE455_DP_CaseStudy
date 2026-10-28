@@ -1,0 +1,66 @@
+CHANGE 2 - REAL-TIME TRACKING
+
+Requirement:
+Support real-time shipment tracking by recording the current location of
+a shipment and maintaining tracking information.
+
+Baseline:
+The baseline transportation model contains shipments with order, vehicle,
+driver, route, status, scheduled/actual departure and arrival times, and
+notes. It does not contain a shipment tracking entity, GPS coordinates,
+latitude/longitude fields, or tracking-history mechanism.
+
+Baseline source evidence:
+- app/models/transportation.py - shipment models
+- app/repositories/shipment_repositories.py - TransportationRepository
+- app/api/transportation.py - shipment API operations
+- sql/schema.sql:204-219 - shipments table
+
+Baseline search evidence:
+A source search for tracking, latitude, longitude, location, GPS and gps
+returned only sql/schema.sql:13, where location is a warehouse location
+field. No shipment tracking fields or tracking mechanism were found in the
+inspected transportation model, repository, API, or shipment schema.
+
+Evolution:
+A separate shipment_tracking entity was introduced so that shipment
+location information can be recorded independently from the core shipment
+record. Each tracking record stores shipment_id, latitude, longitude,
+location, status and recorded_at.
+
+Database changes:
+1. Created shipment_tracking table.
+2. Added a foreign-key relationship from shipment_tracking.shipment_id
+   to shipments.shipment_id.
+3. Added an index on shipment_tracking.shipment_id.
+4. Added an index on shipment_tracking.recorded_at.
+
+Application implementation:
+- ShipmentTrackingBase, ShipmentTrackingCreate and ShipmentTrackingResponse
+  models were added to app/models/transportation.py.
+- TransportationRepository was extended with create_tracking_update().
+- TransportationRepository was extended with get_tracking_history().
+- POST /api/v1/transportation/delivery-tracking records a tracking update.
+- GET /api/v1/transportation/shipments/{shipment_id}/tracking retrieves
+  tracking history.
+
+Design impact:
+The existing TransportationRepository and FastAPI dependency-injection
+structure are preserved. Tracking capability is added as a separate
+representation associated with shipments, avoiding changes to the core
+shipment record for every location update.
+
+Pattern evolution:
+Repository Pattern is preserved and extended. The existing
+TransportationRepository now encapsulates tracking database operations.
+
+Verification:
+- FastAPI application started successfully.
+- POST /api/v1/transportation/delivery-tracking returned HTTP 201 Created.
+- A tracking update was successfully associated with shipment_id = 4.
+- GET /api/v1/transportation/shipments/4/tracking returned HTTP 200 OK.
+- Multiple tracking records were returned for shipment_id = 4.
+- The newest tracking record was returned first according to recorded_at DESC.
+
+Change status:
+Implemented and verified.

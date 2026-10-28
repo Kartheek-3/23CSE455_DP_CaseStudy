@@ -1,0 +1,6 @@
+# Layer Supertype / python
+working folder: Part3/layer_supertype_module_base/python
+$ python test_module_base.py
+Layer Supertype tests: 11/11 passed
+
+[exit code: 0]

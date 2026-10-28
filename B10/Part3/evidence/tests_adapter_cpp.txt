@@ -1,0 +1,9 @@
+# Adapter / cpp
+working folder: Part3/adapter_sensor_driver/cpp
+$ g++ -std=c++14 -O2 -Wall -o test_sensor_driver.exe test_sensor_driver.cpp
+
+[compile exit code: 0]
+$ test_sensor_driver.exe
+Adapter tests: 12/12 passed
+
+[exit code: 0]

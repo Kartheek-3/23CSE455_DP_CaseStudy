@@ -1,0 +1,13 @@
+I'm doing a design patterns case study on JUnit 6.1.3, commit f59f60d:
+https://github.com/junit-team/junit-framework/tree/f59f60d2cebdf2224235d81f781b1f310cbc8138
+
+I only study production code (src/main/java) in these four modules:
+junit-platform-engine, junit-platform-launcher, junit-jupiter-api, junit-jupiter-engine.
+
+My case study has four areas:
+A. Test discovery and the test descriptor hierarchy
+B. Test engines and the execution lifecycle
+C. Execution listeners and result reporting
+D. Jupiter extensions and resource management
+
+For each area tell the files that are related to that area with full file path and also how does it interact with the overall structure. Also how does tests flow in this flow.

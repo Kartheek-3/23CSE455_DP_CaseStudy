@@ -1,0 +1,6 @@
+phonepe-sdk 1.1.0 has requirement APScheduler<=3.10.1, but you have apscheduler 3.11.2.
+phonepe-sdk 1.1.0 has requirement dataclasses-json<=0.5.8, but you have dataclasses-json 0.6.7.
+phonepe-sdk 1.1.0 has requirement requests<=2.31.0, but you have requests 2.33.1.
+phonepe-sdk 1.1.0 has requirement urllib3<=1.26.12, but you have urllib3 2.6.3.
+dataclasses-json 0.6.7 has requirement marshmallow<4.0.0,>=3.18.0, but you have marshmallow 4.3.0.
+grpcio-status 1.80.0 has requirement protobuf<7.0.0,>=6.31.1, but you have protobuf 7.34.1.

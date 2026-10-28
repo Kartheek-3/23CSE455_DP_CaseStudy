@@ -1,0 +1,14 @@
+$ (cd Part3/factory-method-executors/javascript) node --test test/factory.test.js
+✔ report matches expected-output.txt (0.548708ms)
+✔ a subclass changes only the created product (0.374667ms)
+✔ invalid input is rejected with expected-error.txt (0.315584ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 100.440959
+[exit 0]
+result: 3/3 passed

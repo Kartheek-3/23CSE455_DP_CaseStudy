@@ -1,0 +1,17 @@
+# job_queue / java
+# working folder: Part3/code/pattern_job_queue/java
+# runtime: OpenJDK 17.0.19 (javac 17.0.19)
+$ javac -d build *.java
+
+
+$ java -cp build JobQueueTest ../../../test-cases/job_queue.txt
+PASS delivers
+PASS fifo_order
+PASS blocked_host_skipped
+PASS retries_until_success
+PASS gives_up_after_max_attempts
+PASS empty_queue
+passed 6/6
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 90.1, 92.1, 93.6, 89.7, 115.1 -> median 92.1

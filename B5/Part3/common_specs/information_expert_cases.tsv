@@ -1,0 +1,9 @@
+case_id	inbox_id	trip_id	provider_name	incoming_reference	existing_item_id	existing_trip_id	existing_item_name	existing_reference	existing_inbox_id
+I01	inbox-01	trip-alpha	  Blue Sky Airways  	NEW-01	item-101	trip-alpha	Blue Sky Airways	~	~
+I02	inbox-02	trip-alpha	Harbor Hotel	BOOK-02	~	~	~	~	~
+I03	inbox-03	trip-alpha	North Rail	NEW-03	item-103	trip-alpha	North Rail	OLD-03	~
+I04	inbox-04	trip-beta	City Ferry	NEW-04	item-104	trip-alpha	City Ferry	OLD-OTHER	inbox-44
+I05	inbox-05	trip-alpha	~	NEW-05	item-105	trip-alpha	Harbor Hotel	OLD-05	inbox-prev
+I06	inbox-06	trip-alpha	aTlAs AiR	REF-06	item-106	trip-alpha	Atlas Air	~	~
+I07	inbox-07	trip-alpha	Beacon Stay	NEW-07	item-107	trip-alpha	Beacon Stay	OLD-07	inbox-prior
+I08	inbox-08	trip-alpha	Demo Tours	~	item-108	trip-alpha	Demo Tours	~	~

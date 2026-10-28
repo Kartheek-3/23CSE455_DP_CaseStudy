@@ -1,0 +1,7 @@
+{
+  "Java": "openjdk version \"21.0.12.1\" 2026-08-18",
+  "javac": "javac 21.0.12.1",
+  "Python": "Python 3.13.5",
+  "Node.js": "v22.16.0",
+  "g++": "g++ (Debian 14.2.0-19) 14.2.0"
+}

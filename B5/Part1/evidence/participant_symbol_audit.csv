@@ -1,0 +1,77 @@
+symbol,mapped_instances
+Account,P04;P06;P07
+Account#owner_traveler,P03
+Action Cable,P09
+Action Mailbox,P02
+Action Mailer,P02;P04;P07;P08
+ActionMailer::Base.register_observer,P08
+Active Job,P02;P03;P04;P05;P07
+Active Record,P01;P02;P03;P04;P05;P06;P07
+Anthropic,P02
+ApplicationController#current_account,P03
+ApplicationController#current_member_for,P04
+ApplicationController#current_user,P03;P06
+ApplicationMailbox,P02
+ApprovedSender,P02
+Expense,P01
+FetchTripCoverImageJob#perform,P03
+Geocodable#geocoded?,P05
+GeocodeTripItemsJob#perform,P05;P09
+InboxItem,P02;P09
+InboxItem#build_expense,P01
+InboxItem#confirm_and_create_items!,P01
+InboxItem#fill_missing_links!,P01
+InboxItem#parsed_data,P01
+InboxItem#parsed_data=,P01
+InboxItemsController#update,P01
+InvitationMailer#invite,P07;P08
+InvitationMailer#invite_to_trip,P04;P08
+Invite#email_matches?,P06
+Invite#usable?,P06
+Mail gem,P08
+MailLogger,P08
+MailLogger.delivered_email(message),P08
+OmniAuth initializer,P06
+OmniAuth/provider integration,P06
+ParseInboxItemJob#perform,P02
+Pexels,P03
+Postmark,P08
+Rails routing,P03;P04;P05;P07
+Rails sessions,P06
+SessionsController#create,P06
+SessionsController#create_account_for,P06
+SessionsController#provision_account_or_gate,P06
+Traveler,P01;P02;P03;P04;P07
+Traveler#accept!,P06
+TravelersController#create,P07
+TravelersController#set_account,P07
+Trip,P01;P02;P03;P04;P05
+Trip#build_inbound_email,P03
+Trip#generate_inbound_email,P03
+TripItem,P01;P05
+TripItemsController#bulk_create_items,P05
+TripItemsController#import,P05
+TripItemsController#parse_import_time,P05
+TripMailbox#extract_html_body,P02
+TripMailbox#extract_text_body,P02
+TripMailbox#notify_owners_of_pending_sender,P02
+TripMailbox#process,P02
+TripMailer#pending_sender_notification,P02;P08
+TripMember,P01;P02;P03;P04
+TripMembersController#add_traveler,P04
+TripMembersController#create,P04
+TripMembersController#destroy,P04
+TripMembersController#require_owner_or_planner,P04
+TripMembersController#resolve_and_add_by_email,P04
+TripMembersController#set_trip,P04
+TripsController#create,P03
+Turbo browser runtime,P09
+Turbo::Broadcastable,P09
+Turbo::Streams::Broadcasts,P09
+Turbo::StreamsChannel,P09
+User,P01;P02;P04;P06;P07
+UserIdentity,P06
+app/views/inbox_items/index.html.erb,P09
+app/views/settings/show.html.erb,P07
+app/views/trip_items/import.html.erb,P05
+app/views/trips/show.html.erb,P09

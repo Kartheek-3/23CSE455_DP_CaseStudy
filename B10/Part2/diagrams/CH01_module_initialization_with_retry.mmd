@@ -1,0 +1,48 @@
+%% CH01 - "Module Initialization with Retry" (Template Method) - status: modified
+%% Changed participant: ConcreteClass bang_bang.CustomModule (initialize() now applies the crop profile)
+%% Code: Part2/changes/Change1/code/mycodo/...
+classDiagram
+    class AbstractBaseController {
+        +try_initialize(tries, wait_sec)
+        +initialize()
+    }
+    class AbstractInput {
+        +initialize()
+    }
+    class AbstractFunction {
+        +initialize()
+    }
+    class AbstractFunctionAction {
+        +initialize()
+    }
+    class adafruit_i2c_soil_InputModule["adafruit_i2c_soil.InputModule"]
+    adafruit_i2c_soil_InputModule : +initialize()
+    class weather_openweathermap_weather_InputModule["weather_openweathermap_weather.InputModule"]
+    weather_openweathermap_weather_InputModule : +initialize()
+    class bang_bang_CustomModule["bang_bang.CustomModule"]
+    bang_bang_CustomModule : +crop_profile
+    bang_bang_CustomModule : +initialize()
+    bang_bang_CustomModule : -_apply_crop_profile()
+    class email_ActionModule["email.ActionModule"]
+    email_ActionModule : +initialize()
+    class output_on_off_ActionModule["output_on_off.ActionModule"]
+    output_on_off_ActionModule : +initialize()
+    class CropProfile {
+        <<dataclass>>
+        +name_unique
+        +name
+        +target_moisture
+        +tolerance
+    }
+    class get_crop_profile
+    <<function>> get_crop_profile
+    AbstractBaseController <|-- AbstractInput
+    AbstractBaseController <|-- AbstractFunction
+    AbstractBaseController <|-- AbstractFunctionAction
+    AbstractInput <|-- adafruit_i2c_soil_InputModule
+    AbstractInput <|-- weather_openweathermap_weather_InputModule
+    AbstractFunction <|-- bang_bang_CustomModule
+    AbstractFunctionAction <|-- email_ActionModule
+    AbstractFunctionAction <|-- output_on_off_ActionModule
+    bang_bang_CustomModule ..> get_crop_profile : _apply_crop_profile()
+    get_crop_profile ..> CropProfile : returns

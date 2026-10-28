@@ -1,0 +1,268 @@
+# DaPlanStan — Final Cross-Language Aggregation
+
+Aggregation complete and validated
+
+All five confirmed pattern types have been represented in Java, Python, JavaScript and C++. The final faculty dataset, comparative report, validation record and cumulative Part3 package are complete.
+
+# 5
+
+Pattern types
+
+# 20
+
+Implementations
+
+# 192/192
+
+Recorded tests passed
+
+## 1. Download the final artifacts
+
+Complete Final Part3 Package
+
+186 files · 197 KB · ZIP integrity verified
+
+Download Complete Part3 ZIP
+
+Faculty Cross-Language Dataset
+
+Exactly 20 rows and 11 required columns
+
+Download cross_language.csv
+
+Final Academic Comparison Report
+
+Methodology, five pattern analyses, metric comparisons, verification matrix and limitations
+
+Download CROSS_LANGUAGE_FINAL_REPORT.md
+
+Download CROSS_LANGUAGE_VALIDATION.md
+
+Download Concise Team Report Summary
+
+## 2. Final CSV validation
+
+I read the actual five frozen append-ready JSON files and compared their records against the shared fixtures, test logs, static metric files and timing evidence.
+
+| Validation                         | Result     |
+| ---------------------------------- | ---------- |
+| Required columns                   | Exactly 11 |
+| Data rows                          | Exactly 20 |
+| Distinct patterns                  | 5          |
+| Languages per pattern              | 4          |
+| Duplicate pattern/language records | 0          |
+| Missing production source paths    | 0          |
+| Missing metric or execution fields | 0          |
+| Mismatched source instance names   | 0          |
+| Recorded median mismatches         | 0          |
+| Test-output discrepancies          | 0          |
+| Archive integrity                  | Passed     |
+
+The CSV preserves the exact recorded values without replacing them with estimates or newly calculated measurements.
+
+### Row distribution
+
+| Pattern            | Java | Python | JavaScript | C++ | Total |
+| ------------------ | ---- | ------ | ---------- | --- | ----- |
+| Strategy           | 1    | 1      | 1          | 1   | 4     |
+| Observer           | 1    | 1      | 1          | 1   | 4     |
+| Controller         | 1    | 1      | 1          | 1   | 4     |
+| Information Expert | 1    | 1      | 1          | 1   | 4     |
+| Adapter            | 1    | 1      | 1          | 1   | 4     |
+| Total              | 5    | 5      | 5          | 5   | 20    |
+
+## 3. Consolidated test results
+
+| Pattern            | Tests per language | Total verified cases |
+| ------------------ | ------------------ | -------------------- |
+| Strategy           | 15/15              | 60/60                |
+| Observer           | 7/7                | 28/28                |
+| Controller         | 8/8                | 32/32                |
+| Information Expert | 8/8                | 32/32                |
+| Adapter            | 10/10              | 40/40                |
+| Total              | 48/48              | 192/192              |
+
+All 20 recorded execution logs have zero failures, zero errors and exit code 0. Their captured fixture output was checked against the corresponding frozen expected TSV.
+
+The Adapter's extra provider-isolation assertions are recorded separately and have not been used to inflate the 192 counted cases.
+
+These are standalone cross-language tests. The previously blocked DaPlanStan Rails integration tests are a separate matter.
+
+## 4. Production LOC comparison
+
+Production code only; tests, fixtures, blank lines, comment-only lines and generated artifacts excluded.
+
+| Pattern            | Java | Python | JavaScript | C++ |
+| ------------------ | ---- | ------ | ---------- | --- |
+| Strategy           | 52   | 54     | 42         | 74  |
+| Observer           | 47   | 32     | 43         | 60  |
+| Controller         | 66   | 59     | 55         | 90  |
+| Information Expert | 63   | 45     | 38         | 83  |
+| Adapter            | 120  | 93     | 67         | 141 |
+
+C++ counts include both `main.hpp` and `main.cpp`, although the faculty dataset's `snippet_path` convention points to the primary production file, `main.cpp`.
+
+## 5. Maximum function cyclomatic complexity
+
+Source-level McCabe-style approximations, using the frozen decision-counting rule.
+
+| Pattern            | Java | Python | JavaScript | C++ |
+| ------------------ | ---- | ------ | ---------- | --- |
+| Strategy           | 12   | 8      | 8          | 15  |
+| Observer           | 5    | 5      | 5          | 4   |
+| Controller         | 9    | 10     | 9          | 13  |
+| Information Expert | 7    | 7      | 6          | 7   |
+| Adapter            | 12   | 7      | 8          | 12  |
+
+The values are taken from the original per-pattern measurement evidence. They are not formal compiler-generated complexity metrics.
+
+## 6. Median process runtime comparison
+
+Milliseconds. Each median comes from one warm-up followed by five measured fresh-process runs; compilation excluded.
+
+| Pattern            | Java    | Python   | JavaScript | C++   |
+| ------------------ | ------- | -------- | ---------- | ----- |
+| Strategy           | 91.907  | 839.469  | 30.426     | 2.582 |
+| Observer           | 109.548 | 1133.245 | 43.673     | 2.325 |
+| Controller         | 159.473 | 818.330  | 37.862     | 2.566 |
+| Information Expert | 75.602  | 819.622  | 36.436     | 4.391 |
+| Adapter            | 71.668  | 852.240  | 35.246     | 2.706 |
+
+Median process time by language and pattern
+
+Complete test-runner execution, logarithmic differences in magnitude are shown on a linear time axis
+
+Java
+
+Python
+
+JavaScript
+
+C++
+
+03006009001.2KStrategyObserverControllerInfo ExpertAdapter
+
+The measurements include process startup, fixture parsing, assertions and output comparison. They do not measure isolated design-pattern algorithm performance.
+
+## 7. Pattern-role preservation
+
+| Pattern and source ID    | Original instance                       | Preserved cross-language collaboration                                                                              |
+| ------------------------ | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Strategy — S3-N01        | Cancellation Policy Evaluation          | `QuoteEvaluator` selects interchangeable Flexible, Moderate and Strict policies                                     |
+| Observer — P08           | Outbound Mail Delivery Logging          | `MailDeliveryPublisher` registers/unregisters observers and notifies `MailLogger` through a common callback         |
+| Controller — P03         | Trip Creation Coordination              | `TripCreationController` coordinates Trip, Account, membership, storage and a simulated cover task                  |
+| Information Expert — P01 | Parsed Email to Trip Record Linking     | `InboxItem` owns the linking/creation decision using the parsed information it holds                                |
+| Adapter — S2-N01         | Multiple Booking Provider Normalization | Atlas and Beacon adapters translate incompatible inputs through one `OfferProvider` contract into `NormalizedOffer` |
+
+All five examples retain the responsibility or collaboration that justified their original pattern classification.
+
+For the GRASP examples in particular, the selected responsibilities remain meaningful outside Rails: the Controller receives and coordinates the system event, while the Information Expert owns behavior based on its information.
+
+## 8. Cross-language observations
+
+The implementations illustrate different language mechanisms rather than different business requirements.
+
+Java and C++ use explicit interfaces and types extensively. Python employs standard-library abstractions and duck typing where suitable. JavaScript expresses shared contracts through compatible methods and callbacks.
+
+The Adapter and Controller examples generally need more production code because they contain additional participant types, validation and coordination. Observer is comparatively compact across all four languages.
+
+Python and JavaScript often express these examples in fewer production lines than Java and C++, but fewer lines do not automatically imply better maintainability. Similarly, the observed timing differences cannot establish which language is inherently better for a given pattern.
+
+The complete report discusses all five collaborations individually, including C++ observer-pointer lifetime assumptions and the distinction between Adapter's source-format translation and Strategy's interchangeable algorithms.
+
+## 9. Final verification matrix
+
+The following summarizes the 20 recorded implementations. All have compiler/runtime evidence, measured LOC and CC, one warm-up plus five timing records, and an append-ready record.
+
+| Pattern            | Language   | Fixture tests | Runtime  | Metrics  | Final status |
+| ------------------ | ---------- | ------------- | -------- | -------- | ------------ |
+| Strategy           | Java       | 15/15         | Verified | Complete | PASS         |
+| Strategy           | Python     | 15/15         | Verified | Complete | PASS         |
+| Strategy           | JavaScript | 15/15         | Verified | Complete | PASS         |
+| Strategy           | C++        | 15/15         | Verified | Complete | PASS         |
+| Observer           | Java       | 7/7           | Verified | Complete | PASS         |
+| Observer           | Python     | 7/7           | Verified | Complete | PASS         |
+| Observer           | JavaScript | 7/7           | Verified | Complete | PASS         |
+| Observer           | C++        | 7/7           | Verified | Complete | PASS         |
+| Controller         | Java       | 8/8           | Verified | Complete | PASS         |
+| Controller         | Python     | 8/8           | Verified | Complete | PASS         |
+| Controller         | JavaScript | 8/8           | Verified | Complete | PASS         |
+| Controller         | C++        | 8/8           | Verified | Complete | PASS         |
+| Information Expert | Java       | 8/8           | Verified | Complete | PASS         |
+| Information Expert | Python     | 8/8           | Verified | Complete | PASS         |
+| Information Expert | JavaScript | 8/8           | Verified | Complete | PASS         |
+| Information Expert | C++        | 8/8           | Verified | Complete | PASS         |
+| Adapter            | Java       | 10/10         | Verified | Complete | PASS         |
+| Adapter            | Python     | 10/10         | Verified | Complete | PASS         |
+| Adapter            | JavaScript | 10/10         | Verified | Complete | PASS         |
+| Adapter            | C++        | 10/10         | Verified | Complete | PASS         |
+
+Runtime/compiler versions confirmed from the saved evidence are OpenJDK and javac 21.0.12.1, Python 3.13.5, Node.js v22.16.0, and g++ 14.2.0 using C++17.
+
+Compilation and execution were completed during the preceding pattern stages; this final step independently validated their saved execution evidence rather than rerunning all 20 suites.
+
+## 10. Preservation and final ZIP validation
+
+The historical cumulative archive chain was checked:
+
+Strategy
+
+34 files
+
+Observer
+
+68 files
+
+Controller
+
+104 files
+
+Information Expert
+
+137 files
+
+Adapter
+
+181 files
+
+Final Part3
+
+186 files
+
+Every file from each historical archive appears byte-identically in the subsequent archive. The 181 Adapter-stage files remain unchanged inside the 186-file final ZIP.
+
+Compiled Java classes, C++ executable binaries, Python caches and temporary runtime files were excluded.
+
+The final ZIP integrity check passed.
+
+## 11. Remaining limitations
+
+The twenty implementations are deliberately small, fixture-driven demonstrations. They do not reproduce Rails, persistence, Anthropic generation, live geocoding/Turbo, external provider APIs, real mail delivery or booking cancellations.
+
+LOC and complexity are source-based measurements; benchmark medians are specific to the recorded machine and full process workload. Neither should be used alone to rank design quality.
+
+DaPlanStan's full Rails integration/regression testing remains outstanding because the previously available environment used Ruby 3.3.8 instead of the required Ruby 3.4.2 and lacked the locked Rails 8.1.3 dependencies.
+
+## 12. Remaining manual work before team submission
+
+1. Faculty-format review: Confirm the final `cross_language.csv` placement, stable pattern names and repository-relative paths against the faculty instructions.
+2. Independent reproducibility: Compile and rerun the 20 snippets on the team's submission machine if reproducibility evidence is required; retain actual versions and execution logs.
+3. Rails verification: Use a compatible Ruby/Rails environment to run the postponed application integration and regression tests. Record actual results without changing the established source-level findings.
+4. Team report assembly: Integrate the completed evolution/refactoring report with `CROSS_LANGUAGE_FINAL_REPORT.md`, avoiding duplicate or contradictory pattern counts.
+5. Human sign-off: Verify team contributions, source attribution, historical evidence and the final submission folder contents.
+
+## Final completion status
+
+Five pattern types represented across four languages
+
+20 faculty CSV records validated
+
+192/192 recorded fixture tests verified
+
+LOC, cyclomatic complexity and runtime medians preserved
+
+Final academic report, validation record and ZIP created
+
+DaPlanStan, previous Part3 implementations and pattern-evolution records unchanged
+
+Final cross-language aggregation is complete and ready for team-report integration.

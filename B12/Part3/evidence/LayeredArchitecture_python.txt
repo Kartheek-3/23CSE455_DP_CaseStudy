@@ -1,0 +1,8 @@
+PATTERN/SUITE   : LayeredArchitecture_python
+RUNTIME/COMPILER: Python 3.13.7
+WORKDIR         : C:\Users\eswar\OneDrive\Documents\Visual Studio Code\23CSE455_DP_Submission\B12\Part3\LayeredArchitecture\python
+RUN COMMAND     : python test_layered_architecture.py
+PROGRAM OUTPUT  : LAYERED_ARCHITECTURE_PY PASS 8/8
+TIME INCLUDES   : whole process wall time (runtime startup + program execution), after 1 unmeasured warm-up
+TIMING SAMPLES  : 5 measured runs (ms): 87.6512, 95.8776, 94.7289, 88.1571, 89.6968
+MEDIAN_MS       : 89.697

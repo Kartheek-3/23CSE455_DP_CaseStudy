@@ -1,0 +1,150 @@
+CH02 demo run on 2026-10-10 18:46, openjdk version "25.0.4.1" 2026-08-18 LTS
+[demo] lines are printed by the demo tests and by the resource factory; the tree is printed by the console launcher.
+
+================================================================
+== 1 BEFORE: the same tests compiled against official 6.1.3 - the feature does not exist
+================================================================
+== javac exit code: 1
+21 errors
+== missing symbols (count, symbol):
+  11 symbol: class ManagedResource
+   5 symbol: class ResourceFactory
+
+================================================================
+== 2 AFTER, class scope: requested in @BeforeAll, shared by both tests, destroyed after @AfterAll
+== jar: junit-console-b16-ch02.jar   args: --select-class resourcedemo.SharedServerTests
+================================================================
+[demo]   create  server :64214  (requested in SharedServerTests)
+[demo] @BeforeAll got server :64214
+[demo] test healthCheck uses server :64214
+[demo] test secondCall uses server :64214
+[demo] @AfterAll
+[demo]   destroy server :64214
+╷
+├─ JUnit Jupiter ✔
+│  └─ SharedServerTests ✔
+│     ├─ healthCheck(HttpServer) ✔
+│     └─ secondCall(HttpServer) ✔
+Test run finished after 156 ms
+[         4 containers found      ]
+[         4 containers started    ]
+[         4 containers successful ]
+[         2 tests found           ]
+[         2 tests started         ]
+[         2 tests successful      ]
+== exit code: 0
+
+================================================================
+== 3 AFTER, test scope: one server per test, shared with @BeforeEach, destroyed after @AfterEach even when the test fails
+== jar: junit-console-b16-ch02.jar   args: --select-class resourcedemo.PerTestServerTests
+================================================================
+[demo]   create  server :64217  (requested in a_passes(HttpServer))
+[demo] @BeforeEach got server :64217
+[demo] test a_passes uses server :64217
+[demo] @AfterEach
+[demo]   destroy server :64217
+[demo]   create  server :64219  (requested in b_fails(HttpServer))
+[demo] @BeforeEach got server :64219
+[demo] test b_fails uses server :64219
+[demo] @AfterEach
+[demo]   destroy server :64219
+╷
+├─ JUnit Jupiter ✔
+│  └─ PerTestServerTests ✔
+│     ├─ a_passes(HttpServer) ✔
+│     └─ b_fails(HttpServer) ✘ deliberate failure ==> expected: <NOT OK> but was: <OK>
+Failures (1):
+  JUnit Jupiter:PerTestServerTests:b_fails(HttpServer)
+    MethodSource [className = 'resourcedemo.PerTestServerTests', methodName = 'b_fails', methodParameterTypes = 'com.sun.net.httpserver.HttpServer']
+    => org.opentest4j.AssertionFailedError: deliberate failure ==> expected: <NOT OK> but was: <OK>
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1210)
+       resourcedemo.PerTestServerTests.b_fails(PerTestServerTests.java:33)
+Test run finished after 152 ms
+[         4 containers found      ]
+[         4 containers started    ]
+[         4 containers successful ]
+[         2 tests found           ]
+[         2 tests started         ]
+[         1 tests successful      ]
+[         1 tests failed          ]
+== exit code: 1
+
+================================================================
+== 4 AFTER, failure handling: create() throws -> ParameterResolutionException; destroy() throws -> the owning test fails
+== jar: junit-console-b16-ch02.jar   args: --select-class resourcedemo.BrokenFactoryTests
+================================================================
+[demo]   create  connection
+[demo] test b_destroyFails body passes
+[demo]   destroy connection -> throws
+╷
+├─ JUnit Jupiter ✔
+│  └─ BrokenFactoryTests ✔
+│     ├─ a_createFails(String) ✘ Failed to resolve parameter [java.lang.String arg0] in method [void resourcedemo.BrokenFactoryTests.a_createFails(java.lang.String)]: database not reachable
+│     └─ b_destroyFails(String) ✘ Failed to close extension context
+Failures (2):
+  JUnit Jupiter:BrokenFactoryTests:a_createFails(String)
+    MethodSource [className = 'resourcedemo.BrokenFactoryTests', methodName = 'a_createFails', methodParameterTypes = 'java.lang.String']
+    => org.junit.jupiter.api.extension.ParameterResolutionException: Failed to resolve parameter [java.lang.String arg0] in method [void resourcedemo.BrokenFactoryTests.a_createFails(java.lang.String)]: database not reachable
+       java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+       java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+     Caused by: java.lang.IllegalStateException: database not reachable
+       resourcedemo.BrokenFactoryTests$CreateFails.create(BrokenFactoryTests.java:17)
+       resourcedemo.BrokenFactoryTests$CreateFails.create(BrokenFactoryTests.java:14)
+       java.base/java.util.concurrent.FutureTask.run(FutureTask.java:328)
+       [...]
+  JUnit Jupiter:BrokenFactoryTests:b_destroyFails(String)
+    MethodSource [className = 'resourcedemo.BrokenFactoryTests', methodName = 'b_destroyFails', methodParameterTypes = 'java.lang.String']
+    => org.junit.platform.commons.JUnitException: Failed to close extension context
+       java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+       java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+     Caused by: java.lang.IllegalStateException: connection already closed
+       resourcedemo.BrokenFactoryTests$DestroyFails.destroy(BrokenFactoryTests.java:31)
+       resourcedemo.BrokenFactoryTests$DestroyFails.destroy(BrokenFactoryTests.java:21)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+       java.base/java.util.stream.SortedOps$RefSortingSink.end(SortedOps.java:395)
+       [...]
+Test run finished after 36 ms
+[         4 containers found      ]
+[         4 containers started    ]
+[         4 containers successful ]
+[         2 tests found           ]
+[         2 tests started         ]
+[         2 tests failed          ]
+== exit code: 1
+
+================================================================
+== 5 AFTER, closing of stored AutoCloseables disabled: servers are still destroyed (CloseableResource fallback)
+== jar: junit-console-b16-ch02.jar   args: --select-class resourcedemo.PerTestServerTests --config junit.jupiter.extensions.store.close.autocloseable.enabled=false
+================================================================
+[demo]   create  server :64221  (requested in a_passes(HttpServer))
+[demo] @BeforeEach got server :64221
+[demo] test a_passes uses server :64221
+[demo] @AfterEach
+[demo]   destroy server :64221
+[demo]   create  server :64223  (requested in b_fails(HttpServer))
+[demo] @BeforeEach got server :64223
+[demo] test b_fails uses server :64223
+[demo] @AfterEach
+[demo]   destroy server :64223
+╷
+├─ JUnit Jupiter ✔
+│  └─ PerTestServerTests ✔
+│     ├─ a_passes(HttpServer) ✔
+│     └─ b_fails(HttpServer) ✘ deliberate failure ==> expected: <NOT OK> but was: <OK>
+Failures (1):
+  JUnit Jupiter:PerTestServerTests:b_fails(HttpServer)
+    MethodSource [className = 'resourcedemo.PerTestServerTests', methodName = 'b_fails', methodParameterTypes = 'com.sun.net.httpserver.HttpServer']
+    => org.opentest4j.AssertionFailedError: deliberate failure ==> expected: <NOT OK> but was: <OK>
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1210)
+       resourcedemo.PerTestServerTests.b_fails(PerTestServerTests.java:33)
+Test run finished after 160 ms
+[         4 containers found      ]
+[         4 containers started    ]
+[         4 containers successful ]
+[         2 tests found           ]
+[         2 tests started         ]
+[         1 tests successful      ]
+[         1 tests failed          ]
+== exit code: 1
+

@@ -1,0 +1,13 @@
+# publish_subscribe / javascript
+# working folder: Part3/code/pattern_publish_subscribe/javascript
+# runtime: Node.js v24.15.0
+$ node eventBus.test.js ../../../test-cases/publish_subscribe.txt
+PASS subscriber_receives
+PASS only_matching_channel
+PASS subscribers_in_order
+PASS unsubscribe
+PASS no_subscriber_message_dropped
+passed 5/5
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 44.3, 56.1, 50.8, 46.3, 42.0 -> median 46.3

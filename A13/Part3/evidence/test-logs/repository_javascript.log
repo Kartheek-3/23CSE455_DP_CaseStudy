@@ -1,0 +1,14 @@
+# repository / javascript
+# working folder: Part3/code/pattern_repository/javascript
+# runtime: Node.js v24.15.0
+$ node repository.test.js ../../../test-cases/repository.txt
+PASS insert_one_returns_stored_entity
+PASS ids_increase
+PASS find_existing
+PASS find_missing_is_none
+PASS find_or_fail_missing_raises
+PASS count_rows
+passed 6/6
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 48.3, 46.6, 51.0, 52.5, 51.1 -> median 51.0

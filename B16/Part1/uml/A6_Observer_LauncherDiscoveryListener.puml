@@ -1,0 +1,55 @@
+@startuml A6
+!pragma layout smetana
+title A6 Observer: LauncherDiscoveryListener
+
+interface EngineDiscoveryListener <<Observer>> {
+  +selectorProcessed(...)
+  +issueEncountered(...)
+}
+interface LauncherDiscoveryListener <<Observer>> {
+  +launcherDiscoveryStarted(...)
+  +launcherDiscoveryFinished(...)
+  +engineDiscoveryStarted(...)
+  +engineDiscoveryFinished(...)
+}
+class DiscoveryIssueCollector <<ConcreteObserver>>
+class LoggingLauncherDiscoveryListener <<ConcreteObserver, not counted>> #E6E6E6
+class AbortOnFailureLauncherDiscoveryListener <<ConcreteObserver, not counted>> #E6E6E6
+class FlightRecordingDiscoveryListener <<ConcreteObserver, not counted>> #E6E6E6
+class CompositeLauncherDiscoveryListener <<Broadcaster>> {
+  -listeners : List<LauncherDiscoveryListener>
+}
+class "ListenerRegistry<LauncherDiscoveryListener>" as ListenerRegistry <<Registry>> {
+  +add(...)
+  +getCompositeListener()
+}
+class DefaultLauncher <<Registration>> {
+  +registerLauncherDiscoveryListeners(...)
+}
+class EngineDiscoveryOrchestrator <<Subject>>
+
+LauncherDiscoveryListener --|> EngineDiscoveryListener
+DiscoveryIssueCollector ..|> LauncherDiscoveryListener
+LoggingLauncherDiscoveryListener ..|> LauncherDiscoveryListener
+AbortOnFailureLauncherDiscoveryListener ..|> LauncherDiscoveryListener
+FlightRecordingDiscoveryListener ..|> LauncherDiscoveryListener
+CompositeLauncherDiscoveryListener ..|> LauncherDiscoveryListener
+CompositeLauncherDiscoveryListener o--> "0..*" LauncherDiscoveryListener : listeners
+DefaultLauncher ..> ListenerRegistry : add listeners
+EngineDiscoveryOrchestrator o--> ListenerRegistry : launcherDiscoveryListenerRegistry
+ListenerRegistry ..> CompositeLauncherDiscoveryListener : getCompositeListener() creates
+EngineDiscoveryOrchestrator ..> LauncherDiscoveryListener : notifies events
+' aligned-with-record
+legend right
+  <b>Counted participants</b> (record in the dataset)
+  Observer: LauncherDiscoveryListener
+  Observer (base): EngineDiscoveryListener
+  ConcreteObserver: DiscoveryIssueCollector
+  ConcreteObserver: DiscoveryIssueReportingDiscoveryListener (not drawn)
+  Subject (attach): DefaultLauncher#registerLauncherDiscoveryListeners
+  Subject (notify): EngineDiscoveryOrchestrator#discoverEngineRoot
+  Subject (notify, in engine): EngineDiscoveryRequestResolution (not drawn)
+  Multicaster: CompositeLauncherDiscoveryListener
+  Grey classes: real, shown for context, not counted
+endlegend
+@enduml

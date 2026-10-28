@@ -1,0 +1,874 @@
+diff --git a/README.md b/README.md
+--- a/README.md
++++ b/README.md
+@@ -199,3 +199,56 @@
+ `bin/rails test` was attempted and failed before test discovery with
+ `Bundler::GemNotFound`; **zero Rails tests executed**. Detailed actual command
+ results and source changes are in `SCENARIO2_CHANGE_RECORD.md` and `evidence/`.
++
++---
++
++## Coursework AFTER source: Scenario 3 hypothetical cancellation-policy quotes
++
++Source version: `scenario3_cancellation_policies`, copied from the complete
++`scenario2_multiple_booking_providers` AFTER archive. Scenario 2 is unchanged.
++
++Trip owners can view **Estimate cancellation (demo)** for a *confirmed* TripItem
++with a genuinely confirmed InboxItem link, its **own** confirmation reference,
++start timestamp, nonnegative amount, and EUR/GBP/USD currency. Select Flexible,
++Moderate, or Strict to see a **hypothetical** cancellation fee and refund.
++Nothing is cancelled, no provider is contacted, and no TripItem, InboxItem,
++Expense, payment, refund, or cancellation row is written or updated. Demo
++provider offers and generated ideas do not qualify merely by changing their
++status to confirmed. The selected policy is not the real provider's terms.
++
++Fictional policy tiers based on elapsed time before start:
++
++| Time until start | Flexible fee | Moderate fee | Strict fee |
++| --- | ---: | ---: | ---: |
++| >= 72 hours | 0% | 0% | 100% |
++| >= 24, < 72 hours | 0% | 50% | 100% |
++| > 0, < 24 hours | 10% | 100% | 100% |
++| At or after start | 100% | 100% | 100% |
++
++`CancellationPolicies::QuoteEvaluator#call` takes an explicit `evaluated_at`
++and uses BigDecimal with `ROUND_HALF_UP` at two decimals. The controller
++passes `Time.current`; tests pass fixed timestamps. The policies never call
++an external service or modify Active Record models.
++
++With the repository-required Ruby 3.4.2, bundled Rails 8.1.3 dependencies and
++configured test database, run:
++
++```sh
++bundle install
++RAILS_ENV=test bin/rails db:test:prepare
++bin/rails test test/services/cancellation_policies_test.rb \
++  test/controllers/cancellation_quotes_controller_test.rb
++bin/rails test
++```
++
++Independent deterministic checks that **do not require Rails**:
++
++```sh
++ruby evidence/isolated_cancellation_policy_checks.rb
++```
++
++At packaging time the environment supplied Ruby 3.3.8 and lacked the
++Gemfile.lock dependencies. Both Rails test commands failed before test
++collection with `Bundler::GemNotFound` (Rails 8.1.3 among missing gems).
++No Rails tests are claimed as passed. See `SCENARIO3_CHANGE_RECORD.md` and
++`evidence/` for exact logs, limits and source locations.
+diff --git a/app/views/trip_items/show.html.erb b/app/views/trip_items/show.html.erb
+--- a/app/views/trip_items/show.html.erb
++++ b/app/views/trip_items/show.html.erb
+@@ -204,6 +204,13 @@
+         </div>
+       <% end %>
+ 
++      <%# Quote-only demo estimate: owner-only link; controller and evaluator recheck eligibility. %>
++      <% if current_member_for(@trip)&.owner? && CancellationPolicies::QuoteEvaluator.new.eligible?(trip_item: @item) %>
++        <%= link_to "Estimate cancellation (demo)",
++              new_trip_trip_item_cancellation_quote_path(@trip, @item),
++              class: "btn btn-outline btn-sm w-full" %>
++      <% end %>
++
+       <%# Linked expense %>
+       <% if @display_expense %>
+         <div class="grid grid-cols-2">
+diff --git a/config/routes.rb b/config/routes.rb
+--- a/config/routes.rb
++++ b/config/routes.rb
+@@ -34,6 +34,7 @@
+           get  :generate
+           post :generate
+         end
++        resource :cancellation_quote, only: [ :new, :create ]
+         member do
+           patch :confirm
+           get   :to_expense
+diff --git a/SCENARIO3_CHANGE_RECORD.md b/SCENARIO3_CHANGE_RECORD.md
+new file mode 100644
+--- /dev/null
++++ b/SCENARIO3_CHANGE_RECORD.md
+@@ -0,0 +1,93 @@
++# Scenario 3 — AFTER Change Record
++
++## Provenance and scope
++- Source version: `scenario3_cancellation_policies`
++- Input source (never edited): `/mnt/data/scenario2_multiple_booking_providers_AFTER.zip`
++- Input SHA-256: `9dd94c466280d0ab83998da93b86ab4afc0595c51ceae749cf12dadb8b4e0f28`
++- Starting state: 12 confirmed collaborations across 4 types, unchanged until a separate pattern verification.
++- Feature: **hypothetical cancellation quotes only**, no real cancellation, refunds, payment, booking-state or database changes.
++- No migrations; `db/structure.sql` is byte-identical to Scenario 2.
++
++## BEFORE state, Scenario 2 source evidence
++- `app/models/trip_item.rb:21–24`: status enum `idea` or `confirmed` only.
++- `app/controllers/trip_items_controller.rb:89–106`: update, delete and status toggle operate on local itinerary, not provider cancellations.
++- `app/controllers/expenses_controller.rb:74–85`: local expense delete and confirmation.
++- `app/models/inbox_item.rb:12–14,27–58,67–99,101–207`: review status, genuine email booking linkage, booking Expense creation.
++- `app/controllers/booking_options_controller.rb:18–57`: prospective demo ideas, never bookings.
++- `app/jobs/parse_inbox_item_job.rb:20–139`: extraction of booking facts but no contractual cancellation rules.
++- `app/mailboxes/trip_mailbox.rb:2–31`: incoming booking email intake.
++- `db/structure.sql:91–125`: TripItem amount, currency, start, ref and InboxItem link; Expense records.
++- `config/routes.rb:30–49`: nested itinerary, import, generation, provider and inbox routes.
++- `app/views/trip_items/show.html.erb:127–177,238–297`: booking-reference display fallback, edit/delete actions.
++
++## AFTER workflow
++Owner opens a confirmed email-linked TripItem → link to `new_trip_trip_item_cancellation_quote_path` → `CancellationQuotesController#new` → check membership and eligibility → choose Flexible/Moderate/Strict → POST `CancellationQuotesController#create` → `QuoteEvaluator#call` reads stored booking fields and invokes the selected stateless policy → BigDecimal hypothetical fee/refund → render same view with disclaimer. **No writes, external calls or job enqueue.**
++
++## Eligibility and authorization
++- `app/services/cancellation_policies/quote_evaluator.rb:60–73`: `confirmed?`, actual InboxItem relation with confirmed review, **own** nonblank `confirmation_ref`, start time, amount >= 0, and currency in EUR/GBP/USD.
++- `app/controllers/cancellation_quotes_controller.rb:26–33`: user-scoped Trip and TripItem; owner-only GET and POST.
++- `app/controllers/cancellation_quotes_controller.rb:6–22`: both actions verify eligibility; POST accepts only policy code and supplies `Time.current`. Error messages are controlled.
++- Manually confirmed ideas, generated ideas and provider demo ideas remain ineligible unless they acquire the genuine booking evidence required by the frozen specification.
++
++## Policy rules (fee %)
++| Time difference `starts_at - evaluated_at` | Flexible | Moderate | Strict |
++| --- | ---: | ---: | ---: |
++| >= 72 hours | 0 | 0 | 100 |
++| >= 24 and < 72 hours | 0 | 50 | 100 |
++| > 0 and < 24 hours | 10 | 100 | 100 |
++| <= 0 hours | 100 | 100 | 100 |
++
++`Flexible#fee_rate` in `app/services/cancellation_policies/flexible.rb:5–12`, `Moderate` in `moderate.rb:5–12`, and `Strict` in `strict.rb:5–9`; all return BigDecimal rates.
++
++`QuoteEvaluator` (`quote_evaluator.rb:13–22,32–55`) selects a whitelisted class, computes fee using `(amount * rate).round(2, BigDecimal::ROUND_HALF_UP)`, and returns the eight fields: policy_code, policy_name, original_amount, fee_amount, refund_amount, currency, refundable, explanation. Refund = stored original amount - rounded fee, so totals balance. An explicit evaluation timestamp is required. Invalid input raises a controlled Error subclass. A zero-cost item is valid but `refundable` is false.
++
++## File-level change locations
++### Existing modified
++- `config/routes.rb:37`: singular nested `resource :cancellation_quote, only: [:new, :create]` (new feature route).
++- `app/views/trip_items/show.html.erb:207–212`: owner-only and eligibility-dependent quote entry point (UI).
++- `README.md`: new Scenario 3 instructions, rules and verification commands (documentation).
++
++### Newly introduced application files
++- `app/controllers/cancellation_quotes_controller.rb:1–43`: GET/new, POST/create, access, user-scoped lookup, error rendering (feature/controller).
++- `app/services/cancellation_policies/flexible.rb:1–13`: fictional Flexible rules.
++- `app/services/cancellation_policies/moderate.rb:1–13`: fictional Moderate rules.
++- `app/services/cancellation_policies/strict.rb:1–10`: fictional Strict rules.
++- `app/services/cancellation_policies/quote_evaluator.rb:1–84`: eligibility, deterministic selection, money-safe quote and controlled errors.
++- `app/views/cancellation_quotes/new.html.erb:1–35`: form, quote, back link, explicit hypothetical-only disclaimer (UI).
++
++### New tests and evidence
++- `test/services/cancellation_policies_test.rb:1–115`: Rails unit tests: deadlines, validation, money, currency, refusal and no mutation.
++- `test/controllers/cancellation_quotes_controller_test.rb:1–131`: Rails controller tests: access, GET/POST, tampering, no writes, no network/job path.
++- `evidence/isolated_cancellation_policy_checks.rb`: standalone Ruby policy validation without Rails (executed).
++- `evidence/isolated_policy_checks_output.txt`: actual isolated result.
++- `evidence/scenario3_ruby_syntax_checks.txt`: syntax verification output.
++- `evidence/rails_scenario3_test_attempt.log`: focused Rails test command and actual dependency error.
++- `evidence/rails_full_test_attempt.log`: full Rails test command and actual dependency error.
++- `evidence/scenario3_runtime_verification_summary.txt`: split by execution tier.
++- `SCENARIO3_CHANGE_RECORD.md`: this document.
++
++## Acceptance coverage
++- Three stateless policies, single `fee_rate(seconds_until_start:)` contract; exact 72h and 24h boundaries and one-second offsets.
++- Whitelist allows only flexible/moderate/strict; unknown code rejected; no constantize.
++- Signed-in owner access; item scoped to trip; non-owner denied.
++- Ineligible idea, unconfirmed email, missing own reference, missing start, amount or unsupported currency rejected.
++- Use only server-loaded amount/start/currency; browser tampering does not override stored data.
++- Quote-only GET and POST: no TripItem/InboxItem/Expense mutation, no cancellation record or external request.
++- Persistent Scenario 1 generation/import and Scenario 2 provider comparison unchanged.
++
++## Verification (actual, not estimated)
++- Ruby available: `3.3.8`; repository `.ruby-version`: `ruby-3.4.2`.
++- Command: `ruby evidence/isolated_cancellation_policy_checks.rb` → **10 runs, 45 assertions, 0 failures, 0 errors, 0 skips**, exit 0.
++- Command: `ruby -c` on **8 Scenario 3 Ruby files** → 8/8 `Syntax OK`, exit 0.
++- Command: `ruby bin/rails test test/services/cancellation_policies_test.rb test/controllers/cancellation_quotes_controller_test.rb` → exit 1, `Bundler::GemNotFound`: missing locked `rails-8.1.3` and others. Rails tests executed: **0**, passes/failures/errors/skips **N/A** (not discovered).
++- Command: `ruby bin/rails test` → exit 1, same missing dependency error. Rails tests executed: **0**, no meaningful passed/failed/skip counts.
++- Live Anthropic, booking providers, geocoding and Turbo were not exercised. The new policy feature does not invoke any of them.
++- Rails request, access-control, rendering, DB isolation and integration regression tests are **written but not executed**.
++
++## Regression and limitations
++- Byte-comparison confirmed no edits to Scenario 1 generation/import, Scenario 2 booking-provider implementations, InboxItem/Mailbox/Parser, TripItem, Expense, authentication/membership, Geocodable, geocoding job, or database schema.
++- Hypothetical policies do not represent real contractual cancellation terms. No cancellation state is persisted.
++- Items without direct confirmation reference, start, amount or supported currency cannot be quoted.
++- Controller passes actual current time, while tests deliberately supply fixed timestamps to evaluator.
++- No true Rails runtime evidence yet because dependencies could not boot; rerun Rails tests under Ruby 3.4.2 with installed locked dependencies.
++- No pattern evolution statuses or instance-count changes assigned at implementation stage. **Strategy and separate GRASP Controller are candidates only** for future AFTER verification. Fixed policy whitelist is not by itself Factory.
+diff --git a/app/controllers/cancellation_quotes_controller.rb b/app/controllers/cancellation_quotes_controller.rb
+new file mode 100644
+--- /dev/null
++++ b/app/controllers/cancellation_quotes_controller.rb
+@@ -0,0 +1,43 @@
++class CancellationQuotesController < ApplicationController
++  before_action :authenticate_user!
++  before_action :set_trip_and_item
++  before_action :require_owner!
++
++  def new
++    @policy_code = "flexible"
++    ensure_eligible!
++  rescue CancellationPolicies::QuoteEvaluator::Error => e
++    @quote_error = e.message
++    render :new, status: :unprocessable_entity
++  end
++
++  def create
++    ensure_eligible!
++    @policy_code = params[:policy_code].to_s
++    @quote = evaluator.call(trip_item: @item, policy_code: @policy_code, evaluated_at: Time.current)
++    render :new
++  rescue CancellationPolicies::QuoteEvaluator::Error => e
++    @quote_error = e.message
++    render :new, status: :unprocessable_entity
++  end
++
++  private
++
++  def set_trip_and_item
++    @trip = current_user.trips.find(params[:trip_id])
++    @item = @trip.trip_items.find(params[:trip_item_id])
++  end
++
++  def require_owner!
++    head :forbidden unless current_member_for(@trip)&.owner?
++  end
++
++  def evaluator
++    @evaluator ||= CancellationPolicies::QuoteEvaluator.new
++  end
++
++  def ensure_eligible!
++    evaluator.eligible?(trip_item: @item) ||
++      raise(CancellationPolicies::QuoteEvaluator::IneligibleItem, "This item is not eligible for a demo cancellation quote.")
++  end
++end
+diff --git a/app/services/cancellation_policies/flexible.rb b/app/services/cancellation_policies/flexible.rb
+new file mode 100644
+--- /dev/null
++++ b/app/services/cancellation_policies/flexible.rb
+@@ -0,0 +1,13 @@
++require "bigdecimal"
++
++module CancellationPolicies
++  # Fictional application policy; never an external provider's contract.
++  class Flexible
++    def fee_rate(seconds_until_start:)
++      return BigDecimal("1") if seconds_until_start <= 0
++      return BigDecimal("0.10") if seconds_until_start < 24 * 60 * 60
++
++      BigDecimal("0")
++    end
++  end
++end
+diff --git a/app/services/cancellation_policies/moderate.rb b/app/services/cancellation_policies/moderate.rb
+new file mode 100644
+--- /dev/null
++++ b/app/services/cancellation_policies/moderate.rb
+@@ -0,0 +1,13 @@
++require "bigdecimal"
++
++module CancellationPolicies
++  # Fictional application policy; never an external provider's contract.
++  class Moderate
++    def fee_rate(seconds_until_start:)
++      return BigDecimal("0") if seconds_until_start >= 72 * 60 * 60
++      return BigDecimal("0.50") if seconds_until_start >= 24 * 60 * 60
++
++      BigDecimal("1")
++    end
++  end
++end
+diff --git a/app/services/cancellation_policies/quote_evaluator.rb b/app/services/cancellation_policies/quote_evaluator.rb
+new file mode 100644
+--- /dev/null
++++ b/app/services/cancellation_policies/quote_evaluator.rb
+@@ -0,0 +1,84 @@
++require "bigdecimal"
++require "date"
++
++module CancellationPolicies
++  # Read-only calculator for hypothetical refunds. Does not cancel bookings.
++  class QuoteEvaluator
++    class Error < StandardError; end
++    class IneligibleItem < Error; end
++    class UnknownPolicy < Error; end
++    class InvalidBookingData < Error; end
++    class InvalidEvaluationTime < Error; end
++
++    POLICIES = {
++      "flexible" => [ "Flexible", Flexible ],
++      "moderate" => [ "Moderate", Moderate ],
++      "strict" => [ "Strict", Strict ]
++    }.freeze
++    CURRENCIES = %w[EUR GBP USD].freeze
++    ROUNDING = BigDecimal::ROUND_HALF_UP
++    DISCLAIMER = "This is a hypothetical cancellation estimate based on a demonstration policy. " \
++                 "No reservation has been cancelled and no actual refund is guaranteed. " \
++                 "Check your booking provider's terms."
++
++    # Used only to determine visibility of the UI link. call revalidates everything.
++    def eligible?(trip_item:)
++      validate_booking!(trip_item)
++      true
++    rescue Error
++      false
++    end
++
++    def call(trip_item:, policy_code:, evaluated_at:)
++      validate_booking!(trip_item)
++      raise InvalidEvaluationTime, "A valid evaluation time is required." unless valid_time?(evaluated_at)
++
++      chosen = POLICIES[policy_code.to_s]
++      raise UnknownPolicy, "Choose Flexible, Moderate or Strict." unless chosen
++
++      policy_name, policy_class = chosen
++      original = BigDecimal(trip_item.amount.to_s)
++      seconds = as_time(trip_item.starts_at) - as_time(evaluated_at)
++      rate = policy_class.new.fee_rate(seconds_until_start: seconds)
++      fee = (original * rate).round(2, ROUNDING)
++      refund = original - fee
++
++      {
++        policy_code: policy_code.to_s,
++        policy_name: policy_name,
++        original_amount: original,
++        fee_amount: fee,
++        refund_amount: refund,
++        currency: trip_item.currency,
++        refundable: refund.positive?,
++        explanation: "The #{policy_name} demonstration policy applies a #{(rate * 100).to_i}% cancellation fee."
++      }
++    end
++
++    private
++
++    def validate_booking!(item)
++      raise IneligibleItem, "This item is not a confirmed email-linked booking." unless item&.confirmed?
++      raise IneligibleItem, "A confirmed source email is required." if item.inbox_item_id.nil? || !item.inbox_item&.confirmed?
++      raise IneligibleItem, "This item has no own confirmation reference." if item.confirmation_ref.to_s.strip.empty?
++      raise InvalidBookingData, "A booking start time is required." unless valid_time?(item.starts_at)
++      raise InvalidBookingData, "A booking amount is required." if item.amount.nil?
++
++      amount = BigDecimal(item.amount.to_s)
++      raise InvalidBookingData, "Booking amount must be nonnegative and finite." unless amount.finite? && amount >= 0
++      raise InvalidBookingData, "Only EUR, GBP and USD are supported for demo quotes." unless CURRENCIES.include?(item.currency)
++      true
++    rescue ArgumentError, TypeError
++      raise InvalidBookingData, "Booking amount is invalid."
++    end
++
++    def as_time(value)
++      value.is_a?(Time) ? value : value.to_time
++    end
++
++    def valid_time?(value)
++      value.is_a?(Time) || value.is_a?(DateTime) ||
++        (defined?(ActiveSupport::TimeWithZone) && value.is_a?(ActiveSupport::TimeWithZone))
++    end
++  end
++end
+diff --git a/app/services/cancellation_policies/strict.rb b/app/services/cancellation_policies/strict.rb
+new file mode 100644
+--- /dev/null
++++ b/app/services/cancellation_policies/strict.rb
+@@ -0,0 +1,10 @@
++require "bigdecimal"
++
++module CancellationPolicies
++  # Fictional application policy; never an external provider's contract.
++  class Strict
++    def fee_rate(seconds_until_start:)
++      BigDecimal("1")
++    end
++  end
++end
+diff --git a/app/views/cancellation_quotes/new.html.erb b/app/views/cancellation_quotes/new.html.erb
+new file mode 100644
+--- /dev/null
++++ b/app/views/cancellation_quotes/new.html.erb
+@@ -0,0 +1,35 @@
++<% content_for :hide_navbar, true %>
++<div class="max-w-md mx-auto px-4 py-8 space-y-5">
++  <%= link_to "← Back to itinerary item", trip_trip_item_path(@trip, @item), class: "text-sm text-primary" %>
++  <div class="bg-base-200 border border-base-content/10 rounded-3xl p-5 space-y-4">
++    <h1 class="text-xl font-bold">Estimate cancellation (demo)</h1>
++    <p class="text-sm font-semibold"><%= @item.name %></p>
++    <dl class="text-sm space-y-1 text-base-content/70">
++      <div><dt class="inline font-medium">Start:</dt> <dd class="inline"><%= @item.starts_at&.strftime("%d %b %Y, %H:%M") || "Not available" %></dd></div>
++      <div><dt class="inline font-medium">Original amount:</dt> <dd class="inline"><%= @item.amount.present? ? number_with_precision(@item.amount, precision: 2) : "Not available" %> <%= @item.currency %></dd></div>
++      <div><dt class="inline font-medium">Booking ref:</dt> <dd class="inline"><%= @item.confirmation_ref.presence || "Not available" %></dd></div>
++    </dl>
++    <div role="note" class="rounded-xl bg-warning/10 border border-warning/30 text-sm p-3">
++      <%= CancellationPolicies::QuoteEvaluator::DISCLAIMER %>
++    </div>
++    <% if @quote_error.present? %>
++      <p role="alert" class="text-error text-sm"><%= @quote_error %></p>
++    <% end %>
++    <% if @quote_error.blank? || @policy_code.present? %>
++      <%= form_with url: trip_trip_item_cancellation_quote_path(@trip, @item), method: :post, class: "space-y-3" do %>
++        <%= label_tag :policy_code, "Demonstration policy", class: "text-sm font-semibold" %>
++        <%= select_tag :policy_code, options_for_select([ ["Flexible", "flexible"], ["Moderate", "moderate"], ["Strict / Non-refundable", "strict"] ], @policy_code), class: "select select-bordered w-full" %>
++        <%= submit_tag "Estimate refund", class: "btn btn-primary w-full" %>
++      <% end %>
++    <% end %>
++    <% if @quote.present? %>
++      <section aria-label="Hypothetical cancellation quote" class="rounded-2xl bg-base-300/30 p-4 space-y-2">
++        <p class="font-semibold"><%= @quote[:policy_name] %> — hypothetical result</p>
++        <p class="text-sm">Original amount: <%= number_with_precision(@quote[:original_amount], precision: 2) %> <%= @quote[:currency] %></p>
++        <p class="text-sm">Cancellation fee: <%= number_with_precision(@quote[:fee_amount], precision: 2) %> <%= @quote[:currency] %></p>
++        <p class="text-sm font-bold">Hypothetical refund: <%= number_with_precision(@quote[:refund_amount], precision: 2) %> <%= @quote[:currency] %></p>
++        <p class="text-xs text-base-content/60"><%= @quote[:explanation] %></p>
++      </section>
++    <% end %>
++  </div>
++</div>
+diff --git a/evidence/isolated_cancellation_policy_checks.rb b/evidence/isolated_cancellation_policy_checks.rb
+new file mode 100644
+--- /dev/null
++++ b/evidence/isolated_cancellation_policy_checks.rb
+@@ -0,0 +1,103 @@
++require "minitest/autorun"
++require "ostruct"
++require_relative "../app/services/cancellation_policies/flexible"
++require_relative "../app/services/cancellation_policies/moderate"
++require_relative "../app/services/cancellation_policies/strict"
++require_relative "../app/services/cancellation_policies/quote_evaluator"
++
++class IsolatedCancellationPolicyChecks < Minitest::Test
++  START = Time.utc(2026, 11, 16, 10)
++  HOUR = 3600
++  Inbox = Struct.new(:confirmed?)
++  Item = Struct.new(:confirmed?, :inbox_item_id, :inbox_item, :confirmation_ref, :starts_at, :amount, :currency, keyword_init: true)
++
++  def setup
++    @item = Item.new(confirmed?: true, inbox_item_id: "mail-1", inbox_item: Inbox.new(true),
++                     confirmation_ref: "EMAIL-REF", starts_at: START, amount: BigDecimal("200"), currency: "EUR")
++    @evaluator = CancellationPolicies::QuoteEvaluator.new
++  end
++
++  def result(code, seconds)
++    @evaluator.call(trip_item: @item, policy_code: code, evaluated_at: START - seconds)
++  end
++
++  def test_all_policy_boundary_seconds
++    expected = {
++      "flexible" => [0, 0, 0, 0, 20, 20, 200, 200],
++      "moderate" => [0, 0, 100, 100, 200, 200, 200, 200],
++      "strict" => [200, 200, 200, 200, 200, 200, 200, 200]
++    }
++    seconds = [96*HOUR, 72*HOUR, 72*HOUR-1, 24*HOUR, 24*HOUR-1, 1, 0, -1]
++    expected.each do |policy, fees|
++      seconds.zip(fees).each do |s, expected_fee|
++        assert_equal BigDecimal(expected_fee.to_s), result(policy, s)[:fee_amount], "#{policy} at #{s} seconds"
++      end
++    end
++  end
++
++  def test_normalized_shape_and_currency
++    quote = result("moderate", 48*HOUR)
++    assert_equal %i[policy_code policy_name original_amount fee_amount refund_amount currency refundable explanation], quote.keys
++    assert_equal "EUR", quote[:currency]
++    assert_equal BigDecimal("100"), quote[:fee_amount]
++    assert_equal BigDecimal("100"), quote[:refund_amount]
++    assert_equal quote[:original_amount], quote[:fee_amount] + quote[:refund_amount]
++    assert quote[:refundable]
++  end
++
++  def test_decimal_rounding_half_up
++    @item.amount = BigDecimal("0.05")
++    quote = result("moderate", 48*HOUR)
++    assert_equal BigDecimal("0.03"), quote[:fee_amount]
++    assert_equal BigDecimal("0.02"), quote[:refund_amount]
++  end
++
++  def test_zero_amount_is_valid_but_not_refundable
++    @item.amount = BigDecimal("0")
++    quote = result("flexible", 48*HOUR)
++    assert_equal BigDecimal("0"), quote[:fee_amount]
++    assert_equal BigDecimal("0"), quote[:refund_amount]
++    refute quote[:refundable]
++  end
++
++  def test_unknown_policy_rejected
++    assert_raises(CancellationPolicies::QuoteEvaluator::UnknownPolicy) { result("surprise", 48*HOUR) }
++  end
++
++  def test_missing_and_negative_amount_rejected
++    @item.amount = nil
++    assert_raises(CancellationPolicies::QuoteEvaluator::InvalidBookingData) { result("flexible", HOUR) }
++    @item.amount = -1
++    assert_raises(CancellationPolicies::QuoteEvaluator::InvalidBookingData) { result("flexible", HOUR) }
++  end
++
++  def test_missing_time_and_invalid_evaluation_time_rejected
++    @item.starts_at = nil
++    assert_raises(CancellationPolicies::QuoteEvaluator::InvalidBookingData) { result("flexible", HOUR) }
++    @item.starts_at = START
++    assert_raises(CancellationPolicies::QuoteEvaluator::InvalidEvaluationTime) do
++      @evaluator.call(trip_item: @item, policy_code: "flexible", evaluated_at: "not a Time")
++    end
++  end
++
++  def test_unknown_currency_rejected
++    @item.currency = "JPY"
++    assert_raises(CancellationPolicies::QuoteEvaluator::InvalidBookingData) { result("flexible", HOUR) }
++  end
++
++  def test_idea_and_unlinked_demo_cannot_be_quoted
++    @item.define_singleton_method(:confirmed?) { false }
++    assert_raises(CancellationPolicies::QuoteEvaluator::IneligibleItem) { result("flexible", HOUR) }
++    @item.define_singleton_method(:confirmed?) { true }
++    @item.inbox_item_id = nil
++    assert_raises(CancellationPolicies::QuoteEvaluator::IneligibleItem) { result("flexible", HOUR) }
++  end
++
++  def test_own_reference_and_confirmed_inbox_required
++    @item.confirmation_ref = nil
++    assert_raises(CancellationPolicies::QuoteEvaluator::IneligibleItem) { result("flexible", HOUR) }
++    @item.confirmation_ref = "EMAIL-REF"
++    @item.inbox_item = Inbox.new(false)
++    assert_raises(CancellationPolicies::QuoteEvaluator::IneligibleItem) { result("flexible", HOUR) }
++  end
++end
+diff --git a/evidence/isolated_policy_checks_output.txt b/evidence/isolated_policy_checks_output.txt
+new file mode 100644
+--- /dev/null
++++ b/evidence/isolated_policy_checks_output.txt
+@@ -0,0 +1,9 @@
++Run options: --seed 49014
++
++# Running:
++
++..........
++
++Finished in 0.001335s, 7492.3316 runs/s, 33715.4922 assertions/s.
++
++10 runs, 45 assertions, 0 failures, 0 errors, 0 skips
+diff --git a/evidence/rails_full_test_attempt.log b/evidence/rails_full_test_attempt.log
+new file mode 100644
+--- /dev/null
++++ b/evidence/rails_full_test_attempt.log
+@@ -0,0 +1,18 @@
++Command: ruby bin/rails test
++Exit code: 1
++Ruby: ruby 3.3.8 (2025-04-09 revision b200bad6cd) [x86_64-linux-gnu]
++
++/usr/lib/ruby/3.3.0/bundler/definition.rb:599:in `materialize': Could not find rails-8.1.3, propshaft-1.3.1, sqlite3-2.9.2-x86_64-linux-gnu, puma-7.2.0, importmap-rails-2.2.3, turbo-rails-2.0.23, stimulus-rails-1.3.4, tailwindcss-rails-4.4.0, jbuilder-2.14.1, solid_cache-1.0.10, solid_queue-1.4.0, solid_cable-3.0.12, bootsnap-1.23.0, kamal-2.11.0, thruster-0.1.20-x86_64-linux, image_processing-1.14.0, omniauth-google-oauth2-1.2.2, omniauth-apple-1.4.0, omniauth-rails_csrf_protection-2.0.1, anthropic-1.30.0, postmark-rails-0.22.1, geocoder-1.8.6, pagy-43.5.0, dotenv-rails-3.2.0, debug-1.11.1, bundler-audit-0.9.3, brakeman-8.0.4, rubocop-rails-omakase-1.1.0, web-console-4.3.0, actioncable-8.1.3, actionmailbox-8.1.3, actionmailer-8.1.3, actionpack-8.1.3, actiontext-8.1.3, actionview-8.1.3, activejob-8.1.3, activemodel-8.1.3, activerecord-8.1.3, activestorage-8.1.3, activesupport-8.1.3, railties-8.1.3, rack-3.2.5, nio4r-2.7.5, tailwindcss-ruby-4.2.1-x86_64-linux-gnu, concurrent-ruby-1.3.6, fugit-1.12.1, thor-1.5.0, msgpack-1.8.0, base64-0.3.0, bcrypt_pbkdf-1.1.2, dotenv-3.2.0, ed25519-1.4.0, net-ssh-7.3.2, sshkit-1.25.0, zeitwerk-2.7.5, mini_magick-5.3.1, ruby-vips-2.3.0, jwt-3.1.2, oauth2-2.0.18, omniauth-2.1.4, omniauth-oauth2-1.9.0, json-jwt-1.17.0, cgi-0.5.1, connection_pool-3.0.2, postmark-1.25.1, csv-3.3.5, json-2.19.3, uri-1.1.1, yaml-0.4.0, irb-1.17.0, reline-0.6.3, racc-1.8.1, rubocop-1.86.0, rubocop-performance-1.26.1, rubocop-rails-2.34.3, bindex-0.8.1, websocket-driver-0.8.0, mail-2.9.0, rails-dom-testing-2.3.0, nokogiri-1.19.2-x86_64-linux-gnu, rack-session-2.1.1, rack-test-2.2.0, rails-html-sanitizer-1.7.0, useragent-0.16.11, action_text-trix-2.1.18, globalid-1.3.0, builder-3.3.0, erubi-1.13.1, timeout-0.6.1, marcel-1.1.0, bigdecimal-4.1.0, drb-2.2.3, i18n-1.14.8, logger-1.7.0, minitest-6.0.2, securerandom-0.4.1, tzinfo-2.0.6, rackup-2.3.1, rake-13.3.1, et-orbi-1.4.0, raabro-1.4.0, net-scp-4.1.0, net-sftp-4.0.0, ostruct-0.6.3, ffi-1.17.4-x86_64-linux-gnu, faraday-2.14.1, multi_xml-0.8.1, snaky_hash-2.0.3, version_gem-1.1.9, hashie-5.1.0, rack-protection-4.2.1, aes_key_wrap-1.1.0, bindata-2.5.1, faraday-follow_redirects-0.5.0, pp-0.6.3, prism-1.9.0, rdoc-7.2.0, io-console-0.8.2, language_server-protocol-3.17.0.5, lint_roller-1.1.0, parallel-1.27.0, parser-3.3.11.1, rainbow-3.1.1, regexp_parser-2.11.3, rubocop-ast-1.49.1, ruby-progressbar-1.13.0, unicode-display_width-3.2.0, websocket-extensions-0.1.5, mini_mime-1.1.5, net-imap-0.6.3, loofah-2.25.1, faraday-net_http-3.4.2, erb-6.0.2, psych-5.3.1, ast-2.4.3, unicode-emoji-4.2.0, date-3.5.1, crass-1.0.6, net-http-0.9.1, stringio-3.2.0 in locally installed gems (Bundler::GemNotFound)
++	from /usr/lib/ruby/3.3.0/bundler/definition.rb:193:in `specs'
++	from /usr/lib/ruby/3.3.0/bundler/definition.rb:260:in `specs_for'
++	from /usr/lib/ruby/3.3.0/bundler/runtime.rb:18:in `setup'
++	from /usr/lib/ruby/3.3.0/bundler.rb:164:in `setup'
++	from /usr/lib/ruby/3.3.0/bundler/setup.rb:32:in `block in <top (required)>'
++	from /usr/lib/ruby/3.3.0/bundler/ui/shell.rb:173:in `with_level'
++	from /usr/lib/ruby/3.3.0/bundler/ui/shell.rb:119:in `silence'
++	from /usr/lib/ruby/3.3.0/bundler/setup.rb:32:in `<top (required)>'
++	from <internal:/usr/lib/ruby/vendor_ruby/rubygems/core_ext/kernel_require.rb>:136:in `require'
++	from <internal:/usr/lib/ruby/vendor_ruby/rubygems/core_ext/kernel_require.rb>:136:in `require'
++	from /mnt/data/Scenario3_Work/scenario3_cancellation_policies/config/boot.rb:3:in `<top (required)>'
++	from bin/rails:3:in `require_relative'
++	from bin/rails:3:in `<main>'
+diff --git a/evidence/rails_scenario3_test_attempt.log b/evidence/rails_scenario3_test_attempt.log
+new file mode 100644
+--- /dev/null
++++ b/evidence/rails_scenario3_test_attempt.log
+@@ -0,0 +1,18 @@
++Command: ruby bin/rails test test/services/cancellation_policies_test.rb test/controllers/cancellation_quotes_controller_test.rb
++Exit code: 1
++Ruby: ruby 3.3.8 (2025-04-09 revision b200bad6cd) [x86_64-linux-gnu]
++
++/usr/lib/ruby/3.3.0/bundler/definition.rb:599:in `materialize': Could not find rails-8.1.3, propshaft-1.3.1, sqlite3-2.9.2-x86_64-linux-gnu, puma-7.2.0, importmap-rails-2.2.3, turbo-rails-2.0.23, stimulus-rails-1.3.4, tailwindcss-rails-4.4.0, jbuilder-2.14.1, solid_cache-1.0.10, solid_queue-1.4.0, solid_cable-3.0.12, bootsnap-1.23.0, kamal-2.11.0, thruster-0.1.20-x86_64-linux, image_processing-1.14.0, omniauth-google-oauth2-1.2.2, omniauth-apple-1.4.0, omniauth-rails_csrf_protection-2.0.1, anthropic-1.30.0, postmark-rails-0.22.1, geocoder-1.8.6, pagy-43.5.0, dotenv-rails-3.2.0, debug-1.11.1, bundler-audit-0.9.3, brakeman-8.0.4, rubocop-rails-omakase-1.1.0, web-console-4.3.0, actioncable-8.1.3, actionmailbox-8.1.3, actionmailer-8.1.3, actionpack-8.1.3, actiontext-8.1.3, actionview-8.1.3, activejob-8.1.3, activemodel-8.1.3, activerecord-8.1.3, activestorage-8.1.3, activesupport-8.1.3, railties-8.1.3, rack-3.2.5, nio4r-2.7.5, tailwindcss-ruby-4.2.1-x86_64-linux-gnu, concurrent-ruby-1.3.6, fugit-1.12.1, thor-1.5.0, msgpack-1.8.0, base64-0.3.0, bcrypt_pbkdf-1.1.2, dotenv-3.2.0, ed25519-1.4.0, net-ssh-7.3.2, sshkit-1.25.0, zeitwerk-2.7.5, mini_magick-5.3.1, ruby-vips-2.3.0, jwt-3.1.2, oauth2-2.0.18, omniauth-2.1.4, omniauth-oauth2-1.9.0, json-jwt-1.17.0, cgi-0.5.1, connection_pool-3.0.2, postmark-1.25.1, csv-3.3.5, json-2.19.3, uri-1.1.1, yaml-0.4.0, irb-1.17.0, reline-0.6.3, racc-1.8.1, rubocop-1.86.0, rubocop-performance-1.26.1, rubocop-rails-2.34.3, bindex-0.8.1, websocket-driver-0.8.0, mail-2.9.0, rails-dom-testing-2.3.0, nokogiri-1.19.2-x86_64-linux-gnu, rack-session-2.1.1, rack-test-2.2.0, rails-html-sanitizer-1.7.0, useragent-0.16.11, action_text-trix-2.1.18, globalid-1.3.0, builder-3.3.0, erubi-1.13.1, timeout-0.6.1, marcel-1.1.0, bigdecimal-4.1.0, drb-2.2.3, i18n-1.14.8, logger-1.7.0, minitest-6.0.2, securerandom-0.4.1, tzinfo-2.0.6, rackup-2.3.1, rake-13.3.1, et-orbi-1.4.0, raabro-1.4.0, net-scp-4.1.0, net-sftp-4.0.0, ostruct-0.6.3, ffi-1.17.4-x86_64-linux-gnu, faraday-2.14.1, multi_xml-0.8.1, snaky_hash-2.0.3, version_gem-1.1.9, hashie-5.1.0, rack-protection-4.2.1, aes_key_wrap-1.1.0, bindata-2.5.1, faraday-follow_redirects-0.5.0, pp-0.6.3, prism-1.9.0, rdoc-7.2.0, io-console-0.8.2, language_server-protocol-3.17.0.5, lint_roller-1.1.0, parallel-1.27.0, parser-3.3.11.1, rainbow-3.1.1, regexp_parser-2.11.3, rubocop-ast-1.49.1, ruby-progressbar-1.13.0, unicode-display_width-3.2.0, websocket-extensions-0.1.5, mini_mime-1.1.5, net-imap-0.6.3, loofah-2.25.1, faraday-net_http-3.4.2, erb-6.0.2, psych-5.3.1, ast-2.4.3, unicode-emoji-4.2.0, date-3.5.1, crass-1.0.6, net-http-0.9.1, stringio-3.2.0 in locally installed gems (Bundler::GemNotFound)
++	from /usr/lib/ruby/3.3.0/bundler/definition.rb:193:in `specs'
++	from /usr/lib/ruby/3.3.0/bundler/definition.rb:260:in `specs_for'
++	from /usr/lib/ruby/3.3.0/bundler/runtime.rb:18:in `setup'
++	from /usr/lib/ruby/3.3.0/bundler.rb:164:in `setup'
++	from /usr/lib/ruby/3.3.0/bundler/setup.rb:32:in `block in <top (required)>'
++	from /usr/lib/ruby/3.3.0/bundler/ui/shell.rb:173:in `with_level'
++	from /usr/lib/ruby/3.3.0/bundler/ui/shell.rb:119:in `silence'
++	from /usr/lib/ruby/3.3.0/bundler/setup.rb:32:in `<top (required)>'
++	from <internal:/usr/lib/ruby/vendor_ruby/rubygems/core_ext/kernel_require.rb>:136:in `require'
++	from <internal:/usr/lib/ruby/vendor_ruby/rubygems/core_ext/kernel_require.rb>:136:in `require'
++	from /mnt/data/Scenario3_Work/scenario3_cancellation_policies/config/boot.rb:3:in `<top (required)>'
++	from bin/rails:3:in `require_relative'
++	from bin/rails:3:in `<main>'
+diff --git a/evidence/scenario3_ruby_syntax_checks.txt b/evidence/scenario3_ruby_syntax_checks.txt
+new file mode 100644
+--- /dev/null
++++ b/evidence/scenario3_ruby_syntax_checks.txt
+@@ -0,0 +1,17 @@
++Command: ruby -c for Scenario 3 Ruby production, test and isolated files
++/mnt/data/Scenario3_Work/scenario3_cancellation_policies/app/controllers/cancellation_quotes_controller.rb
++Syntax OK
++/mnt/data/Scenario3_Work/scenario3_cancellation_policies/app/services/cancellation_policies/flexible.rb
++Syntax OK
++/mnt/data/Scenario3_Work/scenario3_cancellation_policies/app/services/cancellation_policies/moderate.rb
++Syntax OK
++/mnt/data/Scenario3_Work/scenario3_cancellation_policies/app/services/cancellation_policies/quote_evaluator.rb
++Syntax OK
++/mnt/data/Scenario3_Work/scenario3_cancellation_policies/app/services/cancellation_policies/strict.rb
++Syntax OK
++/mnt/data/Scenario3_Work/scenario3_cancellation_policies/test/services/cancellation_policies_test.rb
++Syntax OK
++/mnt/data/Scenario3_Work/scenario3_cancellation_policies/test/controllers/cancellation_quotes_controller_test.rb
++Syntax OK
++/mnt/data/Scenario3_Work/scenario3_cancellation_policies/evidence/isolated_cancellation_policy_checks.rb
++Syntax OK
+diff --git a/evidence/scenario3_runtime_verification_summary.txt b/evidence/scenario3_runtime_verification_summary.txt
+new file mode 100644
+--- /dev/null
++++ b/evidence/scenario3_runtime_verification_summary.txt
+@@ -0,0 +1,9 @@
++Scenario 3 verification summary (actual execution):
++Ruby: 3.3.8; project requires ruby-3.4.2.
++Standalone Ruby cancellation checks: ruby evidence/isolated_cancellation_policy_checks.rb -> exit 0; 10 tests, 45 assertions, 0 failures, 0 errors, 0 skips.
++Syntax: ruby -c on 8 new Ruby source/test/check files -> 8/8 Syntax OK.
++Focused Rails: ruby bin/rails test test/services/cancellation_policies_test.rb test/controllers/cancellation_quotes_controller_test.rb -> exit 1 (Bundler::GemNotFound, missing rails-8.1.3 and other locked gems); 0 tests executed.
++Full Rails: ruby bin/rails test -> exit 1, same blocker; 0 tests executed.
++No Rails pass/failure/error/skip totals available because test discovery was never reached.
++Live Anthropic, external provider, geocoding and Turbo integration were not run.
++Regression preservation is by byte-level source comparison, not successful Rails tests.
+diff --git a/test/controllers/cancellation_quotes_controller_test.rb b/test/controllers/cancellation_quotes_controller_test.rb
+new file mode 100644
+--- /dev/null
++++ b/test/controllers/cancellation_quotes_controller_test.rb
+@@ -0,0 +1,131 @@
++require "test_helper"
++
++class CancellationQuotesControllerTest < ActionController::TestCase
++  tests CancellationQuotesController
++
++  setup do
++    @owner, @trip = make_trip_fixture
++    @request.host = "whats.example.com"
++    @request.session[:user_id] = @owner.id
++    @email = @trip.inbox_items.create!(from_email: @owner.email, received_at: Time.utc(2026, 11, 1),
++                                       review_status: :confirmed, sender_status: :approved, parse_status: :parsed)
++    @item = @trip.trip_items.new(name: "Confirmed stay", kind: :stay, status: :confirmed,
++                                  added_by: @owner, inbox_item: @email, confirmation_ref: "EMAIL-BOOKING-007",
++                                  amount: BigDecimal("200.00"), currency: "EUR",
++                                  starts_at: Time.current + 4.days)
++    @item.defer_geocoding = true
++    @item.save!
++  end
++
++  def route_params
++    { trip_id: @trip.id, trip_item_id: @item.id }
++  end
++
++  def assert_read_only
++    before = [ @item.reload.attributes, @email.reload.attributes, TripItem.count, InboxItem.count, Expense.count ]
++    yield
++    assert_equal before, [ @item.reload.attributes, @email.reload.attributes, TripItem.count, InboxItem.count, Expense.count ]
++  end
++
++  test "owner can open quote screen and read demo-only explanation" do
++    assert_read_only do
++      get :new, params: route_params
++      assert_response :success
++      assert_select "select[name='policy_code']"
++      assert_select "a[href='#{trip_trip_item_path(@trip, @item)}']"
++      assert_select "[role=note]", /No reservation has been cancelled/
++    end
++  end
++
++  test "owner can quote each of three policies without mutating booking or expenses" do
++    assert_read_only do
++      %w[flexible moderate strict].each do |policy|
++        post :create, params: route_params.merge(policy_code: policy)
++        assert_response :success
++        assert_select "section[aria-label='Hypothetical cancellation quote']", /hypothetical/i
++        assert_select "[role=note]", /No reservation has been cancelled/
++      end
++    end
++  end
++
++  test "unknown policy returns a controlled user-visible error" do
++    assert_read_only do
++      post :create, params: route_params.merge(policy_code: "no_such_policy")
++      assert_response :unprocessable_entity
++      assert_select "[role=alert]", /Choose Flexible, Moderate or Strict/
++    end
++  end
++
++  test "non-owner and unrelated users cannot view or create a quote" do
++    viewer = User.create!(name: "Viewer", email: "viewer-#{SecureRandom.hex(4)}@example.test")
++    traveler = Traveler.create!(account: @trip.account, name: viewer.name, user: viewer)
++    TripMember.create!(trip: @trip, traveler: traveler, role: :viewer)
++    @request.session[:user_id] = viewer.id
++    assert_read_only do
++      get :new, params: route_params
++      assert_response :forbidden
++      post :create, params: route_params.merge(policy_code: "flexible")
++      assert_response :forbidden
++    end
++
++    stranger = User.create!(name: "Stranger", email: "other-#{SecureRandom.hex(4)}@example.test")
++    @request.session[:user_id] = stranger.id
++    assert_raises(ActiveRecord::RecordNotFound) { get :new, params: route_params }
++    assert_raises(ActiveRecord::RecordNotFound) { post :create, params: route_params.merge(policy_code: "flexible") }
++  end
++
++  test "Scenario 1 generated idea cannot be quoted even if manually marked confirmed" do
++    @item.update_columns(inbox_item_id: nil, confirmation_ref: nil, status: "confirmed")
++    assert_read_only do
++      get :new, params: route_params
++      assert_response :unprocessable_entity
++      post :create, params: route_params.merge(policy_code: "flexible")
++      assert_response :unprocessable_entity
++    end
++  end
++
++  test "Scenario 2 demo offer cannot be quoted even if manually marked confirmed" do
++    @item.update_columns(inbox_item_id: nil, confirmation_ref: nil, status: "confirmed",
++                         notes: "[demo_provider_offer:atlas_demo:atlas-rome-walk-01]")
++    assert_read_only do
++      post :create, params: route_params.merge(policy_code: "moderate")
++      assert_response :unprocessable_entity
++    end
++  end
++
++  test "sibling reference cannot substitute for item's own missing confirmation reference" do
++    @item.update_columns(confirmation_ref: nil)
++    sibling = @trip.trip_items.new(name: "Sibling", kind: :stay, status: :confirmed, added_by: @owner,
++                                    inbox_item: @email, confirmation_ref: "SIBLING-REF")
++    sibling.defer_geocoding = true
++    sibling.save!
++    assert_read_only do
++      post :create, params: route_params.merge(policy_code: "flexible")
++      assert_response :unprocessable_entity
++    end
++  end
++
++  test "browser submitted amount, currency and booking state do not affect quote" do
++    assert_read_only do
++      post :create, params: route_params.merge(policy_code: "flexible", amount: "999999.99", currency: "USD",
++                                                starts_at: Time.current - 5.days, confirmation_ref: "FAKE",
++                                                status: "idea", fee_amount: "0", refund_amount: "999999.99")
++      assert_response :success
++      assert_select "section[aria-label='Hypothetical cancellation quote']", /200\.00/
++      assert_select "section[aria-label='Hypothetical cancellation quote']", /EUR/
++      assert_select "section[aria-label='Hypothetical cancellation quote']", text: /999999\.99/, count: 0
++    end
++  end
++
++  test "no external request or geocoding job is invoked by viewing or quoting" do
++    Geocoder.stub(:search, ->(*) { raise "Unexpected external geocoding" }) do
++      GeocodeTripItemsJob.stub(:perform_later, ->(*) { raise "Unexpected job enqueue" }) do
++        assert_read_only do
++          get :new, params: route_params
++          post :create, params: route_params.merge(policy_code: "strict")
++          assert_response :success
++        end
++      end
++    end
++  end
++end
+diff --git a/test/services/cancellation_policies_test.rb b/test/services/cancellation_policies_test.rb
+new file mode 100644
+--- /dev/null
++++ b/test/services/cancellation_policies_test.rb
+@@ -0,0 +1,115 @@
++require "test_helper"
++
++class CancellationPoliciesTest < ActiveSupport::TestCase
++  START = Time.utc(2026, 11, 16, 10, 0, 0)
++  HOUR = 3600
++
++  setup do
++    @owner, @trip = make_trip_fixture
++    @inbox = @trip.inbox_items.create!(from_email: @owner.email, received_at: START - 5 * 24 * HOUR,
++                                       sender_status: :approved, parse_status: :parsed, review_status: :confirmed)
++    @item = @trip.trip_items.new(name: "Confirmed email booking", added_by: @owner, kind: :stay,
++                                  status: :confirmed, inbox_item: @inbox, confirmation_ref: "CONFIRMED-123",
++                                  starts_at: START, amount: BigDecimal("200.00"), currency: "EUR")
++    @item.defer_geocoding = true
++    @item.save!
++    @evaluator = CancellationPolicies::QuoteEvaluator.new
++  end
++
++  def quote(code, seconds:)
++    @evaluator.call(trip_item: @item, policy_code: code, evaluated_at: START - seconds)
++  end
++
++  test "all policies use the common fee rate contract with exact 72/24-hour boundaries" do
++    cases = {
++      "flexible" => { 96*HOUR => "0", 72*HOUR => "0", 72*HOUR-1 => "0", 24*HOUR => "0",
++                      24*HOUR-1 => "0.10", 1 => "0.10", 0 => "1", -1 => "1" },
++      "moderate" => { 96*HOUR => "0", 72*HOUR => "0", 72*HOUR-1 => "0.50", 24*HOUR => "0.50",
++                      24*HOUR-1 => "1", 1 => "1", 0 => "1", -1 => "1" },
++      "strict" => { 96*HOUR => "1", 72*HOUR => "1", 72*HOUR-1 => "1", 24*HOUR => "1",
++                    24*HOUR-1 => "1", 1 => "1", 0 => "1", -1 => "1" }
++    }
++    cases.each do |code, inputs|
++      inputs.each do |seconds, rate|
++        expected = BigDecimal("200.00") * BigDecimal(rate)
++        assert_equal expected, quote(code, seconds: seconds)[:fee_amount], "#{code} at #{seconds}s"
++      end
++    end
++  end
++
++  test "normalized result preserves decimal amounts and currency" do
++    result = quote("moderate", seconds: 48*HOUR)
++    assert_equal %i[policy_code policy_name original_amount fee_amount refund_amount currency refundable explanation], result.keys
++    assert_equal "moderate", result[:policy_code]
++    assert_equal "Moderate", result[:policy_name]
++    assert_equal BigDecimal("200.00"), result[:original_amount]
++    assert_equal BigDecimal("100.00"), result[:fee_amount]
++    assert_equal BigDecimal("100.00"), result[:refund_amount]
++    assert_equal "EUR", result[:currency]
++    assert result[:refundable]
++    assert_equal result[:original_amount], result[:fee_amount] + result[:refund_amount]
++  end
++
++  test "half-up money rounding uses database-stored amount and avoids float arithmetic" do
++    @item.update_columns(amount: BigDecimal("0.05"))
++    result = quote("moderate", seconds: 48*HOUR)
++    assert_equal BigDecimal("0.03"), result[:fee_amount]
++    assert_equal BigDecimal("0.02"), result[:refund_amount]
++  end
++
++  test "zero cost is valid and not positively refundable" do
++    @item.update_columns(amount: BigDecimal("0.00"), currency: "USD")
++    result = quote("flexible", seconds: 72*HOUR)
++    assert_equal BigDecimal("0"), result[:fee_amount]
++    assert_equal BigDecimal("0"), result[:refund_amount]
++    refute result[:refundable]
++    assert_equal "USD", result[:currency]
++  end
++
++  test "unknown policy and missing or invalid time are controlled errors" do
++    assert_raises(CancellationPolicies::QuoteEvaluator::UnknownPolicy) { quote("unknown", seconds: HOUR) }
++    assert_raises(CancellationPolicies::QuoteEvaluator::InvalidEvaluationTime) do
++      @evaluator.call(trip_item: @item, policy_code: "flexible", evaluated_at: nil)
++    end
++    assert_raises(CancellationPolicies::QuoteEvaluator::InvalidEvaluationTime) do
++      @evaluator.call(trip_item: @item, policy_code: "flexible", evaluated_at: "2026-11-16")
++    end
++  end
++
++  test "missing amount or start time, negative amount and unsupported currency are rejected" do
++    { amount: nil, starts_at: nil, currency: "JPY" }.each do |field, value|
++      @item.update_columns(field => value)
++      assert_raises(CancellationPolicies::QuoteEvaluator::InvalidBookingData) { quote("flexible", seconds: 3*HOUR) }
++      @item.reload
++      @item.update_columns(field => { amount: BigDecimal("200"), starts_at: START, currency: "EUR" }.fetch(field))
++    end
++    @item.update_columns(amount: BigDecimal("-1"))
++    assert_raises(CancellationPolicies::QuoteEvaluator::InvalidBookingData) { quote("flexible", seconds: 3*HOUR) }
++  end
++
++  test "idea or manually confirmed item without linked confirmed email cannot receive quote" do
++    @item.update_columns(status: "idea")
++    assert_raises(CancellationPolicies::QuoteEvaluator::IneligibleItem) { quote("flexible", seconds: 3*HOUR) }
++    @item.update_columns(status: "confirmed", inbox_item_id: nil)
++    assert_raises(CancellationPolicies::QuoteEvaluator::IneligibleItem) { quote("flexible", seconds: 3*HOUR) }
++  end
++
++  test "item must have its own confirmation reference, not a sibling display fallback" do
++    @item.update_columns(confirmation_ref: nil)
++    assert_raises(CancellationPolicies::QuoteEvaluator::IneligibleItem) { quote("flexible", seconds: 3*HOUR) }
++  end
++
++  test "inbox email must exist and have confirmed review status" do
++    @inbox.update!(review_status: :pending_review)
++    assert_raises(CancellationPolicies::QuoteEvaluator::IneligibleItem) { quote("flexible", seconds: 3*HOUR) }
++    @inbox.update!(review_status: :confirmed)
++    assert @evaluator.eligible?(trip_item: @item)
++  end
++
++  test "quote evaluator never changes trip item, inbox item or expense" do
++    before = [@item.attributes, @inbox.attributes, Expense.count]
++    quote("flexible", seconds: 24*HOUR)
++    quote("moderate", seconds: 24*HOUR)
++    assert_equal before, [@item.reload.attributes, @inbox.reload.attributes, Expense.count]
++  end
++end

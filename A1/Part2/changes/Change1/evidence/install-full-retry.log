@@ -1,0 +1,187 @@
+Collecting aiohappyeyeballs==2.6.1 (from -r ch01/baseline/requirements.txt (line 1))
+  Downloading aiohappyeyeballs-2.6.1-py3-none-any.whl.metadata (5.9 kB)
+Collecting aiohttp==3.13.5 (from -r ch01/baseline/requirements.txt (line 2))
+  Downloading aiohttp-3.13.5-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (8.1 kB)
+Collecting aiosignal==1.4.0 (from -r ch01/baseline/requirements.txt (line 3))
+  Downloading aiosignal-1.4.0-py3-none-any.whl.metadata (3.7 kB)
+Collecting APScheduler==3.11.2 (from -r ch01/baseline/requirements.txt (line 4))
+  Downloading apscheduler-3.11.2-py3-none-any.whl.metadata (6.4 kB)
+Collecting asgiref==3.11.1 (from -r ch01/baseline/requirements.txt (line 5))
+  Downloading asgiref-3.11.1-py3-none-any.whl.metadata (9.3 kB)
+Collecting attrs==26.1.0 (from -r ch01/baseline/requirements.txt (line 6))
+  Downloading attrs-26.1.0-py3-none-any.whl.metadata (8.8 kB)
+Collecting autobahn==25.12.2 (from -r ch01/baseline/requirements.txt (line 7))
+  Downloading autobahn-25.12.2-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (32 kB)
+Collecting Automat==25.4.16 (from -r ch01/baseline/requirements.txt (line 8))
+  Downloading automat-25.4.16-py3-none-any.whl.metadata (8.4 kB)
+Collecting CacheControl==0.14.4 (from -r ch01/baseline/requirements.txt (line 9))
+  Downloading cachecontrol-0.14.4-py3-none-any.whl.metadata (3.1 kB)
+Collecting cachetools==7.1.0 (from -r ch01/baseline/requirements.txt (line 10))
+  Downloading cachetools-7.1.0-py3-none-any.whl.metadata (5.8 kB)
+Collecting certifi==2026.4.22 (from -r ch01/baseline/requirements.txt (line 11))
+  Downloading certifi-2026.4.22-py3-none-any.whl.metadata (2.5 kB)
+Collecting cffi==2.0.0 (from -r ch01/baseline/requirements.txt (line 12))
+  Downloading cffi-2.0.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (2.6 kB)
+Collecting channels==4.3.2 (from -r ch01/baseline/requirements.txt (line 13))
+  Downloading channels-4.3.2-py3-none-any.whl.metadata (4.7 kB)
+Collecting channels-redis==4.3.0 (from -r ch01/baseline/requirements.txt (line 14))
+  Downloading channels_redis-4.3.0-py3-none-any.whl.metadata (13 kB)
+Collecting charset-normalizer==3.4.7 (from -r ch01/baseline/requirements.txt (line 15))
+  Downloading charset_normalizer-3.4.7-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (40 kB)
+Collecting click==8.3.3 (from -r ch01/baseline/requirements.txt (line 16))
+  Downloading click-8.3.3-py3-none-any.whl.metadata (2.6 kB)
+Collecting constantly==23.10.4 (from -r ch01/baseline/requirements.txt (line 17))
+  Downloading constantly-23.10.4-py3-none-any.whl.metadata (1.8 kB)
+Collecting daphne==4.2.1 (from -r ch01/baseline/requirements.txt (line 18))
+  Downloading daphne-4.2.1-py3-none-any.whl.metadata (1.7 kB)
+Collecting dataclasses-json==0.6.7 (from -r ch01/baseline/requirements.txt (line 19))
+  Downloading dataclasses_json-0.6.7-py3-none-any.whl.metadata (25 kB)
+Collecting defusedxml==0.8.0rc2 (from -r ch01/baseline/requirements.txt (line 20))
+  Downloading defusedxml-0.8.0rc2-py2.py3-none-any.whl.metadata (33 kB)
+Collecting dj-database-url==3.1.2 (from -r ch01/baseline/requirements.txt (line 21))
+  Downloading dj_database_url-3.1.2-py3-none-any.whl.metadata (13 kB)
+Collecting Django==6.0.4 (from -r ch01/baseline/requirements.txt (line 22))
+  Downloading django-6.0.4-py3-none-any.whl.metadata (3.9 kB)
+Collecting django-allauth==65.16.1 (from -r ch01/baseline/requirements.txt (line 23))
+  Downloading django_allauth-65.16.1-py3-none-any.whl.metadata (9.2 kB)
+Collecting django-cors-headers==4.9.0 (from -r ch01/baseline/requirements.txt (line 24))
+  Downloading django_cors_headers-4.9.0-py3-none-any.whl.metadata (16 kB)
+Collecting djangorestframework==3.17.1 (from -r ch01/baseline/requirements.txt (line 25))
+  Downloading djangorestframework-3.17.1-py3-none-any.whl.metadata (7.9 kB)
+Collecting dnspython==2.8.0 (from -r ch01/baseline/requirements.txt (line 26))
+  Downloading dnspython-2.8.0-py3-none-any.whl.metadata (5.7 kB)
+Collecting firebase-admin==7.4.0 (from -r ch01/baseline/requirements.txt (line 27))
+  Downloading firebase_admin-7.4.0-py3-none-any.whl.metadata (1.7 kB)
+Collecting frozenlist==1.8.0 (from -r ch01/baseline/requirements.txt (line 28))
+  Downloading frozenlist-1.8.0-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (20 kB)
+Collecting google-api-core==2.30.3 (from -r ch01/baseline/requirements.txt (line 29))
+  Downloading google_api_core-2.30.3-py3-none-any.whl.metadata (3.1 kB)
+Collecting google-api-python-client==2.195.0 (from -r ch01/baseline/requirements.txt (line 30))
+  Downloading google_api_python_client-2.195.0-py3-none-any.whl.metadata (7.0 kB)
+Collecting google-auth==2.50.0 (from -r ch01/baseline/requirements.txt (line 31))
+  Downloading google_auth-2.50.0-py3-none-any.whl.metadata (6.2 kB)
+Collecting google-auth-httplib2==0.3.1 (from -r ch01/baseline/requirements.txt (line 32))
+  Downloading google_auth_httplib2-0.3.1-py3-none-any.whl.metadata (3.0 kB)
+Collecting google-cloud-core==2.5.1 (from -r ch01/baseline/requirements.txt (line 33))
+  Downloading google_cloud_core-2.5.1-py3-none-any.whl.metadata (2.8 kB)
+Collecting google-cloud-firestore==2.27.0 (from -r ch01/baseline/requirements.txt (line 34))
+  Downloading google_cloud_firestore-2.27.0-py3-none-any.whl.metadata (10.0 kB)
+Collecting google-cloud-storage==3.10.1 (from -r ch01/baseline/requirements.txt (line 35))
+  Downloading google_cloud_storage-3.10.1-py3-none-any.whl.metadata (15 kB)
+Collecting google-crc32c==1.8.0 (from -r ch01/baseline/requirements.txt (line 36))
+  Downloading google_crc32c-1.8.0-cp312-cp312-manylinux1_x86_64.manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_5_x86_64.whl.metadata (1.7 kB)
+Collecting google-resumable-media==2.8.2 (from -r ch01/baseline/requirements.txt (line 37))
+  Downloading google_resumable_media-2.8.2-py3-none-any.whl.metadata (2.2 kB)
+Collecting googleapis-common-protos==1.74.0 (from -r ch01/baseline/requirements.txt (line 38))
+  Downloading googleapis_common_protos-1.74.0-py3-none-any.whl.metadata (9.2 kB)
+Collecting grpcio==1.80.0 (from -r ch01/baseline/requirements.txt (line 39))
+  Downloading grpcio-1.80.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (3.8 kB)
+Collecting grpcio-status==1.80.0 (from -r ch01/baseline/requirements.txt (line 40))
+  Downloading grpcio_status-1.80.0-py3-none-any.whl.metadata (1.3 kB)
+Collecting gunicorn==25.3.0 (from -r ch01/baseline/requirements.txt (line 41))
+  Downloading gunicorn-25.3.0-py3-none-any.whl.metadata (5.5 kB)
+Collecting h11==0.16.0 (from -r ch01/baseline/requirements.txt (line 42))
+  Downloading h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+Collecting h2==4.3.0 (from -r ch01/baseline/requirements.txt (line 43))
+  Downloading h2-4.3.0-py3-none-any.whl.metadata (5.1 kB)
+Collecting hpack==4.1.0 (from -r ch01/baseline/requirements.txt (line 44))
+  Downloading hpack-4.1.0-py3-none-any.whl.metadata (4.6 kB)
+Collecting httplib2==0.31.2 (from -r ch01/baseline/requirements.txt (line 45))
+  Downloading httplib2-0.31.2-py3-none-any.whl.metadata (2.2 kB)
+Collecting hyperframe==6.1.0 (from -r ch01/baseline/requirements.txt (line 46))
+  Downloading hyperframe-6.1.0-py3-none-any.whl.metadata (4.3 kB)
+Collecting hyperlink==21.0.0 (from -r ch01/baseline/requirements.txt (line 47))
+  Downloading hyperlink-21.0.0-py2.py3-none-any.whl.metadata (1.5 kB)
+Collecting idna==3.13 (from -r ch01/baseline/requirements.txt (line 48))
+  Downloading idna-3.13-py3-none-any.whl.metadata (8.0 kB)
+Collecting incremental==24.11.0 (from -r ch01/baseline/requirements.txt (line 49))
+  Downloading incremental-24.11.0-py3-none-any.whl.metadata (9.5 kB)
+Collecting jsons==1.6.3 (from -r ch01/baseline/requirements.txt (line 50))
+  Downloading jsons-1.6.3-py3-none-any.whl.metadata (9.3 kB)
+Collecting marshmallow==4.3.0 (from -r ch01/baseline/requirements.txt (line 51))
+  Downloading marshmallow-4.3.0-py3-none-any.whl.metadata (6.8 kB)
+Collecting marshmallow-enum==1.5.1 (from -r ch01/baseline/requirements.txt (line 52))
+  Downloading marshmallow_enum-1.5.1-py2.py3-none-any.whl.metadata (2.5 kB)
+Collecting msgpack==1.1.2 (from -r ch01/baseline/requirements.txt (line 53))
+  Downloading msgpack-1.1.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (8.1 kB)
+Collecting multidict==6.7.1 (from -r ch01/baseline/requirements.txt (line 54))
+  Downloading multidict-6.7.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (5.3 kB)
+Collecting mypy-extensions==1.1.0 (from -r ch01/baseline/requirements.txt (line 55))
+  Downloading mypy_extensions-1.1.0-py3-none-any.whl.metadata (1.1 kB)
+Collecting oauthlib==3.3.1 (from -r ch01/baseline/requirements.txt (line 56))
+  Downloading oauthlib-3.3.1-py3-none-any.whl.metadata (7.9 kB)
+Collecting packaging==26.2 (from -r ch01/baseline/requirements.txt (line 57))
+  Downloading packaging-26.2-py3-none-any.whl.metadata (3.5 kB)
+Collecting payu-sdk==1.2.0 (from -r ch01/baseline/requirements.txt (line 58))
+  Downloading payu_sdk-1.2.0-py3-none-any.whl.metadata (4.4 kB)
+Collecting payu-websdk==0.1.7 (from -r ch01/baseline/requirements.txt (line 59))
+  Downloading payu_websdk-0.1.7-py3-none-any.whl.metadata (1.8 kB)
+Requirement already satisfied: phonepe-sdk==1.1.0 in ./ch01/venv/lib/python3.12/site-packages (from -r ch01/baseline/requirements.txt (line 60)) (1.1.0)
+Collecting pillow==12.2.0 (from -r ch01/baseline/requirements.txt (line 61))
+  Downloading pillow-12.2.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (8.8 kB)
+Collecting priority==2.0.0 (from -r ch01/baseline/requirements.txt (line 62))
+  Downloading priority-2.0.0-py3-none-any.whl.metadata (6.6 kB)
+Collecting propcache==0.4.1 (from -r ch01/baseline/requirements.txt (line 63))
+  Downloading propcache-0.4.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (13 kB)
+Collecting proto-plus==1.27.2 (from -r ch01/baseline/requirements.txt (line 64))
+  Downloading proto_plus-1.27.2-py3-none-any.whl.metadata (2.2 kB)
+Collecting protobuf==7.34.1 (from -r ch01/baseline/requirements.txt (line 65))
+  Downloading protobuf-7.34.1-cp310-abi3-manylinux2014_x86_64.whl.metadata (595 bytes)
+Collecting psycopg2==2.9.12 (from -r ch01/baseline/requirements.txt (line 66))
+  Downloading psycopg2-2.9.12.tar.gz (379 kB)
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'error'
+  error: subprocess-exited-with-error
+  
+  × Getting requirements to build wheel did not run successfully.
+  │ exit code: 1
+  ╰─> [34 lines of output]
+      /tmp/pip-build-env-sr8slbt5/overlay/lib/python3.12/site-packages/setuptools/dist.py:765: SetuptoolsDeprecationWarning: License classifiers are deprecated.
+      !!
+      
+              ********************************************************************************
+              Please consider removing the following classifiers in favor of a SPDX license expression:
+      
+              License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)
+      
+              See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#license for details.
+              ********************************************************************************
+      
+      !!
+        self._finalize_license_expression()
+      running egg_info
+      writing psycopg2.egg-info/PKG-INFO
+      writing dependency_links to psycopg2.egg-info/dependency_links.txt
+      writing top-level names to psycopg2.egg-info/top_level.txt
+      
+      Error: pg_config executable not found.
+      
+      pg_config is required to build psycopg2 from source.  Please add the directory
+      containing pg_config to the $PATH or specify the full executable path with the
+      option:
+      
+          python setup.py build_ext --pg-config /path/to/pg_config build ...
+      
+      or with the pg_config option in 'setup.cfg'.
+      
+      If you prefer to avoid building psycopg2 from source, please install the PyPI
+      'psycopg2-binary' package instead.
+      
+      For further information please check the 'doc/src/install.rst' file (also at
+      <https://www.psycopg.org/docs/install.html>).
+      
+      [end of output]
+  
+  note: This error originates from a subprocess, and is likely not a problem with pip.
+
+[notice] A new release of pip is available: 25.0.1 -> 26.2.1
+[notice] To update, run: python -m pip install --upgrade pip
+error: subprocess-exited-with-error
+
+× Getting requirements to build wheel did not run successfully.
+│ exit code: 1
+╰─> See above for output.
+
+note: This error originates from a subprocess, and is likely not a problem with pip.

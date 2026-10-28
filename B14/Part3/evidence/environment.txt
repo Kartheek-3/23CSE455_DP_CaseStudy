@@ -1,0 +1,7 @@
+Platform: Linux-6.18.44-x86_64-with-glibc2.41
+Python timing harness: 3.13.5
+Java compiler: javac 21.0.12.1
+Java runtime: openjdk version "21.0.12.1" 2026-08-18
+C++ compiler: g++ (Debian 14.2.0-19) 14.2.0
+Timing procedure: compile first; one warm-up; five measured process launches; median reported.
+Timing scope: process startup and test harness included; compilation excluded.

@@ -1,0 +1,9 @@
+/workspace/scratch/ac905c27eac1/ch01/venv/lib/python3.12/site-packages/payu_sdk/payuClient.py:3: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  import pkg_resources
+System check identified some issues:
+
+WARNINGS:
+?: settings.ACCOUNT_EMAIL_REQUIRED is deprecated, use: settings.ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
+
+System check identified 1 issue (0 silenced).
+Failed to initialize Firebase: [Errno 2] No such file or directory: 'foodhub-c60e4-firebase-adminsdk-oxz22-3e6b763fd3.json'

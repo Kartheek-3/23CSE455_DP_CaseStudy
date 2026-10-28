@@ -1,0 +1,9 @@
+{
+  "name": "null-object-listener",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/main.js ../test-data/tests.txt",
+    "test": "node --test test/nullobject.test.js"
+  }
+}

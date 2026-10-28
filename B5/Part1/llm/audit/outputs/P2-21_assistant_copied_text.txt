@@ -1,0 +1,84 @@
+# Part 2 — LLM Audit Record
+
+The audit contains 20 stages, covering initial planning, source investigations, candidate verification, the adversarial review, baseline freezing and final documentation.
+
+Historical model identifiers cannot be reliably established for each stage, so the requested fallback `ChatGPT - 2026-10-08` is used. Filenames are proposed archival names for the original conversation records; they do not imply that those files have already been saved.
+
+## 1. Final `llm.csv`
+
+```
+part,model_and_date,prompt_file,input_file,output_file,evaluation,verification_file
+Part 2 - Pattern Discovery and Verification,ChatGPT - 2026-10-08,01_requirements_plan_prompt.txt,daplanstan-main.zip,01_requirements_plan_raw.txt,Partial - Initial requirements and source-inspection plan established; source provenance remained unverified,14_repository_sweep_raw.txt
+Part 2 - Pattern Discovery and Verification,ChatGPT - 2026-10-08,02_geocoding_investigation_prompt.txt,"daplanstan-main.zip;01_requirements_plan_raw.txt",02_geocoding_investigation_raw.txt,Partial - Geocoding responsibilities traced; apparent pattern similarities required separate verification,03_geocoding_verification_raw.txt
+Part 2 - Pattern Discovery and Verification,ChatGPT - 2026-10-08,03_geocoding_verification_prompt.txt,"daplanstan-main.zip;02_geocoding_investigation_raw.txt",03_geocoding_verification_raw.txt,Correct - Template Method Strategy and Adapter rejected; Turbo notification classification remained unresolved at this stage,15_adversarial_review_raw.txt
+Part 2 - Pattern Discovery and Verification,ChatGPT - 2026-10-08,04_inbound_email_investigation_prompt.txt,"daplanstan-main.zip;03_geocoding_verification_raw.txt",04_inbound_email_investigation_raw.txt,Partial - Inbound email and parsed-record linking traced; candidates required source-based challenge,05_inbound_email_verification_raw.txt
+Part 2 - Pattern Discovery and Verification,ChatGPT - 2026-10-08,05_inbound_email_verification_prompt.txt,"daplanstan-main.zip;04_inbound_email_investigation_raw.txt",05_inbound_email_verification_raw.txt,Correct - Information Expert and inbound Controller responsibilities supported; shared Turbo Observer classification deferred,15_adversarial_review_raw.txt
+Part 2 - Pattern Discovery and Verification,ChatGPT - 2026-10-08,06_trip_membership_investigation_prompt.txt,"daplanstan-main.zip;05_inbound_email_verification_raw.txt",06_trip_membership_investigation_raw.txt,Partial - Trip creation and membership responsibilities traced; independent use-case boundaries required verification,07_trip_membership_verification_raw.txt
+Part 2 - Pattern Discovery and Verification,ChatGPT - 2026-10-08,07_trip_membership_verification_prompt.txt,"daplanstan-main.zip;06_trip_membership_investigation_raw.txt",07_trip_membership_verification_raw.txt,Correct - Trip Creation and Trip Membership Management retained as separate Controller responsibilities,17_baseline_freeze_raw.txt
+Part 2 - Pattern Discovery and Verification,ChatGPT - 2026-10-08,08_itinerary_expenses_investigation_prompt.txt,"daplanstan-main.zip;07_trip_membership_verification_raw.txt",08_itinerary_expenses_investigation_raw.txt,Partial - Itinerary import and expense workflows traced; bulk import candidate required independent classification check,09_bulk_import_verification_raw.txt
+Part 2 - Pattern Discovery and Verification,ChatGPT - 2026-10-08,09_bulk_import_verification_prompt.txt,"daplanstan-main.zip;08_itinerary_expenses_investigation_raw.txt",09_bulk_import_verification_raw.txt,Correct - Bulk Itinerary Import Coordination supported; preview and confirmation counted as one collaboration,17_baseline_freeze_raw.txt
+Part 2 - Pattern Discovery and Verification,ChatGPT - 2026-10-08,10_external_identity_investigation_prompt.txt,"daplanstan-main.zip;09_bulk_import_verification_raw.txt",10_external_identity_investigation_raw.txt,Partial - OAuth coordination and mail logging identified as candidates; both remained unconfirmed pending source and framework verification,11_external_identity_verification_raw.txt
+Part 2 - Pattern Discovery and Verification,ChatGPT - 2026-10-08,11_external_identity_verification_prompt.txt,"daplanstan-main.zip;10_external_identity_investigation_raw.txt",11_external_identity_verification_raw.txt,Correct - OAuth Controller and Mail Observer retained; Observer acceptance depended on checked Action Mailer 8.1.3 and Mail 2.9.0 contracts,17_baseline_freeze_raw.txt
+Part 2 - Pattern Discovery and Verification,ChatGPT - 2026-10-08,12_frontend_investigation_prompt.txt,"daplanstan-main.zip;11_external_identity_verification_raw.txt",12_frontend_investigation_raw.txt,Partial - Custom map events and Turbo stream paths traced; map Observer was provisional and Turbo Observer remained uncertain,13_frontend_observer_verification_raw.txt
+Part 2 - Pattern Discovery and Verification,ChatGPT - 2026-10-08,13_frontend_observer_verification_prompt.txt,"daplanstan-main.zip;12_frontend_investigation_raw.txt",13_frontend_observer_verification_raw.txt,Correct - Targeted timeline-map Observer rejected and trip-scoped Turbo Observer retained using checked Turbo Rails 2.0.23 contracts,15_adversarial_review_raw.txt
+Part 2 - Pattern Discovery and Verification,ChatGPT - 2026-10-08,14_repository_sweep_prompt.txt,"daplanstan-main.zip;13_frontend_observer_verification_raw.txt",14_repository_sweep_raw.txt,Partial - Repository coverage completed and two new GRASP candidates left unconfirmed; later review retained account enrollment and rejected invite eligibility,15_adversarial_review_raw.txt
+Part 2 - Pattern Discovery and Verification,ChatGPT - 2026-10-08,15_adversarial_review_prompt.txt,"daplanstan-main.zip;14_repository_sweep_raw.txt",15_adversarial_review_raw.txt,Correct - Nine source-supported instances retained after challenge; Account Traveler Enrollment accepted and Beta Invite Eligibility rejected,17_baseline_freeze_raw.txt
+Part 2 - Pattern Discovery and Verification,ChatGPT - 2026-10-08,16_human_worksheet_prompt.txt,"15_adversarial_review_raw.txt;daplanstan-main.zip",16_human_worksheet_raw.txt,Partial - Human-verification checklist prepared but no independent human review or sign-off was established,20_verification_evidence_raw.txt
+Part 2 - Pattern Discovery and Verification,ChatGPT - 2026-10-08,17_baseline_freeze_prompt.txt,"daplanstan-main.zip;15_adversarial_review_raw.txt;16_human_worksheet_raw.txt",17_baseline_freeze_raw.txt,Correct - source-supported baseline frozen; independent human sign-off and runtime testing not established,20_verification_evidence_raw.txt
+Part 2 - Pattern Discovery and Verification,ChatGPT - 2026-10-08,18_baseline_csv_prompt.txt,17_baseline_freeze_raw.txt,18_baseline_csv_raw.txt,Partial - Nine frozen rows and counts of 6 Controller 1 Information Expert and 2 Observer agree with baseline; separately saved files and parser validation not documented,20_verification_evidence_raw.txt
+Part 2 - Pattern Discovery and Verification,ChatGPT - 2026-10-08,19_uml_preparation_prompt.txt,"17_baseline_freeze_raw.txt;18_baseline_csv_raw.txt",19_uml_preparation_raw.txt,Partial - Nine editable Mermaid diagrams drafted from frozen participants; rendering and SVG export were not independently verified,20_verification_evidence_raw.txt
+Part 2 - Pattern Discovery and Verification,ChatGPT - 2026-10-08,20_verification_evidence_prompt.txt,"daplanstan-main.zip;17_baseline_freeze_raw.txt;18_baseline_csv_raw.txt;19_uml_preparation_raw.txt",20_verification_evidence_raw.txt,Partial - Nine source-confirmed records and five rejected-candidate records documented; runtime tests and independent human sign-off remain outstanding,17_baseline_freeze_raw.txt
+```
+
+## 2. Suggested filenames for 20 prompts and 20 raw outputs
+
+The filenames below match the references used in `llm.csv`.
+
+| Stage                               | Prompt file                                      | Raw LLM output file                           |
+| ----------------------------------- | ------------------------------------------------ | --------------------------------------------- |
+| 01 — Requirements and planning      | `01_requirements_plan_prompt.txt`                | `01_requirements_plan_raw.txt`                |
+| 02 — Geocoding investigation        | `02_geocoding_investigation_prompt.txt`          | `02_geocoding_investigation_raw.txt`          |
+| 03 — Geocoding verification         | `03_geocoding_verification_prompt.txt`           | `03_geocoding_verification_raw.txt`           |
+| 04 — Inbound email investigation    | `04_inbound_email_investigation_prompt.txt`      | `04_inbound_email_investigation_raw.txt`      |
+| 05 — Inbound email verification     | `05_inbound_email_verification_prompt.txt`       | `05_inbound_email_verification_raw.txt`       |
+| 06 — Trip creation and membership   | `06_trip_membership_investigation_prompt.txt`    | `06_trip_membership_investigation_raw.txt`    |
+| 07 — Trip/membership verification   | `07_trip_membership_verification_prompt.txt`     | `07_trip_membership_verification_raw.txt`     |
+| 08 — Itinerary and expenses         | `08_itinerary_expenses_investigation_prompt.txt` | `08_itinerary_expenses_investigation_raw.txt` |
+| 09 — Bulk import verification       | `09_bulk_import_verification_prompt.txt`         | `09_bulk_import_verification_raw.txt`         |
+| 10 — External integrations          | `10_external_identity_investigation_prompt.txt`  | `10_external_identity_investigation_raw.txt`  |
+| 11 — External pattern verification  | `11_external_identity_verification_prompt.txt`   | `11_external_identity_verification_raw.txt`   |
+| 12 — Frontend investigation         | `12_frontend_investigation_prompt.txt`           | `12_frontend_investigation_raw.txt`           |
+| 13 — Frontend Observer verification | `13_frontend_observer_verification_prompt.txt`   | `13_frontend_observer_verification_raw.txt`   |
+| 14 — Repository-wide sweep          | `14_repository_sweep_prompt.txt`                 | `14_repository_sweep_raw.txt`                 |
+| 15 — Final adversarial review       | `15_adversarial_review_prompt.txt`               | `15_adversarial_review_raw.txt`               |
+| 16 — Human-verification worksheet   | `16_human_worksheet_prompt.txt`                  | `16_human_worksheet_raw.txt`                  |
+| 17 — Baseline freeze                | `17_baseline_freeze_prompt.txt`                  | `17_baseline_freeze_raw.txt`                  |
+| 18 — Baseline CSV preparation       | `18_baseline_csv_prompt.txt`                     | `18_baseline_csv_raw.txt`                     |
+| 19 — UML preparation                | `19_uml_preparation_prompt.txt`                  | `19_uml_preparation_raw.txt`                  |
+| 20 — Verification evidence          | `20_verification_evidence_prompt.txt`            | `20_verification_evidence_raw.txt`            |
+
+## 3. Raw evidence preservation rules
+
+Keep the 20 original prompts and 20 raw LLM outputs unchanged. Save each from the relevant conversation stage without correcting wording, changing provisional classifications or replacing early conclusions with the final nine-instance inventory.
+
+In particular, preserve the original geocoding pattern suggestions, the provisional timeline–map Observer, the earlier uncertain Turbo classification and the two candidates discovered during the repository sweep. Their subsequent rejection, acceptance or revision is part of the audit evidence.
+
+The `verification_file` column identifies later source-based review outputs that support or qualify earlier conclusions. These later LLM reviews are not substitutes for independent human sign-off. Where a corresponding source-check document or reviewer record is prepared, preserve it separately, with its reviewer, date and evidence; update references only to files that have actually been saved.
+
+Also keep the final frozen `patterns.csv`, `pattern_counts.csv`, Mermaid sources and verification records separate from the raw LLM outputs. Do not overwrite stage 18 or 19 raw responses with corrected or exported artifacts.
+
+Audit completeness check
+
+| Check                                                  | Result         |
+| ------------------------------------------------------ | -------------- |
+| Major workflow stages                                  | 20 represented |
+| Suggested prompt files                                 | 20             |
+| Suggested raw-output files                             | 20             |
+| Earlier rejected/revised candidates preserved          | Yes            |
+| Historical nine-instance count imposed on early stages | No             |
+| Framework-contract dependency recorded                 | Mail and Turbo |
+| Independent human sign-off claimed                     | No             |
+| Frozen baseline modified                               | No             |
+| Evolution analysis performed                           | No             |
+
+Status: The `llm.csv` content is prepared for archival. The named prompt and output files still need to be saved from the original conversation records and checked against their actual contents. The frozen baseline remains 6 Controller + 1 Information Expert + 2 Observer = 9 instances across 3 pattern types.

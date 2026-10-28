@@ -1,0 +1,78 @@
+# lizard 1.24.1 on the production files only; working folder: Part3/command_automation_actions
+$ lizard java/AbstractFunctionAction.java python/automation_actions.py javascript/automation_actions.js cpp/automation_actions.hpp
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       4      1     27      2       4 DictVars::DictVars@24-27@java/AbstractFunctionAction.java
+       4      2     24      1       4 DictVars::appendMessage@29-32@java/AbstractFunctionAction.java
+       1      1     13      1       1 EmailService::EmailService@41-41@java/AbstractFunctionAction.java
+       5      1     18      0       5 EmailService::checkAllowed@43-47@java/AbstractFunctionAction.java
+       3      1     33      2       3 EmailService::sendEmail@49-51@java/AbstractFunctionAction.java
+       1      1     18      1       1 OutputControl::OutputControl@59-59@java/AbstractFunctionAction.java
+       1      1     15      1       1 OutputControl::outputName@61-61@java/AbstractFunctionAction.java
+       3      1     37      4       3 OutputControl::outputOnOff@63-65@java/AbstractFunctionAction.java
+       4      1     22      2       4 EmailAction::EmailAction@72-75@java/AbstractFunctionAction.java
+      19      8    174      1      19 EmailAction::runAction@78-96@java/AbstractFunctionAction.java
+       7      1     49      5       7 OutputOnOffAction::OutputOnOffAction@105-111@java/AbstractFunctionAction.java
+      17      6    191      1      17 OutputOnOffAction::runAction@114-130@java/AbstractFunctionAction.java
+       1      1     19      2       1 ActionInvoker::register@137-137@java/AbstractFunctionAction.java
+       5      2     45      2       5 ActionInvoker::triggerAction@139-143@java/AbstractFunctionAction.java
+       2      1     25      2       2 __init__@13-14@python/automation_actions.py
+       4      1     21      1       4 check_allowed@16-19@python/automation_actions.py
+       2      1     26      3       2 send_email@21-22@python/automation_actions.py
+       2      1     19      2       2 __init__@28-29@python/automation_actions.py
+       2      1     16      2       2 output_name@31-32@python/automation_actions.py
+       2      1     29      5       2 output_on_off@34-35@python/automation_actions.py
+       2      1      8      2       2 run_action@41-42@python/automation_actions.py
+       2      1     20      3       2 __init__@46-47@python/automation_actions.py
+      16      7    118      2      16 run_action@49-64@python/automation_actions.py
+       3      1     43      6       3 __init__@68-70@python/automation_actions.py
+      16      6    154      2      16 run_action@72-87@python/automation_actions.py
+       2      1     11      1       2 __init__@93-94@python/automation_actions.py
+       2      1     17      3       2 register@96-97@python/automation_actions.py
+       4      2     37      3       4 trigger_action@99-102@python/automation_actions.py
+       4      2     29      2       4 appendMessage@11-14@javascript/automation_actions.js
+       3      1     25      1       3 constructor@18-20@javascript/automation_actions.js
+       5      1     24      0       5 checkAllowed@22-26@javascript/automation_actions.js
+       3      1     25      2       3 sendEmail@28-30@javascript/automation_actions.js
+       3      1     21      1       3 constructor@35-37@javascript/automation_actions.js
+       1      2     21      1       1 outputName@39-39@javascript/automation_actions.js
+       3      1     37      4       3 outputOnOff@41-43@javascript/automation_actions.js
+       3      1      8      1       3 runAction@48-50@javascript/automation_actions.js
+       4      1     24      2       4 constructor@54-57@javascript/automation_actions.js
+       1      1      4      0       1 (anonymous)@62-62@javascript/automation_actions.js
+      16      7    131      1      16 runAction@59-74@javascript/automation_actions.js
+       4      1     36      5       4 constructor@78-81@javascript/automation_actions.js
+      17      9    187      1      17 runAction@83-99@javascript/automation_actions.js
+       3      1     13      0       3 constructor@104-106@javascript/automation_actions.js
+       1      1     18      2       1 register@108-108@javascript/automation_actions.js
+       4      2     47      2       4 triggerAction@110-113@javascript/automation_actions.js
+       4      2     28      1       4 DictVars::append_message@20-23@cpp/automation_actions.hpp
+       1      1     12      1       1 EmailService::EmailService@29-29@cpp/automation_actions.hpp
+       1      1     11      0       1 EmailService::check_allowed@30-30@cpp/automation_actions.hpp
+       5      3     68      2       5 EmailService::send_email@31-35@cpp/automation_actions.hpp
+       1      1     28      1       1 OutputControl::OutputControl@46-46@cpp/automation_actions.hpp
+       4      2     39      1       4 OutputControl::output_name@47-50@cpp/automation_actions.hpp
+       5      1     66      4       5 OutputControl::output_on_off@51-55@cpp/automation_actions.hpp
+       1      1     28      2       1 EmailAction::EmailAction@71-71@cpp/automation_actions.hpp
+      21      8    193      1      21 EmailAction::run_action@72-92@cpp/automation_actions.hpp
+       8      3     60      2       8 EmailAction::split@96-103@cpp/automation_actions.hpp
+       3      1     59      5       3 OutputOnOffAction::OutputOnOffAction@110-112@cpp/automation_actions.hpp
+      18      8    229      1      18 OutputOnOffAction::run_action@113-130@cpp/automation_actions.hpp
+       3      1     31      2       3 ActionInvoker::register_action@143-145@cpp/automation_actions.hpp
+       5      2     58      2       5 ActionInvoker::trigger_action@146-150@cpp/automation_actions.hpp
+4 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+    112       5.4     2.0       48.9        14     java/AbstractFunctionAction.java
+     67       4.4     1.9       38.9        14     python/automation_actions.py
+     88       4.7     2.1       40.6        16     javascript/automation_actions.js
+    130       5.7     2.5       65.0        14     cpp/automation_actions.hpp
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+       397       5.0     2.1       48.1       58            0      0.00    0.00

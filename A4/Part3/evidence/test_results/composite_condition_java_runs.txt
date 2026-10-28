@@ -1,0 +1,32 @@
+Pattern: Composite
+Instance: Visibility Condition Tree
+Language: Java
+Compiler/Runtime: javac 23.0.2 / OpenJDK Java 23.0.2+7-58
+Warmup + 5 Runs Raw Output:
+--- Run 1 ---
+RESULT: 6/6 passed
+TIME_MS: 10.767
+
+
+--- Run 2 ---
+RESULT: 6/6 passed
+TIME_MS: 5.773
+
+
+--- Run 3 ---
+RESULT: 6/6 passed
+TIME_MS: 6.555
+
+
+--- Run 4 ---
+RESULT: 6/6 passed
+TIME_MS: 6.912
+
+
+--- Run 5 ---
+RESULT: 6/6 passed
+TIME_MS: 7.114
+
+
+Measured Milliseconds: [10.767, 5.773, 6.555, 6.912, 7.114]
+Computed Median Milliseconds: 6.912

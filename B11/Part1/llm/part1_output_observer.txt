@@ -1,0 +1,22 @@
+[Model: Claude Opus 4.8 | Date: 2026-10-10 | Pattern: Observer | Owner: Nithilesh]
+
+VERDICT: UNCERTAIN - behaviourally a notification mechanism, but NOT a canonical Observer.
+
+What the code actually does (verified):
+- LegalAppApplication.java:25  @EnableScheduling
+- LegalAppApplication.java:45,81,88  three @Scheduled methods
+- These call EmailServiceImpl (hearingReminder / sendMailWithAttachement /
+  BirthdayReminder) which emails users.
+
+Why UNCERTAIN rather than Confirmed:
+A true Observer has a Subject that maintains a list of registered Observers and
+notifies each on a state change. Here there is NO such registration - a timer
+(Spring's scheduler) fires on a cron/fixed-rate schedule and the scheduled method
+directly invokes the email service. There is no subscribe/unsubscribe, no observer
+collection, no subject-observer decoupling. It is scheduler-triggered broadcast, not
+subject-observer notification.
+
+Recommendation: record as an uncertain Observer candidate with this reasoning. CH02
+(adding an SMS channel via a CaseRegister that holds registered observers) is what
+turns this into a genuine Observer - that evolution is the honest way to claim the
+pattern.

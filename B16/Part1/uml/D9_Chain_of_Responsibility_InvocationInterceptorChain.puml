@@ -1,0 +1,46 @@
+@startuml D9
+!pragma layout smetana
+title D9 Chain of Responsibility: InvocationInterceptorChain
+
+interface InvocationInterceptor <<Handler>> {
+  +interceptTestMethod(Invocation, ...)
+  +interceptBeforeEachMethod(Invocation, ...)
+  +interceptAfterEachMethod(Invocation, ...)
+}
+class TimeoutExtension <<ConcreteHandler>>
+interface "InvocationInterceptor.Invocation<T>" as Invocation <<Request>> {
+  +proceed() : T
+  +skip()
+}
+class "InvocationInterceptorChain.InterceptedInvocation<T>" as Link <<Successor link>> {
+  invocation : Invocation<T>
+  call : InterceptorCall<T>
+  interceptor : InvocationInterceptor
+  +proceed() : T
+}
+class InvocationInterceptorChain <<ChainBuilder>> {
+  +invoke(Invocation, ExtensionRegistry, InterceptorCall)
+  -chainInterceptors(...)
+}
+class InterceptingExecutableInvoker <<Client>> {
+  {static} -interceptorChain : InvocationInterceptorChain
+}
+
+TimeoutExtension ..|> InvocationInterceptor
+Link ..|> Invocation
+Link o--> Invocation : invocation (next in chain)
+Link o--> InvocationInterceptor : interceptor
+InvocationInterceptorChain ..> Link : builds back to front
+InterceptingExecutableInvoker o--> InvocationInterceptorChain : interceptorChain
+InvocationInterceptor ..> Invocation : proceed() or skip()
+' aligned-with-record
+legend right
+  <b>Counted participants</b> (record in the dataset)
+  Handler: InvocationInterceptor
+  ConcreteHandler: TimeoutExtension
+  Chain builder: InvocationInterceptorChain#chainInterceptors
+  Link to next handler: InterceptedInvocation
+  Client: InterceptingExecutableInvoker
+  Grey classes: real, shown for context, not counted
+endlegend
+@enduml

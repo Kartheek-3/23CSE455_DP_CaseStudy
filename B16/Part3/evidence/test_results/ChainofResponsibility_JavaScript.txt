@@ -1,0 +1,14 @@
+$ (cd Part3/chain-of-responsibility-interceptors/javascript) node --test test/chain.test.js
+✔ report matches expected-output.txt (0.6095ms)
+✔ a handler can stop the chain before later links (0.3355ms)
+✔ invalid input is rejected with expected-error.txt (0.285625ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 100.223375
+[exit 0]
+result: 3/3 passed

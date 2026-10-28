@@ -1,0 +1,16 @@
+# publish_subscribe / java
+# working folder: Part3/code/pattern_publish_subscribe/java
+# runtime: OpenJDK 17.0.19 (javac 17.0.19)
+$ javac -d build *.java
+
+
+$ java -cp build GlobalEventServiceTest ../../../test-cases/publish_subscribe.txt
+PASS subscriber_receives
+PASS only_matching_channel
+PASS subscribers_in_order
+PASS unsubscribe
+PASS no_subscriber_message_dropped
+passed 5/5
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 103.7, 87.6, 96.0, 89.3, 98.0 -> median 96.0

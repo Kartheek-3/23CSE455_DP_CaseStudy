@@ -1,0 +1,1 @@
+Challenge these five baseline claims against the recorded public commit: MVC, Active Record, Chain of Responsibility, Template Method, and Facade. Also test whether Repository, Strategy, or Observer should be counted. Return confirmed, rejected, or uncertain with participant and source evidence.

@@ -1,0 +1,29 @@
+I'm doing Part 2 (Evolution and Refactoring) of a university design-patterns project on Mycodo v8.17.0 (https://github.com/kizniche/Mycodo.git, baseline commit ee70a111c622e2a81026fd5c1553a948acf8161e). I've attached PART2_GUIDE.md (the full spec), my Part 1 data/patterns.csv, data/pattern_counts.csv, and the relevant source files. The guide's Library app is only an example; my real app is Mycodo and my real pattern instances are the ones in patterns.csv. Reuse the exact same instance_name values.
+
+My three required changes are:
+- CH01: [describe requirement 1]
+- CH02: [describe requirement 2]
+- CH03: [describe requirement 3]
+
+For EACH change, follow the guide's Steps 3-9 and give me:
+1. requirement.md: requirement, 3-5 testable acceptance criteria, the expected pattern effect, an honest refactoring section, and a "Pattern effects" table covering EVERY pattern instance alive at that point (status: preserved / modified / extended / replaced / removed / newly_introduced, with a one-line reason).
+2. Code smell: name a real smell in the code I'll touch, with file and line evidence from the attached code, and the refactoring technique. If there is no genuine smell, say so; do not invent one.
+3. Characterization tests to write BEFORE any changes, which must pass on the unmodified code.
+4. The refactoring as a minimal diff with no behaviour change.
+5. The feature as a separate minimal diff that extends an existing pattern where possible instead of adding more if/else.
+6. Tests for each acceptance criterion.
+7. The git commands for saving characterization_tests.diff, refactoring.diff, feature.diff and test_result.log in the guide's folder layout.
+
+Then give me the full-run deliverables:
+- patterns_evolution.csv rows (9 columns exactly as in the guide) for Original code and for Code after Change1, Change2 and Change3. Baseline rows are copied from patterns.csv with status baseline. Removed instances keep a row with status removed. Source locations point to the correct folder for each version.
+- pattern_counts.csv rows for each version. Following the guide's counting rules, adding a participant to an existing pattern is not a new instance, and removed instances are not counted.
+- A metrics.csv template (columns: version, folder, source_files, nloc, functions, max_ccn, avg_ccn, tests_passed, tests_total) with the lizard commands to fill it. Do NOT invent the numbers.
+- Mermaid (.mmd) source for evolved_architecture, the updated UML for every extended, modified or replaced pattern, and a new UML for every newly introduced pattern.
+- A short explanation I can paste into the report of how the metrics changed and why.
+
+Strict rules:
+- Only use code, file names, class names and line numbers that appear in the attached files. If you can't verify something, write "CANNOT CONFIRM" instead of guessing.
+- You cannot run my tests. Never fabricate test output, screenshots, metrics numbers or line ranges. Give me the exact commands to run and mark every number I must fill in myself as TODO.
+- Keep refactoring and feature diffs strictly separate.
+- Show your reasoning for each pattern status choice.
+- Output everything as clearly labelled sections, one per file, so I can copy each into its own file.

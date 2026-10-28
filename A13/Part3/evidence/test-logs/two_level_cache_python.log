@@ -1,0 +1,15 @@
+# two_level_cache / python
+# working folder: Part3/code/pattern_two_level_cache/python
+# runtime: CPython 3.14.6
+$ python3 -B test_redis_single_cache.py ../../../test-cases/two_level_cache.txt
+PASS first_fetch_calls_fetcher
+PASS second_fetch_hits_memory
+PASS memory_expiry_falls_back_to_redis
+PASS delete_clears_both_levels
+PASS get_on_empty_cache_is_none
+PASS get_does_not_call_fetcher
+PASS other_process_reads_redis
+passed 7/7
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 23.9, 24.3, 25.2, 23.8, 24.2 -> median 24.2

@@ -1,0 +1,12 @@
+@page
+@model RecoveryCodesModel
+@{ ViewData["Title"] = "Recovery codes"; }
+<h2>Recovery codes</h2>
+<p>Generating codes replaces your previous set. Each code works once, after your password. Save these codes offline.</p>
+@if (Model.Codes != null) { <ul>@foreach (var code in Model.Codes) { <li><code>@code</code></li> }</ul> }
+<form method="post">
+    <div asp-validation-summary="All"></div>
+    <label asp-for="Password">Confirm password</label>
+    <input asp-for="Password" autocomplete="current-password" />
+    <button type="submit">Generate new recovery codes</button>
+</form>

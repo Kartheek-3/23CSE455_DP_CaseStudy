@@ -1,0 +1,46 @@
+Working Directory: /home/vighnesh/DP-case_study/misskey
+Command: pnpm --filter backend exec vitest run test/unit/LinkSafetyService.test.ts --config vitest.config.unit.ts
+Node version: v22.23.1
+pnpm version: 11.25.0
+Date: Sun Oct 11 10:27:06 AM UTC 2026
+--------------------------------------------------
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - `__dirname` (vitest.config.ts:28:17). Use `import.meta.dirname` instead
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v4.1.11 /home/vighnesh/DP-case_study/misskey/packages/backend
+
+(node:20165) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node-22 --trace-deprecation ...` to show where the warning was created)
+ ✓ test/unit/LinkSafetyService.test.ts (29 tests) 26ms 23 MB heap used
+
+ Test Files  1 passed (1)
+      Tests  29 passed (29)
+   Start at  15:57:07
+   Duration  543ms (transform 117ms, setup 0ms, import 333ms, tests 26ms, environment 22ms)
+
+Exit Code: 0
+--------------------------------------------------
+Regression Verification across all changes (CH01, CH02, CH03):
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - `__dirname` (vitest.config.ts:28:17). Use `import.meta.dirname` instead
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v4.1.11 /home/vighnesh/DP-case_study/misskey/packages/backend
+
+(node:20235) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node-22 --trace-deprecation ...` to show where the warning was created)
+ ✓ test/unit/LinkSafetyService.test.ts (29 tests) 25ms 23 MB heap used
+ ✓ test/unit/EventService.test.ts (21 tests) 19ms 144 MB heap used
+ ✓ test/unit/AudioTranscriptService.test.ts (21 tests) 13ms 16 MB heap used
+
+ Test Files  3 passed (3)
+      Tests  71 passed (71)
+   Start at  15:57:09
+   Duration  2.40s (transform 532ms, setup 0ms, import 1.84s, tests 57ms, environment 58ms)
+
+Regression Exit Code: 0
+--------------------------------------------------
+SPDX Header Verification:
+SPDX: OK — CI 判定と HTML コメント形式を対象 2486 ファイルが通過した。追加確認は不要。
+SPDX Exit Code: 0

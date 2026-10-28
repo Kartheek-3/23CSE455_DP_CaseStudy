@@ -1,0 +1,9 @@
+{
+  "name": "factory-method-executors",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/main.js ../test-data/tests.txt",
+    "test": "node --test test/factory.test.js"
+  }
+}

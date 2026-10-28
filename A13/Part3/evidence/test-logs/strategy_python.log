@@ -1,0 +1,13 @@
+# strategy / python
+# working folder: Part3/code/pattern_strategy/python
+# runtime: CPython 3.14.6
+$ python3 -B test_log_manager.py ../../../test-cases/strategy.txt
+PASS default_backend
+PASS switch_to_pretty
+PASS switch_to_json
+PASS runtime_swap
+PASS null_backend_rejected
+passed 5/5
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 34.4, 32.9, 33.1, 34.1, 32.5 -> median 33.1

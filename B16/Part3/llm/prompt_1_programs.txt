@@ -1,0 +1,50 @@
+Hey, I'm on Part 3 of my JUnit 6.1.3 case study now. I need to take two of the patterns I found
+in JUnit and write a small program for each one in Java, Python, JavaScript and C++. All four
+versions should solve the same problem with the same input file and give exactly the same output.
+
+The first one is Observer, based on JUnit's TestExecutionListener (my instance C1). The idea:
+a runner reads test events from a text file, something like
+
+  started  CalcTests#add
+  finished CalcTests#add SUCCESSFUL
+  skipped  CalcTests#div reason=disabled
+  finished CalcTests#sub FAILED
+
+and passes each event to the listeners registered with it. I'd like three listeners: one that
+counts results per status, one that logs a line per event, and a broken one that throws every
+time. Same as CompositeTestExecutionListener.notifyEach in JUnit, the broken listener shouldn't
+stop the others from getting the event, but the failure should be recorded somewhere. At the
+end, print the summary and the log.
+
+The second one is Composite, based on JUnit's TestDescriptor tree (my instance A1). Read an
+indented text file that describes an engine, its test classes and their test methods (methods
+can have tags), and build a tree where containers and leaves share one interface. Then count
+the tests, remove the tests that have a given tag, prune any container that ends up empty, and
+print the tree.
+
+Could you put everything in a part3/ folder like this?
+  part3/<pattern_problem_name>/test-data/    input file(s) and the exact expected output
+  part3/<pattern_problem_name>/java/         code, test runner, README.md
+  part3/<pattern_problem_name>/python/       same
+  part3/<pattern_problem_name>/javascript/   same
+  part3/<pattern_problem_name>/cpp/          same
+
+A few things that matter for my marks:
+- Write each version the way people normally write that language: interfaces in Java, an ABC
+  or duck typing in Python, classes in JavaScript, an abstract base class with smart pointers
+  in C++. Keep the actual code small and keep it separate from the tests.
+- Standard library only, nothing to install.
+- Each language needs a test runner that runs the program on the shared input and checks it
+  against the expected output (plain main with an exit code for Java, unittest for Python,
+  node:test for JavaScript, a small main returning 0 or 1 for C++).
+- I have Java 25, Python 3.14, Node 26 and Apple clang 21 (C++20). Please put the exact
+  compile/run/test commands in each README, run from that language's folder.
+- In each README, add a few lines on how the pattern comes out differently in that language,
+  like static vs dynamic typing, interfaces vs duck typing, and who owns the memory.
+
+Once it's all written, please actually run every compile and test command in your sandbox and
+show me what happened, including the versions you used. Don't bother timing anything; I have
+to do the timing on my own laptop.
+
+Last thing: I need to copy all of this to my computer. A single part3.zip would be perfect if
+you can make one. If not, just print every file in full with its path above it.

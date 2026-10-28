@@ -1,0 +1,2 @@
+add 10 PASS
+div 10 PASS skipped

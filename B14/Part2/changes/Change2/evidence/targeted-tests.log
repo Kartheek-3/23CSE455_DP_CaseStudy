@@ -1,0 +1,66 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.3 [39m[90m/Users/niveditaramesh/Projects/nextjs-blog-cms[39m
+
+ [32m✓[39m __tests__/features/posts/publication.test.ts [2m([22m[2m30 tests[22m[2m)[22m[32m 27[2mms[22m[39m
+[90mstderr[2m | __tests__/features/posts/actions.test.ts[2m > [22m[2mdashboard publication actions[2m > [22m[2mreports publish success separately from a scheduling failure
+[22m[39m[updatePost] Newsletter scheduling failed: Error: Database unavailable
+    at [90m/Users/niveditaramesh/Projects/nextjs-blog-cms/[39m__tests__/features/posts/actions.test.ts:121:61
+    at [90mfile:///Users/niveditaramesh/Projects/nextjs-blog-cms/[39mnode_modules/[4m.pnpm[24m/vitest@5.0.3_@types+node@24.19.1_@vitest+coverage-v8@5.0.3_jsdom@30.1.2_@noble+hashes@1_f97942b8f5e79211fd67ce9242d55731/node_modules/[4mvitest[24m/dist/chunks/run.BTlFXlnv.js:1628:35
+    at [90mfile:///Users/niveditaramesh/Projects/nextjs-blog-cms/[39mnode_modules/[4m.pnpm[24m/vitest@5.0.3_@types+node@24.19.1_@vitest+coverage-v8@5.0.3_jsdom@30.1.2_@noble+hashes@1_f97942b8f5e79211fd67ce9242d55731/node_modules/[4mvitest[24m/dist/chunks/run.BTlFXlnv.js:2783:26
+    at [90mfile:///Users/niveditaramesh/Projects/nextjs-blog-cms/[39mnode_modules/[4m.pnpm[24m/vitest@5.0.3_@types+node@24.19.1_@vitest+coverage-v8@5.0.3_jsdom@30.1.2_@noble+hashes@1_f97942b8f5e79211fd67ce9242d55731/node_modules/[4mvitest[24m/dist/chunks/run.BTlFXlnv.js:3321:20
+    at new Promise (<anonymous>)
+    at runWithCancel [90m(file:///Users/niveditaramesh/Projects/nextjs-blog-cms/[39mnode_modules/[4m.pnpm[24m/vitest@5.0.3_@types+node@24.19.1_@vitest+coverage-v8@5.0.3_jsdom@30.1.2_@noble+hashes@1_f97942b8f5e79211fd67ce9242d55731/node_modules/[4mvitest[24m/dist/chunks/run.BTlFXlnv.js:3316:10[90m)[39m
+    at [90mfile:///Users/niveditaramesh/Projects/nextjs-blog-cms/[39mnode_modules/[4m.pnpm[24m/vitest@5.0.3_@types+node@24.19.1_@vitest+coverage-v8@5.0.3_jsdom@30.1.2_@noble+hashes@1_f97942b8f5e79211fd67ce9242d55731/node_modules/[4mvitest[24m/dist/chunks/run.BTlFXlnv.js:3301:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///Users/niveditaramesh/Projects/nextjs-blog-cms/[39mnode_modules/[4m.pnpm[24m/vitest@5.0.3_@types+node@24.19.1_@vitest+coverage-v8@5.0.3_jsdom@30.1.2_@noble+hashes@1_f97942b8f5e79211fd67ce9242d55731/node_modules/[4mvitest[24m/dist/chunks/run.BTlFXlnv.js:3259:10[90m)[39m
+    at [90mfile:///Users/niveditaramesh/Projects/nextjs-blog-cms/[39mnode_modules/[4m.pnpm[24m/vitest@5.0.3_@types+node@24.19.1_@vitest+coverage-v8@5.0.3_jsdom@30.1.2_@noble+hashes@1_f97942b8f5e79211fd67ce9242d55731/node_modules/[4mvitest[24m/dist/chunks/run.BTlFXlnv.js:3882:64
+
+[90mstderr[2m | __tests__/features/posts/actions.test.ts[2m > [22m[2mdashboard publication actions[2m > [22m[2mreports unpublish success even when queue cancellation fails
+[22m[39m[unpublishPost] Newsletter cancellation failed: Error: Database unavailable
+    at [90m/Users/niveditaramesh/Projects/nextjs-blog-cms/[39m__tests__/features/posts/actions.test.ts:129:59
+    at [90mfile:///Users/niveditaramesh/Projects/nextjs-blog-cms/[39mnode_modules/[4m.pnpm[24m/vitest@5.0.3_@types+node@24.19.1_@vitest+coverage-v8@5.0.3_jsdom@30.1.2_@noble+hashes@1_f97942b8f5e79211fd67ce9242d55731/node_modules/[4mvitest[24m/dist/chunks/run.BTlFXlnv.js:1628:35
+    at [90mfile:///Users/niveditaramesh/Projects/nextjs-blog-cms/[39mnode_modules/[4m.pnpm[24m/vitest@5.0.3_@types+node@24.19.1_@vitest+coverage-v8@5.0.3_jsdom@30.1.2_@noble+hashes@1_f97942b8f5e79211fd67ce9242d55731/node_modules/[4mvitest[24m/dist/chunks/run.BTlFXlnv.js:2783:26
+    at [90mfile:///Users/niveditaramesh/Projects/nextjs-blog-cms/[39mnode_modules/[4m.pnpm[24m/vitest@5.0.3_@types+node@24.19.1_@vitest+coverage-v8@5.0.3_jsdom@30.1.2_@noble+hashes@1_f97942b8f5e79211fd67ce9242d55731/node_modules/[4mvitest[24m/dist/chunks/run.BTlFXlnv.js:3321:20
+    at new Promise (<anonymous>)
+    at runWithCancel [90m(file:///Users/niveditaramesh/Projects/nextjs-blog-cms/[39mnode_modules/[4m.pnpm[24m/vitest@5.0.3_@types+node@24.19.1_@vitest+coverage-v8@5.0.3_jsdom@30.1.2_@noble+hashes@1_f97942b8f5e79211fd67ce9242d55731/node_modules/[4mvitest[24m/dist/chunks/run.BTlFXlnv.js:3316:10[90m)[39m
+    at [90mfile:///Users/niveditaramesh/Projects/nextjs-blog-cms/[39mnode_modules/[4m.pnpm[24m/vitest@5.0.3_@types+node@24.19.1_@vitest+coverage-v8@5.0.3_jsdom@30.1.2_@noble+hashes@1_f97942b8f5e79211fd67ce9242d55731/node_modules/[4mvitest[24m/dist/chunks/run.BTlFXlnv.js:3301:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///Users/niveditaramesh/Projects/nextjs-blog-cms/[39mnode_modules/[4m.pnpm[24m/vitest@5.0.3_@types+node@24.19.1_@vitest+coverage-v8@5.0.3_jsdom@30.1.2_@noble+hashes@1_f97942b8f5e79211fd67ce9242d55731/node_modules/[4mvitest[24m/dist/chunks/run.BTlFXlnv.js:3259:10[90m)[39m
+    at [90mfile:///Users/niveditaramesh/Projects/nextjs-blog-cms/[39mnode_modules/[4m.pnpm[24m/vitest@5.0.3_@types+node@24.19.1_@vitest+coverage-v8@5.0.3_jsdom@30.1.2_@noble+hashes@1_f97942b8f5e79211fd67ce9242d55731/node_modules/[4mvitest[24m/dist/chunks/run.BTlFXlnv.js:3882:64
+
+[90mstderr[2m | __tests__/features/posts/actions.test.ts[2m > [22m[2mnewsletter scheduling retry authorization[2m > [22m[2mfails closed when queue status is unavailable
+[22m[39m[getPostNewsletterState] Failed to read newsletter status: { message: [32m'Database unavailable'[39m }
+
+[90mstderr[2m | __tests__/features/posts/actions.test.ts[2m > [22m[2mnewsletter scheduling retry authorization[2m > [22m[2mreports retry scheduling failure without modifying the published post
+[22m[39m[retryNewsletterScheduling] Scheduling failed: Error: DB unavailable
+    at [90m/Users/niveditaramesh/Projects/nextjs-blog-cms/[39m__tests__/features/posts/actions.test.ts:182:61
+    at [90mfile:///Users/niveditaramesh/Projects/nextjs-blog-cms/[39mnode_modules/[4m.pnpm[24m/vitest@5.0.3_@types+node@24.19.1_@vitest+coverage-v8@5.0.3_jsdom@30.1.2_@noble+hashes@1_f97942b8f5e79211fd67ce9242d55731/node_modules/[4mvitest[24m/dist/chunks/run.BTlFXlnv.js:1628:35
+    at [90mfile:///Users/niveditaramesh/Projects/nextjs-blog-cms/[39mnode_modules/[4m.pnpm[24m/vitest@5.0.3_@types+node@24.19.1_@vitest+coverage-v8@5.0.3_jsdom@30.1.2_@noble+hashes@1_f97942b8f5e79211fd67ce9242d55731/node_modules/[4mvitest[24m/dist/chunks/run.BTlFXlnv.js:2783:26
+    at [90mfile:///Users/niveditaramesh/Projects/nextjs-blog-cms/[39mnode_modules/[4m.pnpm[24m/vitest@5.0.3_@types+node@24.19.1_@vitest+coverage-v8@5.0.3_jsdom@30.1.2_@noble+hashes@1_f97942b8f5e79211fd67ce9242d55731/node_modules/[4mvitest[24m/dist/chunks/run.BTlFXlnv.js:3321:20
+    at new Promise (<anonymous>)
+    at runWithCancel [90m(file:///Users/niveditaramesh/Projects/nextjs-blog-cms/[39mnode_modules/[4m.pnpm[24m/vitest@5.0.3_@types+node@24.19.1_@vitest+coverage-v8@5.0.3_jsdom@30.1.2_@noble+hashes@1_f97942b8f5e79211fd67ce9242d55731/node_modules/[4mvitest[24m/dist/chunks/run.BTlFXlnv.js:3316:10[90m)[39m
+    at [90mfile:///Users/niveditaramesh/Projects/nextjs-blog-cms/[39mnode_modules/[4m.pnpm[24m/vitest@5.0.3_@types+node@24.19.1_@vitest+coverage-v8@5.0.3_jsdom@30.1.2_@noble+hashes@1_f97942b8f5e79211fd67ce9242d55731/node_modules/[4mvitest[24m/dist/chunks/run.BTlFXlnv.js:3301:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///Users/niveditaramesh/Projects/nextjs-blog-cms/[39mnode_modules/[4m.pnpm[24m/vitest@5.0.3_@types+node@24.19.1_@vitest+coverage-v8@5.0.3_jsdom@30.1.2_@noble+hashes@1_f97942b8f5e79211fd67ce9242d55731/node_modules/[4mvitest[24m/dist/chunks/run.BTlFXlnv.js:3259:10[90m)[39m
+    at [90mfile:///Users/niveditaramesh/Projects/nextjs-blog-cms/[39mnode_modules/[4m.pnpm[24m/vitest@5.0.3_@types+node@24.19.1_@vitest+coverage-v8@5.0.3_jsdom@30.1.2_@noble+hashes@1_f97942b8f5e79211fd67ce9242d55731/node_modules/[4mvitest[24m/dist/chunks/run.BTlFXlnv.js:3882:64
+
+[90mstderr[2m | __tests__/features/posts/actions.test.ts[2m > [22m[2mpublication directly from the new writing screen[2m > [22m[2mreports newsletter failure after successful new publication
+[22m[39m[createPost] Newsletter scheduling failed: Error: Queue unavailable
+    at [90m/Users/niveditaramesh/Projects/nextjs-blog-cms/[39m__tests__/features/posts/actions.test.ts:298:61
+    at [90mfile:///Users/niveditaramesh/Projects/nextjs-blog-cms/[39mnode_modules/[4m.pnpm[24m/vitest@5.0.3_@types+node@24.19.1_@vitest+coverage-v8@5.0.3_jsdom@30.1.2_@noble+hashes@1_f97942b8f5e79211fd67ce9242d55731/node_modules/[4mvitest[24m/dist/chunks/run.BTlFXlnv.js:1628:35
+    at [90mfile:///Users/niveditaramesh/Projects/nextjs-blog-cms/[39mnode_modules/[4m.pnpm[24m/vitest@5.0.3_@types+node@24.19.1_@vitest+coverage-v8@5.0.3_jsdom@30.1.2_@noble+hashes@1_f97942b8f5e79211fd67ce9242d55731/node_modules/[4mvitest[24m/dist/chunks/run.BTlFXlnv.js:2783:26
+    at [90mfile:///Users/niveditaramesh/Projects/nextjs-blog-cms/[39mnode_modules/[4m.pnpm[24m/vitest@5.0.3_@types+node@24.19.1_@vitest+coverage-v8@5.0.3_jsdom@30.1.2_@noble+hashes@1_f97942b8f5e79211fd67ce9242d55731/node_modules/[4mvitest[24m/dist/chunks/run.BTlFXlnv.js:3321:20
+    at new Promise (<anonymous>)
+    at runWithCancel [90m(file:///Users/niveditaramesh/Projects/nextjs-blog-cms/[39mnode_modules/[4m.pnpm[24m/vitest@5.0.3_@types+node@24.19.1_@vitest+coverage-v8@5.0.3_jsdom@30.1.2_@noble+hashes@1_f97942b8f5e79211fd67ce9242d55731/node_modules/[4mvitest[24m/dist/chunks/run.BTlFXlnv.js:3316:10[90m)[39m
+    at [90mfile:///Users/niveditaramesh/Projects/nextjs-blog-cms/[39mnode_modules/[4m.pnpm[24m/vitest@5.0.3_@types+node@24.19.1_@vitest+coverage-v8@5.0.3_jsdom@30.1.2_@noble+hashes@1_f97942b8f5e79211fd67ce9242d55731/node_modules/[4mvitest[24m/dist/chunks/run.BTlFXlnv.js:3301:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///Users/niveditaramesh/Projects/nextjs-blog-cms/[39mnode_modules/[4m.pnpm[24m/vitest@5.0.3_@types+node@24.19.1_@vitest+coverage-v8@5.0.3_jsdom@30.1.2_@noble+hashes@1_f97942b8f5e79211fd67ce9242d55731/node_modules/[4mvitest[24m/dist/chunks/run.BTlFXlnv.js:3259:10[90m)[39m
+    at [90mfile:///Users/niveditaramesh/Projects/nextjs-blog-cms/[39mnode_modules/[4m.pnpm[24m/vitest@5.0.3_@types+node@24.19.1_@vitest+coverage-v8@5.0.3_jsdom@30.1.2_@noble+hashes@1_f97942b8f5e79211fd67ce9242d55731/node_modules/[4mvitest[24m/dist/chunks/run.BTlFXlnv.js:3882:64
+
+ [32m✓[39m __tests__/features/posts/actions.test.ts [2m([22m[2m43 tests[22m[2m)[22m[32m 66[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m2 passed[39m[22m[90m (2)[39m
+[2m      Tests [22m [1m[32m73 passed[39m[22m[90m (73)[39m
+[2m   Start at [22m 00:17:16
+[2m   Duration [22m 1.34s[2m (environment 63%, setup 14%, transform 9%, import 9%, tests 4%, worker 1%)[22m
+

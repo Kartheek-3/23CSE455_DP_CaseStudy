@@ -1,0 +1,16 @@
+# adapter / python
+# working folder: Part3/code/pattern_adapter/python
+# runtime: CPython 3.14.6
+$ python3 -B test_telemetry.py ../../../test-cases/adapter.txt
+PASS no_adapter_runs_function
+PASS message_with_user
+PASS message_without_user
+PASS span_returns_value
+PASS span_propagates_error
+PASS shutdown_has_time_limit
+PASS two_adapters_fan_out
+PASS two_adapters_nest_spans
+passed 8/8
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 24.9, 24.3, 24.3, 24.5, 25.1 -> median 24.5

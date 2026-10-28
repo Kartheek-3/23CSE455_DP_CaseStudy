@@ -1,0 +1,54 @@
+source_version,summary,pattern_name,count
+Original code,per_pattern,Adapter,3
+Original code,per_pattern,Chain of Responsibility,1
+Original code,per_pattern,Data Mapper,1
+Original code,per_pattern,Decorator,1
+Original code,per_pattern,Dependency Injection,1
+Original code,per_pattern,Gateway,1
+Original code,per_pattern,Layered Architecture,1
+Original code,per_pattern,Observer,1
+Original code,per_pattern,Repository,5
+Original code,per_pattern,Singleton,1
+Original code,total_pattern_types,,10
+Original code,total_pattern_instances,,16
+After CH01,per_pattern,Adapter,3
+After CH01,per_pattern,Chain of Responsibility,1
+After CH01,per_pattern,Data Mapper,1
+After CH01,per_pattern,Decorator,1
+After CH01,per_pattern,Dependency Injection,1
+After CH01,per_pattern,Gateway,1
+After CH01,per_pattern,Layered Architecture,1
+After CH01,per_pattern,Observer,1
+After CH01,per_pattern,Repository,5
+After CH01,per_pattern,Singleton,1
+After CH01,per_pattern,State,1
+After CH01,total_pattern_types,,11
+After CH01,total_pattern_instances,,17
+After CH02,per_pattern,Adapter,3
+After CH02,per_pattern,Chain of Responsibility,1
+After CH02,per_pattern,Data Mapper,1
+After CH02,per_pattern,Decorator,1
+After CH02,per_pattern,Dependency Injection,1
+After CH02,per_pattern,Gateway,1
+After CH02,per_pattern,Layered Architecture,1
+After CH02,per_pattern,Observer,1
+After CH02,per_pattern,Repository,5
+After CH02,per_pattern,Singleton,1
+After CH02,per_pattern,State,2
+After CH02,per_pattern,Strategy,1
+After CH02,total_pattern_types,,12
+After CH02,total_pattern_instances,,19
+After CH03,per_pattern,Adapter,3
+After CH03,per_pattern,Chain of Responsibility,1
+After CH03,per_pattern,Data Mapper,1
+After CH03,per_pattern,Decorator,2
+After CH03,per_pattern,Dependency Injection,1
+After CH03,per_pattern,Gateway,1
+After CH03,per_pattern,Layered Architecture,1
+After CH03,per_pattern,Observer,1
+After CH03,per_pattern,Repository,5
+After CH03,per_pattern,Singleton,1
+After CH03,per_pattern,State,2
+After CH03,per_pattern,Strategy,2
+After CH03,total_pattern_types,,12
+After CH03,total_pattern_instances,,21

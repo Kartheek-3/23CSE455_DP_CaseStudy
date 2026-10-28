@@ -1,0 +1,34 @@
+Baseline SHA: 5f501341d49d2bc3fa7e817ce7548a82174326eb
+Preceding SHA: 39e3c987488d59045cc3ed5cfe532f6f32c0936d
+Implementation SHA: b3040278d3e63cf4ced915f9623b95969ff42010
+Date: 2026-10-11
+Author: vighnesh1001 <realvighnesh@gmail.com>
+Branch: develop
+
+Commit Message:
+feat: add explainable personalized feed
+
+Changed Files:
+- packages/backend/migration/1788000000000-recommendation-preferences.js
+- packages/backend/src/core/CoreModule.ts
+- packages/backend/src/core/RecommendationService.ts
+- packages/backend/src/core/recommendation/RecommendationStrategy.ts
+- packages/backend/src/di-symbols.ts
+- packages/backend/src/models/RecommendationPreference.ts
+- packages/backend/src/models/RepositoryModule.ts
+- packages/backend/src/models/_.ts
+- packages/backend/src/postgres.ts
+- packages/backend/src/server/api/endpoint-list.ts
+- packages/backend/src/server/api/endpoints/recommendations/for-you.ts
+- packages/backend/src/server/api/endpoints/recommendations/preferences.ts
+- packages/backend/src/server/api/endpoints/recommendations/preferences/reset.ts
+- packages/backend/src/server/api/endpoints/recommendations/preferences/update.ts
+- packages/backend/test/unit/RecommendationService.test.ts
+- packages/frontend/src/components/MkNote.vue
+- packages/frontend/src/pages/for-you.vue
+
+Verification Status:
+- Vitest: 20 passed (20 total) in 506ms, exit code 0
+- Regressions: CH01 (21 passed), CH02 (21 passed), CH03 (29 passed), CH04 (20 passed), total 91 passed (91 total), exit code 0
+- SPDX license check: OK (2496 files passed)
+- Working tree: clean

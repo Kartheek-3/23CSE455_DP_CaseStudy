@@ -1,0 +1,7 @@
+[Model: Claude Opus 4.8 | 2026-10-10 | CH03 | owner: Sai Tharun]
+Change: getPasswordEncoder() body replaced with `new BCryptPasswordEncoder()`
+(Change3/change3.diff, against the real baseline). Strategy structure + wiring at
+line 31 unchanged; only the concrete strategy's behaviour corrected.
+Pattern effect: Password Encoding Strategy = modified (concrete class replaced).
+Test: PasswordEncoderTest -> 2 run, 0 fail (encode() yields a $2 BCrypt hash, not
+plaintext; matches() accepts correct / rejects wrong). See test_result/mvn_test.log.

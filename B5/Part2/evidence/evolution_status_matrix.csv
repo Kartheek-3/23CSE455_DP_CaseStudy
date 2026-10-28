@@ -1,0 +1,15 @@
+pattern_id,instance_name,pattern_name,pattern_type,baseline,scenario1_personalized_itinerary,scenario2_multiple_booking_providers,scenario3_cancellation_policies
+P01,Parsed Email to Trip Record Linking,Information Expert (GRASP),GRASP - Responsibility Assignment,baseline,preserved,preserved,preserved
+P02,Inbound Travel Email Intake Coordination,Controller (GRASP),GRASP - Responsibility Assignment,baseline,preserved,preserved,preserved
+P03,Trip Creation Coordination,Controller (GRASP),GRASP - Responsibility Assignment,baseline,preserved,preserved,preserved
+P04,Trip Membership Management Coordination,Controller (GRASP),GRASP - Responsibility Assignment,baseline,preserved,preserved,preserved
+P05,Bulk Itinerary Import Coordination,Controller (GRASP),GRASP - Responsibility Assignment,baseline,modified,preserved,preserved
+P06,OAuth Sign-in and Identity Linking Coordination,Controller (GRASP),GRASP - Responsibility Assignment,baseline,preserved,preserved,preserved
+P07,Account Traveler Enrollment Coordination,Controller (GRASP),GRASP - Responsibility Assignment,baseline,preserved,preserved,preserved
+P08,Outbound Mail Delivery Logging,Observer (GoF),GoF - Behavioral (framework-mediated),baseline,preserved,preserved,preserved
+P09,Trip-Scoped Turbo Refresh Notifications,Observer (GoF),GoF - Behavioral (framework-mediated),baseline,preserved,preserved,preserved
+S1-N01,Personalized Itinerary Generation Coordination,Controller (GRASP),GRASP - Responsibility Assignment,—,newly_introduced,preserved,preserved
+S2-N01,Multiple Booking Provider Normalization,Adapter (GoF),GoF - Structural,—,—,newly_introduced,preserved
+S2-N02,Multiple Booking Provider Option Coordination,Controller (GRASP),GRASP - Responsibility Assignment,—,—,newly_introduced,preserved
+S3-N01,Cancellation Policy Evaluation,Strategy (GoF),GoF - Behavioral,—,—,—,newly_introduced
+S3-N02,Cancellation Quote Coordination,Controller (GRASP),GRASP - Responsibility Assignment,—,—,—,newly_introduced

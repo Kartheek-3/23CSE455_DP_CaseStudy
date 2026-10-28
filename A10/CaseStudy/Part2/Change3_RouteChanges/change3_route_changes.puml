@@ -1,0 +1,48 @@
+@startuml
+title Change 3 - Shipment Route Changes
+
+class Shipment {
+    shipment_id
+    route_id
+    status
+    updated_at
+}
+
+class Route {
+    route_id
+    origin_city
+    destination_city
+    distance_km
+    estimated_hours
+}
+
+class ShipmentRouteHistory {
+    route_history_id
+    shipment_id
+    previous_route_id
+    new_route_id
+    changed_at
+}
+
+class TransportationRepository {
+    +change_shipment_route(route_change)
+}
+
+class RouteChangeAPI {
+    POST /shipments/change-route
+}
+
+Shipment "1" --> "1" Route : current route
+Shipment "1" --> "0..*" ShipmentRouteHistory : route history
+ShipmentRouteHistory --> Route : previous/new route
+RouteChangeAPI --> TransportationRepository : uses
+TransportationRepository --> Shipment : updates
+TransportationRepository --> ShipmentRouteHistory : records
+
+note right of ShipmentRouteHistory
+    Preserves route-change history
+    while shipments.route_id stores
+    the current route.
+end note
+
+@enduml

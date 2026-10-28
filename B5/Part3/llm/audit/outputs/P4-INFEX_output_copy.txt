@@ -1,0 +1,245 @@
+# Part 3 — Information Expert (GRASP) Cross-Language Implementation
+
+Completed — 32/32 tests passed
+
+Pattern ID: P01 Pattern: Information Expert (GRASP) Confirmed instance: Parsed Email to Trip Record Linking
+
+The fourth selected pattern has been implemented and tested in Java, Python, JavaScript and C++ using the shared frozen I01–I08 fixtures.
+
+Strategy, Observer and Controller remain unchanged. Adapter has not been started.
+
+## 1. Download the completed package
+
+Information Expert P01 Cross-Language Package
+
+Cumulative Part3 ZIP · 137 files · 132 KB · Integrity verified
+
+Download Information Expert P01 ZIP
+
+Verification Summary
+
+Four Append-Ready Records
+
+Shared I01–I08 Cases · Expected Results
+
+The archive contains all four completed pattern implementations and the frozen Strategy, Observer and Controller materials.
+
+## 2. Exact Information Expert files created
+
+```
+Part3/
+├── INFORMATION_EXPERT_VERIFICATION_SUMMARY.md
+├── common_specs/
+│   ├── INFORMATION_EXPERT_README.md
+│   ├── information_expert_cases.tsv
+│   └── information_expert_expected.tsv
+├── information_expert/
+│   ├── information_expert_append_ready.json
+│   ├── java/
+│   │   ├── Main.java
+│   │   ├── TestMain.java
+│   │   ├── README.md
+│   │   ├── test_result.txt
+│   │   └── timings.csv
+│   ├── python/
+│   │   ├── main.py
+│   │   ├── test_main.py
+│   │   ├── README.md
+│   │   ├── test_result.txt
+│   │   └── timings.csv
+│   ├── javascript/
+│   │   ├── main.js
+│   │   ├── test_main.js
+│   │   ├── README.md
+│   │   ├── test_result.txt
+│   │   └── timings.csv
+│   └── cpp/
+│       ├── main.hpp
+│       ├── main.cpp
+│       ├── test_main.cpp
+│       ├── README.md
+│       ├── test_result.txt
+│       └── timings.csv
+└── evidence/
+    ├── information_expert_measure_complexity.py
+    ├── information_expert_run_verification.py
+    ├── information_expert_static_metrics.json
+    ├── information_expert_environment_versions.json
+    ├── information_expert_compilation_results.json
+    ├── information_expert_execution_results.json
+    ├── information_expert_preservation_check.txt
+    └── information_expert_source_manifest.sha256
+```
+
+## 3. Frozen fixture validation
+
+The fixtures were created and checksummed before implementing the translations. All four test runners use the same input and expected-output files.
+
+| Case | Test scenario                                                | Verified outcome                        |
+| ---- | ------------------------------------------------------------ | --------------------------------------- |
+| I01  | Existing same-trip item has missing reference and inbox link | `LINKED`; both fields filled            |
+| I02  | No existing item                                             | `CREATED`; `item-I02`                   |
+| I03  | Existing item has a confirmation reference                   | `LINKED`; original reference preserved  |
+| I04  | Matching item belongs to another trip                        | `CREATED` in current trip               |
+| I05  | Provider name missing                                        | `ERROR MISSING_PROVIDER`                |
+| I06  | Provider and item names differ only in letter case           | `LINKED`                                |
+| I07  | Existing item already belongs to another InboxItem           | `LINKED`; original inbox link preserved |
+| I08  | Incoming confirmation reference absent                       | `LINKED`; reference remains missing     |
+
+All eight cases produce their exact expected TSV output.
+
+The fixture SHA-256 values are recorded in `common_specs/INFORMATION_EXPERT_README.md`.
+
+## 4. GRASP Information Expert collaboration
+
+InboxReviewController
+
+Receives the review request and delegates
+
+InboxItem — Information Expert
+
+Owns parsed provider name, confirmation reference, trip ID and inbox ID
+
+Inspect Trip and existing TripItems
+
+LINKED
+
+Reuse item and fill missing fields
+
+CREATED
+
+Create one confirmed TripItem
+
+### Role mapping in all four languages
+
+| Role               | Java                    | Python                     | JavaScript             | C++                    |
+| ------------------ | ----------------------- | -------------------------- | ---------------------- | ---------------------- |
+| Information Expert | `InboxItem`             | `InboxItem`                | `InboxItem`            | `InboxItem`            |
+| Expert operation   | `linkOrCreateTripItem`  | `link_or_create_trip_item` | `linkOrCreateTripItem` | `linkOrCreateTripItem` |
+| Caller             | `InboxReviewController` | Same                       | Same                   | Same                   |
+| Collection context | `Trip`                  | `Trip`                     | `Trip`                 | `Trip`                 |
+| Domain record      | `TripItem`              | `TripItem`                 | `TripItem`             | `TripItem`             |
+
+Why this is Information Expert: The matching and linking decision belongs to `InboxItem`, which possesses the relevant parsed booking information.
+
+The caller delegates that responsibility. The example does not depend on Rails controller syntax, transform unrelated provider schemas or introduce a separate factory abstraction.
+
+## 5. State-change verification
+
+The test runners check more than the final text output.
+
+| Requirement                              | Verified behavior                 |
+| ---------------------------------------- | --------------------------------- |
+| Existing matching item reused            | No additional TripItem created    |
+| Missing confirmation reference           | Filled from incoming information  |
+| Existing nonblank confirmation reference | Preserved                         |
+| Missing inbox link                       | Filled                            |
+| Existing inbox link                      | Preserved                         |
+| Cross-trip item                          | Never reused                      |
+| New item                                 | Correct `item-Ixx` ID and trip ID |
+| New item status                          | `confirmed`                       |
+| Invalid provider name                    | No record created or modified     |
+
+These checks passed in all four languages.
+
+## 6. Compilation and actual test results
+
+| Language   | Verified runtime/compiler | Test command                 | Passed | Failures | Errors | Exit |
+| ---------- | ------------------------- | ---------------------------- | ------ | -------- | ------ | ---- |
+| Java       | OpenJDK / javac 21.0.12.1 | `java TestMain`              | 8/8    | 0        | 0      | 0    |
+| Python     | Python 3.13.5             | `python3 test_main.py`       | 8/8    | 0        | 0      | 0    |
+| JavaScript | Node.js v22.16.0          | `node test_main.js`          | 8/8    | 0        | 0      | 0    |
+| C++        | g++ 14.2.0, C++17         | `./information_expert_tests` | 8/8    | 0        | 0      | 0    |
+
+Java compilation and execution:
+
+```
+javac Main.java TestMain.java
+java TestMain
+```
+
+C++ compilation and execution:
+
+```
+g++ -std=c++17 -O2 -Wall -Wextra -pedantic main.cpp test_main.cpp -o information_expert_tests
+./information_expert_tests
+```
+
+Both compilation commands succeeded with exit code 0.
+
+Total: 32/32 tests passed, zero failures and zero errors.
+
+## 7. Production LOC and cyclomatic complexity
+
+| Language   | Production LOC | Maximum function CC |
+| ---------- | -------------- | ------------------- |
+| Java       | 63             | 7                   |
+| Python     | 45             | 7                   |
+| JavaScript | 38             | 6                   |
+| C++        | 83             | 7                   |
+
+LOC excludes tests, fixtures, blank lines, comment-only lines and compiled files. C++ includes both `main.hpp` and `main.cpp`.
+
+The complexity audit reused the frozen Part3 McCabe-style counting helpers. Only method-discovery patterns were extended for the new Information Expert classes.
+
+These are source-level measurements, not profiler measurements.
+
+## 8. Five raw timing measurements and medians
+
+Each language completed one warm-up and five measured fresh-process executions. Every measured execution passed all eight cases.
+
+All values are milliseconds. Medians exclude the warm-up.
+
+| Language   | Run 1   | Run 2   | Run 3   | Run 4   | Run 5   | Median  |
+| ---------- | ------- | ------- | ------- | ------- | ------- | ------- |
+| Java       | 75.602  | 64.794  | 78.340  | 78.457  | 56.485  | 75.602  |
+| Python     | 847.285 | 798.344 | 814.468 | 819.622 | 839.151 | 819.622 |
+| JavaScript | 52.606  | 33.741  | 37.011  | 36.436  | 33.055  | 36.436  |
+| C++        | 4.391   | 4.827   | 4.058   | 2.721   | 4.930   | 4.391   |
+
+Median fresh-process execution time
+
+0ms250ms500ms750ms1KmsJavaPythonJavaScriptC++
+
+The timings include process startup, reading fixtures, execution, state assertions and result comparison. They are not isolated linking-algorithm benchmarks.
+
+Exact six-run timing records, including warm-ups, are retained in each `timings.csv`.
+
+## 9. Four append-ready faculty records
+
+Download Information Expert Append-Ready JSON
+
+The JSON contains four records using exactly the eleven required faculty fields:
+
+`pattern_name`, `instance_name`, `language`, `snippet_path`, `source_loc`, `max_function_cc`, `runtime_compiler`, `test_command`, `test_result`, `median_process_ms`, `language_notes`.
+
+All four records use:
+
+- `pattern_name = Information Expert`
+- `instance_name = Parsed Email to Trip Record Linking`
+
+They are ready for later aggregation. The final `cross_language.csv` has not been created.
+
+## 10. Preservation checks and limitations
+
+The checksums of 112 pre-existing Part3 files were compared against the pre-implementation snapshot. Every one matched, including the frozen Strategy, Observer and Controller material.
+
+The cumulative ZIP passed integrity checks, and generated `.class` files, C++ executables, Python caches and temporary files were excluded.
+
+This example is deliberately in-memory and dependency-free. It does not reproduce Rails, real email parsing, Anthropic, database transactions or Expense creation. The frozen fixture set contains at most one candidate item, and matching is limited to ASCII case-insensitive comparison.
+
+The tests establish behavior for I01–I08, not every possible malformed input or concurrent update.
+
+## 11. Final Part 3 progress
+
+| Pattern                    | Source ID | Status                 |
+| -------------------------- | --------- | ---------------------- |
+| Strategy (GoF)             | S3-N01    | Completed and frozen   |
+| Observer (GoF)             | P08       | Completed and frozen   |
+| Controller (GRASP)         | P03       | Completed and frozen   |
+| Information Expert (GRASP) | P01       | Completed and verified |
+| Adapter (GoF)              | S2-N01    | Not started            |
+
+16 of the required 20 language implementations are now complete.
+
+P01 — Information Expert is complete for the cross-language coursework stage. DaPlanStan and all previously completed pattern materials remain unchanged. Adapter implementation has not begun.

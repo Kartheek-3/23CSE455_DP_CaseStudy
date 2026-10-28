@@ -1,0 +1,31 @@
+%% Proxy - "Daemon RPC Client"
+%% mycodo/mycodo_client.py (DaemonControl) wrapping Pyro5.api.Proxy; RealSubject = daemon at PYRO_URI (outside scope)
+classDiagram
+    class DaemonControl {
+        +proxy(timeout)
+        +check_daemon()
+        +output_on(output_id, output_type, amount, min_off, output_channel, trigger_conditionals)
+        +output_off(output_id, output_channel, trigger_conditionals)
+        +output_state(output_id, output_channel)
+        +trigger_action(action_id, value, debug)
+        +trigger_all_actions(function_id, message, debug)
+    }
+    class Pyro5_api_Proxy["Pyro5.api.Proxy"]
+    <<dependency>> Pyro5_api_Proxy
+    class bang_bang_CustomModule["bang_bang.CustomModule"]
+    bang_bang_CustomModule : +loop()
+    class InputController {
+        +loop()
+    }
+    class AbstractConditional {
+        +run_action(action_id, value, message)
+    }
+    class AbstractOutput {
+        +check_triggers(output_id, amount, output_channel)
+    }
+    DaemonControl ..> Pyro5_api_Proxy : creates and forwards to
+    bang_bang_CustomModule --> DaemonControl : control
+    InputController --> DaemonControl : control
+    AbstractConditional --> DaemonControl : control
+    AbstractOutput --> DaemonControl : control
+    note for DaemonControl "RealSubject = daemon object at PYRO_URI (defined outside scope)"

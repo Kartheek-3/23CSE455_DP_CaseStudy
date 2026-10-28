@@ -1,0 +1,6 @@
+# Adapter / python
+working folder: Part3/adapter_sensor_driver/python
+$ python test_sensor_driver.py
+Adapter tests: 12/12 passed
+
+[exit code: 0]

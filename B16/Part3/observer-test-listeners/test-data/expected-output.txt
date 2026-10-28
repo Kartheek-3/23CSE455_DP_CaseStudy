@@ -1,0 +1,28 @@
+== Summary ==
+total: 6
+SUCCESSFUL: 2
+FAILED: 1
+ABORTED: 1
+SKIPPED: 2
+== Log ==
+1. started CalcTests#add
+2. finished CalcTests#add SUCCESSFUL
+3. started CalcTests#sub
+4. finished CalcTests#sub FAILED
+5. skipped CalcTests#div (disabled)
+6. started CalcTests#mul
+7. finished CalcTests#mul ABORTED
+8. skipped StringTests#trim (not on this OS)
+9. started StringTests#concat
+10. finished StringTests#concat SUCCESSFUL
+== Listener failures (10) ==
+BrokenListener failed on started CalcTests#add: listener is broken
+BrokenListener failed on finished CalcTests#add: listener is broken
+BrokenListener failed on started CalcTests#sub: listener is broken
+BrokenListener failed on finished CalcTests#sub: listener is broken
+BrokenListener failed on skipped CalcTests#div: listener is broken
+BrokenListener failed on started CalcTests#mul: listener is broken
+BrokenListener failed on finished CalcTests#mul: listener is broken
+BrokenListener failed on skipped StringTests#trim: listener is broken
+BrokenListener failed on started StringTests#concat: listener is broken
+BrokenListener failed on finished StringTests#concat: listener is broken

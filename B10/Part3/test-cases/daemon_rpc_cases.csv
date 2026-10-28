@@ -1,0 +1,13 @@
+case_id,daemon,timeout,operations,expected
+PX01,up,,output_on:pump1:0:30|output_state:pump1:0,0 Output pump1 CH0 ON for 30 s|on
+PX02,up,,output_on_off:pump1:0:on:0|output_state:pump1:0|output_on_off:pump1:0:off:0|output_state:pump1:0,0 Output pump1 CH0 ON|on|0 Output pump1 CH0 OFF|off
+PX03,up,,output_on_off:pump1:0:dance:0,1 state not "on" 1 True "off" 0 or False. Found: "dance"
+PX04,up,,check_daemon,GOOD
+PX05,unhealthy:Input controller not running,,check_daemon,Input controller not running
+PX06,down,,check_daemon,Pyro5 Communication error: cannot connect to PYRO:mycodo@localhost:9080
+PX07,slow:20,30,output_on:pump1:0:0|check_daemon|output_state:pump1:0,0 Output pump1 CH0 ON|Pyro5 TimeoutError: call exceeded 10 s timeout|on
+PX08,slow:20,15,output_state:pump1:0,ERROR
+PX09,down,,output_off:pump1:0,ERROR
+PX10,slow:25,,output_state:pump2:1,off
+PX11,slow:5,,check_daemon,GOOD
+PX12,up,,output_on_off:valve:2:1:45|output_off:valve:2|output_state:valve:2,0 Output valve CH2 ON for 45 s|0 Output valve CH2 OFF|off

@@ -1,0 +1,14 @@
+@startuml template_method
+title Template Method - Security Configuration Callback
+skinparam shadowing false
+abstract class WebSecurityConfigurerAdapter <<AbstractClass>> {
+  +{abstract} configure(HttpSecurity)
+  +{abstract} configure(AuthenticationManagerBuilder)
+}
+class SecurityConfiguration <<ConcreteClass>> {
+  +configure(HttpSecurity)
+  +configure(AuthenticationManagerBuilder)
+}
+WebSecurityConfigurerAdapter <|-- SecurityConfiguration
+note bottom of SecurityConfiguration : config/SecurityConfiguration.java:23
+@enduml

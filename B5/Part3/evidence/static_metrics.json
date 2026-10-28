@@ -1,0 +1,61 @@
+{
+  "Java": {
+    "production_files": [
+      "strategy/java/Main.java"
+    ],
+    "source_loc": 52,
+    "max_function_cc": 12,
+    "functions_cc": {
+      "feeRate": 3,
+      "feeRate#2": 3,
+      "feeRate#3": 1,
+      "evaluate": 12,
+      "error": 1
+    }
+  },
+  "Python": {
+    "production_files": [
+      "strategy/python/main.py"
+    ],
+    "source_loc": 54,
+    "max_function_cc": 8,
+    "functions_cc": {
+      "FeeStrategy.feeRate": 1,
+      "FlexiblePolicy.feeRate": 3,
+      "ModeratePolicy.feeRate": 3,
+      "StrictPolicy.feeRate": 1,
+      "QuoteEvaluator.__init__": 1,
+      "QuoteEvaluator.evaluate": 8
+    }
+  },
+  "JavaScript": {
+    "production_files": [
+      "strategy/javascript/main.js"
+    ],
+    "source_loc": 42,
+    "max_function_cc": 8,
+    "functions_cc": {
+      "feeRate": 3,
+      "feeRate#2": 3,
+      "feeRate#3": 1,
+      "constructor": 1,
+      "evaluate": 8
+    }
+  },
+  "C++": {
+    "production_files": [
+      "strategy/cpp/main.hpp",
+      "strategy/cpp/main.cpp"
+    ],
+    "source_loc": 74,
+    "max_function_cc": 15,
+    "functions_cc": {
+      "FlexiblePolicy::feeRate": 3,
+      "ModeratePolicy::feeRate": 3,
+      "StrictPolicy::feeRate": 1,
+      "numeric": 1,
+      "error": 1,
+      "QuoteEvaluator::evaluate": 15
+    }
+  }
+}

@@ -1,0 +1,30 @@
+# Apple clang version 21.0.0 (clang-2100.3.34.2)
+# 1) AddressSanitizer + UndefinedBehaviorSanitizer (-std=c++20 -g -fsanitize=address,undefined -fno-omit-frame-pointer); leak detection is not supported by ASan on macOS arm64, see 2)
+PASS report matches expected-output.txt
+PASS a throwing listener does not stop the next one
+PASS invalid input is rejected with expected-error.txt
+3 passed, 0 failed
+observer sanitizer exit 0
+PASS report for tag 'slow' matches expected-output.txt
+PASS a leaf and a container answer count_tests the same way
+PASS invalid input is rejected with expected-error.txt
+3 passed, 0 failed
+composite sanitizer exit 0
+
+# 2) macOS leaks --atExit on the normal test binaries (-std=c++20 -g)
+3 passed, 0 failed
+Process 9056: 0 leaks for 0 total leaked bytes.
+observer leaks exit 0
+3 passed, 0 failed
+Process 9092: 0 leaks for 0 total leaked bytes.
+composite leaks exit 0
+
+# 3) the eight further problems: ASan+UBSan test runners, then macOS leaks --atExit
+strategy-test-filters: sanitizer run '3 passed, 0 failed' (exit 0); 0 leaks for 0 total leaked bytes
+adapter-listener-bridge: sanitizer run '3 passed, 0 failed' (exit 0); 0 leaks for 0 total leaked bytes
+decorator-timeout-invocation: sanitizer run '3 passed, 0 failed' (exit 0); 0 leaks for 0 total leaked bytes
+template-method-engine: sanitizer run '3 passed, 0 failed' (exit 0); 0 leaks for 0 total leaked bytes
+command-task-queue: sanitizer run '3 passed, 0 failed' (exit 0); 0 leaks for 0 total leaked bytes
+null-object-listener: sanitizer run '3 passed, 0 failed' (exit 0); 0 leaks for 0 total leaked bytes
+chain-of-responsibility-interceptors: sanitizer run '3 passed, 0 failed' (exit 0); 0 leaks for 0 total leaked bytes
+factory-method-executors: sanitizer run '3 passed, 0 failed' (exit 0); 0 leaks for 0 total leaked bytes

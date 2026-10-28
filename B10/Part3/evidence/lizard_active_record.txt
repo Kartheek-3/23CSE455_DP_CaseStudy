@@ -1,0 +1,96 @@
+# lizard 1.24.1 on the production files only; working folder: Part3/active_record_user_role
+$ lizard java/CRUDMixin.java python/user_role.py javascript/user_role.js cpp/user_role.hpp
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       1      1     13      1       1 CRUDMixin::CRUDMixin@18-18@java/CRUDMixin.java
+      11      2     59      0      11 CRUDMixin::save@25-35@java/CRUDMixin.java
+       8      2     49      0       8 CRUDMixin::delete@37-44@java/CRUDMixin.java
+       1      1     12      1       1 IntegrityError::IntegrityError@48-48@java/CRUDMixin.java
+       1      1     12      1       1 InvalidRequestError::InvalidRequestError@52-52@java/CRUDMixin.java
+       1      1     22      1       1 Session::add@61-61@java/CRUDMixin.java
+       4      2     43      1       4 Session::delete@63-66@java/CRUDMixin.java
+      21     14    221      0      21 Session::commit@68-88@java/CRUDMixin.java
+       1      1     11      0       1 Session::rollback@90-90@java/CRUDMixin.java
+       1      1     32      1       1 Session::count@92-92@java/CRUDMixin.java
+       5      1     30      3       5 User::User@99-103@java/CRUDMixin.java
+       1      1     16      0       1 User::uniqueColumns@105-105@java/CRUDMixin.java
+       1      1     13      0       1 User::requiredColumns@106-106@java/CRUDMixin.java
+       1      2     19      1       1 User::column@107-107@java/CRUDMixin.java
+       7      2     70      0       7 User::gensalt@109-115@java/CRUDMixin.java
+      11      6    130      2      11 User::hashpw@118-128@java/CRUDMixin.java
+       1      1     18      1       1 User::setPassword@130-130@java/CRUDMixin.java
+       1      1     18      2       1 User::checkPassword@132-132@java/CRUDMixin.java
+       4      1     21      2       4 Role::Role@139-142@java/CRUDMixin.java
+       1      1     14      0       1 Role::uniqueColumns@144-144@java/CRUDMixin.java
+       1      1     14      0       1 Role::requiredColumns@145-145@java/CRUDMixin.java
+       1      1     10      1       1 Role::column@146-146@java/CRUDMixin.java
+       2      1     14      0       2 gensalt@20-21@python/user_role.py
+       8      6     93      2       9 hashpw@24-32@python/user_role.py
+       2      1     25      1       2 __init__@38-39@python/user_role.py
+       2      1     19      2       2 add@41-42@python/user_role.py
+       4      2     37      2       4 delete@44-47@python/user_role.py
+      13     13    143      1      13 commit@49-61@python/user_role.py
+       2      1     11      1       2 rollback@63-64@python/user_role.py
+       2      2     23      2       2 count@66-67@python/user_role.py
+       8      2     52      1       8 save@73-80@python/user_role.py
+       6      2     44      1       6 delete@82-87@python/user_role.py
+       2      1     34      4       2 __init__@93-94@python/user_role.py
+       2      1     19      2       2 set_password@96-97@python/user_role.py
+       2      1     14      2       2 check_password@100-101@python/user_role.py
+       2      1     32      3       2 __init__@107-108@python/user_role.py
+       1      1     11      0       1 gensalt@15-15@javascript/user_role.js
+       7      6    105      2       7 hashpw@18-24@javascript/user_role.js
+       3      1     28      0       3 constructor@28-30@javascript/user_role.js
+       1      1     18      1       1 add@32-32@javascript/user_role.js
+       4      2     43      1       4 delete@34-37@javascript/user_role.js
+       1      2      8      0       1 (anonymous)@40-40@javascript/user_role.js
+       1      1     17      0       1 (anonymous)@40-40@javascript/user_role.js
+       1      2     12      0       1 (anonymous)@43-43@javascript/user_role.js
+       1      1     10      0       1 (anonymous)@48-48@javascript/user_role.js
+      16      7    146      0      16 commit@39-54@javascript/user_role.js
+       1      1     11      0       1 rollback@56-56@javascript/user_role.js
+       1      1      6      0       1 (anonymous)@58-58@javascript/user_role.js
+       1      1     20      1       1 count@58-58@javascript/user_role.js
+       3      1     11      1       3 constructor@63-65@javascript/user_role.js
+      11      2     64      0      11 save@67-77@javascript/user_role.js
+       8      2     51      0       8 delete@79-86@javascript/user_role.js
+       4      1     31      3       4 constructor@94-97@javascript/user_role.js
+       1      1     18      1       1 setPassword@99-99@javascript/user_role.js
+       1      1     15      2       1 checkPassword@101-101@javascript/user_role.js
+       4      1     31      2       4 constructor@109-112@javascript/user_role.js
+       1      1     19      1       1 Session::add@26-26@cpp/user_role.hpp
+       5      2     52      1       5 Session::del@27-31@cpp/user_role.hpp
+       1      1     11      0       1 Session::rollback@33-33@cpp/user_role.hpp
+       4      1     48      0       4 Session::count@35-38@cpp/user_role.hpp
+       1      1     13      1       1 CRUDMixin::CRUDMixin@49-49@cpp/user_role.hpp
+      11      2     64      0      11 CRUDMixin::save@55-65@cpp/user_role.hpp
+       8      2     52      0       8 CRUDMixin::del@66-73@cpp/user_role.hpp
+      18     14    237      0      18 Session::commit@79-96@cpp/user_role.hpp
+       6      1     41      0       6 gensalt@98-103@cpp/user_role.hpp
+      11      5    166      2      11 hashpw@106-116@cpp/user_role.hpp
+       1      1     43      3       1 User::User@120-120@cpp/user_role.hpp
+       1      1     14      0       1 User::unique_columns@121-121@cpp/user_role.hpp
+       1      1     11      0       1 User::required_columns@122-122@cpp/user_role.hpp
+       1      2     24      1       1 User::column@123-123@cpp/user_role.hpp
+       1      1     22      1       1 User::set_password@124-124@cpp/user_role.hpp
+       3      1     26      2       3 User::check_password@125-127@cpp/user_role.hpp
+       1      1     36      3       1 Role::Role@134-134@cpp/user_role.hpp
+       1      1     12      0       1 Role::unique_columns@135-135@cpp/user_role.hpp
+       1      1     12      0       1 Role::required_columns@136-136@cpp/user_role.hpp
+       1      2     20      1       1 Role::column@137-137@cpp/user_role.hpp
+4 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+    113       3.9     2.0       38.5        22     java/CRUDMixin.java
+     69       4.1     2.5       40.0        14     python/user_role.py
+     83       3.5     1.8       32.8        20     javascript/user_role.js
+    119       3.9     2.1       46.1        20     cpp/user_role.hpp
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+       384       3.8     2.1       39.3       76            0      0.00    0.00

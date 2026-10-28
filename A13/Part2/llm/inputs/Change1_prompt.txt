@@ -1,0 +1,678 @@
+# CH01 IMPLEMENTATION PROMPT — Native Events, RSVP and Reminder Notifications in Misskey
+
+## 1. Task
+
+Implement **Change 1 (CH01): Native Events with RSVP and Reminder Notifications** in the actual Misskey codebase.
+
+You have already received the master instruction for this project, the repository architecture context, the baseline information, the Part 2 directory structure, and the evidence-generation requirements.
+
+Follow those instructions. Do not repeat the entire codebase analysis. Inspect the relevant source files and implement the feature using Misskey's existing architecture.
+
+This task has two equally important deliverables:
+
+1. A functioning implementation integrated into Misskey, with appropriate automated tests.
+2. The complete and accurate Part 2 evidence package documenting what you implemented, tested, committed and verified.
+
+Do not implement Changes 2, 3 or 4. Do not begin link-safety detection, personalized recommendations, or audio transcription.
+
+## 2. Repository and baseline
+
+Use the existing repositories and folders:
+
+Misskey application:
+`/home/vighnesh/DP-case_study/misskey`
+
+Case-study evidence:
+`/home/vighnesh/DP-case_study/A1/Part2`
+
+The previously established baseline is:
+
+- Branch: `develop`
+- Baseline commit: `5f501341d49d2bc3fa7e817ce7548a82174326eb`
+- Node.js: `v22.23.1`
+- pnpm: `11.25.0`
+- Operating system: Fedora Linux 44
+
+Recheck the branch, commit and working-tree status before implementation. Preserve existing user changes. If the repository has advanced from the stated baseline, establish the actual preceding commit and explain the difference rather than overwriting or resetting the repository.
+
+The dependencies were installed during preflight. Use the repository's declared package-manager version and existing tooling.
+
+## 3. Feature specification
+
+Implement a structured event-management experience integrated into Misskey's existing social networking application.
+
+The result should allow users to create events, share them through the appropriate Misskey interface, express their attendance intentions, receive relevant notifications, and manage events they own.
+
+Misskey already supports ordinary posts, media, notifications and other social interactions. Do not merely add event details to an ordinary text post and claim the feature is complete. Implement an actual structured event workflow.
+
+### 3.1 Event information
+
+An event must support:
+
+- A required title.
+- A description.
+- A start date and time.
+- An end date and time.
+- A valid IANA timezone identifier.
+- An optional physical location.
+- An optional online meeting URL.
+
+Use appropriate database types, API schemas and frontend controls for these fields.
+
+Establish sensible validation constraints for title and description length, valid time ranges, timezone identifiers and optional URL fields. Reuse Misskey's existing validation and error-handling conventions.
+
+The start and end instants must be stored and compared consistently regardless of the creator's local timezone. The selected timezone should be preserved or otherwise represented according to the chosen data model so that the event can be displayed correctly.
+
+Reject invalid time ranges, malformed inputs and unsupported URL schemes. Do not trust frontend validation as the sole enforcement mechanism.
+
+### 3.2 Creating and sharing events
+
+An authenticated local user must be able to create an event.
+
+Integrate the feature with the existing Misskey application and content experience. Inspect the note model, frontend composer, timeline rendering and existing media or structured-content patterns before deciding how best to represent an event.
+
+Choose the smallest maintainable architecture that supports a real user-facing event workflow.
+
+The implementation must provide a suitable way to access event details and RSVP controls from the application. A backend-only endpoint with no practical way for a user to use the feature is insufficient.
+
+Do not introduce unnecessary duplicate post models or bypass Misskey's existing access-control and validation mechanisms.
+
+For this change, events created locally are in scope. Full ActivityPub federation of event objects is explicitly out of scope unless a minimal existing mechanism makes it unavoidable. Do not claim remote-instance interoperability.
+
+### 3.3 RSVP functionality
+
+Support these three RSVP states:
+
+- `going`
+- `interested`
+- `not_going`
+
+An authenticated user must be able to select or change their response to an event.
+
+Implement the appropriate persistence and API behaviour so that:
+
+- An RSVP is associated with an event and a user.
+- Each user has at most one current RSVP per event.
+- Changing an RSVP updates the existing response rather than creating duplicate attendance records.
+- Attendance counts or equivalent event-attendance summaries reflect the current responses.
+- The event creator can inspect attendance information in accordance with the application's privacy rules.
+- Users cannot modify another user's RSVP.
+- Invalid, missing, cancelled or inaccessible events produce appropriate errors.
+
+Define and enforce the rules for events that have already started or ended. These rules should be consistent across the API and service layers.
+
+Protect against duplicate records and concurrent RSVP updates through appropriate constraints and data-access behaviour.
+
+### 3.4 Editing and cancellation
+
+Event creators must be able to edit event details and cancel their own events.
+
+Implement the following behaviour:
+
+- Editing an event updates its stored information and the information shown to users.
+- Changing the start time updates the reminder schedule.
+- Changing the relevant event details can generate an event-update notification for affected attendees.
+- Cancelling an event marks it as cancelled using the chosen domain model and prevents its outstanding reminder from being delivered.
+- Cancellation generates an appropriate notification for affected participants.
+- Unauthorised users cannot edit or cancel an event they do not own.
+
+Avoid deleting records when doing so would destroy necessary RSVP or notification history.
+
+Use transactions or other appropriate consistency mechanisms where multiple related records must change together.
+
+## 4. Reminder and notification requirements
+
+Integrate the feature with Misskey's existing notification, job-queue and background-processing architecture. Inspect the relevant queue declarations, processors, event services and notification types before adding new infrastructure.
+
+Do not introduce a separate standalone notification system if the existing one can be extended safely.
+
+### 4.1 Event reminders
+
+Implement an automatic reminder for eligible event participants before the event starts.
+
+Use a documented initial default reminder lead time of **15 minutes**.
+
+The scheduling logic must account for the event's actual start instant rather than the wall-clock representation of a particular timezone.
+
+The behaviour must satisfy these conditions:
+
+- A reminder is not scheduled for an event that has already passed.
+- Editing an event's start time updates its reminder schedule.
+- Cancelling an event prevents its pending reminder from being sent.
+- A participant who changes their RSVP to `not_going` must not receive the event reminder.
+- Eligible participants receive no more than one reminder for the same event occurrence.
+- A job that is retried or processed more than once must not generate duplicate reminder notifications.
+- The reminder identifies the event clearly and provides a way to view its details.
+- Scheduling and delivery use the existing queue or job mechanisms where appropriate.
+
+Choose a scheduling design that fits the current Misskey implementation. Avoid introducing an unreliable in-memory timer that loses scheduled work on process restart.
+
+Use the repository's existing notification conventions and persistence patterns.
+
+### 4.2 RSVP notifications
+
+Implement appropriate notifications for relevant RSVP activity, using the existing notification system if feasible.
+
+At minimum, define the intended behaviour for the event creator when an attendee responds or changes their response. Avoid sending duplicate notifications for idempotent requests.
+
+Ensure that notification recipients and payloads comply with existing user and event visibility rules.
+
+### 4.3 Event update and cancellation notifications
+
+When an event changes in a way that affects attendees, notify the relevant participants according to the chosen notification policy.
+
+A cancellation notification must make clear that the event has been cancelled. It must not be confused with a reminder or a normal RSVP update.
+
+Use distinct notification semantics and types where the existing architecture requires them. Do not create redundant types merely to increase the number of apparent features.
+
+### 4.4 Failure handling
+
+Handle the following situations:
+
+- The queue submission fails.
+- A scheduled job executes after an event has been cancelled.
+- A scheduled job is retried.
+- An attendee changes their RSVP shortly before the reminder.
+- An event is rescheduled multiple times.
+- The event or attendee becomes inaccessible under the applicable rules.
+
+The system must not send stale notifications simply because an old job remains in the queue. Jobs should verify the current event and RSVP state when appropriate.
+
+Document any external-service or infrastructure limitation that prevents complete verification.
+
+## 5. Architecture inspection before implementation
+
+Inspect only the source modules relevant to this feature, using the known codebase architecture as your guide.
+
+Investigate the existing conventions for:
+
+- API endpoint definitions and validation.
+- Core business services and dependency injection.
+- Database entities, repository registration and migrations.
+- Note creation and rendering, if relevant to the chosen event representation.
+- Notifications and notification payload types.
+- Queue scheduling and processor execution.
+- Frontend components, composition flows and timeline rendering.
+- API response packing and SDK types.
+- Localisation and repository-specific file headers.
+
+Start with the existing service and endpoint patterns. Extend an existing abstraction when appropriate.
+
+Do not assume a particular file owns a responsibility until you verify its implementation.
+
+For every new class, interface or service, have a clear reason for its existence. Keep the change appropriately scoped.
+
+## 6. Database and migration requirements
+
+Determine which database records and relationships are necessary for events and RSVP state.
+
+If a schema change is needed:
+
+- Follow Misskey's current migration conventions.
+- Add a new migration instead of changing historical migrations.
+- Provide the correct forward and reverse migration operations when supported by the existing conventions.
+- Add suitable indexes and uniqueness constraints.
+- Handle nullable fields and deletion/cancellation semantics deliberately.
+- Ensure application code and migrations agree on field names, types and constraints.
+- Include the migration in the changed-file and commit records.
+
+Verify the migration using the smallest suitable test or schema-validation procedure available in the existing environment.
+
+Do not mark migrations as verified merely because the migration source file exists.
+
+## 7. Automated testing — required but deliberately focused
+
+Automated testing is mandatory.
+
+I do not require a full Misskey test-suite run, comprehensive browser automation, load testing or a complete deployment simply to verify this change.
+
+Run focused tests that exercise the actual implementation through the repository's established test infrastructure.
+
+Do not write a disconnected mock implementation and test that instead of the Misskey code.
+
+### 7.1 Inspect the existing tests first
+
+Find the relevant test files and package scripts. Prefer existing Vitest conventions and fixtures. Use mocks or controlled test doubles for unrelated services when that allows the feature's real business logic to be verified.
+
+Run relevant baseline tests before modifying code when feasible. Record the actual commands and results.
+
+### 7.2 Minimum automated test coverage
+
+Add tests for the following behaviours where applicable to the actual implementation.
+
+**Event creation and validation**
+
+1. Successfully create an event using valid inputs.
+2. Reject invalid or missing required fields.
+3. Reject an invalid time range or timezone.
+4. Handle optional location and meeting URLs correctly.
+
+**Permissions and event lifecycle**
+
+5. Permit the event owner to edit their own event.
+6. Reject unauthorised edits or cancellation attempts.
+7. Verify that cancellation changes the effective event state.
+8. Verify that rescheduling updates the stored event and reminder schedule.
+
+**RSVP behaviour**
+
+9. Create a valid RSVP for each of the three supported states.
+10. Change a user's RSVP and verify that the previous state is replaced.
+11. Verify that duplicate requests do not create duplicate attendance records.
+12. Verify appropriate attendance counts or summaries.
+
+**Reminder behaviour**
+
+13. Verify that the appropriate reminder is scheduled before the event.
+14. Verify that a past event does not receive a new reminder schedule.
+15. Verify that a cancelled event does not generate its reminder.
+16. Verify that rescheduling does not leave an effective duplicate reminder.
+17. Verify that `not_going` participants are excluded.
+18. Verify retry or repeated processing does not cause duplicate notifications.
+
+**Notification behaviour**
+
+19. Verify that applicable RSVP changes produce the intended notification.
+20. Verify that relevant event updates and cancellations produce the correct notification.
+21. Verify that notifications are not duplicated when an idempotent operation is repeated.
+
+These are coverage objectives, not instructions to create 21 unnecessarily complex tests. Combine closely related assertions where appropriate. Prefer a small set of well-designed tests that verifies multiple related outcomes.
+
+Add API or service tests where they are necessary to prove that input validation, authorisation and integration work correctly.
+
+### 7.3 Test execution boundaries
+
+Use the smallest relevant unit, service or API tests that verify this feature.
+
+Do not automatically run:
+
+- The complete backend test suite.
+- The complete frontend test suite.
+- Every end-to-end test.
+- Full browser automation.
+- Unrelated package tests.
+- Live federation tests against remote servers.
+
+Run a focused backend type-check, lint check or frontend test only when it is relevant and practical.
+
+If database persistence or scheduled-job execution requires PostgreSQL or Redis, check whether the service is already available before attempting a test that depends on it.
+
+Use deterministic mocks for unrelated infrastructure, but do not use them to pretend that an unverified real integration succeeded. Where live persistence or a real queue is essential to the acceptance criterion, test that integration if the environment supports it. Otherwise record the remaining limitation explicitly.
+
+### 7.4 Test failure policy
+
+When a test fails:
+
+1. Inspect the actual failure.
+2. Identify whether the problem is in the code, test assumptions, environment or an existing issue.
+3. Fix genuine implementation defects.
+4. Rerun the relevant failed test.
+5. Record the final result.
+
+Do not remove valid assertions to force a pass. Do not suppress failures or describe a blocked test as passed.
+
+If a required check remains unexecuted, record the status as `not_run` with the reason. If a test remains failing, disclose that failure.
+
+### 7.5 Test evidence
+
+Save actual command output in:
+
+`A1/Part2/changes/Change1/test_result.log`
+
+Include:
+
+- The working directory.
+- The exact test command.
+- Test runner and relevant version.
+- Actual test output.
+- Exit code.
+- Passed, failed, skipped and unexecuted counts where available.
+- Any environment limitations.
+
+The log must be produced from actual execution. Do not create fictional passing results.
+
+## 8. CLI demonstration
+
+The primary use-case verification must be executable through CLI commands.
+
+Prefer focused automated tests for event creation, RSVP transitions, reminder scheduling and notification behaviour.
+
+If a small test script or fixture-driven runner improves reproducibility, add it within the established project test conventions.
+
+Do not require me to open a browser or manually click through the entire application to establish that the main backend use cases work.
+
+If frontend unit tests are available for the relevant components, run the focused checks that are practical. Document that CLI backend tests do not independently establish visual correctness.
+
+## 9. Git commit requirements
+
+Implement Change 1 in the actual Misskey repository.
+
+Before staging:
+
+- Inspect `git diff`.
+- Run `git diff --check`.
+- Verify all changed and new source files.
+- Verify the focused tests.
+- Confirm that no unrelated user files are staged.
+
+Stage only the files relevant to Change 1, including the feature-specific automated tests and any necessary migration.
+
+Create one local implementation commit with a descriptive message, for example:
+
+`feat: add native events with RSVP and reminders`
+
+Use an appropriate conventional commit message if the repository has a stricter convention.
+
+Do not commit unrelated changes. Do not push to a remote repository.
+
+After the commit:
+
+- Record the real baseline and implementation commit SHAs.
+- Verify the source diff.
+- Confirm the final working-tree status.
+- Ensure that the commit actually contains the claimed implementation and tests.
+
+Save the relevant commit information in:
+
+`A1/Part2/changes/Change1/commit.txt`
+
+The case-study evidence folder is outside the Misskey repository, so do not accidentally include it in the Misskey feature commit.
+
+## 10. Change 1 evidence files
+
+Generate the following files from the actual implementation.
+
+### 10.1 `requirement.md`
+
+Location:
+
+`A1/Part2/changes/Change1/requirement.md`
+
+Record:
+
+- The complete Change 1 requirement from this prompt.
+- The feature objective.
+- Observable acceptance criteria.
+- The important architectural decisions.
+- The affected Misskey source modules.
+- Any relevant assumptions and exclusions.
+
+### 10.2 `diff.patch`
+
+Location:
+
+`A1/Part2/changes/Change1/diff.patch`
+
+Generate the actual patch from the recorded preceding commit to the Change 1 implementation commit. Include all relevant new and modified production files, tests and migrations.
+
+Confirm that the patch corresponds to the commit recorded in `commit.txt`.
+
+### 10.3 `test_result.log`
+
+Location:
+
+`A1/Part2/changes/Change1/test_result.log`
+
+Save the actual focused CLI test results and any relevant build or type-check results.
+
+### 10.4 `commit.txt`
+
+Location:
+
+`A1/Part2/changes/Change1/commit.txt`
+
+Record actual baseline, previous and resulting commit identifiers, commit message and changed source paths.
+
+### 10.5 `metrics.csv`
+
+Location:
+
+`A1/Part2/changes/Change1/metrics.csv`
+
+Measure the before/after source LOC using consistent rules and a reproducible tool.
+
+Document the measurement scope and tool. Distinguish production code from tests.
+
+Use comparable snapshots. Include the actual commit SHAs and relevant test outcomes.
+
+If a metric is unavailable, explain why. Do not estimate missing data.
+
+### 10.6 `pattern_effects.md`
+
+Location:
+
+`A1/Part2/changes/Change1/pattern_effects.md`
+
+Document:
+
+- Existing pattern collaborations affected by the feature.
+- Their actual participants and source locations before and after.
+- Whether each collaboration was preserved, modified, extended, replaced or removed.
+- Any newly introduced confirmed collaboration.
+- The evidence and reasoning supporting the classification.
+- The real code smell addressed and refactoring performed.
+- The focused test evidence supporting behaviour preservation.
+
+Do not invent a design pattern merely because the new implementation contains a service, factory, queue or notification.
+
+If no safe and meaningful refactoring is justified, state that explicitly and identify the remaining coursework requirement rather than fabricate one.
+
+## 11. Pattern evolution CSV
+
+Update:
+
+`A1/Part2/pattern_evalution.csv`
+
+Preserve its required header:
+
+`source_version,pattern_name,pattern_type,instance_name,participant_roles,source_locations,intent_and_evidence,status_after_change,change_description`
+
+Use the verified baseline inventory already present in the file. Do not erase valid baseline records.
+
+For Change 1:
+
+1. Add the confirmed pattern-collaboration records for the `CH01` snapshot.
+2. Preserve `instance_name` where an existing collaboration continues.
+3. Update source locations and participants where they changed.
+4. Mark unaffected existing collaborations in the inspected scope as `preserved` where appropriate.
+5. Mark modified, extended, replaced, removed and newly introduced collaborations accurately.
+6. Retain removal history.
+7. Use actual source locations and actual evidence.
+8. Verify the final records against the committed code.
+
+The source inspection scope remains the actual scope established during preflight. Do not claim an exhaustive pattern inventory of the entire Misskey monorepo.
+
+Use source version labels consistently:
+
+- `baseline`
+- `CH01`
+
+Do not include results for Changes 2 or 3 before those changes have been implemented.
+
+## 12. Pattern count CSV
+
+Update:
+
+`A1/Part2/Pattern_count.csv`
+
+Use its existing prescribed schema:
+
+`source_version,summary,pattern_name,count`
+
+Recalculate the baseline and CH01 records using confirmed pattern collaborations.
+
+Include:
+
+- `per_pattern`
+- `total_pattern_types`
+- `total_pattern_instances`
+
+Count a collaboration as one instance regardless of how many participants it has. Exclude removed instances from the active count for the relevant current snapshot.
+
+Ensure the counts agree with `pattern_evalution.csv`. Do not manually increase the number of patterns to make the implementation appear more sophisticated.
+
+## 13. Architecture diagrams
+
+Create or update appropriate diagrams under:
+
+`A1/Part2/diagrams/Change1/`
+
+Where the feature creates a material change in the architecture or pattern collaboration, provide:
+
+- An editable PlantUML file, such as `class_diagram.puml`.
+- A rendered image, such as `class_diagram.png`.
+
+Illustrate the actual event workflow: the relevant endpoint, service, data persistence, RSVP collaboration, notification system and reminder scheduling mechanism, to the extent that they exist in the implementation.
+
+Use actual class, interface, function or module names and relationships.
+
+Do not draw hypothetical classes or claim the architecture was implemented when it was not.
+
+If no additional diagram is warranted, document the reason instead of generating a misleading diagram.
+
+## 14. Exact prompt, context, output and verification records
+
+Create and maintain the following files.
+
+### Prompt
+
+`A1/Part2/llm/inputs/Change1_prompt.txt`
+
+Save the actual Change 1 implementation prompt used in the coding-agent interaction. Preserve its content.
+
+### Input context
+
+`A1/Part2/llm/inputs/Change1_context.md`
+
+Record:
+
+- The baseline or preceding source commit.
+- The relevant source files inspected.
+- The actual repository context provided to the agent.
+- The feature constraints and test-environment assumptions.
+- Any other supplied context that materially influenced the implementation.
+
+Do not invent source context or claim files were inspected when they were not.
+
+### Output
+
+`A1/Part2/llm/outputs/Change1_output.txt`
+
+Save the actual implementation report or captured tool output associated with the interaction, including genuine tests and commit results.
+
+Do not fabricate a raw model transcript. If the tool cannot expose the full conversation, record the actual available output and explain the limitation.
+
+### Verification
+
+`A1/Part2/llm/verification/Change1_verification.md`
+
+Document the claims that were checked, the relevant source locations, actual test results, the commit SHA, and whether each claim is correct, partially correct, incorrect or cannot be confirmed.
+
+Distinguish code-level verification from an actual PostgreSQL, Redis or external-provider integration test.
+
+## 15. Update the root `llm.csv`
+
+Update:
+
+`A1/Part2/llm.csv`
+
+Preserve the prescribed columns:
+
+`part,model_and_date,prompt_file,input_file,output_file,evaluation,verification_file`
+
+Add the Change 1 interaction record using paths relative to the team folder `A1/`.
+
+For example:
+
+- `prompt_file`: `Part2/llm/inputs/Change1_prompt.txt`
+- `input_file`: `Part2/llm/inputs/Change1_context.md`
+- `output_file`: `Part2/llm/outputs/Change1_output.txt`
+- `verification_file`: `Part2/llm/verification/Change1_verification.md`
+
+Use the actual model identifier and interaction date when available. If unavailable, state that honestly instead of guessing.
+
+Ensure every referenced file exists and corresponds to the recorded interaction.
+
+Use UTF-8 CSV with a single header row and correctly quoted cells. Do not replace actual interactions with invented retrospective records.
+
+## 16. Update the evolved source README
+
+Update:
+
+`A1/Part2/code/README.md`
+
+Record:
+
+- The Misskey repository URL.
+- The baseline SHA.
+- The Change 1 implementation SHA.
+- The new or modified production source paths.
+- The migration, if any.
+- The focused automated test commands.
+- The actual test results or log references.
+- The measurement rules.
+- The relevant limitations.
+- How to retrieve the evolved application source from the actual Misskey Git history.
+
+Ensure that the `code/` folder contains the necessary evolved application source evidence, not only the README. Avoid copying dependency caches, compiled artifacts or unrelated files.
+
+## 17. Evidence accuracy and data integrity
+
+All deliverables must describe the implementation that actually exists after the Change 1 commit.
+
+Do not:
+
+- Claim a test passed without executing it.
+- Invent test output, metrics, source locations or commit SHAs.
+- Assume a notification was delivered merely because a queue job was enqueued.
+- Assume a database change works merely because the TypeScript compiles.
+- Claim real speech, scheduling or external-service integration when only a mocked interface was tested.
+- Mark a design pattern as confirmed based only on a class name.
+- Silently discard existing evidence or unrelated user files.
+- Create evidence folders for later features and fill them with fictional results.
+
+Check all relative paths, CSV headers, source versions and commit references before finishing.
+
+## 18. Completion conditions for CH01
+
+Do not consider Change 1 complete until:
+
+1. The event-management functionality is implemented in the actual Misskey codebase.
+2. The feature is integrated with appropriate API and frontend behaviour.
+3. The required persistent data and migration are implemented where necessary.
+4. RSVP behaviour, permissions and attendance state are covered by relevant automated tests.
+5. Reminder scheduling, event rescheduling, cancellation and duplicate notification handling are tested to the extent permitted by the available environment.
+6. Focused CLI test commands have actually run, with results recorded honestly.
+7. The source changes and feature-specific tests are committed in one separate local commit.
+8. The diff and commit identifiers are recorded.
+9. Before/after metrics and design-pattern effects are documented.
+10. The pattern-evolution and pattern-count CSVs are updated consistently.
+11. Relevant diagrams are saved.
+12. The exact prompt, supplied context, available raw output and verification record are saved.
+13. `llm.csv` maps the interaction to those files.
+14. The code README identifies the evolved source and how to reproduce the focused checks.
+15. The final evidence passes a path and consistency check.
+
+If a requirement remains incomplete because a real dependency is unavailable, state exactly what remains unverified. Do not claim complete success.
+
+## 19. Final response after completing Change 1
+
+Provide a concise implementation report with:
+
+- Feature summary.
+- Main changed source files.
+- Database migration details, if applicable.
+- Automated tests executed and actual pass/fail results.
+- Tests not run and reasons.
+- Relevant type-check or lint results, if executed.
+- Baseline and implementation commit SHAs.
+- Source LOC before and after.
+- Design-pattern changes and refactoring performed.
+- Paths of all created or updated evidence files.
+- Any remaining defects or limitations.
+
+Do not begin Change 2. After presenting the evidence for Change 1, stop and wait for my next requirement.
+
+**Start by implementing this event feature in Misskey. Complete the focused automated tests, commit the implementation, and generate all the Change 1 evidence described above.**
+
+THE PARTS THAT NEEDED HAVE TO BE ADDED TO THOSSE FILES CORRECTLY 

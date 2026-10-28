@@ -1,0 +1,47 @@
+@startuml A2
+!pragma layout smetana
+title A2 Composite: CompositeFilter (after Change3 - extended)
+
+interface "Filter<T>" as Filter <<Component>> {
+  +apply(T) : FilterResult
+  {static} +composeFilters(Collection<Filter<T>>) : Filter<T>
+}
+class "CompositeFilter<T>" as CompositeFilter <<Composite>> {
+  -filters : Collection<Filter<T>>
+  +apply(T) : FilterResult
+}
+interface PostDiscoveryFilter <<Leaf, not counted>> #E6E6E6
+class EngineDiscoveryOrchestrator <<Client>>
+
+CompositeFilter ..|> Filter
+CompositeFilter o--> "0..*" Filter : filters
+PostDiscoveryFilter --|> Filter
+Filter ..> CompositeFilter : composeFilters() creates
+EngineDiscoveryOrchestrator ..> Filter : composeFilters(postDiscoveryFilters).apply()
+note bottom of PostDiscoveryFilter
+  Leaves in discovery: PostDiscoveryFilter implementations
+  (IncludeMethodFilter, ExcludeMethodFilter, TagFilter lambdas).
+  [B16 correction: EngineFilter removed - it is applied by
+  EngineFilterer, never inside CompositeFilter.]
+end note
+class FilterPolicy <<Leaf, new in CH03>> #C8F7C5 {
+  -exclude : boolean
+  -matchers : List<Predicate<TestDescriptor>>
+  {static} ~fromConfiguration(ConfigurationParameters) : Optional<PostDiscoveryFilter>
+  +apply(TestDescriptor) : FilterResult
+}
+FilterPolicy ..|> PostDiscoveryFilter
+EngineDiscoveryOrchestrator ..> FilterPolicy : collectPostDiscoveryFilters() adds it last
+' aligned-with-record
+legend right
+  <b>Counted participants</b> (record in the dataset)
+  Component: Filter
+  Composite: CompositeFilter
+  Leaf: IncludeMethodFilter (not drawn)
+  Leaf: ExcludeMethodFilter (not drawn)
+  Leaf (lambda factory): TagFilter (not drawn)
+  Client: EngineDiscoveryOrchestrator#applyPostDiscoveryFilters
+  Leaf: FilterPolicy
+  Grey classes: real, shown for context, not counted
+endlegend
+@enduml

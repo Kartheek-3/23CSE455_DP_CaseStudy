@@ -1,0 +1,32 @@
+Pattern: Strategy
+Instance: Visibility Condition Evaluator Dispatch
+Language: Python
+Compiler/Runtime: Python 3.11.9
+Warmup + 5 Runs Raw Output:
+--- Run 1 ---
+RESULT: 6/6 passed
+TIME_MS: 0.056
+
+
+--- Run 2 ---
+RESULT: 6/6 passed
+TIME_MS: 0.067
+
+
+--- Run 3 ---
+RESULT: 6/6 passed
+TIME_MS: 0.046
+
+
+--- Run 4 ---
+RESULT: 6/6 passed
+TIME_MS: 0.054
+
+
+--- Run 5 ---
+RESULT: 6/6 passed
+TIME_MS: 0.048
+
+
+Measured Milliseconds: [0.056, 0.067, 0.046, 0.054, 0.048]
+Computed Median Milliseconds: 0.054

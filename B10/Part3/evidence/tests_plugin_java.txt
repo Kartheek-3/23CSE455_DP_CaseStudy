@@ -1,0 +1,9 @@
+# Plugin / java
+working folder: Part3/plugin_module_loading/java
+$ javac -d out InputController.java ModuleLoadingTest.java
+
+[compile exit code: 0]
+$ java -cp out ModuleLoadingTest
+Plugin tests: 9/9 passed
+
+[exit code: 0]

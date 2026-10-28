@@ -1,0 +1,4 @@
+totp	123456	repeat	ok:ok
+totp	000000	repeat	fail:fail
+recovery	R-1	repeat	ok:fail
+recovery	wrong	repeat	fail:fail

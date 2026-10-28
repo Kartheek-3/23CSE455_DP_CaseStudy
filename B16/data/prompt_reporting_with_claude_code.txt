@@ -1,0 +1,8 @@
+Reporting and tooling work done by Claude Code (Claude Opus 5.5, CLI, on my machine) on 2026-10-10,
+following my requests in the Claude Code session (no separate written prompt), e.g.
+"finish leftover", "review it for any signs that make me lose marks", "verify using the referenced doc".
+
+Produced by Claude Code: the draft of B16_Report.tex (data/report_template.tex + data/build_report.py),
+Part3/B16_slide.tex, B16_dataset.xlsx (data/build_workbook.py), README.md, the dataset generators
+(data/build_part1_csv.py, data/build_part2_csv.py, data/assemble.py), Part3/measure.py,
+Part1/uml/align_with_records.py and the line-check / verification scripts used in Parts 1-3.

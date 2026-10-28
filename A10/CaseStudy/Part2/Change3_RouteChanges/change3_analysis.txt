@@ -1,0 +1,69 @@
+CHANGE 3 - ROUTE CHANGES
+
+Requirement:
+Support route changes for shipments while preserving the history of
+previous route assignments.
+
+Baseline:
+The baseline WTMS application contains a routes table and associates each
+shipment with a route through shipments.route_id. RouteUpdate exists as a
+Pydantic model, but no repository method or API endpoint was implemented
+for updating routes.
+
+Baseline source evidence:
+- app/models/transportation.py - RouteBase, RouteUpdate, RouteResponse
+- app/repositories/shipment_repositories.py - route creation/listing and
+  shipment creation/retrieval
+- app/api/transportation.py - route creation/listing endpoints
+- sql/schema.sql:191-199 - routes table
+- sql/schema.sql:204-219 - shipments table
+
+Evolution:
+A shipment route-change capability was introduced while preserving the
+existing shipments.route_id field as the current route. A separate
+shipment_route_history table records each route change with the previous
+route, new route, shipment and change timestamp.
+
+Database changes:
+1. Created shipment_route_history table.
+2. Added shipment_id foreign key to shipments.
+3. Added previous_route_id and new_route_id foreign keys to routes.
+4. Added changed_at timestamp.
+5. Added indexes on shipment_id and changed_at.
+
+Application implementation:
+- Added ShipmentRouteChangeCreate model.
+- Added ShipmentRouteHistoryResponse model.
+- Added TransportationRepository.change_shipment_route().
+- Added POST /api/v1/transportation/shipments/change-route.
+
+Route-change operation:
+1. Locks and reads the shipment's current route.
+2. Validates that the shipment exists.
+3. Validates that the new route differs from the current route.
+4. Updates shipments.route_id.
+5. Inserts the previous and new route IDs into shipment_route_history.
+6. Returns the created route-history record.
+
+Design impact:
+The existing shipment representation continues to store the current route,
+while route history is separated into its own persistence structure.
+The existing TransportationRepository architecture is preserved and
+extended with route-change behavior.
+
+Pattern evolution:
+Repository Pattern is preserved and extended. The existing
+TransportationRepository now encapsulates the route-change transaction
+and route-history persistence.
+
+Verification:
+- POST /api/v1/transportation/shipments/change-route returned HTTP 200 OK.
+- Shipment 4 was changed from route_id = 1 to route_id = 2.
+- The API returned route_history_id = 1.
+- The recorded history contained previous_route_id = 1 and
+  new_route_id = 2.
+- A direct PostgreSQL query confirmed current_route_id = 2 and the
+  corresponding route-history record.
+
+Change status:
+Implemented and verified.

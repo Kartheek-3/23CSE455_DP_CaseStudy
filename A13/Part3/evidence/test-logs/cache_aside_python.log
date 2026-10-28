@@ -1,0 +1,15 @@
+# cache_aside / python
+# working folder: Part3/code/pattern_cache_aside/python
+# runtime: CPython 3.14.6
+$ python3 -B test_federated_instance_service.py ../../../test-cases/cache_aside.txt
+PASS register_on_first_fetch
+PASS second_fetch_from_cache
+PASS cache_reloaded_from_db
+PASS ids_are_sequential
+PASS lookup_unknown_caches_negative
+PASS lookup_known_after_cache_drop
+PASS register_after_negative_lookup
+passed 7/7
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 27.9, 28.5, 27.6, 27.4, 26.8 -> median 27.6
