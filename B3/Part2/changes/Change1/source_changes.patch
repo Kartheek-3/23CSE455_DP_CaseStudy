@@ -1,0 +1,267 @@
+﻿git : warning: in the working copy of 'D:\DP\CASE_STUDY\new_Dp\django-job-portal_observer\jobsapp\observers.py', LF will be replaced by 
+CRLF the next time Git touches it
+At line:22 char:9
++         git diff --no-index --no-ext-diff -- /dev/null $current 2>&1  ...
++         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (warning: in the... Git touches it:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+diff --git "a/D:\\DP\\CASE_STUDY\\new_Dp\\django-job-portal_observer\\jobsapp\\observers.py" "b/D:\\DP\\CASE_STUDY\\new_Dp\\django-job-portal_observer\\jobsapp\\observers.py"
+new file mode 100644
+index 0000000..9781d25
+--- /dev/null
++++ "b/D:\\DP\\CASE_STUDY\\new_Dp\\django-job-portal_observer\\jobsapp\\observers.py"
+@@ -0,0 +1,62 @@
++"""Observer pattern for job publication events.
++
++The subject owns a list of observers and notifies them after a job is saved.
++Observers implement update(job). The default observer logs the event; additional
++observers (email, in-app alerts, queue publishing) can be subscribed later.
++"""
++from __future__ import annotations
++
++import logging
++from typing import Protocol
++
++logger = logging.getLogger(__name__)
++
++
++class JobObserver(Protocol):
++    """Contract for objects interested in newly created jobs."""
++
++    def update(self, job) -> None:
++        """Handle a newly created job."""
++
++
++class JobCreatedLoggingObserver:
++    """A safe default observer that records job-created events in application logs."""
++
++    def update(self, job) -> None:
++        logger.info(
++            "Job created: id=%s title=%r category_id=%s",
++            job.pk,
++            job.title,
++            getattr(job, "category_id", None),
++        )
++
++
++class JobCreatedSubject:
++    """Subject that allows observers to subscribe, unsubscribe, and receive events."""
++
++    def __init__(self, observers=None):
++        self._observers = list(observers or [])
++
++    def subscribe(self, observer: JobObserver) -> None:
++        if observer not in self._observers:
++            self._observers.append(observer)
++
++    def unsubscribe(self, observer: JobObserver) -> None:
++        if observer in self._observers:
++            self._observers.remove(observer)
++
++    def notify(self, job) -> None:
++        # Snapshot avoids changes to subscriptions affecting the current dispatch.
++        for observer in tuple(self._observers):
++            try:
++                observer.update(job)
++            except Exception:
++                # A notification observer must not break successful job creation.
++                logger.exception(
++                    "Job-created observer %r failed for job id=%s",
++                    observer,
++                    getattr(job, "pk", None),
++                )
++
++
++job_created_subject = JobCreatedSubject([JobCreatedLoggingObserver()])
+git : warning: in the working copy of 'D:\DP\CASE_STUDY\new_Dp\django-job-portal_observer\jobsapp\api\views\employer.py', LF will be 
+replaced by CRLF the next time Git touches it
+At line:32 char:9
++         git diff --no-index --no-ext-diff -- $baseline $current 2>&1  ...
++         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (warning: in the... Git touches it:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+diff --git "a/D:\\DP\\CASE_STUDY\\new_Dp\\django-job-portal\\jobsapp\\api\\views\\employer.py" "b/D:\\DP\\CASE_STUDY\\new_Dp\\django-job-portal_observer\\jobsapp\\api\\views\\employer.py"
+index c7d5dbd..463576a 100644
+--- "a/D:\\DP\\CASE_STUDY\\new_Dp\\django-job-portal\\jobsapp\\api\\views\\employer.py"
++++ "b/D:\\DP\\CASE_STUDY\\new_Dp\\django-job-portal_observer\\jobsapp\\api\\views\\employer.py"
+@@ -3,6 +3,7 @@ from rest_framework.generics import CreateAPIView, ListAPIView, ListCreateAPIVie
+ from rest_framework.permissions import IsAuthenticated
+ from rest_framework.views import APIView
+ from rest_framework import status
++from jobsapp.application_states import ApplicationStateFactory
+ 
+ from jobsapp.api.permissions import IsEmployer, IsJobCreator
+ from jobsapp.api.serializers import (
+@@ -13,6 +14,7 @@ from jobsapp.api.serializers import (
+     NewJobSerializer,
+ )
+ from jobsapp.models import Applicant, Company
++from jobsapp.observers import job_created_subject
+ 
+ 
+ class DashboardAPIView(ListAPIView):
+@@ -32,7 +34,9 @@ class JobCreateAPIView(CreateAPIView):
+     permission_classes = [IsAuthenticated, IsEmployer]
+ 
+     def perform_create(self, serializer):
+-        serializer.save(user=self.request.user)
++        job = serializer.save(user=self.request.user)
++        # Notify observers only after the job has been persisted successfully.
++        job_created_subject.notify(job)
+ 
+ 
+ class EmployerCompanyListCreateAPIView(ListCreateAPIView):
+@@ -49,7 +53,9 @@ class EmployerCompanyListCreateAPIView(ListCreateAPIView):
+         return Company.objects.filter(user=self.request.user).order_by("-created_at")
+ 
+     def perform_create(self, serializer):
+-        serializer.save(user=self.request.user)
++        job = serializer.save(user=self.request.user)
++        # Notify observers only after the job has been persisted successfully.
++        job_created_subject.notify(job)
+ 
+ 
+ class EmployerCompanyDetailAPIView(RetrieveUpdateAPIView):
+@@ -91,28 +97,54 @@ class ApplicantsPerJobListAPIView(ListAPIView):
+         ).order_by("id")
+ 
+ 
++
+ class UpdateApplicantStatusAPIView(APIView):
+     permission_classes = [IsAuthenticated, IsEmployer]
+ 
+     def post(self, request, *args, **kwargs):
+         applicant_id = kwargs.get("applicant_id")
+         status_code = kwargs.get("status_code")
++
+         try:
+             applicant = Applicant.objects.select_related("job__user").get(
+                 id=applicant_id
+             )
+         except Applicant.DoesNotExist:
+-            data = {"message": "Applicant not found"}
+-            return JsonResponse(data, status=status.HTTP_404_NOT_FOUND)
++            return JsonResponse(
++                {"message": "Applicant not found"},
++                status=status.HTTP_404_NOT_FOUND,
++            )
+ 
+         if applicant.job.user != request.user:
+-            data = {"errors": "You are not authorized"}
+-            return JsonResponse(data, status=status.HTTP_403_FORBIDDEN)
++            return JsonResponse(
++                {"errors": "You are not authorized"},
++                status=status.HTTP_403_FORBIDDEN,
++            )
++
++        # Preserve the existing API behavior for unsupported target codes.
+         if status_code not in [1, 2]:
+             status_code = 3
+ 
+-        applicant.status = status_code
++        current_state = ApplicationStateFactory.from_code(applicant.status)
++        target_state = ApplicationStateFactory.from_code(status_code)
++
++        # Let the State pattern decide whether the transition is valid.
++        if not current_state.can_transition_to(target_state):
++            return JsonResponse(
++                {
++                    "errors": (
++                        f"Cannot transition from {current_state.label} "
++                        f"to {target_state.label}"
++                    )
++                },
++                status=status.HTTP_400_BAD_REQUEST,
++            )
++
++        applicant.status = target_state.code
+         applicant.comment = request.data.get("comment", "")
+         applicant.save()
+-        data = {"message": "Applicant status updated"}
+-        return JsonResponse(data, status=status.HTTP_200_OK)
++
++        return JsonResponse(
++            {"message": "Applicant status updated"},
++            status=status.HTTP_200_OK,
++        )
+git : warning: in the working copy of 'D:\DP\CASE_STUDY\new_Dp\django-job-portal_observer\tests\jobsapp\test_observers.py', LF will be 
+replaced by CRLF the next time Git touches it
+At line:22 char:9
++         git diff --no-index --no-ext-diff -- /dev/null $current 2>&1  ...
++         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (warning: in the... Git touches it:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+diff --git "a/D:\\DP\\CASE_STUDY\\new_Dp\\django-job-portal_observer\\tests\\jobsapp\\test_observers.py" "b/D:\\DP\\CASE_STUDY\\new_Dp\\django-job-portal_observer\\tests\\jobsapp\\test_observers.py"
+new file mode 100644
+index 0000000..c98af31
+--- /dev/null
++++ "b/D:\\DP\\CASE_STUDY\\new_Dp\\django-job-portal_observer\\tests\\jobsapp\\test_observers.py"
+@@ -0,0 +1,65 @@
++import unittest
++from unittest.mock import Mock
++
++from jobsapp.observers import JobCreatedSubject
++
++
++class JobCreatedSubjectTests(unittest.TestCase):
++    def setUp(self):
++        self.job = Mock(pk=7, title="Backend Engineer", category_id=3)
++
++    def test_notify_calls_each_subscribed_observer(self):
++        first, second = Mock(), Mock()
++        subject = JobCreatedSubject([first, second])
++
++        subject.notify(self.job)
++
++        first.update.assert_called_once_with(self.job)
++        second.update.assert_called_once_with(self.job)
++
++    def test_subscribe_adds_observer(self):
++        observer = Mock()
++        subject = JobCreatedSubject()
++        subject.subscribe(observer)
++
++        subject.notify(self.job)
++
++        observer.update.assert_called_once_with(self.job)
++
++    def test_duplicate_subscription_is_ignored(self):
++        observer = Mock()
++        subject = JobCreatedSubject()
++        subject.subscribe(observer)
++        subject.subscribe(observer)
++
++        subject.notify(self.job)
++
++        observer.update.assert_called_once_with(self.job)
++
++    def test_unsubscribe_stops_notifications(self):
++        observer = Mock()
++        subject = JobCreatedSubject([observer])
++        subject.unsubscribe(observer)
++
++        subject.notify(self.job)
++
++        observer.update.assert_not_called()
++
++    def test_unsubscribing_unknown_observer_is_safe(self):
++        subject = JobCreatedSubject()
++        subject.unsubscribe(Mock())
++        subject.notify(self.job)
++
++    def test_observer_failure_does_not_block_other_observers(self):
++        failing, healthy = Mock(), Mock()
++        failing.update.side_effect = RuntimeError("notification failed")
++        subject = JobCreatedSubject([failing, healthy])
++
++        with self.assertLogs("jobsapp.observers", level="ERROR"):
++            subject.notify(self.job)
++
++        healthy.update.assert_called_once_with(self.job)
++
++
++if __name__ == "__main__":
++    unittest.main()

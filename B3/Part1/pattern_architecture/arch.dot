@@ -1,0 +1,25 @@
+digraph arch {
+  rankdir=TB; fontname="Helvetica"; node [fontname="Helvetica",fontsize=10,shape=box,style="rounded,filled",fillcolor="#f4f6fa"]; edge [fontname="Helvetica",fontsize=9];
+  client [label="Client\n(REST / GraphQL request)",fillcolor="#fff3cd"];
+  db [label="Database",shape=cylinder,fillcolor="#e8e8e8"];
+  models [label="jobsapp/models.py\nCompany, Job, Applicant, Favorite"];
+  subgraph cluster_rest { label="REST path (Django REST Framework)"; style=dashed; fontsize=11;
+    urls [label="jobsapp/api/urls.py\n(routing)"];
+    views [label="Views: jobsapp/api/views/employer.py, employee.py\npermission_classes, perform_create, get_serializer_class\n[Instances 3, 4, 5]"];
+    perms [label="jobsapp/api/permissions.py\nIsEmployer, IsEmployee, IsJobCreator\n[Instance 3: Strategy]"];
+    ser [label="jobsapp/api/serializers.py\nCompanySerializer, CompanyWriteSerializer, ...\n[Instance 5: Factory Method]"];
+  }
+  subgraph cluster_gql { label="GraphQL path (Graphene)"; style=dashed; fontsize=11;
+    mut [label="jobsapp/graphql/sub_mutations.py\nCreateNewJob, UpdateJob"];
+    mm [label="MutationMixin.mutate\n[Instance 2: Template Method]"];
+    pm [label="PermissionMixin\n(graphql_mixins.py)"];
+    gperms [label="jobsapp/graphql/permissions.py\nAllowAny, IsAuthenticated, IsEmployer, IsEmployee\n[Instance 1: Strategy]"];
+    hook [label="CreateNewJobMixin / UpdateJobMixin\nresolve_mutation (hook)"];
+    forms [label="jobsapp/forms.py\nCreateJobForm"];
+  }
+  client -> urls [label="HTTP request"]; urls -> views;
+  views -> perms [label="1. permission check"]; views -> ser [label="2. validate / serialize"]; ser -> models [label="3. save / read"];
+  client -> mut [label="GraphQL mutation"]; mut -> mm [label="inherits"]; mm -> pm [label="1. check_permissions"]; pm -> gperms [label="has_permission"];
+  mm -> hook [label="2. resolve_mutation"]; hook -> forms; forms -> models;
+  models -> db;
+}

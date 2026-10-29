@@ -1,0 +1,14 @@
+digraph u1 { rankdir=BT; fontname="Helvetica"; node [fontname="Helvetica",fontsize=10,shape=record,style=filled,fillcolor="#f4f6fa"]; edge [fontname="Helvetica",fontsize=9];
+ base [label="{BasePermission\n«Strategy»|+ message\l|+ has_permission(request, **kwargs)\l+ has_object_permission(request, obj, **kwargs)\l}"];
+ a [label="{AllowAny\n«ConcreteStrategy»|+ has_permission()\l}"];
+ b [label="{IsAuthenticated\n«ConcreteStrategy»|+ has_permission()\l}"];
+ c [label="{IsEmployer\n«ConcreteStrategy»|+ has_permission()\l}"];
+ d [label="{IsEmployee\n«ConcreteStrategy»|+ has_permission()\l}"];
+ ctx [label="{PermissionMixin\n«Context»|+ permission_classes\l|+ check_permissions(info, **kwargs)\l+ check_object_permissions(info, obj, **kwargs)\l+ get_permissions()\l}"];
+ mm [label="{MutationMixin|+ mutate()\l}"];
+ n1 [label="{CreateNewJob\n«Client»|permission_classes =\l[IsAuthenticated, IsEmployer]\l}"];
+ n2 [label="{UpdateJob\n«Client»|permission_classes =\l[IsAuthenticated, IsEmployer]\l}"];
+ a -> base [arrowhead=empty]; b -> base [arrowhead=empty]; c -> base [arrowhead=empty]; d -> base [arrowhead=empty];
+ ctx -> base [style=dashed,arrowhead=vee,label="holds instances of"];
+ mm -> ctx [arrowhead=empty]; n1 -> mm [arrowhead=empty]; n2 -> mm [arrowhead=empty];
+}

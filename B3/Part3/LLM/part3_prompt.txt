@@ -1,0 +1,62 @@
+Part 3 — Cross-Language Design Pattern Implementation Prompt
+
+Project context This is Part 3 of a design-pattern case study on the
+Django REST-Based Job Recruitment Application (django-job-portal). Part
+1 identified five baseline instances: GraphQL Permission Policy
+(Strategy), GraphQL Mutation Pipeline (Template Method), DRF Role
+Permission Policy (Strategy), DRF Create Hook (Template Method), and
+Company Serializer Selection (Factory Method). Part 2 added Observer.
+State is not included in this Part 3 scope.
+
+Goal Implement the selected design patterns independently in Python,
+Java, JavaScript, and C++ so the implementations can be compared across
+languages.
+
+Rules 1. Use the confirmed source-pattern description as the reference.
+Do not claim a standalone reproduction is a direct port of
+Django/DRF/Graphene unless it actually integrates those frameworks. 2.
+Preserve equivalent behavior across languages: same use cases, inputs,
+expected outputs, and test scenarios. 3. Keep implementations small,
+understandable, and runnable with the language’s standard tools where
+practical. 4. Include a test runner for each language and report the
+actual test results. 5. Measure and record source LOC using one
+consistent counting rule. State which files are counted and whether
+blank/comment lines are excluded. 6. Measure runtime with five local
+runs where possible. Record all five measurements and the median. State
+whether process/runtime startup is included and whether compilation is
+excluded. 7. Record language/runtime/compiler versions from actual
+command output. 8. Do not invent metrics, versions, test results,
+prompts, outputs, or evaluation results. Mark missing information as not
+measured/not recorded. 9. Explain any language-specific differences that
+affect the pattern structure. 10. Keep a README in each language folder
+documenting the implementation, how to run it, tests, metrics, and
+limitations.
+
+For the Template Method pattern Use the confirmed GraphQL Mutation
+Pipeline as the reference: - MutationMixin.mutate() checks
+permissions. - If permitted, it calls resolve_mutation(). -
+PermissionDeniedError is converted into an error payload. - CreateNewJob
+and UpdateJob provide different mutation-hook implementations.
+
+For the Strategy pattern Use the confirmed DRF Role Permission Policy as
+the reference: - IsEmployer checks the employer role. - IsEmployee
+checks the employee role. - IsJobCreator checks whether the user owns
+the job. - Explain that a standalone reproduction is inspired by DRF and
+is not a complete DRF integration.
+
+For Observer Use the behavior already defined and tested in the
+project’s Part 2 implementation. Preserve equivalent event behavior
+across languages and document any simplifications.
+
+Deliverables - part3_prompt.txt: this prompt, saved with the Part 3
+project materials. - llm.csv: a provenance log of actual LLM-assisted
+work. - pattern_crosslanguage.csv: a comparison of language
+implementations, measured LOC/complexity/runtime, test results, and
+versions. - Per-language source files, test runners, and README files.
+
+llm.csv guidance Record actual interactions only. Include date/time,
+pattern, language, task/prompt summary, model/tool, output files or code
+produced, test/evaluation result, and notes. Do not fabricate historical
+prompt text or evaluations. If exact prompt/output provenance was not
+captured, mark it as not recorded and fill in future rows at the time of
+each interaction.

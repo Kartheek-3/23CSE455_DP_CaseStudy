@@ -1,0 +1,11 @@
+digraph u5 { rankdir=BT; fontname="Helvetica"; node [fontname="Helvetica",fontsize=10,shape=record,style=filled,fillcolor="#f4f6fa"]; edge [fontname="Helvetica",fontsize=9];
+ cr [label="{GenericAPIView\n«Creator, framework»|+ get_serializer()\l+ get_serializer_class()   «FactoryMethod»\l}",fillcolor="#e8e8e8"];
+ c1 [label="{EmployerCompanyListCreateAPIView\n«ConcreteCreator»|+ get_serializer_class()\l   POST: CompanyWriteSerializer\l   otherwise: CompanySerializer\l}"];
+ c2 [label="{EmployerCompanyDetailAPIView\n«ConcreteCreator»|+ get_serializer_class()\l   PUT or PATCH: CompanyWriteSerializer\l   otherwise: CompanySerializer\l}"];
+ p [label="{rest_framework.serializers.ModelSerializer\n«Product, framework»}",fillcolor="#e8e8e8"];
+ p1 [label="{CompanySerializer\n«ConcreteProduct»|read-only fields\l}"];
+ p2 [label="{CompanyWriteSerializer\n«ConcreteProduct»|writable fields\l}"];
+ c1 -> cr [arrowhead=empty]; c2 -> cr [arrowhead=empty];
+ p1 -> p [arrowhead=empty]; p2 -> p [arrowhead=empty];
+ c1 -> p1 [style=dashed,arrowhead=vee,label="creates"]; c1 -> p2 [style=dashed,arrowhead=vee]; c2 -> p1 [style=dashed,arrowhead=vee]; c2 -> p2 [style=dashed,arrowhead=vee];
+}
