@@ -1,37 +1,51 @@
 # 23CSE455 — Design Patterns Case Study
 
+This repository contains the comprehensive Design Patterns Case Study for **Team B1**: **Design Pattern Identification and Evolution in a React and Node.js-Based Restaurant Management Application**. It documents a source-based architectural review, three full-stack software evolutions, ten design-pattern collaborations, 40 cross-language implementations (Java, Python, JavaScript, C++), reproducible test suites, canonical datasets, and a compiled academic report.
 
-This repository contains information about case study, **Design Pattern Identification and Evolution in a Laravel-Based Healthcare Management Application**. It documents a source-based architectural review, three hypothetical integration changes, eight proposed design-pattern collaborations, cross-language demonstrations, reproducible tests, and a compiled academic report.
-
-## Submission
+## Submission Directory
 
 | Resource | Location |
-| --- | --- |
-| Team A5 overview, setup and evidence | [A5/README.md](A5/README.md) |
-| Final compiled report (PDF) | [A5/A5_Report.pdf](A5/A5_Report.pdf) |
-| Editable report source (LaTeX) | [A5/A5_Report.tex](A5/A5_Report.tex) |
-| Baseline pattern identification | [A5/Part1/](A5/Part1/) |
-| Evolution scenarios and PHP prototypes | [A5/Part2/](A5/Part2/) |
-| Cross-language source and measurements | [A5/Part3/](A5/Part3/) |
-| Installable Laravel 12 integration overlay | [A5/laravel_integration/](A5/laravel_integration/) |
-| Automated validation workflow | [.github/workflows/a5-validate.yml](.github/workflows/a5-validate.yml) |
+|:---|:---|
+| **Team B1 Overview, Reproduction & Evidence** | [B1/README.md](B1/README.md) |
+| **Final Compiled Academic Report (PDF)** | [B1/B1_Report.pdf](B1/B1_Report.pdf) / [B1/B1_Final_Report.pdf](B1/B1_Final_Report.pdf) |
+| **Editable Report Source (LaTeX)** | [B1/B1_Report.tex](B1/B1_Report.tex) |
+| **Technical Corrections & Limitations Audit** | [B1/CORRECTIONS_AND_LIMITATIONS.md](B1/CORRECTIONS_AND_LIMITATIONS.md) |
+| **Baseline Pattern Identification (Part 1)** | [B1/Part1/](B1/Part1/) |
+| **Software Evolutions & Full-Stack System (Part 2)** | [B1/Part2/](B1/Part2/) |
+| **Cross-Language Implementations & Benchmarks (Part 3)** | [B1/Part3/](B1/Part3/) |
+| **Canonical Datasets & Raw Evidence Logs** | [B1/data/](B1/data/) |
+| **Restaurant POS Full-Stack Integration Overlay** | [B1/restaurant_integration/](B1/restaurant_integration/) |
+---
 
-## Scope and evidence
+## Scope and Evidence
 
-The inspected application is [esteham/hospital-management](https://github.com/esteham/hospital-management), fixed at commit `1e7420e431771e3f5eec470d8a005e8255fa5fe8`. **Existing patterns and newly proposed patterns are deliberately distinguished.** The original source excerpts are in `A5/data/code/`; the proposed implementations are case-study extensions, not claims about patterns already present in the baseline.
+The analyzed application is a multi-tier restaurant management POS system built with React, Node.js, Express, TypeScript, Prisma ORM, PostgreSQL/SQLite, and Socket.IO.
 
-The extension demonstrates **eight patterns**, with a proposed two-pattern allocation for each of four members. All eight also have standalone Java, Python, JavaScript and C++ examples (32 programs). An additional Laravel overlay integrates three protected HTTP endpoints and is tested against a clean upstream checkout using simulated provider responses. It does **not** replace the upstream application's existing booking workflows or connect to real payment, laboratory or EHR providers.
+1. **Part 1 (Baseline Discovery):** Inspected baseline codebase for architectural patterns, establishing Façade (`AuthService`, `OrderService`), Observer (Socket.IO event bus), and Chain of Responsibility (Express auth middleware).
+2. **Part 2 (Three Evolutions):**
+   - **Evolution 1 (Online Ordering):** Public endpoints with server-side pricing validation and real-time station notification.
+   - **Evolution 2 (Kitchen Workflow):** Partitioning kitchen orders across station-specific Socket.IO rooms (`cold`, `hot`, `bar`) using deterministic course routing.
+   - **Evolution 3 (Payment Strategy):** GoF Strategy Pattern refactoring with concrete strategies for Cash, CreditCard, MobilePay, and GiftCard.
+   - Verified via automated test suite `verify_evolutions.ts` (28/28 assertions passed, 100%).
+3. **Part 3 (Cross-Language Evaluation):** 10 GoF patterns implemented across Java, Python, JavaScript, and C++ (40 standalone programs). Benchmarked for LOC, cyclomatic complexity, and median execution time in `data/cross_language.csv`.
+
+---
 
 ## Validation
 
-[GitHub Actions](.github/workflows/a5-validate.yml) checks the PHP contracts, 32 language programs, reproducible process timings, Laravel overlay tests, and LaTeX compilation. A successful workflow run provides evidence of those checks, not proof of live third-party integration.
+All evolutions and pattern demonstrations are fully reproducible:
+- **Evolution Test Suite:** `cd apps/backend && node dist/scripts/verify_evolutions.js` (28/28 passed).
+- **Cross-Language Benchmarks:** `python B1/Part3/benchmark.py` (executes all 40 implementations).
+- **Report Compilation:** LaTeX source compiles via `pdflatex -interaction=nonstopmode B1_Report.tex` without errors.
 
-For exact commands, dataset locations, limitations and attribution, read [the full Team A5 README](A5/README.md). The academic report is the primary narrative deliverable.
+---
 
+## Team B1
 
-## Team
-
-- Nemali Ashrith Reddy — AM.AL.U4AID23014
-- Akshay Reddy Velugati — AM.AL.U4AID23062
-- B. Pravallika — AM.SC.U4CSE23212
-- Daripineni Manogna — AM.SC.U4CSE23022
+| Student Name | Roll Number |
+|:---|:---|
+| **D Surya** | AM.SC.U4AIE23032 | 
+| **K Bruhadesh Varma** | AM.SC.U4AIE23039 | 
+| **R Teja** | AM.SC.U4AIE23053 | 
+| **Srivarma Battini** | AM.SC.U4AIE23057 | 
+| **Vijayshima Reddy** | AM.SC.U4AIE23110 |
