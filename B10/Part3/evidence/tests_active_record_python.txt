@@ -1,0 +1,6 @@
+# Active Record / python
+working folder: Part3/active_record_user_role/python
+$ python test_user_role.py
+Active Record tests: 12/12 passed
+
+[exit code: 0]

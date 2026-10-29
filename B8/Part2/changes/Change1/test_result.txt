@@ -1,0 +1,17 @@
+Change1 (personalized workout plans) test run - 2026-10-11 20:45
+Backend: FastAPI TestClient on a temporary copy of backend/gym_system.db
+
+[PASS] factory exposes 6 goal strategies  (General Fitness, Weight Loss, Muscle Building, Strength Training, Endurance, Flexibility)
+[PASS] every factory product is a WorkoutRecommendationStrategy
+[PASS] unknown goal falls back to General Fitness
+[PASS] goal inferred from free text
+[PASS] no goal inferred from empty text
+[PASS] GET /workout/goals returns the strategy goals
+[PASS] recommendation for Weight Loss uses the Weight Loss strategy  (4 exercises)
+[PASS] difficulty adjusts sets (Advanced > Beginner)  (3 vs 5 sets)
+[PASS] member's own goal is inferred and used
+[PASS] members cannot request recommendations (403)
+[PASS] workout plan saves its fitness_goal
+
+Result: 11 passed, 0 failed
+Frontend: ng build --configuration development -> success (final code after Change3)

@@ -1,0 +1,646 @@
+diff --git a/src/application/services/NotificationService.ts b/src/application/services/NotificationService.ts
+index 4d387a7..0c5e1ca 100644
+--- a/src/application/services/NotificationService.ts
++++ b/src/application/services/NotificationService.ts
+@@ -3,6 +3,7 @@ export interface INotificationService {
+     sendBookingNotification(driverId: string, data: any): void;
+     broadcastBookingNotification(driverIds: string[], data: any): void;
+     cancelBookingNotification(driverId:string,data:any):void
++    driverCancelledBookingNotification(userId: string, data: any): void;
+     paymentNotification(driverId:string,data:any):void
+     bookingAssignedNotification(bookingId: string, driverId?: string): void;
+     sendBookingConfirmation(userId: string, data: any): void;
+diff --git a/src/application/use_cases/Driver/UpdateBookingstatus.ts b/src/application/use_cases/Driver/UpdateBookingstatus.ts
+index 9ec1330..a5fe788 100644
+--- a/src/application/use_cases/Driver/UpdateBookingstatus.ts
++++ b/src/application/use_cases/Driver/UpdateBookingstatus.ts
+@@ -7,6 +7,7 @@ import { TOKENS } from "../../../constants/Tokens";
+ import { HTTP_STATUS_CODES } from "../../../constants/HttpStatusCode";
+ import { ERROR_MESSAGES } from "../../../constants/ErrorMessages";
+ import { IUpdateBookingStatusUseCase } from "./interfaces/IUpdateBookingStatusUseCase";
++import { TripLifecycle } from "../../../domain/booking/TripState";
+ 
+ 
+ interface UpdateBookingStatusInput {
+@@ -33,6 +34,12 @@ export class UpdateBookingStatus implements IUpdateBookingStatusUseCase {
+       throw new AuthError(ERROR_MESSAGES.BOOKING_NOT_FOUND, HTTP_STATUS_CODES.NOT_FOUND);
+     }
+ 
++    if (status === BookingStatus.CANCELLED) {
++      throw new AuthError("Use the cancel endpoint to cancel a ride.", HTTP_STATUS_CODES.BAD_REQUEST);
++    }
++    // Throws InvalidTransitionError when the current trip state does not allow this status.
++    new TripLifecycle(booking.status).moveTo(status);
++
+     if (status === "REJECTED" && !reason) {
+       throw new AuthError(
+         "Reason is required when rejecting a booking.",
+diff --git a/src/application/use_cases/User/CancelBooking.ts b/src/application/use_cases/User/CancelBooking.ts
+index 5cd8343..14f5304 100644
+--- a/src/application/use_cases/User/CancelBooking.ts
++++ b/src/application/use_cases/User/CancelBooking.ts
+@@ -1,18 +1,13 @@
+ import { inject, injectable } from "tsyringe";
+-import { IBookingRepository } from "../../../domain/repositories/IBookingrepository"; 
+-import { BookingStatus } from "../../../domain/models/Booking";
++import { IBookingRepository } from "../../../domain/repositories/IBookingrepository";
+ import { AuthError } from "../../../domain/errors/Autherror";
+ import { INotificationService } from "../../services/NotificationService";
+ import { TOKENS } from "../../../constants/Tokens";
+ import { ERROR_MESSAGES } from "../../../constants/ErrorMessages";
+ import { HTTP_STATUS_CODES } from "../../../constants/HttpStatusCode";
+-import { ICancelBookingUseCase } from "./interfaces/ICancelBookingUseCase";
+-
+-interface CancelBookingInput {
+-  bookingId: string;
+-  status: BookingStatus;
+-  reason: string;
+-}
++import { ICancelBookingUseCase, CancelBookingInput, CancelBookingResult } from "./interfaces/ICancelBookingUseCase";
++import { TripLifecycle } from "../../../domain/booking/TripState";
++import { cancellationPolicyFor } from "../../../domain/booking/CancellationPolicy";
+ 
+ @injectable()
+ export class CancelBookingInputUseCase  implements ICancelBookingUseCase{
+@@ -23,34 +18,41 @@ export class CancelBookingInputUseCase  implements ICancelBookingUseCase{
+     private _bookingRepo: IBookingRepository
+   ) {}
+ 
+-  async execute(input: CancelBookingInput): Promise<void> {
+-    const { bookingId, status, reason } = input;
++  async execute(input: CancelBookingInput): Promise<CancelBookingResult> {
++    const { bookingId, reason, cancelledBy, actorId } = input;
+ 
+     const booking = await this._bookingRepo.findBookingById(bookingId);
+     if (!booking) {
+       throw new AuthError(ERROR_MESSAGES.BOOKING_NOT_FOUND, HTTP_STATUS_CODES.NOT_FOUND);
+     }
+ 
+-    // Only restrict cancellation if the booking is already CONFIRMED (assigned to a driver)
+-    if (booking.status === BookingStatus.CONFIRMED) {
+-      const IST_OFFSET = 5.5 * 60 * 60 * 1000;
+-      const startIST = new Date(new Date(booking.startDate).getTime() + IST_OFFSET);
+-      const cutoffIST = new Date(startIST);
+-      cutoffIST.setUTCDate(cutoffIST.getUTCDate() - 1);
+-      cutoffIST.setUTCHours(21, 0, 0, 0); // 9:00 PM IST
+-      const cutoffTime = cutoffIST.getTime() - IST_OFFSET;
+-
+-      if (Date.now() > cutoffTime) {
+-        throw new AuthError("Bookings can only be cancelled before 9:00 PM of the day before the ride.", HTTP_STATUS_CODES.BAD_REQUEST);
+-      }
++    const ownerId = cancelledBy === "user" ? booking.userId?.toString() : booking.driverId?.toString();
++    if (!ownerId || ownerId !== actorId) {
++      throw new AuthError("You can only cancel your own rides.", HTTP_STATUS_CODES.FORBIDDEN);
+     }
+ 
++    // State decides whether the ride can still be cancelled; the policy decides the fee.
++    const status = new TripLifecycle(booking.status).apply("cancel");
++    const cancellationFee = cancellationPolicyFor(cancelledBy).calculateFee(booking, new Date());
++
+     await this._bookingRepo.updateBooking(bookingId, {
+       status,
+-      reason
++      reason,
++      cancelledBy,
++      cancellationFee,
+     });
+-    if (booking.driverId) {
+-      await this._notificationService.cancelBookingNotification(booking.driverId.toString(), { status, reason, startDate: booking.startDate, bookingId })
++
++    const payload = { status, reason, startDate: booking.startDate, bookingId, cancelledBy, cancellationFee };
++    if (cancelledBy === "user" && booking.driverId) {
++      await this._notificationService.cancelBookingNotification(booking.driverId.toString(), payload);
++    } else if (cancelledBy === "driver") {
++      await this._notificationService.driverCancelledBookingNotification(booking.userId.toString(), payload);
++    }
++    if (!booking.driverId) {
++      // Broadcast request that nobody accepted yet: dismiss the popup on drivers' screens.
++      this._notificationService.bookingAssignedNotification(bookingId);
+     }
++
++    return { bookingId, status, cancellationFee };
+   }
+ }
+diff --git a/src/application/use_cases/User/interfaces/ICancelBookingUseCase.ts b/src/application/use_cases/User/interfaces/ICancelBookingUseCase.ts
+index 34b1bd2..a85948c 100644
+--- a/src/application/use_cases/User/interfaces/ICancelBookingUseCase.ts
++++ b/src/application/use_cases/User/interfaces/ICancelBookingUseCase.ts
+@@ -1,11 +1,19 @@
+-import { BookingStatus } from "../../../../domain/models/Booking"; 
++import { BookingStatus } from "../../../../domain/models/Booking";
++import { CancelledBy } from "../../../../domain/booking/CancellationPolicy";
+ 
+ export interface CancelBookingInput {
+   bookingId: string;
+-  status: BookingStatus;
+   reason: string;
++  cancelledBy: CancelledBy;
++  actorId: string;
++}
++
++export interface CancelBookingResult {
++  bookingId: string;
++  status: BookingStatus;
++  cancellationFee: number;
+ }
+ 
+ export interface ICancelBookingUseCase {
+-  execute(input: CancelBookingInput): Promise<void>;
++  execute(input: CancelBookingInput): Promise<CancelBookingResult>;
+ }
+diff --git a/src/constants/Routes.ts b/src/constants/Routes.ts
+index e02a2b4..a542dc6 100644
+--- a/src/constants/Routes.ts
++++ b/src/constants/Routes.ts
+@@ -66,6 +66,7 @@ export const ROUTES = {
+     ONBOARD: "/onboard",
+     BOOKINGS: "/bookings",
+     BOOKING_STATUS: "/booking-status/:bookingId",
++    CANCEL_BOOKING: "/booking/cancel",
+     VERIFY_ACCOUNT: "/verify-account",
+     CHAT: {
+       BASE: "/chat/:roomId",
+diff --git a/src/domain/booking/CancellationPolicy.ts b/src/domain/booking/CancellationPolicy.ts
+new file mode 100644
+index 0000000..82fad80
+--- /dev/null
++++ b/src/domain/booking/CancellationPolicy.ts
+@@ -0,0 +1,50 @@
++import { Booking, BookingStatus } from "../models/Booking";
++
++export type CancelledBy = "user" | "driver";
++
++/** Strategy: how much the rider is charged when a ride is cancelled. */
++export interface CancellationPolicy {
++  readonly cancelledBy: CancelledBy;
++  calculateFee(booking: Booking, now: Date): number;
++}
++
++const IST_OFFSET = 5.5 * 60 * 60 * 1000;
++
++/** 9:00 PM IST on the day before the ride (rule taken from the baseline CancelBooking). */
++export function cancellationCutoff(startDate: Date): Date {
++  const startIST = new Date(new Date(startDate).getTime() + IST_OFFSET);
++  const cutoffIST = new Date(startIST);
++  cutoffIST.setUTCDate(cutoffIST.getUTCDate() - 1);
++  cutoffIST.setUTCHours(21, 0, 0, 0);
++  return new Date(cutoffIST.getTime() - IST_OFFSET);
++}
++
++export const LATE_FEE_RATE = 0.1;
++export const MIN_LATE_FEE = 50;
++
++/** Rider: free while PENDING or before the cutoff; afterwards 10% of the estimated fare, at least Rs 50. */
++export class RiderCancellationPolicy implements CancellationPolicy {
++  readonly cancelledBy = "user" as const;
++  calculateFee(booking: Booking, now: Date): number {
++    if (booking.status !== BookingStatus.CONFIRMED) return 0;
++    if (now.getTime() <= cancellationCutoff(booking.startDate).getTime()) return 0;
++    return Math.max(MIN_LATE_FEE, Math.round((booking.estimatedFare ?? 0) * LATE_FEE_RATE));
++  }
++}
++
++/** Driver: the rider is never charged when the driver cancels. */
++export class DriverCancellationPolicy implements CancellationPolicy {
++  readonly cancelledBy = "driver" as const;
++  calculateFee(): number {
++    return 0;
++  }
++}
++
++const POLICIES: Record<CancelledBy, CancellationPolicy> = {
++  user: new RiderCancellationPolicy(),
++  driver: new DriverCancellationPolicy(),
++};
++
++export function cancellationPolicyFor(cancelledBy: CancelledBy): CancellationPolicy {
++  return POLICIES[cancelledBy];
++}
+diff --git a/src/domain/booking/TripState.ts b/src/domain/booking/TripState.ts
+new file mode 100644
+index 0000000..bcc41f2
+--- /dev/null
++++ b/src/domain/booking/TripState.ts
+@@ -0,0 +1,120 @@
++import { BookingStatus } from "../models/Booking";
++import { InvalidTransitionError } from "../errors/InvalidTransitionError";
++
++export type TripEvent = "accept" | "complete" | "cancel" | "reject" | "expire";
++
++/**
++ * State pattern for the trip (booking) lifecycle. Each state object knows which
++ * events it accepts; anything else raises InvalidTransitionError.
++ */
++export interface TripState {
++  readonly status: BookingStatus;
++  accept(): TripState;
++  complete(): TripState;
++  cancel(): TripState;
++  reject(): TripState;
++  expire(): TripState;
++}
++
++abstract class BaseTripState implements TripState {
++  abstract readonly status: BookingStatus;
++  accept(): TripState {
++    return this.refuse("accept");
++  }
++  complete(): TripState {
++    return this.refuse("complete");
++  }
++  cancel(): TripState {
++    return this.refuse("cancel");
++  }
++  reject(): TripState {
++    return this.refuse("reject");
++  }
++  expire(): TripState {
++    return this.refuse("expire");
++  }
++  protected refuse(event: TripEvent): never {
++    throw new InvalidTransitionError(`Cannot ${event} a ${this.status.toLowerCase()} ride.`);
++  }
++}
++
++export class PendingTrip extends BaseTripState {
++  readonly status = BookingStatus.PENDING;
++  accept() {
++    return new ConfirmedTrip();
++  }
++  cancel() {
++    return new FinishedTrip(BookingStatus.CANCELLED);
++  }
++  reject() {
++    return new FinishedTrip(BookingStatus.REJECTED);
++  }
++  expire() {
++    return new FinishedTrip(BookingStatus.EXPIRED);
++  }
++}
++
++export class ConfirmedTrip extends BaseTripState {
++  readonly status = BookingStatus.CONFIRMED;
++  complete() {
++    return new FinishedTrip(BookingStatus.COMPLETED);
++  }
++  cancel() {
++    return new FinishedTrip(BookingStatus.CANCELLED);
++  }
++  reject() {
++    return new FinishedTrip(BookingStatus.REJECTED);
++  }
++}
++
++/** COMPLETED, CANCELLED, REJECTED and EXPIRED accept no further events. */
++export class FinishedTrip extends BaseTripState {
++  constructor(readonly status: BookingStatus) {
++    super();
++  }
++}
++
++export function tripStateFor(status: BookingStatus | undefined): TripState {
++  switch (status ?? BookingStatus.PENDING) {
++    case BookingStatus.PENDING:
++      return new PendingTrip();
++    case BookingStatus.CONFIRMED:
++      return new ConfirmedTrip();
++    default:
++      return new FinishedTrip(status as BookingStatus);
++  }
++}
++
++const EVENT_FOR_TARGET: Partial<Record<BookingStatus, TripEvent>> = {
++  [BookingStatus.CONFIRMED]: "accept",
++  [BookingStatus.COMPLETED]: "complete",
++  [BookingStatus.CANCELLED]: "cancel",
++  [BookingStatus.REJECTED]: "reject",
++  [BookingStatus.EXPIRED]: "expire",
++};
++
++/** Context: keeps the current trip state and applies events to it. */
++export class TripLifecycle {
++  private state: TripState;
++
++  constructor(status: BookingStatus | undefined) {
++    this.state = tripStateFor(status);
++  }
++
++  get status(): BookingStatus {
++    return this.state.status;
++  }
++
++  apply(event: TripEvent): BookingStatus {
++    this.state = this.state[event]();
++    return this.state.status;
++  }
++
++  moveTo(target: BookingStatus): BookingStatus {
++    const event = EVENT_FOR_TARGET[target];
++    if (!event) {
++      throw new InvalidTransitionError(`A ride cannot be moved back to ${target}.`);
++    }
++    return this.apply(event);
++  }
++}
+diff --git a/src/domain/models/Booking.ts b/src/domain/models/Booking.ts
+index 8bb76d8..e83390a 100644
+--- a/src/domain/models/Booking.ts
++++ b/src/domain/models/Booking.ts
+@@ -42,6 +42,8 @@ paymentIntentId?:string;
+     fromLat?: number;
+     fromLng?: number;
+     userAcknowledged?: boolean;
++    cancelledBy?: "user" | "driver";
++    cancellationFee?: number;
+     createdAt?: Date;   
+     updatedAt?: Date;
+   }
+diff --git a/src/infrastructure/database/modals/Bookingschema.ts b/src/infrastructure/database/modals/Bookingschema.ts
+index 091c2c5..377195a 100644
+--- a/src/infrastructure/database/modals/Bookingschema.ts
++++ b/src/infrastructure/database/modals/Bookingschema.ts
+@@ -43,7 +43,9 @@ const bookingSchema = new Schema<BookingDocument>(
+     walletDeduction:{type:Number},
+     fromLat: { type: Number },
+     fromLng: { type: Number },
+-    userAcknowledged: { type: Boolean, default: false }
++    userAcknowledged: { type: Boolean, default: false },
++    cancelledBy: { type: String, enum: ["user", "driver"] },
++    cancellationFee: { type: Number }
+   },
+  
+   {
+diff --git a/src/infrastructure/services/CronScheduler.ts b/src/infrastructure/services/CronScheduler.ts
+index 3d6f1b7..7f6e53c 100644
+--- a/src/infrastructure/services/CronScheduler.ts
++++ b/src/infrastructure/services/CronScheduler.ts
+@@ -4,6 +4,7 @@ import { BookingStatus } from "../../domain/models/Booking";
+ import { INotificationService } from "../../application/services/NotificationService";
+ import { TOKENS } from "../../constants/Tokens";
+ import { Types } from "mongoose";
++import { TripLifecycle } from "../../domain/booking/TripState";
+ 
+ export class CronScheduler {
+   static start() {
+@@ -26,7 +27,7 @@ export class CronScheduler {
+         const notificationService = container.resolve<INotificationService>(TOKENS.NOTIFICATION_SERVICE);
+ 
+         for (const booking of expiredBookings) {
+-          booking.status = BookingStatus.EXPIRED;
++          booking.status = new TripLifecycle(booking.status).apply("expire");
+           booking.reason = `No driver accepted the request within ${limitMinutes} minutes.`;
+           await booking.save();
+ 
+diff --git a/src/infrastructure/services/SocketNotification.ts b/src/infrastructure/services/SocketNotification.ts
+index 06eb5ee..a6dc387 100644
+--- a/src/infrastructure/services/SocketNotification.ts
++++ b/src/infrastructure/services/SocketNotification.ts
+@@ -32,6 +32,13 @@ async cancelBookingNotification(driverId: string, data: any):Promise< void> {
+   }
+ }
+ 
++async driverCancelledBookingNotification(userId: string, data: any): Promise<void> {
++  const socketId = await redis.get<string>(`user:socket:${userId}`);
++  if (socketId) {
++    this.io.to(socketId).emit("booking:cancelledByDriver", data);
++  }
++}
++
+ async paymentNotification(driverId: string, data: any):Promise<void> {
+   
+   const socketId = await redis.get<string>(`driver:socket:${driverId}`);
+diff --git a/src/presentation/controllers/BookingController.ts b/src/presentation/controllers/BookingController.ts
+index c37fede..855399d 100644
+--- a/src/presentation/controllers/BookingController.ts
++++ b/src/presentation/controllers/BookingController.ts
+@@ -190,17 +190,30 @@ private _bookDriverUseCase: IBookDriverUseCase,
+     res.status(HTTP_STATUS_CODES.OK).json({ bookings });
+   });
+ 
+-  cancelBooking = catchAsync(async (req: Request, res: Response) => {
++  cancelBooking = catchAsync(async (req: AuthenticatedRequest, res: Response) => {
+     // 1. DTO Validation
+     const validatedData = ZodHelper.validate(CancelBookingSchema, req.body);
+ 
+     // 2. Execute
+-    await this._cancelBookingUseCase.execute({ 
++    const result = await this._cancelBookingUseCase.execute({ 
+       ...validatedData, 
+-      status: BookingStatus.CANCELLED 
++      cancelledBy: "user",
++      actorId: req.user?.id || "",
+     });
+ 
+-    res.status(HTTP_STATUS_CODES.OK).json({ message: "Booking cancelled successfully" });
++    res.status(HTTP_STATUS_CODES.OK).json({ message: "Booking cancelled successfully", data: result });
++  });
++
++  driverCancelBooking = catchAsync(async (req: AuthenticatedRequest, res: Response) => {
++    const validatedData = ZodHelper.validate(CancelBookingSchema, req.body);
++
++    const result = await this._cancelBookingUseCase.execute({
++      ...validatedData,
++      cancelledBy: "driver",
++      actorId: req.user?.id || "",
++    });
++
++    res.status(HTTP_STATUS_CODES.OK).json({ message: "Booking cancelled successfully", data: result });
+   });
+ 
+   getChatByBookingId = catchAsync(async (req: Request, res: Response) => {
+diff --git a/src/presentation/routes/driverRoutes.ts b/src/presentation/routes/driverRoutes.ts
+index 5add862..766983a 100644
+--- a/src/presentation/routes/driverRoutes.ts
++++ b/src/presentation/routes/driverRoutes.ts
+@@ -49,6 +49,8 @@ router
+         driverController.getBookingsForDriver.bind(driverController))
+        .patch(ROUTES.DRIVER.BOOKING_STATUS,protectRoute(['driver']),checkBlockedMiddleware.handle.bind(checkBlockedMiddleware),
+         bookingController.updateStatus.bind(bookingController))
++       .patch(ROUTES.DRIVER.CANCEL_BOOKING,protectRoute(['driver']),checkBlockedMiddleware.handle.bind(checkBlockedMiddleware),
++        bookingController.driverCancelBooking.bind(bookingController))
+ 
+         .post(ROUTES.DRIVER.VERIFY_ACCOUNT,
+           protectRoute(['driver']),checkBlockedMiddleware.handle.bind(checkBlockedMiddleware),
+diff --git a/tests/baseline_defects.test.ts b/tests/baseline_defects.test.ts
+deleted file mode 100644
+index 50ff51c..0000000
+--- a/tests/baseline_defects.test.ts
++++ /dev/null
+@@ -1,18 +0,0 @@
+-import "reflect-metadata";
+-import { test } from "node:test";
+-import assert from "node:assert/strict";
+-import { CancelBookingInputUseCase } from "../src/application/use_cases/User/CancelBooking";
+-import { BookingStatus } from "../src/domain/models/Booking";
+-import { FakeBookingRepo, FakeNotifier, makeBooking } from "./helpers/fakes";
+-
+-// These tests document defects of the public baseline that motivate CH01 and CH02.
+-// They pass on the baseline; CH01/CH02 replace them with tests of the corrected behaviour.
+-// CH01 replaced "an admin can move a rejected driver straight to approved" (see driverStatus.test.ts).
+-
+-test("DEFECT (baseline): a COMPLETED trip can still be cancelled", async () => {
+-  const bookings = new FakeBookingRepo();
+-  const b = bookings.seed(makeBooking({ status: BookingStatus.COMPLETED }));
+-  const useCase = new CancelBookingInputUseCase(new FakeNotifier() as any, bookings as any);
+-  await useCase.execute({ bookingId: String(b._id), status: BookingStatus.CANCELLED, reason: "late" });
+-  assert.equal((await bookings.findBookingById(String(b._id)))?.status, BookingStatus.CANCELLED);
+-});
+diff --git a/tests/booking.test.ts b/tests/booking.test.ts
+index f5246ca..4c3140b 100644
+--- a/tests/booking.test.ts
++++ b/tests/booking.test.ts
+@@ -49,7 +49,8 @@ test("rider cancelling a PENDING trip sets CANCELLED and stores the reason", asy
+   const bookings = new FakeBookingRepo();
+   const b = bookings.seed(makeBooking({ status: BookingStatus.PENDING }));
+   const useCase = new CancelBookingInputUseCase(new FakeNotifier() as any, bookings as any);
+-  await useCase.execute({ bookingId: String(b._id), status: BookingStatus.CANCELLED, reason: "plans changed" });
++  // CH02: input now names the actor instead of passing a status (expectations unchanged)
++  await useCase.execute({ bookingId: String(b._id), reason: "plans changed", cancelledBy: "user", actorId: b.userId.toString() });
+   const after = await bookings.findBookingById(String(b._id));
+   assert.equal(after?.status, BookingStatus.CANCELLED);
+   assert.equal(after?.reason, "plans changed");
+@@ -61,7 +62,7 @@ test("rider cancelling a CONFIRMED trip notifies the assigned driver", async ()
+   const b = bookings.seed(makeBooking({ status: BookingStatus.CONFIRMED, driverId, startDate: future }));
+   const notifier = new FakeNotifier();
+   const useCase = new CancelBookingInputUseCase(notifier as any, bookings as any);
+-  await useCase.execute({ bookingId: String(b._id), status: BookingStatus.CANCELLED, reason: "x" });
++  await useCase.execute({ bookingId: String(b._id), reason: "x", cancelledBy: "user", actorId: b.userId.toString() });
+   assert.deepEqual(notifier.calls.map((c) => [c[0], c[1]]), [["cancelBookingNotification", driverId.toString()]]);
+ });
+ 
+diff --git a/tests/cancellation.test.ts b/tests/cancellation.test.ts
+new file mode 100644
+index 0000000..eddd866
+--- /dev/null
++++ b/tests/cancellation.test.ts
+@@ -0,0 +1,130 @@
++import "reflect-metadata";
++import { test } from "node:test";
++import assert from "node:assert/strict";
++import { Types } from "mongoose";
++import { CancelBookingInputUseCase } from "../src/application/use_cases/User/CancelBooking";
++import { UpdateBookingStatus } from "../src/application/use_cases/Driver/UpdateBookingstatus";
++import { TripLifecycle, TripEvent } from "../src/domain/booking/TripState";
++import { RiderCancellationPolicy, DriverCancellationPolicy, cancellationCutoff } from "../src/domain/booking/CancellationPolicy";
++import { InvalidTransitionError } from "../src/domain/errors/InvalidTransitionError";
++import { BookingStatus } from "../src/domain/models/Booking";
++import { FakeBookingRepo, FakeNotifier, makeBooking } from "./helpers/fakes";
++
++// CH02 - ride cancellation: trip lifecycle as State objects, cancellation fee as Strategy.
++
++const run = (events: TripEvent[]) => {
++  const trip = new TripLifecycle(BookingStatus.PENDING);
++  let errors = 0;
++  for (const e of events) {
++    try {
++      trip.apply(e);
++    } catch (err) {
++      assert.ok(err instanceof InvalidTransitionError);
++      errors++;
++    }
++  }
++  return [trip.status, errors];
++};
++
++// Same fixtures as Part3/test-cases/state_spec.md (T1-T8)
++test("CH02 trip state fixtures T1-T8", () => {
++  assert.deepEqual(run(["accept", "complete"]), [BookingStatus.COMPLETED, 0]);
++  assert.deepEqual(run(["cancel"]), [BookingStatus.CANCELLED, 0]);
++  assert.deepEqual(run(["accept", "cancel"]), [BookingStatus.CANCELLED, 0]);
++  assert.deepEqual(run(["expire"]), [BookingStatus.EXPIRED, 0]);
++  assert.deepEqual(run(["complete"]), [BookingStatus.PENDING, 1]);
++  assert.deepEqual(run(["accept", "complete", "cancel"]), [BookingStatus.COMPLETED, 1]);
++  assert.deepEqual(run(["accept", "reject"]), [BookingStatus.REJECTED, 0]);
++  assert.deepEqual(run(["expire", "accept", "cancel"]), [BookingStatus.EXPIRED, 2]);
++});
++
++const hours = (h: number) => new Date(Date.now() + h * 3600 * 1000);
++
++test("CH02 rider policy: PENDING is free even close to the ride", () => {
++  const b = makeBooking({ status: BookingStatus.PENDING, startDate: hours(2), estimatedFare: 900 });
++  assert.equal(new RiderCancellationPolicy().calculateFee(b, new Date()), 0);
++});
++
++test("CH02 rider policy: CONFIRMED before the 9 PM IST cutoff is free", () => {
++  const b = makeBooking({ status: BookingStatus.CONFIRMED, startDate: hours(5 * 24), estimatedFare: 900 });
++  assert.equal(new RiderCancellationPolicy().calculateFee(b, new Date()), 0);
++});
++
++test("CH02 rider policy: CONFIRMED after the cutoff pays 10% of the fare, minimum Rs 50", () => {
++  const big = makeBooking({ status: BookingStatus.CONFIRMED, startDate: hours(2), estimatedFare: 1200 });
++  const small = makeBooking({ status: BookingStatus.CONFIRMED, startDate: hours(2), estimatedFare: 450 });
++  const policy = new RiderCancellationPolicy();
++  assert.equal(policy.calculateFee(big, new Date()), 120);
++  assert.equal(policy.calculateFee(small, new Date()), 50);
++});
++
++test("CH02 cutoff is 21:00 IST (15:30 UTC) on the previous day", () => {
++  assert.equal(cancellationCutoff(new Date("2026-12-10T04:30:00.000Z")).toISOString(), "2026-12-09T15:30:00.000Z");
++});
++
++test("CH02 driver policy never charges the rider, even one hour before the ride", () => {
++  assert.equal(new DriverCancellationPolicy().calculateFee(), 0);
++});
++
++test("CH02 (fixes baseline defect) a COMPLETED trip cannot be cancelled and nothing is saved", async () => {
++  const bookings = new FakeBookingRepo();
++  const b = bookings.seed(makeBooking({ status: BookingStatus.COMPLETED }));
++  const useCase = new CancelBookingInputUseCase(new FakeNotifier() as any, bookings as any);
++  await assert.rejects(useCase.execute({ bookingId: String(b._id), reason: "late", cancelledBy: "user",
++    actorId: b.userId.toString() }), InvalidTransitionError);
++  assert.equal(bookings.updates.length, 0);
++});
++
++test("CH02 only the rider or the assigned driver of the trip may cancel it", async () => {
++  const bookings = new FakeBookingRepo();
++  const b = bookings.seed(makeBooking({ status: BookingStatus.CONFIRMED, driverId: new Types.ObjectId(), startDate: hours(48) }));
++  const useCase = new CancelBookingInputUseCase(new FakeNotifier() as any, bookings as any);
++  await assert.rejects(useCase.execute({ bookingId: String(b._id), reason: "x", cancelledBy: "user",
++    actorId: new Types.ObjectId().toString() }), /your own rides/);
++  await assert.rejects(useCase.execute({ bookingId: String(b._id), reason: "x", cancelledBy: "driver",
++    actorId: new Types.ObjectId().toString() }), /your own rides/);
++});
++
++test("CH02 late rider cancellation stores fee and actor, and notifies the driver", async () => {
++  const bookings = new FakeBookingRepo();
++  const driverId = new Types.ObjectId();
++  const b = bookings.seed(makeBooking({ status: BookingStatus.CONFIRMED, driverId, startDate: hours(3), estimatedFare: 800 }));
++  const notifier = new FakeNotifier();
++  const result = await new CancelBookingInputUseCase(notifier as any, bookings as any)
++    .execute({ bookingId: String(b._id), reason: "flight delayed", cancelledBy: "user", actorId: b.userId.toString() });
++  assert.deepEqual(result, { bookingId: String(b._id), status: BookingStatus.CANCELLED, cancellationFee: 80 });
++  const saved = await bookings.findBookingById(String(b._id));
++  assert.equal(saved?.cancelledBy, "user");
++  assert.equal(saved?.cancellationFee, 80);
++  assert.deepEqual(notifier.calls.map((c) => [c[0], c[1]]), [["cancelBookingNotification", driverId.toString()]]);
++});
++
++test("CH02 driver cancellation is free for the rider and notifies the rider", async () => {
++  const bookings = new FakeBookingRepo();
++  const driverId = new Types.ObjectId();
++  const b = bookings.seed(makeBooking({ status: BookingStatus.CONFIRMED, driverId, startDate: hours(3), estimatedFare: 800 }));
++  const notifier = new FakeNotifier();
++  const result = await new CancelBookingInputUseCase(notifier as any, bookings as any)
++    .execute({ bookingId: String(b._id), reason: "vehicle issue", cancelledBy: "driver", actorId: driverId.toString() });
++  assert.equal(result.cancellationFee, 0);
++  assert.deepEqual(notifier.calls.map((c) => [c[0], c[1]]), [["driverCancelledBookingNotification", b.userId.toString()]]);
++});
++
++test("CH02 cancelling an unaccepted broadcast request dismisses the drivers' popups", async () => {
++  const bookings = new FakeBookingRepo();
++  const b = bookings.seed(makeBooking({ status: BookingStatus.PENDING }));
++  const notifier = new FakeNotifier();
++  await new CancelBookingInputUseCase(notifier as any, bookings as any)
++    .execute({ bookingId: String(b._id), reason: "x", cancelledBy: "user", actorId: b.userId.toString() });
++  assert.deepEqual(notifier.names(), ["bookingAssignedNotification"]);
++});
++
++test("CH02 driver status update follows the trip state (cannot complete a PENDING ride)", async () => {
++  const bookings = new FakeBookingRepo();
++  const b = bookings.seed(makeBooking({ status: BookingStatus.PENDING }));
++  const useCase = new UpdateBookingStatus(bookings as any, new FakeNotifier() as any);
++  await assert.rejects(useCase.execute({ bookingId: String(b._id), status: BookingStatus.COMPLETED, finalKm: 5 }),
++    InvalidTransitionError);
++  await assert.rejects(useCase.execute({ bookingId: String(b._id), status: BookingStatus.CANCELLED }), /cancel endpoint/);
++  assert.equal(bookings.updates.length, 0);
++});

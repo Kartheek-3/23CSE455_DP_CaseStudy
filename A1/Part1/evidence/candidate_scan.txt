@@ -1,0 +1,157 @@
+# Candidate scan of data/code/baseline_83998629 (generated 2026-10-11T15:43:55Z)
+
+## 1. Django signal receivers and registration
+data/code/baseline_83998629/canteenapp/signals.py:52:@receiver(post_save, sender='canteenapp.Item') 
+data/code/baseline_83998629/canteenapp/apps.py:7:    def ready(self):
+data/code/baseline_83998629/canteenapp/apps.py:8:        import canteenapp.signals
+
+## 2. Channels subscriptions (group_add) by consumer
+13:class MenuConsumer(AsyncWebsocketConsumer):
+15:        await self.channel_layer.group_add('menu_group', self.channel_name)
+64:class AllItemsConsumer(AsyncWebsocketConsumer): 
+67:        await self.channel_layer.group_add('allitems_group', self.channel_name)
+153:class CartItemConsumer(AsyncWebsocketConsumer):
+155:        await self.channel_layer.group_add('cartitem_group', self.channel_name)
+210:class AdditionalPricesConsumer(AsyncWebsocketConsumer): 
+213:        await self.channel_layer.group_add('addprices_group', self.channel_name)
+267:class SearchItemsConsumer(AsyncWebsocketConsumer):
+270:        await self.channel_layer.group_add('search_items_group', self.channel_name)
+350:class AdminOrderConsumer(AsyncWebsocketConsumer):
+355:            await self.channel_layer.group_add(self.group_name, self.channel_name)
+462:class RestaurantOrderConsumer(AsyncWebsocketConsumer):
+468:            await self.channel_layer.group_add(self.group_name, self.channel_name)
+589:class DeliveryOrderConsumer(AsyncWebsocketConsumer):
+595:            await self.channel_layer.group_add(self.group_name, self.channel_name)
+693:class CustomerOrderConsumer(AsyncWebsocketConsumer):
+699:            await self.channel_layer.group_add(self.group_name, self.channel_name)
+850:class AdminNotificationConsumer(AsyncWebsocketConsumer):
+854:            await self.channel_layer.group_add('admin_notification_group', self.channel_name)
+882:class DeliveryNotificationConsumer(AsyncWebsocketConsumer):
+887:            await self.channel_layer.group_add('delivery_notification_group', self.channel_name)
+916:class RestaurantNotificationConsumer(AsyncWebsocketConsumer):
+921:            await self.channel_layer.group_add('restaurant_notification_group', self.channel_name)
+
+## 3. Routed WebSocket consumers
+5:    re_path(r'ws/menu/$', consumers.MenuConsumer.as_asgi()),
+6:    re_path(r'ws/allitems/$', consumers.AllItemsConsumer.as_asgi()),
+7:    re_path(r'ws/cartitems/$',consumers.CartItemConsumer.as_asgi()),
+8:    re_path(r'ws/additionalprices/$',consumers.AdditionalPricesConsumer.as_asgi()),
+9:    re_path(r'ws/searchupdate/$',consumers.SearchItemsConsumer.as_asgi()),
+10:    re_path(r'ws/adminorderconsumer/$',consumers.AdminOrderConsumer.as_asgi()),
+11:    re_path(r'ws/restaurantconsumers/$',consumers.RestaurantOrderConsumer.as_asgi()),
+12:    re_path(r'ws/deliveryconsumers/$',consumers.DeliveryOrderConsumer.as_asgi()),
+13:    re_path(r'ws/adminnotifications/$',consumers.AdminNotificationConsumer.as_asgi()),
+14:    re_path(r'ws/deliverynotifications/$',consumers.DeliveryNotificationConsumer.as_asgi()),
+15:    re_path(r'ws/restaurantnotifications/$',consumers.RestaurantNotificationConsumer.as_asgi()),
+
+## 4. Triple-quoted (disabled) regions in consumers.py
+691:"""     
+848:            return None"""
+
+## 5. Channels publications (group_send) per enclosing view function
+adminaddmenu (def at line 578): 1 call(s); groups=['menu_group']; lines=[593]
+admindeletemenu (def at line 632): 1 call(s); groups=['menu_group']; lines=[649]
+adminupdatemenu (def at line 665): 1 call(s); groups=['menu_group']; lines=[684]
+adminadditem (def at line 838): 1 call(s); groups=['allitems_group']; lines=[880]
+admindeleteitem (def at line 929): 2 call(s); groups=['allitems_group', 'cartitem_group']; lines=[945, 951]
+adminupdateitem (def at line 966): 4 call(s); groups=['allitems_group', 'cartitem_group', 'search_items_group']; lines=[998, 1004, 1010, 1017]
+adminupdateitemimage (def at line 1036): 3 call(s); groups=['allitems_group', 'cartitem_group', 'search_items_group']; lines=[1055, 1062, 1068]
+adminaddprice (def at line 1094): 2 call(s); groups=['addprices_group', 'cartitem_group']; lines=[1113, 1120]
+adminupdateprices (def at line 1159): 1 call(s); groups=['addprices_group']; lines=[1170]
+admindeleteprice (def at line 1185): 1 call(s); groups=['addprices_group']; lines=[1194]
+adminassignordertodelivery (def at line 1791): 1 call(s); groups=['delivery_person_{delivery_personnel.id}']; lines=[1812]
+adminupdateorderstatus (def at line 2127): 8 call(s); groups=['admin_group', 'delivery_group', 'restaurant_group']; lines=[2170, 2176, 2182, 2188, 2195, 2201, 2207, 2213]
+update_cart_item (def at line 2642): 6 call(s); groups=['addprices_group', 'cartitem_group']; lines=[2657, 2663, 2688, 2694, 2704, 2710]
+add_to_cart (def at line 2723): 16 call(s); groups=['addprices_group', 'allitems_group', 'cartitem_group', 'search_items_group']; lines=[2744, 2750, 2756, 2762, 2790, 2797, 2803, 2809, 2834, 2841, 2847, 2853, 2864, 2871, 2877, 2883]
+updatedelivery_type (def at line 3103): 2 call(s); groups=['addprices_group', 'cartitem_group']; lines=[3121, 3130]
+deliveryupdatedeliverystatus (def at line 3320): 6 call(s); groups=['admin_group', 'delivery_group', 'restaurant_group']; lines=[3364, 3370, 3377, 3384, 3391, 3398]
+restaurantadditem (def at line 3807): 1 call(s); groups=['allitems_group']; lines=[3847]
+restaurantdeleteitem (def at line 3896): 2 call(s); groups=['allitems_group', 'cartitem_group']; lines=[3912, 3918]
+restaurantupdateitem (def at line 3933): 4 call(s); groups=['allitems_group', 'cartitem_group', 'search_items_group']; lines=[3962, 3969, 3975, 3981]
+restaurantupdateitemimage (def at line 3998): 3 call(s); groups=['allitems_group', 'cartitem_group', 'search_items_group']; lines=[4017, 4024, 4030]
+restaurantupdateorderstatus (def at line 4359): 8 call(s); groups=['admin_group', 'delivery_group', 'restaurant_group']; lines=[4402, 4408, 4414, 4420, 4427, 4433, 4439, 4445]
+restaurantplaceorder (def at line 4555): 8 call(s); groups=['admin_group', 'allitems_group', 'cartitem_group', 'restaurant_group']; lines=[4603, 4609, 4617, 4623, 4629, 4635, 4641, 4647]
+phonepe_callback (def at line 4798): 5 call(s); groups=['admin_group', 'restaurant_group', 'restaurant_notification_group']; lines=[4922, 4929, 4936, 4943, 4950]
+TOTAL group_send calls: 87
+
+## 6. Abstract classes / interchangeable-policy declarations
+(none found)
+
+## 7. Named GoF participants (Factory, Adapter, Facade, Command, Repository, Singleton, State, Visitor, Builder)
+(none found)
+
+## 8. Status-driven workflow (State candidate)
+data/code/baseline_83998629/canteenapp/views.py:2112:def get_status_index(delivery_type, status):
+data/code/baseline_83998629/canteenapp/models.py:198:    PAYMENT_STATUS_CHOICES = [
+data/code/baseline_83998629/canteenapp/models.py:230:    REFUND_STATUS_CHOICES = [
+data/code/baseline_83998629/canteenapp/models.py:249:    CUSTOMER_ORDER_STATUS_CHOICES = [
+data/code/baseline_83998629/canteenapp/models.py:260:    DELIVERY_STATUS_CHOICES = [
+data/code/baseline_83998629/canteenapp/models.py:269:    PICKUP_STATUS_CHOICES = [
+data/code/baseline_83998629/canteenapp/models.py:278:    DINING_STATUS_CHOICES = [
+data/code/baseline_83998629/canteenapp/models.py:385:    def get_status_display(self):
+data/code/baseline_83998629/canteenapp/models.py:407:    def add_additional_charges(self):
+
+## 9. Module-level payment client (Singleton candidate)
+4701:phonepe_client = PhonePePaymentClient(
+
+## 10. Social-auth pipeline (pipeline/chain candidate)
+65:SOCIAL_AUTH_PIPELINE = (
+66-    'social_core.pipeline.social_auth.social_details',
+67-    'social_core.pipeline.social_auth.social_uid',
+68-    'social_core.pipeline.social_auth.auth_allowed',
+69-    'social_core.pipeline.social_auth.social_user',
+70-    'social_core.pipeline.user.get_username',
+71-    'canteenapp.signals.create_unique_username',
+72-    'social_core.pipeline.social_auth.associate_user',
+73-    'social_core.pipeline.social_auth.load_extra_data',
+74-    'social_core.pipeline.user.user_details',
+75-)
+
+## 11. Access-control decorators (Decorator candidate)
+81:def admin_required(view_func):
+82-    return user_passes_test(
+83-        lambda u: u.is_superuser, 
+84-        login_url='/adminlogin/'
+85-    )(view_func)
+--
+93:def user_required(view_func):
+94-    return user_passes_test(
+95-        lambda u: u.is_active and (u.is_superuser or u.has_perm('canteenapp.is_user') ),
+96-        login_url='/userlogin/'
+97-    )(view_func)
+
+## 12. Baseline delivery assignment (Strategy candidate)
+@admin_required
+@require_POST
+@csrf_protect
+def adminassignordertodelivery(request):
+    data = json.loads(request.body)
+    order_id = data.get('order_id')
+    delivery_personnel_email = data.get('delivery_personnel')
+    if not all([order_id, delivery_personnel_email]):
+        return JsonResponse({'success': False, 'error': 'Required missing fields.'})
+    try:
+        delivery_personnel = DeliveryPerson.objects.get(email=delivery_personnel_email)
+    except DeliveryPerson.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Delivery Personnel not exists.'})
+    try:
+        order = Order.objects.get(order_id=order_id)
+    except Order.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Order not exists.'})
+
+    try:
+        order.delivery_person = delivery_personnel
+        order.status = 'shipped'
+        order.save()
+        print(delivery_personnel.id)
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f'delivery_person_{delivery_personnel.id}',
+            {
+                "type": 'new_order',
+                "order_id": order.order_id
+            }
+        )
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})

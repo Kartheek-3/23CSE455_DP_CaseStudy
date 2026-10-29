@@ -1,0 +1,440 @@
+# Inbound Travel-Email Processing — Source Investigation 02
+
+Pattern classification pending
+
+DaPlanStan · Uploaded original source ZIP · Static analysis
+
+## 1. Main finding: Parsing and creating trip records are separate operations
+
+The source establishes three important boundaries:
+
+1. Email intake: `TripMailbox` identifies the trip, checks the sender and creates an `InboxItem`.
+2. AI extraction: `ParseInboxItemJob` sends email information to Anthropic and saves the resulting structured data in the existing `InboxItem`.
+3. Record creation: `InboxItemsController#update` separately invokes application methods that create or link `TripItem` and `Expense` records when the user selects confirmation or relinking.
+
+Parsing an email does not itself create itinerary items or expenses. This distinction is directly supported by `ParseInboxItemJob#perform` at lines 99–112 and `InboxItemsController#update` at lines 16–35.&#x20;
+
+
+
+An approved sender allows an email to proceed to parsing, but approval is not the same as confirmation of its extracted travel information.
+
+## 2. How incoming email enters and is assigned to a trip
+
+The application's mailbox entry point is:
+
+`app/mailboxes/application_mailbox.rb:1–3`
+
+```
+class ApplicationMailbox < ActionMailbox::Base
+  routing(all: :trip)
+end
+```
+
+The `routing(all: :trip)` declaration tells Rails Action Mailbox to route incoming messages to `TripMailbox`. It does not itself identify a particular trip.
+
+At `app/mailboxes/trip_mailbox.rb:2–9`, `TripMailbox#process` extracts the first recipient address, normalizes it to lowercase and removes surrounding whitespace:
+
+```
+to_address = mail.to&.first.to_s.downcase.strip
+trip = Trip.find_by(inbound_email: to_address)
+```
+
+When no matching trip exists, the method logs a warning and returns. It does not create an `InboxItem` or enqueue parsing in that branch.
+
+### Where the recipient address comes from
+
+`app/models/trip.rb:14–19` validates the inbound address and registers a callback to generate one when creating a trip.
+
+`Trip#build_inbound_email`, lines 35–37, constructs an address from the parameterized trip title, a random hexadecimal suffix and the configured email domain.
+
+The mailbox uses the address stored on `Trip`, not the trip title or message subject, to identify the destination.
+
+Important limitation: The code checks the first address in `mail.to`. It does not iterate over every recipient to locate a matching trip.
+
+These relationships are application-written behavior operating on Rails and Action Mailbox objects.&#x20;
+
+
+
+## 3. What `TripMailbox` decides and stores
+
+After locating the trip, `TripMailbox#process` checks whether the sender is recognized.
+
+At `app/mailboxes/trip_mailbox.rb:11–14`, the sender is approved if any one of these conditions is true:
+
+- Their normalized email is recorded in the trip's `approved_senders` association.
+- Their email matches a `Traveler` associated with the trip through `TripMember`.
+- Their email matches the `User` account associated with a trip member's traveler record.
+
+These are three application-defined database checks, not an Anthropic decision.
+
+At lines 16–24, the mailbox creates an `InboxItem` using `trip.inbox_items.create!`.
+
+| Stored field    | Source of value                       |
+| --------------- | ------------------------------------- |
+| `trip_id`       | The matched `Trip` association        |
+| `from_email`    | First sender address, normalized      |
+| `from_name`     | Sender's display name, when available |
+| `subject`       | Email subject, or `"(no subject)"`    |
+| `raw_body`      | Decoded text extracted from the email |
+| `raw_html`      | Decoded HTML content, when available  |
+| `received_at`   | Email date, otherwise `Time.current`  |
+| `sender_status` | `approved` or `pending_approval`      |
+
+For multipart email, `extract_text_body` prefers the decoded text part, then falls back to `mail.decoded`. `extract_html_body` attempts to extract the decoded HTML part. Both methods have exception fallbacks.
+
+The source references are `app/mailboxes/trip_mailbox.rb:16–59`.&#x20;
+
+### Other initial state
+
+The database schema supplies these defaults:
+
+| Field              | Initial state    |
+| ------------------ | ---------------- |
+| `parse_status`     | `unparsed`       |
+| `review_status`    | `pending_review` |
+| `parsed_data_json` | `NULL`           |
+| `reviewed_by_id`   | `NULL`           |
+| `reviewed_at`      | `NULL`           |
+
+These defaults appear in `db/migrate/20260328112022_create_inbox_items.rb:3–18` and the current `db/structure.sql:36`.
+
+The schema also includes `attachments_json`, and the model declares `has_many_attached :email_attachments`. However, the inspected `TripMailbox#process` does not populate either attachment representation. Attachment ingestion should not be claimed as implemented by this traced method.
+
+### What happens after the inbox record is created?
+
+Recognized sender
+
+`ParseInboxItemJob.perform_later(inbox_item.id)` is called at `app/mailboxes/trip_mailbox.rb:26–27`.
+
+Unrecognized sender
+
+No initial parsing job is enqueued. `notify_owners_of_pending_sender` sends a notification to each owner through `TripMailer.pending_sender_notification(...).deliver_later`, at `app/mailboxes/trip_mailbox.rb:55–59`.
+
+The mailbox therefore coordinates intake, trip lookup, approval checking, inbox persistence and the initial next action. It does not itself extract structured travel details or create destination trip records.
+
+## 4. Exactly what `ParseInboxItemJob` does
+
+Primary source: `app/jobs/parse_inbox_item_job.rb:1–140`
+
+The job inherits from `ApplicationJob` and declares `queue_as :default`. It also declares a Rails `retry_on StandardError` policy, although its own broad rescue handler is relevant to whether that policy would actually run.
+
+Its implemented sequence is:
+
+1. Find the inbox record
+
+   `InboxItem.find_by(id: inbox_item_id)` returns the stored email. If no record exists, `perform` returns.
+2. Construct the prompt
+
+   `build_prompt` uses the trip title, sender name/email, subject and `raw_body` truncated to 4,000 characters. It does not use `raw_html` or attachments.
+3. Call Anthropic
+
+   `parse_with_anthropic` creates an `Anthropic::Client` and requests a message from `claude-haiku-4-5-20251001`, with a system prompt, a tool schema and the constructed email prompt.
+4. Extract the structured response
+
+   The application searches the response content for the first block whose type is `:tool_use`. It returns the block's input as a string-keyed hash, or `{}` when no such block exists.
+5. Save extraction results
+
+   `inbox_item.update!(parsed_data: data, parse_status: :parsed)` saves the extracted structure through `InboxItem#parsed_data=`.
+6. Handle errors
+
+   On a rescued exception, it logs the failure and attempts to set `parse_status: :failed`.
+
+The system prompt instructs the model to extract clearly stated information. The application-supplied tool schema defines four main output categories:
+
+| Structured key    | Expected content                               |
+| ----------------- | ---------------------------------------------- |
+| `travel_legs`     | Flights, trains, ferries, buses and cars       |
+| `accommodations`  | Stays, check-in/out dates and amounts          |
+| `bookings`        | Tours, restaurants, tickets and other bookings |
+| `shortlist_items` | Suggested places and activities                |
+
+These are data returned to the application. The `record_travel_data` tool declaration does not itself call `TripItem.create!` or `Expense.create!`.
+
+One important distinction: the code sets `parse_status: :parsed` even if `parse_with_anthropic` returns an empty hash. It has no visible semantic validation requiring the result to contain a usable travel record.
+
+### Anthropic versus DaPlanStan responsibility
+
+| Anthropic/provider                                                | DaPlanStan application                                                  |
+| ----------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Processes the submitted prompt and model instructions             | Selects the model and constructs the prompt                             |
+| Produces a structured tool-use response when successful           | Defines the expected tool input schema                                  |
+| Supplies generated travel-information values                      | Extracts the tool input and saves it to `InboxItem`                     |
+| Does not directly operate on the Rails database through this call | Later interprets the saved values and creates or updates domain records |
+
+Rails Active Job handles background execution, while DaPlanStan supplies the `perform` implementation and record updates.
+
+The precise job logic is at `app/jobs/parse_inbox_item_job.rb:99–139`; the tool schema is at lines 20–97.&#x20;
+
+
+
+## 5. Confirmation and record-linking flow
+
+This is the most important application-owned part of the workflow.
+
+### Exact call sites
+
+A source-wide search of the uploaded repository found these executable calls to `fill_missing_links!` and `confirm_and_create_items!`:
+
+| Caller                                | Location                                          | Method invoked                                  |
+| ------------------------------------- | ------------------------------------------------- | ----------------------------------------------- |
+| User chooses Add to trip              | `app/controllers/inbox_items_controller.rb:18–20` | `@item.confirm_and_create_items!(current_user)` |
+| `InboxItem#confirm_and_create_items!` | `app/models/inbox_item.rb:34–35`                  | `fill_missing_links!(added_by)`                 |
+| User chooses Fix missing links        | `app/controllers/inbox_items_controller.rb:25–26` | `@item.fill_missing_links!(current_user)`       |
+
+No call from `ParseInboxItemJob` to either method was found.&#x20;
+
+
+
+### A. What happens when the user selects Add to trip?
+
+The action is initiated from `app/views/inbox_items/show.html.erb:53–62` and handled by `InboxItemsController#update`.
+
+Under the `confirm` branch, the controller first calls `confirm_and_create_items!` and then records `review_status: :confirmed`, `reviewed_by` and `reviewed_at`.
+
+Within `InboxItem#confirm_and_create_items!`, lines 34–58:
+
+1. It invokes `fill_missing_links!`.
+2. It reads the saved `parsed_data`.
+3. If that data is not a Hash, it returns.
+4. It processes `shortlist_items` using a category mapping.
+5. It skips entries with blank names or names already found among the trip's itinerary items.
+6. It creates new `TripItem` records with `status: :idea` for accepted shortlist entries.
+
+There are separate rescue handlers for individual shortlist creation errors.
+
+### B. What `fill_missing_links!` actually does
+
+`InboxItem#fill_missing_links!` occupies `app/models/inbox_item.rb:67–187`.
+
+Record-linking algorithm
+
+\#chatgpt-mermaid-\_r_11q\_{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;fill:rgb(237, 237, 237);}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#chatgpt-mermaid-\_r_11q\_ .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-\_r_11q\_ .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-\_r_11q\_ .error-icon{fill:rgb(48, 48, 48);}#chatgpt-mermaid-\_r_11q\_ .error-text{fill:rgb(237, 237, 237);stroke:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_11q\_ .edge-thickness-normal{stroke-width:1px;}#chatgpt-mermaid-\_r_11q\_ .edge-thickness-thick{stroke-width:3.5px;}#chatgpt-mermaid-\_r_11q\_ .edge-pattern-solid{stroke-dasharray:0;}#chatgpt-mermaid-\_r_11q\_ .edge-thickness-invisible{stroke-width:0;fill:none;}#chatgpt-mermaid-\_r_11q\_ .edge-pattern-dashed{stroke-dasharray:3;}#chatgpt-mermaid-\_r_11q\_ .edge-pattern-dotted{stroke-dasharray:2;}#chatgpt-mermaid-\_r_11q\_ .marker{fill:rgb(175, 175, 175);stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_11q\_ .marker.cross{stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_11q\_ svg{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;}#chatgpt-mermaid-\_r_11q\_ p{margin:0;}#chatgpt-mermaid-\_r_11q\_ .label{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_11q\_ .cluster-label text{fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_11q\_ .cluster-label span{color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_11q\_ .cluster-label span p{background-color:transparent;}#chatgpt-mermaid-\_r_11q\_ .label text,#chatgpt-mermaid-\_r_11q\_ span{fill:rgb(237, 237, 237);color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_11q\_ .node rect,#chatgpt-mermaid-\_r_11q\_ .node circle,#chatgpt-mermaid-\_r_11q\_ .node ellipse,#chatgpt-mermaid-\_r_11q\_ .node polygon,#chatgpt-mermaid-\_r_11q\_ .node path{fill:rgb(9, 23, 44);stroke:rgb(31, 78, 148);stroke-width:1px;}#chatgpt-mermaid-\_r_11q\_ .rough-node .label text,#chatgpt-mermaid-\_r_11q\_ .node .label text,#chatgpt-mermaid-\_r_11q\_ .image-shape .label,#chatgpt-mermaid-\_r_11q\_ .icon-shape .label{text-anchor:middle;}#chatgpt-mermaid-\_r_11q\_ .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#chatgpt-mermaid-\_r_11q\_ .rough-node .label,#chatgpt-mermaid-\_r_11q\_ .node .label,#chatgpt-mermaid-\_r_11q\_ .image-shape .label,#chatgpt-mermaid-\_r_11q\_ .icon-shape .label{text-align:center;}#chatgpt-mermaid-\_r_11q\_ .node.clickable{cursor:pointer;}#chatgpt-mermaid-\_r_11q\_ .root .anchor path{fill:rgb(175, 175, 175)!important;stroke-width:0;stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_11q\_ .arrowheadPath{fill:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_11q\_ .edgePath .path{stroke:rgb(175, 175, 175);stroke-width:1px;}#chatgpt-mermaid-\_r_11q\_ .flowchart-link{stroke:rgb(175, 175, 175);fill:none;}#chatgpt-mermaid-\_r_11q\_ .edgeLabel{background-color:rgb(0, 0, 0);text-align:center;}#chatgpt-mermaid-\_r_11q\_ .edgeLabel p{background-color:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_11q\_ .edgeLabel rect{opacity:0.5;background-color:rgb(0, 0, 0);fill:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_11q\_ .labelBkg{background-color:rgba(0, 0, 0, 0.5);}#chatgpt-mermaid-\_r_11q\_ .cluster rect{fill:rgb(48, 48, 48);stroke:rgba(255, 255, 255, 0.15);stroke-width:1px;}#chatgpt-mermaid-\_r_11q\_ .cluster text{fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_11q\_ .cluster span{color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_11q\_ div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:12px;background:rgb(48, 48, 48);border:1px solid rgba(255, 255, 255, 0.15);border-radius:2px;pointer-events:none;z-index:100;}#chatgpt-mermaid-\_r_11q\_ .flowchartTitleText{text-anchor:middle;font-size:18px;fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_11q\_ rect.text{fill:none;stroke-width:0;}#chatgpt-mermaid-\_r_11q\_ .icon-shape,#chatgpt-mermaid-\_r_11q\_ .image-shape{background-color:rgb(0, 0, 0);text-align:center;}#chatgpt-mermaid-\_r_11q\_ .icon-shape p,#chatgpt-mermaid-\_r_11q\_ .image-shape p{background-color:rgb(0, 0, 0);padding:2px;}#chatgpt-mermaid-\_r_11q\_ .icon-shape .label rect,#chatgpt-mermaid-\_r_11q\_ .image-shape .label rect{opacity:0.5;background-color:rgb(0, 0, 0);fill:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_11q\_ .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#chatgpt-mermaid-\_r_11q\_ .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#chatgpt-mermaid-\_r_11q\_ .node .neo-node{stroke:rgb(31, 78, 148);}#chatgpt-mermaid-\_r_11q\_ [data-look="neo"].node rect,#chatgpt-mermaid-\_r_11q\_ [data-look="neo"].cluster rect,#chatgpt-mermaid-\_r_11q\_ [data-look="neo"].node polygon{stroke:url(#chatgpt-mermaid-\_r_11q\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_11q\_ [data-look="neo"].swimlane.cluster rect{filter:none;}#chatgpt-mermaid-\_r_11q\_ [data-look="neo"].node path{stroke:url(#chatgpt-mermaid-\_r_11q\_-gradient);stroke-width:1px;}#chatgpt-mermaid-\_r_11q\_ [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_11q\_ [data-look="neo"].node .neo-line path{stroke:rgb(31, 78, 148);filter:none;}#chatgpt-mermaid-\_r_11q\_ [data-look="neo"].node circle{stroke:url(#chatgpt-mermaid-\_r_11q\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_11q\_ [data-look="neo"].node circle .state-start{fill:#000000;}#chatgpt-mermaid-\_r_11q\_ [data-look="neo"].icon-shape .icon{fill:url(#chatgpt-mermaid-\_r_11q\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_11q\_ [data-look="neo"].icon-shape .icon-neo path{stroke:url(#chatgpt-mermaid-\_r_11q\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_11q\_ .node text{font-size:14px;font-weight:600;letter-spacing:normal;fill:rgb(153, 206, 255);}#chatgpt-mermaid-\_r_11q\_ .edgeLabels text{font-size:13px;font-weight:600;letter-spacing:-0.08px;fill:rgb(153, 206, 255);}#chatgpt-mermaid-\_r_11q\_ .node tspan[font-weight="normal"],#chatgpt-mermaid-\_r_11q\_ .edgeLabels tspan[font-weight="normal"]{font-weight:600;}#chatgpt-mermaid-\_r_11q\_ .edgeLabel .label rect{opacity:1;rx:13px;ry:13px;fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-width:1px;}#chatgpt-mermaid-\_r_11q\_ .node rect,#chatgpt-mermaid-\_r_11q\_ .node circle,#chatgpt-mermaid-\_r_11q\_ .node ellipse,#chatgpt-mermaid-\_r_11q\_ .node polygon,#chatgpt-mermaid-\_r_11q\_ .node path{fill:rgb(0, 40, 77);stroke:rgba(255, 255, 255, 0.1);stroke-width:1px;}#chatgpt-mermaid-\_r_11q\_ .node rect{rx:16px;ry:16px;}#chatgpt-mermaid-\_r_11q\_ .node.mermaid-decision .label-container{fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-dasharray:2,2;}#chatgpt-mermaid-\_r_11q\_ .edgePaths .flowchart-link{stroke:rgb(175, 175, 175);stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;}#chatgpt-mermaid-\_r_11q\_ .marker{fill:rgb(175, 175, 175);stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_11q\_ :root{--mermaid-font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";}Read stored parsed_dataHash?ReturnFind payer and index existingtrip itemsProcess travel legs,accommodations and bookingsMatching item name?Fill missing fields on existingTripItemCreate confirmed TripItemPayer, price and no linkedexpense?Create linked ExpenseNo new ExpenseReturn to controllerNoYesYesNoYesNo
+
+The method begins by identifying a possible payer. It first looks for a trip member whose traveler email matches the message sender; if that fails, it looks for a trip member's traveler associated with the user performing the action.
+
+It then builds name-indexed lookups for itinerary items already linked to the inbox record and for all items belonging to the trip.
+
+The local `find_or_upsert` lambda at lines 82–99:
+
+- Prefers an item linked to the current inbox email, otherwise an item matching the lowercased name in the trip.
+- For existing records, fills missing `inbox_item_id`, address and confirmation reference using `update_columns`.
+- For unmatched names, creates a new confirmed `TripItem` associated with the inbox item and the reviewing user.
+
+The term upsert here is the application's local method-variable name. The logic is implemented with Ruby lookups and Active Record operations, not a single database-native upsert statement.
+
+### C. How different extracted categories are handled
+
+| Category        | Processing                                                                                                                             | Expense creation conditions                                                                                              |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Travel legs     | Converts transport modes to itinerary kinds; constructs names and destination addresses; detects a particular two-leg return-trip case | If a payer exists, selects the first leg with a price and creates an expense only when that selected item has no expense |
+| Accommodations  | Creates or links stays with dates, address, amount and confirmation number                                                             | Payer exists, price is present and the item has no expense                                                               |
+| Other bookings  | Maps booking type to an itinerary kind and creates or links the booking                                                                | Payer exists, price is present and the item has no expense                                                               |
+| Shortlist ideas | Handled separately by `confirm_and_create_items!`                                                                                      | No corresponding expense creation in that method                                                                         |
+
+The code for travel legs is at `app/models/inbox_item.rb:101–138`, accommodations at lines 140–158 and bookings at lines 160–187.&#x20;
+
+The shared `build_expense` method at lines 191–207 uses `trip.expenses.create!`, linking the `Expense` to the `TripItem`, `InboxItem`, reviewer and identified payer. It stores an amount, currency, description, category, date, booking source and confirmation timestamp.
+
+Important condition: An extracted amount alone is insufficient to create an expense. The application must identify a `paid_by_traveler`, and the relevant expense must not already exist according to its lookup.
+
+The source comments describe the linking routine as idempotent. Its name matching and expense-existence checks support that intention, but concurrency and duplicate behavior have not been independently tested.
+
+### D. What happens with other review actions?
+
+`app/controllers/inbox_items_controller.rb:16–35` also handles:
+
+| `action_type` | Actual application behavior                                      |
+| ------------- | ---------------------------------------------------------------- |
+| `confirm`     | Create/link itinerary data, then mark the inbox record confirmed |
+| `discard`     | Mark the inbox record discarded; no linking method is called     |
+| `relink`      | Call `fill_missing_links!` without processing shortlist ideas    |
+| `retry`       | Set parsing status to unparsed and enqueue a new parsing job     |
+
+The `retry` branch does not itself check sender approval or require a previously failed parsing status.
+
+All of these actions execute through Rails controller routing, but the branching and model method calls are application-written.
+
+## 6. How approved-sender management affects processing
+
+`ApprovedSendersController` provides separate actions for adding and removing sender approvals.
+
+Approval: `app/controllers/approved_senders_controller.rb:5–20`
+
+The controller optionally looks up an existing `InboxItem` using `params[:inbox_item_id]`, then creates an `ApprovedSender` for the trip containing the submitted email, approving user and approval timestamp.
+
+When the request identifies an inbox item, the controller also changes that particular item's `sender_status` to `approved` and enqueues `ParseInboxItemJob`.
+
+If no inbox item ID is supplied, it adds the sender to the approved list but does not automatically enqueue jobs for every previously received email from that address.
+
+Removal: `app/controllers/approved_senders_controller.rb:22–26`
+
+The controller destroys the selected approved-sender entry. It does not retrospectively change the status of existing inbox records.
+
+Validation: `app/models/approved_sender.rb:1–6`
+
+The model requires an email, requires `approved_at` and enforces trip-scoped email uniqueness.
+
+The route for these controller actions is declared at `config/routes.rb:45`. The controller uses `current_user.trips.find(params[:trip_id])` at lines 30–32; there is no separate owner-role check in the inspected action.
+
+### A source-level inconsistency worth flagging
+
+In `app/views/inbox_items/show.html.erb:53–75`, the conditional order is:
+
+```
+<% if @item.pending_review? %>
+  ...
+<% elsif @item.pending_approval? %>
+  ...
+```
+
+New inbox records have `review_status: pending_review` by default, including those from unrecognized senders. Therefore, the first branch appears to take precedence over the approval branch for those new records.
+
+Meanwhile, `InboxItemsController#update` does not check `sender_status` or `parse_status` before executing the `confirm` or `relink` actions.
+
+This creates a possible approval/review gating inconsistency: the mailbox delays automatic parsing for unknown senders, but the review controller does not independently enforce that gate. A real user-interaction test is required before recording the full impact as a verified defect.&#x20;
+
+
+
+It is relevant to explaining control flow, but it is not by itself evidence of a design pattern.
+
+## 7. Complete collaboration trace
+
+Inbound email to trip data
+
+\#chatgpt-mermaid-\_r_133\_{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;fill:rgb(237, 237, 237);}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#chatgpt-mermaid-\_r_133\_ .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-\_r_133\_ .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-\_r_133\_ .error-icon{fill:rgb(48, 48, 48);}#chatgpt-mermaid-\_r_133\_ .error-text{fill:rgb(237, 237, 237);stroke:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_133\_ .edge-thickness-normal{stroke-width:1px;}#chatgpt-mermaid-\_r_133\_ .edge-thickness-thick{stroke-width:3.5px;}#chatgpt-mermaid-\_r_133\_ .edge-pattern-solid{stroke-dasharray:0;}#chatgpt-mermaid-\_r_133\_ .edge-thickness-invisible{stroke-width:0;fill:none;}#chatgpt-mermaid-\_r_133\_ .edge-pattern-dashed{stroke-dasharray:3;}#chatgpt-mermaid-\_r_133\_ .edge-pattern-dotted{stroke-dasharray:2;}#chatgpt-mermaid-\_r_133\_ .marker{fill:rgb(175, 175, 175);stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_133\_ .marker.cross{stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_133\_ svg{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;}#chatgpt-mermaid-\_r_133\_ p{margin:0;}#chatgpt-mermaid-\_r_133\_ .label{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_133\_ .cluster-label text{fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_133\_ .cluster-label span{color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_133\_ .cluster-label span p{background-color:transparent;}#chatgpt-mermaid-\_r_133\_ .label text,#chatgpt-mermaid-\_r_133\_ span{fill:rgb(237, 237, 237);color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_133\_ .node rect,#chatgpt-mermaid-\_r_133\_ .node circle,#chatgpt-mermaid-\_r_133\_ .node ellipse,#chatgpt-mermaid-\_r_133\_ .node polygon,#chatgpt-mermaid-\_r_133\_ .node path{fill:rgb(9, 23, 44);stroke:rgb(31, 78, 148);stroke-width:1px;}#chatgpt-mermaid-\_r_133\_ .rough-node .label text,#chatgpt-mermaid-\_r_133\_ .node .label text,#chatgpt-mermaid-\_r_133\_ .image-shape .label,#chatgpt-mermaid-\_r_133\_ .icon-shape .label{text-anchor:middle;}#chatgpt-mermaid-\_r_133\_ .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#chatgpt-mermaid-\_r_133\_ .rough-node .label,#chatgpt-mermaid-\_r_133\_ .node .label,#chatgpt-mermaid-\_r_133\_ .image-shape .label,#chatgpt-mermaid-\_r_133\_ .icon-shape .label{text-align:center;}#chatgpt-mermaid-\_r_133\_ .node.clickable{cursor:pointer;}#chatgpt-mermaid-\_r_133\_ .root .anchor path{fill:rgb(175, 175, 175)!important;stroke-width:0;stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_133\_ .arrowheadPath{fill:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_133\_ .edgePath .path{stroke:rgb(175, 175, 175);stroke-width:1px;}#chatgpt-mermaid-\_r_133\_ .flowchart-link{stroke:rgb(175, 175, 175);fill:none;}#chatgpt-mermaid-\_r_133\_ .edgeLabel{background-color:rgb(0, 0, 0);text-align:center;}#chatgpt-mermaid-\_r_133\_ .edgeLabel p{background-color:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_133\_ .edgeLabel rect{opacity:0.5;background-color:rgb(0, 0, 0);fill:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_133\_ .labelBkg{background-color:rgba(0, 0, 0, 0.5);}#chatgpt-mermaid-\_r_133\_ .cluster rect{fill:rgb(48, 48, 48);stroke:rgba(255, 255, 255, 0.15);stroke-width:1px;}#chatgpt-mermaid-\_r_133\_ .cluster text{fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_133\_ .cluster span{color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_133\_ div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:12px;background:rgb(48, 48, 48);border:1px solid rgba(255, 255, 255, 0.15);border-radius:2px;pointer-events:none;z-index:100;}#chatgpt-mermaid-\_r_133\_ .flowchartTitleText{text-anchor:middle;font-size:18px;fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_133\_ rect.text{fill:none;stroke-width:0;}#chatgpt-mermaid-\_r_133\_ .icon-shape,#chatgpt-mermaid-\_r_133\_ .image-shape{background-color:rgb(0, 0, 0);text-align:center;}#chatgpt-mermaid-\_r_133\_ .icon-shape p,#chatgpt-mermaid-\_r_133\_ .image-shape p{background-color:rgb(0, 0, 0);padding:2px;}#chatgpt-mermaid-\_r_133\_ .icon-shape .label rect,#chatgpt-mermaid-\_r_133\_ .image-shape .label rect{opacity:0.5;background-color:rgb(0, 0, 0);fill:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_133\_ .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#chatgpt-mermaid-\_r_133\_ .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#chatgpt-mermaid-\_r_133\_ .node .neo-node{stroke:rgb(31, 78, 148);}#chatgpt-mermaid-\_r_133\_ [data-look="neo"].node rect,#chatgpt-mermaid-\_r_133\_ [data-look="neo"].cluster rect,#chatgpt-mermaid-\_r_133\_ [data-look="neo"].node polygon{stroke:url(#chatgpt-mermaid-\_r_133\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_133\_ [data-look="neo"].swimlane.cluster rect{filter:none;}#chatgpt-mermaid-\_r_133\_ [data-look="neo"].node path{stroke:url(#chatgpt-mermaid-\_r_133\_-gradient);stroke-width:1px;}#chatgpt-mermaid-\_r_133\_ [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_133\_ [data-look="neo"].node .neo-line path{stroke:rgb(31, 78, 148);filter:none;}#chatgpt-mermaid-\_r_133\_ [data-look="neo"].node circle{stroke:url(#chatgpt-mermaid-\_r_133\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_133\_ [data-look="neo"].node circle .state-start{fill:#000000;}#chatgpt-mermaid-\_r_133\_ [data-look="neo"].icon-shape .icon{fill:url(#chatgpt-mermaid-\_r_133\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_133\_ [data-look="neo"].icon-shape .icon-neo path{stroke:url(#chatgpt-mermaid-\_r_133\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_133\_ .node text{font-size:14px;font-weight:600;letter-spacing:normal;fill:rgb(153, 206, 255);}#chatgpt-mermaid-\_r_133\_ .edgeLabels text{font-size:13px;font-weight:600;letter-spacing:-0.08px;fill:rgb(153, 206, 255);}#chatgpt-mermaid-\_r_133\_ .node tspan[font-weight="normal"],#chatgpt-mermaid-\_r_133\_ .edgeLabels tspan[font-weight="normal"]{font-weight:600;}#chatgpt-mermaid-\_r_133\_ .edgeLabel .label rect{opacity:1;rx:13px;ry:13px;fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-width:1px;}#chatgpt-mermaid-\_r_133\_ .node rect,#chatgpt-mermaid-\_r_133\_ .node circle,#chatgpt-mermaid-\_r_133\_ .node ellipse,#chatgpt-mermaid-\_r_133\_ .node polygon,#chatgpt-mermaid-\_r_133\_ .node path{fill:rgb(0, 40, 77);stroke:rgba(255, 255, 255, 0.1);stroke-width:1px;}#chatgpt-mermaid-\_r_133\_ .node rect{rx:16px;ry:16px;}#chatgpt-mermaid-\_r_133\_ .node.mermaid-decision .label-container{fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-dasharray:2,2;}#chatgpt-mermaid-\_r_133\_ .edgePaths .flowchart-link{stroke:rgb(175, 175, 175);stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;}#chatgpt-mermaid-\_r_133\_ .marker{fill:rgb(175, 175, 175);stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_133\_ :root{--mermaid-font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";}Incoming email via PostmarkingressRails Action MailboxApplicationMailbox routes allTripMailbox#processTrip found by recipient?Log and returnCheck sender approvalCreate InboxItem with rawemailSender recognized?Notify trip ownersApproval action, optionally forthis InboxItemApprovedSendersControllerUpdate sender status andenqueue parsingEnqueue ParseInboxItemJobBuild prompt and callAnthropicSave parsed_data andparse_statusUser review actionsconfirm_and_create_items!fill_missing_links!Mark discardedFind or create TripItemConditionally create ExpenseAdd shortlist ideasNoYesNoYesConfirmRelinkDiscardRetry
+
+The diagram represents intended application paths established from static source. It does not assert that webhook delivery, queued execution or user review has been tested.
+
+The configured external ingress is Postmark (`config/application.rb:52–53`). The setup documentation describes an Action Mailbox webhook under `/rails/action_mailbox/postmark/inbound_emails`; actual Postmark delivery was not tested. The application's ordinary `config/routes.rb` declares the trip inbox and approval actions, while Action Mailbox provides its own ingress infrastructure.&#x20;
+
+
+
+## 8. Participant and source-evidence register
+
+All paths are relative to the root of `daplanstan-main.zip`. The ranges below are from the uploaded source snapshot; they are not independently tied to the stated upstream commit.
+
+| Participant / method                          | Exact source location                                 | Observed responsibility                                               |
+| --------------------------------------------- | ----------------------------------------------------- | --------------------------------------------------------------------- |
+| Action Mailbox ingress configuration          | `config/application.rb:52–53`                         | Configure Postmark ingress                                            |
+| `ApplicationMailbox`                          | `app/mailboxes/application_mailbox.rb:1–3`            | Route incoming emails to `TripMailbox`                                |
+| `Trip#build_inbound_email`                    | `app/models/trip.rb:31–37`                            | Generate trip-specific email address                                  |
+| `TripMailbox#process`                         | `app/mailboxes/trip_mailbox.rb:2–31`                  | Locate trip, check sender, create inbox record and choose next action |
+| `TripMailbox#extract_text_body`               | `app/mailboxes/trip_mailbox.rb:35–43`                 | Extract text content                                                  |
+| `TripMailbox#extract_html_body`               | `app/mailboxes/trip_mailbox.rb:45–53`                 | Extract HTML content                                                  |
+| `TripMailbox#notify_owners_of_pending_sender` | `app/mailboxes/trip_mailbox.rb:55–60`                 | Request notification emails                                           |
+| `TripMailer#pending_sender_notification`      | `app/mailers/trip_mailer.rb:2–10`                     | Construct owner notification                                          |
+| `ApprovedSendersController#create`            | `app/controllers/approved_senders_controller.rb:5–20` | Register approval and optionally enqueue parsing                      |
+| `ApprovedSender`                              | `app/models/approved_sender.rb:1–6`                   | Persist approved-sender association and validation                    |
+| `ParseInboxItemJob#perform`                   | `app/jobs/parse_inbox_item_job.rb:99–112`             | Coordinate AI extraction and persist its result                       |
+| `ParseInboxItemJob#build_prompt`              | `app/jobs/parse_inbox_item_job.rb:116–125`            | Prepare input for extraction                                          |
+| `ParseInboxItemJob#parse_with_anthropic`      | `app/jobs/parse_inbox_item_job.rb:127–139`            | Invoke Anthropic and extract tool input                               |
+| `InboxItem#parsed_data` and setter            | `app/models/inbox_item.rb:19–25`                      | Serialize and deserialize structured data                             |
+| `InboxItemsController#update`                 | `app/controllers/inbox_items_controller.rb:16–35`     | Handle confirmation, discard, relink and retry                        |
+| `InboxItem#confirm_and_create_items!`         | `app/models/inbox_item.rb:34–58`                      | Perform linking, then add shortlist ideas                             |
+| `InboxItem#fill_missing_links!`               | `app/models/inbox_item.rb:67–187`                     | Find, update or create trip records                                   |
+| `InboxItem#build_expense`                     | `app/models/inbox_item.rb:191–207`                    | Construct an associated expense                                       |
+| `TripItem`                                    | `app/models/trip_item.rb:1–28`                        | Persist linked itinerary data, types and statuses                     |
+| `Expense`                                     | `app/models/expense.rb:1–28`                          | Persist linked expense data                                           |
+| Inbox review interface                        | `app/views/inbox_items/show.html.erb:53–83, 130–137`  | Submit review and linking actions                                     |
+| Trip inbox routes                             | `config/routes.rb:44–45`                              | Route inbox and sender-management requests                            |
+
+## 9. Ownership of the collaboration
+
+| Area                 | DaPlanStan application code                            | Rails / dependency / provider                         |
+| -------------------- | ------------------------------------------------------ | ----------------------------------------------------- |
+| Email reception      | Configure ingress and mailbox routing                  | Postmark transport and Action Mailbox ingestion       |
+| Trip matching        | Recipient normalization and `Trip.find_by`             | Rails Active Record query machinery                   |
+| Sender checks        | Approval conditions and notifications                  | Active Record associations and Action Mailer delivery |
+| Parsing              | Prompt, schema, model selection and result persistence | Anthropic SDK and remote model generation             |
+| Background execution | Job's `perform` logic                                  | Active Job / configured Solid Queue                   |
+| Confirmation         | Review actions and record-linking rules                | Rails controller infrastructure and persistence       |
+| UI updates           | `broadcasts_refreshes_to :trip` declaration            | Turbo broadcasting and stream subscriptions           |
+
+The substantive business logic—sender eligibility, extracted-data interpretation, existing-item matching, conditional expense creation and review decisions—is written in DaPlanStan.
+
+The frameworks and providers supply transport, lifecycle management, queue execution, database APIs, model inference and UI-update infrastructure.
+
+## 10. Pattern candidates worth investigating
+
+No GoF classification is established by this source trace. There are three narrower hypotheses worth retaining for skeptical review.
+
+Candidate A — GRASP Information Expert
+
+UNCONFIRMED
+
+Why it might fit: `InboxItem` owns the parsed-data interface, belongs to the relevant trip, and contains methods that use this information to create and link related records (`app/models/inbox_item.rb:19–25, 34–207`).
+
+False-positive risk: These are responsibilities placed on an Active Record model. That could simply represent model-centric application code, not a deliberate responsibility allocation justified by GRASP Information Expert. The method also reaches across `Trip`, `TripItem`, `Expense`, `Traveler` and `User` data.
+
+Origin: Mainly application-owned business logic, supported by Active Record.
+
+Verification focus: Determine whether `InboxItem` genuinely holds the information needed to justify ownership of these operations, or whether it is only coordinating responsibilities belonging to several other entities.
+
+Candidate B — GRASP Controller
+
+UNCONFIRMED
+
+Why it might fit: `TripMailbox#process` acts as a handler for an inbound system event. It coordinates lookup, authorization-related checks, inbox-record creation and delegation to background processing or notification.
+
+False-positive risk: Receiving an event in a Rails mailbox is a framework convention. A method that coordinates several calls is not automatically a meaningful GRASP Controller assignment.
+
+Origin: Application-owned event handling within Rails-provided mailbox infrastructure.
+
+Verification focus: Evaluate the division of responsibility between `ApplicationMailbox`, `TripMailbox`, `InboxItem` and the parsing job against the GRASP Controller definition, not merely their names or inheritance.
+
+Candidate C — Observer-like Turbo refresh
+
+UNCONFIRMED
+
+Why it might fit: `InboxItem` declares `broadcasts_refreshes_to :trip` at `app/models/inbox_item.rb:5`, and `app/views/inbox_items/index.html.erb:1` declares `turbo_stream_from @trip`.
+
+Together, these are evidence of a framework-configured model-change notification and stream subscription relationship.
+
+False-positive risk: The actual observer/subscription machinery is implemented by Turbo and Rails. The application does not visibly define its own observer interface, registry or notification implementation.
+
+Origin: Predominantly framework-provided, with application-defined declarations.
+
+Verification focus: Trace actual subscription and broadcast behavior, then determine whether it qualifies under the faculty's framework-idiom category. This may overlap with the same trip-stream infrastructure observed during the geocoding investigation; it must not automatically become a separate counted pattern instance.
+
+The use of `ParseInboxItemJob`, Anthropic tool input, lookup methods and `find_or_upsert` does not currently justify proposing Command, Chain of Responsibility, Strategy, Adapter or Factory as additional candidates. Those labels would require defining mechanisms that this inspection has not demonstrated.
+
+## 11. Strongest non-pattern explanation
+
+The complete workflow is best described as:
+
+A Rails Action Mailbox intake pipeline with a sender-approval gate, asynchronous AI-based data extraction, persisted intermediate results and user-triggered domain-record linking.
+
+The application uses straightforward procedural decisions, Active Record associations, background jobs and methods on its `InboxItem` model. Much of the framework behavior is declarative.
+
+This explanation accounts for the collaboration without inventing interfaces, interchangeable implementations or design-pattern participants.
+
+## 12. Remaining verification questions
+
+The static trace is complete enough to support candidate review, but the following points remain unresolved:
+
+1. Inbound transport: Has Postmark successfully delivered a real email through the configured Action Mailbox ingress into `TripMailbox`?
+2. Approval enforcement: Does the inbox view's conditional order cause an unknown sender's email to display confirmation controls before approval, and are there any runtime protections not visible in the inspected application methods?
+3. Parsing execution: Does the job return a usable Anthropic tool result for representative emails? Its rescue handler also needs checking against Rails' configured retry behavior.
+4. Record linking: Do repeated or concurrent confirmation requests remain duplicate-safe? The source's name matching and expense-existence checks demonstrate an intention, not a tested guarantee.
+5. Partial failures: What happens when individual item or expense creation fails but the controller subsequently marks the inbox record confirmed? No transaction covering the entire operation is visible.
+6. Attachments: Are inbound attachments preserved through another framework mechanism? The inspected mailbox method does not copy them to `InboxItem`.
+7. Turbo updates: Are subscribed browser clients actually refreshed following `InboxItem` changes, and should that framework behavior qualify for the inventory?
+8. Human verification: A reviewer still needs to assess the GRASP responsibility assignments and decide whether they are meaningful enough to be counted.
+
+## Investigation outcome
+
+Inbound-email investigation
+
+Verification pending
+
+| Control-flow trace             | Established from source          |
+| ------------------------------ | -------------------------------- |
+| Parsing versus record creation | Confirmed as separate code paths |
+| Source locations               | Recorded                         |
+| Pattern hypotheses             | 3 unconfirmed                    |
+| Confirmed pattern instances    | 0                                |
+| Runtime testing                | Not performed                    |
+
+Conclusion: The inbound-email source demonstrates an application-controlled review and linking workflow, not automatic record creation by Anthropic. GRASP Information Expert, GRASP Controller and a Turbo-mediated Observer idiom are possible classifications for later verification, but none has yet met the standard for confirmation.
+
+The next appropriate activity within this source area is to evaluate these specific candidates against their essential mechanisms and either reject them or preserve narrowly defined uncertainties, just as was done for geocoding.

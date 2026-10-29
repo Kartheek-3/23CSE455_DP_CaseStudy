@@ -1,0 +1,13 @@
+# proxy / python
+# working folder: Part3/code/pattern_proxy/python
+# runtime: CPython 3.14.6
+$ python3 -B test_analytics_proxy.py ../../../test-cases/proxy.txt
+PASS absent_real_is_noop
+PASS forwards_after_set
+PASS before_and_after_set
+PASS all_methods_forwarded
+PASS second_set_rejected
+passed 5/5
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 23.8, 24.8, 23.6, 34.3, 24.7 -> median 24.7

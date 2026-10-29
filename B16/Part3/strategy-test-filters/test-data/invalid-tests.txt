@@ -1,0 +1,2 @@
+CalcTests#add fast
+CalcTests.div slow

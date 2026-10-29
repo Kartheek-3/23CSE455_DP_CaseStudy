@@ -1,0 +1,7 @@
+$ (cd Part3/strategy-test-filters/cpp) ./strategy_test
+PASS report matches expected-output.txt
+PASS a new strategy plugs in without changing the selector
+PASS invalid input is rejected with expected-error.txt
+3 passed, 0 failed
+[exit 0]
+result: 3/3 passed

@@ -1,0 +1,23 @@
+snapshot,file,metric,value
+baseline,canteenapp/views.py,file NLOC,4651
+baseline,canteenapp/views.py,adminassignordertodelivery NLOC,30
+baseline,canteenapp/views.py,adminassignordertodelivery CCN,5
+after_CH01,canteenapp/views.py,file NLOC,4660
+after_CH01,canteenapp/views.py,adminassignordertodelivery NLOC,27
+after_CH01,canteenapp/views.py,adminassignordertodelivery CCN,5
+after_CH01,canteenapp/views.py,_notify_delivery_assignment NLOC/CCN,5/1
+after_CH01,canteenapp/delivery_assignment.py,file NLOC,77
+after_CH01,canteenapp/delivery_assignment.py,max function CCN,6
+after_CH01,canteenapp/delivery_assignment.py,__init__ (line 13) CCN,1
+after_CH01,canteenapp/delivery_assignment.py,eligible_delivery_people (line 18) CCN,1
+after_CH01,canteenapp/delivery_assignment.py,select (line 38) CCN,1
+after_CH01,canteenapp/delivery_assignment.py,select (line 43) CCN,4
+after_CH01,canteenapp/delivery_assignment.py,select (line 53) CCN,2
+after_CH01,canteenapp/delivery_assignment.py,get_assignment_policy (line 75) CCN,3
+after_CH01,canteenapp/delivery_assignment.py,__init__ (line 84) CCN,1
+after_CH01,canteenapp/delivery_assignment.py,assign (line 88) CCN,6
+after_CH01,canteenapp/test_delivery_assignment.py (tests),file NLOC,300
+diff,canteenapp/delivery_assignment.py,lines added / removed,111 / 0
+diff,canteenapp/templates/adminassignorder.html,lines added / removed,52 / 27
+diff,canteenapp/test_delivery_assignment.py,lines added / removed,353 / 0
+diff,canteenapp/views.py,lines added / removed,41 / 28

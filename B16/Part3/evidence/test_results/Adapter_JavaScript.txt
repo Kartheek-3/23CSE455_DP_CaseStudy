@@ -1,0 +1,14 @@
+$ (cd Part3/adapter-listener-bridge/javascript) node --test test/adapter.test.js
+✔ report matches expected-output.txt (0.998834ms)
+✔ the adapter converts engine calls into client calls (0.361166ms)
+✔ invalid input is rejected with expected-error.txt (0.321833ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 101.000667
+[exit 0]
+result: 3/3 passed

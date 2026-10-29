@@ -1,0 +1,20 @@
+﻿classDiagram
+    class JobQuery {
+        <<GraphQL query>>
+        +recruiter_jobs
+        +resolve_recruiter_jobs(info)
+    }
+
+    class BasePermission {
+        <<permission base class>>
+        +has_permission(request)
+    }
+
+    class IsRecruiter {
+        +has_permission(request)
+    }
+
+    JobQuery --> IsRecruiter : creates and checks
+    IsRecruiter --|> BasePermission : inherits
+
+    note for IsRecruiter "Recruiter-specific permission policy"

@@ -1,0 +1,5 @@
+Input supplied to the model:
+- Baseline commit 4e4ebb57 of legalSystem.
+- Part 1 confirmed instances: Password Encoding Strategy, Hearing/Reminder
+  Notification (uncertain Observer).
+- Baseline file for CH03 diff: config/SecurityConfiguration.java:57-77 (stubbed encoder).

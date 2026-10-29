@@ -1,0 +1,36 @@
+I'm doing Part 1 (Pattern Discovery) of a university design-patterns project. The app is Mycodo v8.17.0 (https://github.com/kizniche/Mycodo.git), commit ee70a111c622e2a81026fd5c1553a948acf8161e. I've attached PART1_GUIDE.md (the full spec) and the source files I'm inspecting, with line numbers and a file-name header above each. The guide's Library app is only an example; every class, file and line number in your answer must come from my attached Mycodo files.
+
+Scope:
+- Inspected: [list folders/files, e.g. mycodo/inputs/, mycodo/controllers/, mycodo/functions/]
+- Excluded (with reasons): [list, e.g. migrations, third-party libs, static assets]
+
+Counting rule: we count GoF design patterns in which at least one class or method of the app takes part. Architecture styles and GRASP principles are named but not counted.
+
+Follow the guide's Steps 4-12 and give me:
+
+1. Candidate list: every pattern candidate you find (Strategy, Observer, Factory/Factory Method, Template Method, Adapter, Singleton, Decorator, Facade, Repository, Dependency Injection, and any others you find), with where you saw it. Remember that a class name is not proof; there must be a real collaboration.
+
+2. For each candidate: Confirmed / Rejected / Uncertain, using the guide's checklist questions for that pattern, with the specific code evidence. Say clearly when a role is missing or combined in one class, like "Subject=not separately declared". Give rejected and uncertain ones a reason (rejected_candidates.md table).
+
+3. patterns.csv: the exact 7-column header from the guide, one row per instance (two concrete classes in one collaboration is ONE instance). Each row needs source_version=Original code, a meaningful instance_name (not just the pattern name), all participant_roles mapped to real classes/functions separated by ";", source_locations as file:line-range, and intent_and_evidence. Put any cell containing a comma in double quotes. Paths must start with data/code/..., not absolute paths.
+
+4. pattern_counts.csv rows for Original code: per_pattern, total_pattern_types and total_pattern_instances, using the guide's format.
+
+5. A Mermaid architecture diagram (architecture.mmd) of the main parts of Mycodo and how a request flows through them, plus a 3-4 sentence explanation of one flow. Include only components that exist in the attached files.
+
+6. One Mermaid class diagram (.mmd) per confirmed instance using the real class names.
+
+7. pattern_mapping.md (markdown table of patterns.csv) and code_excerpts.md (3-10 key lines per instance, with file and line numbers, copied exactly from the attached code).
+
+8. A small probe test for each confirmed pattern, written for Mycodo's actual language and test setup (pytest, if Python), that exercises the real code and shows the pattern working, for example swapping an implementation changes the result. Say what each one needs to run and what it should print.
+
+9. The four totals for the report: confirmed pattern types, confirmed pattern instances, concrete participant classes, unique participant symbols (each class/interface/function counted once), plus the rejected and uncertain counts. Show how you calculated each.
+
+10. Templates (with TODO where I need to fill things in): Part1_prompt.txt (this prompt), run_info.txt (model, date, steps), verification.md (columns: #, AI claim, Our verdict [Correct / Partially correct / Incorrect / Cannot confirm], Evidence/correction), and the data/llm.csv row for "Pattern discovery".
+
+Strict rules:
+- Use only code that appears in my attached files. Quote line numbers exactly as they appear in the numbered input. If you can't verify a class, role or line range, write "CANNOT CONFIRM" rather than guessing.
+- You can't run code. Never invent test output, logs, screenshots or environment versions. Give me the commands, and mark anything I need to measure or run as TODO.
+- If a file I'd expect in a pattern isn't in my attached scope, say it is outside the scope instead of assuming what it contains.
+- Be conservative. It is better to list a candidate as Uncertain than to force-fit a pattern. Prefer fewer, well-evidenced instances over many weak ones.
+- Output everything as clearly labelled sections, one per file with its full Part1/ path, so I can copy each into its own file.

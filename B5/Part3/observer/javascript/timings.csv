@@ -1,0 +1,7 @@
+run,elapsed_ms,exit_code,passed,total
+warmup,37.965193,0,7,7
+measure_1,36.192922,0,7,7
+measure_2,46.430877,0,7,7
+measure_3,44.341686,0,7,7
+measure_4,43.67267,0,7,7
+measure_5,37.15543,0,7,7

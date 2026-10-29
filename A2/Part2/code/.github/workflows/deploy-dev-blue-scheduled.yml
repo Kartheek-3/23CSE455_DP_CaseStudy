@@ -1,0 +1,28 @@
+name: Scheduled deploy to dev-blue
+
+on:
+  schedule:
+    - cron: "0 5 * * *"
+
+permissions:
+  contents: read # Needed to checkout repo
+
+concurrency:
+  group: deploy-dev-blue
+  cancel-in-progress: true
+
+jobs:
+  call-workflow:
+    name: Call MBTA deploy-ecs workflow
+    permissions:
+      contents: read # Needed to checkout repo
+      id-token: write # Needed to access ECR and ECS
+    uses: mbta/workflows/.github/workflows/deploy-ecs.yml@c76e5ccd9556fbea52bc41548f7ceed5985ad775 # v5.1.0
+    with:
+      app-name: api
+      environment: dev-blue
+      docker-additional-tags: dev-blue
+    secrets:
+      aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
+      docker-repo: ${{ secrets.DOCKER_REPO }}
+      slack-webhook: ${{ secrets.SLACK_WEBHOOK }}

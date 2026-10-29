@@ -1,0 +1,7 @@
+Input supplied to the model:
+- Repository: https://github.com/vikash0439/legalSystem
+- Baseline commit: 4e4ebb574d6730614855899e032fd5a79b04da63 (2023-03-18)
+- Files read: config/SecurityConfiguration.java, modal/CustomUserDetails.java,
+  service/CustomUserDetailsService.java, service/CaseService.java, modal/Users.java,
+  repository/CaseRepository.java (+ sibling repositories), repository/UsersRepository.java,
+  mail/EmailServiceImpl.java, LegalAppApplication.java

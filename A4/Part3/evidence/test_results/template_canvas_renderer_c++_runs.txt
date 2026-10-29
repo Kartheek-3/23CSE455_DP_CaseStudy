@@ -1,0 +1,32 @@
+Pattern: Template Method
+Instance: Picture Elements Konva Canvas Base
+Language: C++
+Compiler/Runtime: g++ MinGW GCC 6.3.0 (-O2 -std=c++14)
+Warmup + 5 Runs Raw Output:
+--- Run 1 ---
+RESULT: 5/5 passed
+TIME_MS: 0.0538
+
+
+--- Run 2 ---
+RESULT: 5/5 passed
+TIME_MS: 0.0752
+
+
+--- Run 3 ---
+RESULT: 5/5 passed
+TIME_MS: 0.0293
+
+
+--- Run 4 ---
+RESULT: 5/5 passed
+TIME_MS: 0.0231
+
+
+--- Run 5 ---
+RESULT: 5/5 passed
+TIME_MS: 0.0363
+
+
+Measured Milliseconds: [0.0538, 0.0752, 0.0293, 0.0231, 0.0363]
+Computed Median Milliseconds: 0.036

@@ -1,0 +1,12 @@
+digraph u3 { rankdir=BT; fontname="Helvetica"; node [fontname="Helvetica",fontsize=10,shape=record,style=filled,fillcolor="#f4f6fa"]; edge [fontname="Helvetica",fontsize=9];
+ base [label="{rest_framework.permissions.BasePermission\n«Strategy, framework»|+ has_permission(request, view)\l}",fillcolor="#e8e8e8"];
+ e1 [label="{IsEmployer\n«ConcreteStrategy»|+ has_permission()\l}"];
+ e2 [label="{IsEmployee\n«ConcreteStrategy»|+ has_permission()\l}"];
+ e3 [label="{IsJobCreator\n«ConcreteStrategy»|+ has_permission()\l}"];
+ ctx [label="{rest_framework.views.APIView\n«Context, framework»|+ permission_classes\l+ check_permissions()\l}",fillcolor="#e8e8e8"];
+ v1 [label="{ApplicantsPerJobListAPIView|permission_classes =\l[IsAuthenticated, IsEmployer, IsJobCreator]\l}"];
+ v2 [label="{ApplyJobApiView|permission_classes =\l[IsAuthenticated, IsEmployee]\l}"];
+ e1 -> base [arrowhead=empty]; e2 -> base [arrowhead=empty]; e3 -> base [arrowhead=empty];
+ ctx -> base [style=dashed,arrowhead=vee,label="holds"];
+ v1 -> ctx [arrowhead=empty]; v2 -> ctx [arrowhead=empty];
+}

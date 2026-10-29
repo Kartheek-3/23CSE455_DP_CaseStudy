@@ -1,0 +1,60 @@
+@startuml ch02_trip_state_cancellation
+title CH02 - ride cancellation: State (trip lifecycle) + Strategy (cancellation fee)
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+hide empty members
+
+interface TripState <<State>> {
+  +status
+  +accept() / complete() / cancel()
+  +reject() / expire()
+}
+abstract class BaseTripState {
+  #refuse(event): never
+}
+class PendingTrip <<ConcreteState>>
+class ConfirmedTrip <<ConcreteState>>
+class FinishedTrip <<ConcreteState>> {
+  COMPLETED | CANCELLED | REJECTED | EXPIRED
+}
+class TripLifecycle <<Context>> {
+  -state: TripState
+  +apply(event): BookingStatus
+  +moveTo(target): BookingStatus
+}
+BaseTripState ..|> TripState
+PendingTrip --|> BaseTripState
+ConfirmedTrip --|> BaseTripState
+FinishedTrip --|> BaseTripState
+TripLifecycle o--> TripState
+
+interface CancellationPolicy <<Strategy>> {
+  +cancelledBy
+  +calculateFee(booking, now): number
+}
+class RiderCancellationPolicy <<ConcreteStrategy>> {
+  free if PENDING or before 21:00 IST day before
+  else max(50, 10% of fare)
+}
+class DriverCancellationPolicy <<ConcreteStrategy>> {
+  always 0
+}
+RiderCancellationPolicy ..|> CancellationPolicy
+DriverCancellationPolicy ..|> CancellationPolicy
+
+class CancelBookingInputUseCase <<Context / Client>> {
+  +execute({bookingId, reason, cancelledBy, actorId})
+}
+interface INotificationService {
+  +cancelBookingNotification(driverId, data)
+  +driverCancelledBookingNotification(userId, data)  // new
+  +bookingAssignedNotification(bookingId)
+}
+CancelBookingInputUseCase --> TripLifecycle : apply("cancel")
+CancelBookingInputUseCase --> CancellationPolicy : cancellationPolicyFor(cancelledBy)
+CancelBookingInputUseCase --> INotificationService
+class UpdateBookingStatus <<Client>>
+class CronScheduler <<Client>>
+UpdateBookingStatus --> TripLifecycle : moveTo(status)
+CronScheduler --> TripLifecycle : apply("expire")
+@enduml

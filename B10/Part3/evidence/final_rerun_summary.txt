@@ -1,0 +1,32 @@
+template_method  java        Template Method tests: 12/12 passed
+template_method  python      Template Method tests: 12/12 passed
+template_method  javascript  Template Method tests: 12/12 passed
+template_method  cpp         Template Method tests: 12/12 passed
+strategy         java        Strategy tests: 12/12 passed
+strategy         python      Strategy tests: 12/12 passed
+strategy         javascript  Strategy tests: 12/12 passed
+strategy         cpp         Strategy tests: 12/12 passed
+adapter          java        Adapter tests: 12/12 passed
+adapter          python      Adapter tests: 12/12 passed
+adapter          javascript  Adapter tests: 12/12 passed
+adapter          cpp         Adapter tests: 12/12 passed
+proxy            java        Proxy tests: 12/12 passed
+proxy            python      Proxy tests: 12/12 passed
+proxy            javascript  Proxy tests: 12/12 passed
+proxy            cpp         Proxy tests: 12/12 passed
+command          java        Command tests: 12/12 passed
+command          python      Command tests: 12/12 passed
+command          javascript  Command tests: 12/12 passed
+command          cpp         Command tests: 12/12 passed
+plugin           java        Plugin tests: 9/9 passed
+plugin           python      Plugin tests: 9/9 passed
+plugin           javascript  Plugin tests: 9/9 passed
+plugin           cpp         Plugin tests: 9/9 passed
+layer_supertype  java        Layer Supertype tests: 11/11 passed
+layer_supertype  python      Layer Supertype tests: 11/11 passed
+layer_supertype  javascript  Layer Supertype tests: 11/11 passed
+layer_supertype  cpp         Layer Supertype tests: 11/11 passed
+active_record    java        Active Record tests: 12/12 passed
+active_record    python      Active Record tests: 12/12 passed
+active_record    javascript  Active Record tests: 12/12 passed
+active_record    cpp         Active Record tests: 12/12 passed

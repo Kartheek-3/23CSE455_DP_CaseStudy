@@ -1,0 +1,11 @@
+Using the Area B files (JUnit 6.1.3, commit `f59f60d`), can you look into which design patterns are actually used in the test engines and execution lifecycle?
+
+Focus on `TestEngine`, `HierarchicalTestEngine`, `JupiterTestEngine`, `Node`, `NodeTestTask`, `HierarchicalTestExecutor`, `HierarchicalTestExecutorService` and its implementations (`SameThread`, `ForkJoinPool`, and `WorkerThreadPool`), `ParallelExecutionConfigurationStrategy`, `EngineExecutionOrchestrator`, `Launcher`, `DelegatingLauncher`, and `InterceptingLauncher`.
+
+Check Composite, Strategy, Template Method, Observer, and Adapter. You can also mention patterns like Decorator or Factory Method if there's strong evidence for them.
+
+For each pattern, explain where and how it's used, map the roles to the actual classes or methods, and include the file path, line numbers, and a small code snippet as evidence. Give each pattern a verdict (confirmed, uncertain, or rejected) with a short explanation.
+
+Also point out any classes that might look like they implement a pattern based on their names but don't actually follow it, and explain why.
+
+Don't repeat patterns already covered in Area A unless the same classes play a different role in Area B.

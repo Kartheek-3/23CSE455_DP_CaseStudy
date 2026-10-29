@@ -1,0 +1,184 @@
+﻿diff --git "a/D:\\DP\\CASE_STUDY\\new_Dp\\django-job-portal\\jobsapp\\graphql\\permissions.py" "b/D:\\DP\\CASE_STUDY\\new_Dp\\django-job-portal_observer\\jobsapp\\graphql\\permissions.py"
+index 6192972..c3ad57d 100644
+--- "a/D:\\DP\\CASE_STUDY\\new_Dp\\django-job-portal\\jobsapp\\graphql\\permissions.py"
++++ "b/D:\\DP\\CASE_STUDY\\new_Dp\\django-job-portal_observer\\jobsapp\\graphql\\permissions.py"
+@@ -44,3 +44,14 @@ class IsEmployee(BasePermission):
+ 
+     def has_permission(self, request, **kwargs):
+         return bool(request.user and request.user.role == "employee")
++
++
++class IsRecruiter(BasePermission):
++    message = _("Your user account must be a recruiter")
++
++    def has_permission(self, request, **kwargs):
++        return bool(
++            request.user
++            and request.user.is_authenticated
++            and request.user.role == "recruiter"
++        )
+diff --git "a/D:\\DP\\CASE_STUDY\\new_Dp\\django-job-portal\\jobsapp\\graphql\\queries.py" "b/D:\\DP\\CASE_STUDY\\new_Dp\\django-job-portal_observer\\jobsapp\\graphql\\queries.py"
+index b0053d2..652c090 100644
+--- "a/D:\\DP\\CASE_STUDY\\new_Dp\\django-job-portal\\jobsapp\\graphql\\queries.py"
++++ "b/D:\\DP\\CASE_STUDY\\new_Dp\\django-job-portal_observer\\jobsapp\\graphql\\queries.py"
+@@ -1,14 +1,22 @@
++
+ import graphene
+ 
+ from .types import JobGQLType
+-from jobsapp.models import Job
++from .permissions import IsRecruiter
+ from .exceptions import GraphQLError
++from jobsapp.models import Job
+ 
+ 
+ class JobQuery(graphene.ObjectType):
+     jobs = graphene.List(JobGQLType)
+     job = graphene.Field(JobGQLType, pk=graphene.Int())
+ 
++    # CH02: recruiter-only query protected by the IsRecruiter strategy.
++    recruiter_jobs = graphene.List(
++        JobGQLType,
++        description="Published jobs accessible to recruiter accounts only.",
++    )
++
+     def resolve_jobs(self, info):
+         return Job.objects.all()
+ 
+@@ -19,3 +27,11 @@ class JobQuery(graphene.ObjectType):
+             except Job.DoesNotExist:
+                 return GraphQLError("Job doesn't exists")
+         return None
++
++    def resolve_recruiter_jobs(self, info):
++        permission = IsRecruiter()
++
++        if not permission.has_permission(info.context):
++            raise GraphQLError(str(permission.message))
++
++        return Job.objects.filter(status="published", filled=False)
+diff --git "a/D:\\DP\\CASE_STUDY\\new_Dp\\django-job-portal_observer\\tests\\jobsapp\\test_graphql_permissions.py" "b/D:\\DP\\CASE_STUDY\\new_Dp\\django-job-portal_observer\\tests\\jobsapp\\test_graphql_permissions.py"
+new file mode 100644
+index 0000000..17647a5
+--- /dev/null
++++ "b/D:\\DP\\CASE_STUDY\\new_Dp\\django-job-portal_observer\\tests\\jobsapp\\test_graphql_permissions.py"
+@@ -0,0 +1,43 @@
++
++from types import SimpleNamespace
++
++from django.test import SimpleTestCase
++
++from jobsapp.graphql.permissions import IsRecruiter
++
++
++class TestIsRecruiterPermission(SimpleTestCase):
++    def setUp(self):
++        self.permission = IsRecruiter()
++
++    def make_request(self, authenticated, role=None):
++        user = SimpleNamespace(
++            is_authenticated=authenticated,
++            role=role,
++        )
++        return SimpleNamespace(user=user)
++
++    def test_authenticated_recruiter_is_allowed(self):
++        request = self.make_request(True, "recruiter")
++
++        self.assertTrue(self.permission.has_permission(request))
++
++    def test_employer_is_denied(self):
++        request = self.make_request(True, "employer")
++
++        self.assertFalse(self.permission.has_permission(request))
++
++    def test_employee_is_denied(self):
++        request = self.make_request(True, "employee")
++
++        self.assertFalse(self.permission.has_permission(request))
++
++    def test_anonymous_user_is_denied(self):
++        request = self.make_request(False, "recruiter")
++
++        self.assertFalse(self.permission.has_permission(request))
++
++    def test_missing_user_is_denied(self):
++        request = SimpleNamespace(user=None)
++
++        self.assertFalse(self.permission.has_permission(request))
+diff --git "a/D:\\DP\\CASE_STUDY\\new_Dp\\django-job-portal_observer\\tests\\jobsapp\\test_graphql_recruiter_query.py" "b/D:\\DP\\CASE_STUDY\\new_Dp\\django-job-portal_observer\\tests\\jobsapp\\test_graphql_recruiter_query.py"
+new file mode 100644
+index 0000000..61c5212
+--- /dev/null
++++ "b/D:\\DP\\CASE_STUDY\\new_Dp\\django-job-portal_observer\\tests\\jobsapp\\test_graphql_recruiter_query.py"
+@@ -0,0 +1,70 @@
++
++import json
++
++from django.test import TestCase, Client
++from django.urls import reverse
++
++from tests.factories.user_factory import UserFactory
++from tests.factories.job_factory import JobFactory
++
++
++class RecruiterJobsQueryTests(TestCase):
++    def setUp(self):
++        self.client = Client()
++        self.endpoint = "/graphql/"
++
++        self.recruiter = UserFactory(role="recruiter")
++        self.employer = UserFactory(role="employer")
++
++        self.published_job = JobFactory(status="published", filled=False)
++        self.closed_job = JobFactory(status="closed", filled=False)
++        self.filled_job = JobFactory(status="published", filled=True)
++
++    def execute_query(self, query):
++        return self.client.post(
++            self.endpoint,
++            data=json.dumps({"query": query}),
++            content_type="application/json",
++        )
++
++    def test_recruiter_can_query_published_unfilled_jobs(self):
++        self.client.force_login(self.recruiter)
++
++        response = self.execute_query(
++            "{ recruiterJobs { id title status filled } }"
++        )
++
++        self.assertEqual(response.status_code, 200)
++        payload = response.json()
++        self.assertNotIn("errors", payload)
++
++        returned_ids = {
++            int(job["id"]) for job in payload["data"]["recruiterJobs"]
++        }
++        self.assertIn(self.published_job.id, returned_ids)
++        self.assertNotIn(self.closed_job.id, returned_ids)
++        self.assertNotIn(self.filled_job.id, returned_ids)
++
++    def test_employer_cannot_query_recruiter_jobs(self):
++        self.client.force_login(self.employer)
++
++        response = self.execute_query("{ recruiterJobs { id title } }")
++
++        self.assertEqual(response.status_code, 200)
++        payload = response.json()
++        self.assertIn("errors", payload)
++
++    def test_anonymous_user_cannot_query_recruiter_jobs(self):
++        response = self.execute_query("{ recruiterJobs { id title } }")
++
++        self.assertEqual(response.status_code, 200)
++        payload = response.json()
++        self.assertIn("errors", payload)
++
++    def test_existing_public_jobs_query_still_works(self):
++        response = self.execute_query("{ jobs { id title } }")
++
++        self.assertEqual(response.status_code, 200)
++        payload = response.json()
++        self.assertNotIn("errors", payload)
++        self.assertIn("jobs", payload["data"])

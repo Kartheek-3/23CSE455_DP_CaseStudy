@@ -1,0 +1,1028 @@
+I am doing Part 1 of a Design Pattern Case Study on the Misskey open-source social media application.
+
+I want you to perform a DEEP, SYSTEMATIC, EXHAUSTIVE and SOURCE-CODE-GROUNDED design-pattern discovery of the baseline Misskey repository.
+
+This is especially important because my faculty has said that PATTERN DISCOVERY carries a large portion of the marks. Missing a genuine pattern that exists in the application can result in loss of marks.
+
+Therefore, DO NOT stop after finding a convenient number of patterns.
+
+The objective is to investigate the repository systematically and produce the most comprehensive and defensible pattern inventory possible from the actual baseline source.
+
+I have attached:
+1. The official Design Pattern Case Study instructions.
+2. This pattern-discovery prompt.
+3. Previous case-study/report context.
+4. Previous analysis/evidence from an earlier pattern-discovery attempt.
+
+The previous analysis is ONLY supporting context. It must NOT be treated as proof.
+
+==================================================
+1. PROJECT AND BASELINE SOURCE
+==================================================
+
+Project: Misskey
+
+Repository:
+https://github.com/SR3YAS237/misskey.git
+
+Baseline commit:
+
+5f501341d49d2bc3fa7e817ce7548a82174326eb
+
+This exact baseline commit is the source version for Part 1.
+
+The baseline source must remain unchanged during this analysis.
+
+Do not switch to another commit, branch, release, or the current develop/main source unless I explicitly instruct you to do so.
+
+If you need to verify the baseline, verify the exact commit first.
+
+==================================================
+2. PRIMARY OBJECTIVE
+==================================================
+
+The objective is NOT:
+
+"Find four patterns."
+
+The objective is:
+
+"Identify every reasonably supportable application-level design, architectural, enterprise, and other justified pattern collaboration that can be established from the Misskey baseline source, while rejecting false positives."
+
+Search broadly first.
+
+Then verify rigorously.
+
+Do not stop after finding:
+
+- Observer / Publish-Subscribe
+- Strategy
+- Repository
+- Adapter
+
+These four were identified during an earlier analysis, but they are NOT automatically the final answer.
+
+The new analysis must independently verify them and continue searching for additional genuine patterns.
+
+If the final result contains:
+
+4 genuine patterns → report 4.
+
+6 genuine patterns → report 6.
+
+10 genuine patterns → report 10.
+
+Do not add patterns simply to increase the count.
+
+Do not stop simply because four patterns have already been found.
+
+==================================================
+3. SOURCE OF TRUTH
+==================================================
+
+The actual Misskey source code at the exact baseline commit is the ultimate source of truth.
+
+Do NOT treat the following as proof that a pattern exists:
+
+- pattern names in filenames
+- class names
+- interface names
+- comments
+- README descriptions
+- documentation
+- previous AI analysis
+- previous conclusions
+- existing CSV files
+- report text
+- assignment examples
+- textbook similarity
+
+These may only be used as leads.
+
+Every final pattern claim must be verified against actual source code.
+
+Do not invent:
+
+- classes
+- interfaces
+- participants
+- pattern roles
+- relationships
+- source locations
+- line numbers
+- implementation behavior
+- test results
+- build results
+- commit SHAs
+- runtime measurements
+
+If evidence is unavailable, say so.
+
+==================================================
+4. PREVIOUSLY IDENTIFIED PATTERNS
+==================================================
+
+The previous analysis identified these four candidates:
+
+1. Observer / Publish-Subscribe
+2. Strategy
+3. Repository
+4. Adapter
+
+Treat them only as previously discovered candidates.
+
+They must be independently re-verified from the actual source.
+
+For each one, verify:
+
+- actual participants
+- actual participant roles
+- actual interaction
+- exact source locations
+- exact line ranges
+- problem/intent
+- whether it is genuinely a pattern
+- whether it is application-level or merely framework/library behavior
+
+If any previous pattern turns out to be weak or incorrect, reject or reclassify it.
+
+Do not preserve a pattern simply because it appeared in the previous CSV or analysis.
+
+==================================================
+5. PATTERN TAXONOMY TO INVESTIGATE
+==================================================
+
+Search across multiple pattern families.
+
+Do not restrict the investigation to the classic GoF patterns.
+
+At minimum investigate possible evidence for:
+
+--------------------------------------------------
+5.1 CREATIONAL PATTERNS
+--------------------------------------------------
+
+- Factory
+- Factory Method
+- Abstract Factory
+- Builder
+- Prototype
+- Singleton
+- Object Pool
+- other justified creation patterns
+
+Look for:
+
+- factory functions
+- object creation abstractions
+- creation through interfaces
+- configurable object construction
+- staged construction
+- centralized object creation
+- prototype/cloning mechanisms
+- controlled singleton-like instances
+
+Do not assume a function named "create" is automatically a Factory.
+
+--------------------------------------------------
+5.2 STRUCTURAL PATTERNS
+--------------------------------------------------
+
+- Adapter
+- Facade
+- Decorator
+- Proxy
+- Composite
+- Bridge
+- Flyweight
+- other justified structural patterns
+
+Look for:
+
+- wrappers
+- delegation
+- abstraction layers
+- external-system adapters
+- middleware wrappers
+- proxy/delegating objects
+- hierarchical structures
+- abstraction/implementation separation
+- object composition
+
+Do not classify simple helper functions as structural patterns without meaningful collaboration evidence.
+
+--------------------------------------------------
+5.3 BEHAVIORAL PATTERNS
+--------------------------------------------------
+
+- Observer
+- Publish-Subscribe
+- Strategy
+- Command
+- State
+- Chain of Responsibility
+- Template Method
+- Mediator
+- Iterator
+- Visitor
+- Memento
+- Interpreter
+- other justified behavioral patterns
+
+Look for:
+
+- event registration
+- subscriptions
+- event publishing
+- interchangeable behavior
+- command dispatch
+- state transitions
+- sequential handlers
+- inheritance hooks
+- centralized coordination
+- traversal abstractions
+- visitors
+- undo/history/state restoration
+
+Do not classify every event emitter as Observer or every handler chain as Chain of Responsibility without verifying the actual collaboration.
+
+==================================================
+5.4 ARCHITECTURAL / ENTERPRISE / APPLICATION PATTERNS
+==================================================
+
+Investigate possible evidence for:
+
+- Repository
+- Service Layer
+- Data Mapper
+- Unit of Work
+- Dependency Injection
+- Event-driven architecture
+- Event Bus
+- Message Bus
+- CQRS
+- Facade / Service Orchestration
+- Gateway
+- caching patterns
+- transaction patterns
+- application service patterns
+- domain service patterns
+- other justified architectural/application patterns
+
+For each architectural pattern, determine whether the collaboration is actually present in Misskey's own source.
+
+Do not call a framework's internal architecture a Misskey application pattern merely because Misskey uses that framework.
+
+==================================================
+5.5 GRASP / MICRO-ARCHITECTURAL PATTERNS
+==================================================
+
+Investigate where concrete collaboration can be demonstrated:
+
+- Information Expert
+- Creator
+- Controller
+- Low Coupling
+- High Cohesion
+- Polymorphism
+- Indirection
+- Pure Fabrication
+- Protected Variations
+
+Do NOT label every well-designed class as a GRASP pattern.
+
+A GRASP pattern should only be reported when the source provides a meaningful and defensible collaboration demonstrating it.
+
+==================================================
+6. FRAMEWORK / LIBRARY VS APPLICATION PATTERN
+==================================================
+
+This distinction is extremely important.
+
+Do NOT call something a confirmed application-level design pattern merely because a framework or library internally implements that pattern.
+
+Misskey may use technologies such as:
+
+- Vue
+- TypeScript
+- TypeORM
+- Redis
+- BullMQ
+- GraphQL
+- dependency-injection infrastructure
+- HTTP frameworks
+- database libraries
+- queue libraries
+- frontend frameworks
+- external APIs
+- other third-party libraries
+
+Investigate whether the behavior is:
+
+A. A genuine pattern implemented through Misskey's own source code
+
+OR
+
+B. Merely a framework/library mechanism
+
+If it is simply provided by a framework/library, classify it as:
+
+FRAMEWORK / LIBRARY MECHANISM
+
+rather than claiming it as a custom Misskey application pattern.
+
+However, if Misskey's own source code creates a meaningful collaboration using that infrastructure, investigate whether the APPLICATION collaboration itself constitutes a pattern.
+
+Explain this distinction clearly.
+
+==================================================
+7. SYSTEMATIC REPOSITORY ARCHAEOLOGY
+==================================================
+
+Do not inspect only one directory.
+
+Systematically investigate relevant areas of the repository.
+
+At minimum consider:
+
+- packages/backend
+- packages/frontend
+- packages/frontend-shared
+- core/domain services
+- models
+- repositories
+- server
+- endpoints
+- event/pub-sub mechanisms
+- queues
+- jobs
+- notification mechanisms
+- authentication
+- federation
+- media / Drive
+- timelines
+- reactions
+- notes
+- users
+- messaging / Chat
+- logging
+- caching
+- configuration
+- frontend component architecture
+- composables
+- stores
+- API clients
+- utilities
+- adapters
+- integrations
+- external-service wrappers
+- other relevant modules discovered during investigation
+
+Do not assume these areas necessarily contain patterns.
+
+They are investigation areas.
+
+Use source-code searches to discover candidate collaborations.
+
+Useful search directions include:
+
+- interfaces with multiple implementations
+- abstract/base classes
+- interchangeable implementations
+- factory functions
+- constructors
+- object creation functions
+- event registration
+- subscription
+- publish/emit mechanisms
+- repositories
+- dependency injection
+- wrappers
+- decorators
+- proxies
+- middleware
+- command dispatch
+- strategy selection
+- state transitions
+- chained handlers
+- service orchestration
+- caches
+- external integrations
+- adapters
+- polymorphism
+- centralized coordination
+- queues
+- message passing
+- factories/builders
+- frontend component composition
+
+But finding such a structure does NOT automatically mean a pattern exists.
+
+Always verify the actual collaboration.
+
+==================================================
+8. FEATURE-ORIENTED INVESTIGATION
+==================================================
+
+Use the application's major functional areas as additional discovery paths.
+
+Investigate where relevant:
+
+- User/profile
+- Notes/posts
+- Replies
+- Reactions
+- Notifications
+- Media/Drive
+- Messaging/Chat
+- Timelines
+- Federation
+- Authentication
+- Moderation
+- Search
+- Queues/background jobs
+- Streaming
+- Configuration
+- Logging
+- Frontend components
+- API communication
+
+The purpose is not to claim that every feature contains a pattern.
+
+The purpose is to avoid missing patterns because they are hidden inside a functional subsystem rather than a class named after a textbook pattern.
+
+==================================================
+9. ONE PATTERN = ONE COLLABORATION
+==================================================
+
+Follow the assignment's definition carefully.
+
+One row in patterns.csv represents:
+
+ONE confirmed pattern collaboration
+in
+ONE source version.
+
+Do NOT create:
+
+- one row for every participant
+- one row for every class
+- one row for every method
+- one row merely because several classes implement the same interface
+
+If multiple classes/functions participate in one collaboration, include them together as one pattern instance.
+
+If two genuinely separate collaborations exist for the same pattern type, they may be separate pattern instances.
+
+Do not artificially split or merge collaborations.
+
+Example:
+
+If three concrete implementations participate in ONE Strategy collaboration, that is ONE Strategy instance, not three Strategy instances.
+
+==================================================
+10. REQUIRED EVIDENCE FOR EVERY CANDIDATE
+==================================================
+
+For every candidate pattern, determine:
+
+- Pattern name
+- Pattern type
+- Pattern instance name
+- Actual participants
+- Pattern role of every participant
+- Exact source file path
+- Exact line range
+- Concrete interaction between participants
+- Problem/intent being solved
+- Why this qualifies as the pattern
+- Strongest counterargument against classifying it as that pattern
+- Why the evidence is nevertheless sufficient
+
+Do not accept a pattern merely because the class names resemble textbook terminology.
+
+The pattern must be supported by an actual collaboration.
+
+==================================================
+11. COUNTERARGUMENT TEST
+==================================================
+
+For every pattern proposed as CONFIRMED, explicitly ask:
+
+"What is the strongest reason this might NOT actually be this pattern?"
+
+Examples:
+
+- Is this just normal polymorphism?
+- Is this just a helper function?
+- Is this merely framework behavior?
+- Is this just dependency injection?
+- Is this just an event emitter?
+- Is this just a wrapper without an Adapter relationship?
+- Is this just a database repository generated by a framework?
+- Is this just service decomposition?
+- Is this just inheritance without Template Method?
+- Is this just sequential code rather than Chain of Responsibility?
+- Is this just a factory-like function without a true creation abstraction?
+
+Then explain why the evidence is sufficient or why the candidate should be rejected.
+
+This is important for avoiding false positives.
+
+==================================================
+12. CONFIDENCE / CLASSIFICATION
+==================================================
+
+For every candidate, classify it as one of:
+
+CONFIRMED APPLICATION PATTERN
+
+CONFIRMED ARCHITECTURAL / ENTERPRISE PATTERN
+
+FRAMEWORK / LIBRARY MECHANISM
+
+PATTERN-LIKE BUT INSUFFICIENT
+
+REJECTED / FALSE POSITIVE
+
+Only CONFIRMED patterns should eventually enter patterns.csv.
+
+Keep rejected and uncertain candidates in the analysis so that we can demonstrate that the repository was investigated thoroughly.
+
+==================================================
+13. SECOND "WHAT DID WE MISS?" DISCOVERY PASS
+==================================================
+
+After the initial discovery pass, perform a SECOND independent discovery pass.
+
+Do not simply repeat the first search.
+
+Explicitly ask:
+
+"What pattern could we have missed?"
+
+Search for patterns hidden under different terminology.
+
+Examples:
+
+- Factory implemented as a function rather than a class named Factory
+- Strategy implemented through function/interface substitution
+- Observer implemented through event subscriptions
+- Adapter implemented as a wrapper around an external API
+- Repository implemented through repository abstractions
+- State implemented through explicit state transitions
+- Command implemented through endpoint/action dispatch
+- Facade implemented through a service coordinating multiple subsystems
+- Decorator implemented through wrappers or middleware
+- Proxy implemented through lazy/delegating objects
+- Chain of Responsibility implemented through sequential handlers
+- Template Method implemented through inheritance/hooks
+- Mediator implemented through centralized coordination
+- Builder implemented through staged object construction
+
+These are SEARCH DIRECTIONS, not claims that the patterns exist.
+
+==================================================
+14. SYSTEMATIC NEGATIVE CHECK
+==================================================
+
+For major pattern families, explicitly record whether they were:
+
+- confirmed
+- candidate found but rejected
+- insufficient evidence
+- not found after investigation
+
+Examples:
+
+Creational:
+Factory → ?
+Builder → ?
+Singleton → ?
+
+Structural:
+Adapter → ?
+Facade → ?
+Decorator → ?
+Proxy → ?
+
+Behavioral:
+Observer → ?
+Strategy → ?
+Command → ?
+State → ?
+Chain of Responsibility → ?
+Template Method → ?
+Mediator → ?
+
+Architectural:
+Repository → ?
+Service Layer → ?
+Data Mapper → ?
+Unit of Work → ?
+Event Bus → ?
+CQRS → ?
+
+Do not claim "not present" merely because one search returned nothing.
+
+A "not found" conclusion should be based on reasonable investigation.
+
+==================================================
+15. PART 3 EVIDENCE PRESERVATION
+==================================================
+
+Although this task is Part 1, preserve representative source-code evidence for every confirmed pattern that may later be used in Part 3.
+
+For every confirmed pattern, identify at least one strong, self-contained representative collaboration/snippet where practical.
+
+Record:
+
+- exact production source file
+- exact source line range
+- actual code snippet OR the exact source location from which it can be extracted
+- pattern instance name
+- participants and their roles
+- problem/input/expected behavior demonstrated by the snippet
+- dependencies required to understand or reproduce the snippet
+- why this is a representative implementation of the pattern
+- whether the collaboration can reasonably be isolated into a small equivalent problem for Part 3 cross-language implementation
+
+The representative snippet must come from the actual baseline Misskey source code.
+
+Do NOT select an arbitrary piece of code merely because it is located inside a class involved in the pattern.
+
+The snippet should demonstrate the actual collaboration that provides evidence for the confirmed pattern.
+
+The snippet should be sufficiently understandable that, later in Part 3, the same underlying problem and expected behavior can be implemented independently in:
+
+- Java
+- Python
+- JavaScript
+- C++
+
+If a confirmed pattern has multiple possible source locations, prefer the strongest and most self-contained representative collaboration for Part 3.
+
+Record enough context to later reconstruct the same problem without changing the meaning of the original pattern.
+
+Do NOT modify the original source.
+
+Do NOT invent, rewrite, simplify, or refactor the original snippet during Part 1.
+
+Preserve the original implementation as evidence.
+
+Do NOT perform Part 3 implementation during this Part 1 analysis.
+
+The purpose of this section is only to preserve accurate source evidence so that no confirmed pattern becomes unusable for Part 3 because its original implementation details were not recorded.
+
+Also determine whether the original Misskey collaboration can be isolated into a small, language-independent problem suitable for Part 3.
+
+For example:
+
+Original Misskey collaboration
+        ↓
+Identify underlying problem
+        ↓
+Identify input
+        ↓
+Identify expected output/behavior
+        ↓
+Preserve original pattern structure
+        ↓
+Later implement equivalent problem
+        ↓
+Java / Python / JavaScript / C++
+
+Do NOT change the semantics of the original pattern merely to make cross-language implementation easier.
+
+==================================================
+16. BASELINE REPRODUCIBILITY
+==================================================
+
+Record, where actually available:
+
+- repository URL
+- exact commit SHA
+- branch/tag if applicable
+- Node.js version
+- package manager version
+- relevant package/framework versions
+- build result
+- test result
+
+Never invent missing values.
+
+If something was not executed, write:
+
+NOT EXECUTED
+
+rather than estimating.
+
+Do not claim that tests passed unless actual output confirms it.
+
+Do not claim a build succeeded unless actual output confirms it.
+
+==================================================
+17. REQUIRED PART 1 DELIVERABLE
+==================================================
+
+Eventually I need a high-quality Part 1 pattern inventory suitable for:
+
+patterns.csv
+
+with these columns:
+
+source_version
+pattern_name
+pattern_type
+instance_name
+participant_roles
+source_locations
+intent_and_evidence
+
+The source_version for the baseline should be:
+
+5f501341d49d2bc3fa7e817ce7548a82174326eb
+
+unless the actual repository verification proves otherwise.
+
+Do not invent a different SHA.
+
+The final patterns.csv must contain ONLY confirmed patterns.
+
+==================================================
+18. PATTERN COUNTS
+==================================================
+
+Eventually I also need:
+
+pattern_counts.csv
+
+The counts must be calculated from the final confirmed pattern inventory.
+
+Do NOT create final counts until pattern discovery is complete.
+
+The counts must follow the official assignment rules.
+
+Count each source version separately.
+
+One collaboration = one pattern instance.
+
+Do not count individual concrete participants as separate instances when they belong to the same collaboration.
+
+Do not create extra instances merely because the same collaboration has multiple classes.
+
+==================================================
+19. DO NOT MIX PART 1 AND PART 2
+==================================================
+
+This task is ONLY Part 1 discovery.
+
+Do not:
+
+- modify the source
+- implement Part 2 changes
+- refactor Misskey
+- create new features
+- modify the baseline
+- perform Part 3 implementations
+
+The purpose is to understand and document the existing baseline architecture.
+
+Part 2 and Part 3 will be performed later.
+
+==================================================
+20. SOURCE VERSION INTEGRITY
+==================================================
+
+All Part 1 pattern evidence must correspond to:
+
+5f501341d49d2bc3fa7e817ce7548a82174326eb
+
+Do not mix evidence from:
+
+- current develop
+- current main
+- another release
+- another clone
+- another commit
+
+If you discover that an earlier piece of evidence came from another source version, flag it instead of silently using it.
+
+==================================================
+21. PREVIOUS FILES AND PREVIOUS ANALYSIS
+==================================================
+
+I may have attached previous:
+
+- patterns.csv
+- report files
+- LaTeX files
+- analysis notes
+- previous AI output
+- source-analysis notes
+
+These are CONTEXT ONLY.
+
+They are not authoritative.
+
+Use them to understand what has already been attempted.
+
+Then independently verify everything against the actual baseline source.
+
+If previous evidence conflicts with the actual source:
+
+ACTUAL SOURCE WINS.
+
+==================================================
+22. OUTPUT STYLE DURING INVESTIGATION
+==================================================
+
+Do NOT immediately produce a huge final report.
+
+Work with me step by step.
+
+For each investigation stage:
+
+1. Explain what we are checking.
+2. Give me ONE PowerShell command OR one small group of directly related commands.
+3. I will execute the command.
+4. I will paste the actual output.
+5. Analyze that output.
+6. Then give me the next command.
+
+Do not give me 20 unrelated commands at once.
+
+Do not ask me to manually fabricate source evidence.
+
+Use the actual repository output.
+
+If a command is expected to produce a large amount of output, make the command focused enough to keep the output manageable.
+
+==================================================
+23. RECOMMENDED INVESTIGATION ORDER
+==================================================
+
+Use the following high-level workflow.
+
+PHASE A
+Understand the assignment requirements.
+
+PHASE B
+Establish and verify the exact baseline source.
+
+PHASE C
+Map the repository structure and identify major architectural areas.
+
+PHASE D
+Perform broad pattern discovery.
+
+PHASE E
+Investigate candidate patterns in depth.
+
+PHASE F
+Independently re-check the previously identified four patterns.
+
+PHASE G
+Perform the second "What did we miss?" discovery pass.
+
+PHASE H
+Perform the systematic negative/rejection pass.
+
+PHASE I
+Select and preserve representative source snippets for every confirmed pattern.
+
+PHASE J
+Freeze the final confirmed pattern inventory.
+
+PHASE K
+Only then create:
+
+patterns.csv
+
+and:
+
+pattern_counts.csv
+
+Do not jump to Phase K before discovery is complete.
+
+==================================================
+24. FINAL SELF-AUDIT BEFORE FREEZING PATTERNS
+==================================================
+
+Before declaring Part 1 discovery complete, perform a final self-audit.
+
+Ask:
+
+1. Did we inspect the major relevant Misskey modules?
+
+2. Did we investigate all major pattern families?
+
+3. Did we independently verify Observer/Publish-Subscribe?
+
+4. Did we independently verify Strategy?
+
+5. Did we independently verify Repository?
+
+6. Did we independently verify Adapter?
+
+7. Did we investigate possible Factory patterns?
+
+8. Did we investigate possible Builder patterns?
+
+9. Did we investigate possible Singleton patterns?
+
+10. Did we investigate possible Facade patterns?
+
+11. Did we investigate possible Decorator patterns?
+
+12. Did we investigate possible Proxy patterns?
+
+13. Did we investigate possible Composite patterns?
+
+14. Did we investigate possible Command patterns?
+
+15. Did we investigate possible State patterns?
+
+16. Did we investigate possible Chain of Responsibility patterns?
+
+17. Did we investigate possible Template Method patterns?
+
+18. Did we investigate possible Mediator patterns?
+
+19. Did we investigate Repository / Service Layer / Data Mapper / Unit of Work?
+
+20. Did we investigate event-driven / Event Bus / Message Bus structures?
+
+21. Did we distinguish application patterns from framework mechanisms?
+
+22. Did we reject false positives?
+
+23. Did we perform a second "what did we miss?" pass?
+
+24. Does every confirmed pattern have exact source evidence?
+
+25. Does every confirmed pattern have exact participant-role mapping?
+
+26. Does every confirmed pattern have exact source locations?
+
+27. Does every confirmed pattern have a defensible intent/evidence explanation?
+
+28. Does every confirmed pattern have a representative Part 3 source snippet/location where practical?
+
+29. Can the representative Part 3 problem be isolated without changing the original pattern's meaning?
+
+30. Are all source locations from the exact baseline commit?
+
+31. Have we avoided inventing any evidence?
+
+Only after this self-audit should the pattern inventory be considered frozen.
+
+==================================================
+25. IMPORTANT FINAL RULE
+==================================================
+
+The final objective is NOT to produce a nice-looking list of four patterns.
+
+The objective is to produce the most defensible and comprehensive pattern inventory possible from the actual Misskey baseline source.
+
+Pattern discovery is heavily weighted in the evaluation.
+
+Therefore:
+
+SEARCH BROADLY.
+
+VERIFY RIGOROUSLY.
+
+REJECT FALSE POSITIVES.
+
+DO NOT STOP EARLY.
+
+DO NOT INVENT PATTERNS.
+
+DO NOT MISS PATTERNS BECAUSE OF TERMINOLOGY.
+
+DO NOT TRUST PREVIOUS AI OUTPUT AS PROOF.
+
+DO NOT MIX SOURCE VERSIONS.
+
+PRESERVE REPRESENTATIVE SOURCE EVIDENCE FOR PART 3.
+
+If a pattern genuinely exists, we should find and document it.
+
+If it does not exist or cannot be sufficiently supported, reject it with evidence.
+
+==================================================
+26. START
+==================================================
+
+Start with PHASE A / PHASE B.
+
+First verify the exact baseline repository and commit:
+
+5f501341d49d2bc3fa7e817ce7548a82174326eb
+
+Then proceed step by step.
+
+Give me ONLY the FIRST PowerShell command or the first small group of directly related commands needed to begin the exhaustive pattern-discovery process.
+
+Wait for my output before giving me the next command.

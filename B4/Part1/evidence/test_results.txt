@@ -1,0 +1,16 @@
+Public baseline: mohsin-rafique/property-management
+Commit: f127b4e218018715586a52cede08e182ca45c983
+Executed: 2026-10-11 in composer:2 with SQLite in-memory configuration
+
+PASS  Tests\Unit\ExampleTest
+  that true is true
+
+FAIL  Tests\Feature\ExampleTest
+  the application returns a successful response
+  Expected response status code [200] but received 302.
+  Source route intentionally redirects / to the login route.
+
+Tests: 1 failed, 1 passed (2 assertions)
+Duration: 0.16s
+
+Interpretation: this is an upstream example-test expectation mismatch, not a hidden result. The evolved snapshot changes the expectation to assert the intentional login redirect.

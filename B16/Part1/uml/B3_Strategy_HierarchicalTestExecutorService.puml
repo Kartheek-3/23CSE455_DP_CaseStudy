@@ -1,0 +1,40 @@
+@startuml B3
+!pragma layout smetana
+title B3 Strategy: HierarchicalTestExecutorService
+
+interface HierarchicalTestExecutorService <<Strategy>> {
+  +submit(TestTask) : Future<Void>
+  +invokeAll(List<TestTask>)
+}
+class SameThreadHierarchicalTestExecutorService <<ConcreteStrategy>>
+class ForkJoinPoolHierarchicalTestExecutorService <<ConcreteStrategy>>
+class WorkerThreadPoolHierarchicalTestExecutorService <<ConcreteStrategy>>
+class "HierarchicalTestExecutor<C>" as HierarchicalTestExecutor <<Context>> {
+  -executorService : HierarchicalTestExecutorService
+}
+class "NodeTestTask<C>" as NodeTestTask <<Context>>
+class ParallelHierarchicalTestExecutorServiceFactory <<Selector>> {
+  {static} +create(ConfigurationParameters)
+}
+class JupiterTestEngine <<Selector>>
+
+SameThreadHierarchicalTestExecutorService ..|> HierarchicalTestExecutorService
+ForkJoinPoolHierarchicalTestExecutorService ..|> HierarchicalTestExecutorService
+WorkerThreadPoolHierarchicalTestExecutorService ..|> HierarchicalTestExecutorService
+HierarchicalTestExecutor o--> HierarchicalTestExecutorService : executorService
+NodeTestTask ..> HierarchicalTestExecutorService : invokeAll(children)
+JupiterTestEngine ..> ParallelHierarchicalTestExecutorServiceFactory : createExecutorService()
+ParallelHierarchicalTestExecutorServiceFactory ..> ForkJoinPoolHierarchicalTestExecutorService : creates
+ParallelHierarchicalTestExecutorServiceFactory ..> WorkerThreadPoolHierarchicalTestExecutorService : creates
+' aligned-with-record
+legend right
+  <b>Counted participants</b> (record in the dataset)
+  Strategy: HierarchicalTestExecutorService
+  ConcreteStrategy: SameThreadHierarchicalTestExecutorService
+  ConcreteStrategy: ForkJoinPoolHierarchicalTestExecutorService
+  ConcreteStrategy: WorkerThreadPoolHierarchicalTestExecutorService
+  Context: HierarchicalTestExecutor
+  Context: NodeTestTask#executeRecursively
+  Grey classes: real, shown for context, not counted
+endlegend
+@enduml

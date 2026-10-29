@@ -1,0 +1,11 @@
+$ (cd Part3/command-task-queue/python) python3 -m unittest -v test_command
+test_commands_run_only_when_the_invoker_runs_them (test_command.CommandTest.test_commands_run_only_when_the_invoker_runs_them) ... ok
+test_invalid_input_is_rejected_with_expected_error (test_command.CommandTest.test_invalid_input_is_rejected_with_expected_error) ... ok
+test_report_matches_expected_output (test_command.CommandTest.test_report_matches_expected_output) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK
+[exit 0]
+result: 3/3 passed

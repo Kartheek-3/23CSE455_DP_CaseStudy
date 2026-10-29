@@ -1,0 +1,14 @@
+Model output summary (Part 2):
+CH01 -> strategy/{FinePolicy, RegularFine, AdvocateFine, FineService}.java;
+  effect: Overdue Fine Strategy = newly_introduced; Password Strategy = preserved.
+CH02 -> observer/{HearingObserver, CaseRegister, EmailReminderObserver, SmsReminderObserver}.java;
+  effect: Hearing/Reminder Notification = modified (now a true Observer).
+CH03 -> replace stubbed getPasswordEncoder() with new BCryptPasswordEncoder();
+  effect: Password Encoding Strategy = modified (concrete class), structure preserved.
+Verification by team: all three changes applied to the baseline clone and committed
+  (4e4ebb57 -> c31ce44), then unit-tested with Maven on the submission machine
+  (OpenJDK 11.0.32): FineServiceTest 3/3, CaseRegisterTest 2/2, PasswordEncoderTest
+  2/2 -> 7 run, 0 failures (test_result/mvn_test.log). CH01 needed a @Primary fix for
+  two FinePolicy beans (NoUniqueBeanDefinitionException), verified by a successful app
+  boot (test_result/app_startup.log). CH03 is a faithful diff of the real baseline
+  (change3.diff). See Change*/test_result.txt and test_result/ENVIRONMENT_NOTES.md.

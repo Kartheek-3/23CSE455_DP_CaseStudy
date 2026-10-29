@@ -1,0 +1,27 @@
+== Tree as read ==
+engine junit-jupiter (8 tests)
+  class CalcTests (3 tests)
+    test add
+    test sub @slow
+    test div @slow @flaky
+  class StringTests (2 tests)
+    test concat
+    test upper @flaky
+  class SlowTests (3 tests)
+    test bigSum @slow
+    class SlowTests$Huge (1 test)
+      test hugeSum @slow
+    test bigProduct @slow
+  class EmptyTests (0 tests)
+== Remove tests tagged @slow ==
+tests before: 8
+removed (5): sub, div, bigSum, hugeSum, bigProduct
+pruned (3): SlowTests$Huge, SlowTests, EmptyTests
+tests after: 3
+== Tree after ==
+engine junit-jupiter (3 tests)
+  class CalcTests (1 test)
+    test add
+  class StringTests (2 tests)
+    test concat
+    test upper @flaky

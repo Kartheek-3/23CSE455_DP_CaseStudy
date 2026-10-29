@@ -1,0 +1,55 @@
+﻿PART 1 - REPOSITORY PATTERN SOURCE EVIDENCE
+
+1. WarehouseRepository
+API evidence:
+app/api/warehouses.py:125-136
+The API creates/provides WarehouseRepository through FastAPI dependency injection.
+
+Repository evidence:
+app/repositories/warehouses_repositories.py:133-163
+WarehouseRepository stores the Database abstraction and performs warehouse database operations.
+
+2. InventoryRepository
+API evidence:
+app/api/inventory.py:269-281
+The API obtains InventoryRepository through dependency injection.
+
+Repository evidence:
+app/repositories/inventory_repositories.py:13-19
+InventoryRepository stores the Database abstraction.
+
+Database operation evidence:
+app/repositories/inventory_repositories.py:57-63
+InventoryRepository performs database retrieval through the Database abstraction.
+
+3. OrderRepository
+API evidence:
+app/api/orders.py:439-464
+The API obtains OrderRepository through dependency injection and delegates order operations.
+
+Repository evidence:
+app/repositories/order_repositories.py:13-19
+OrderRepository stores the Database abstraction.
+
+Database operation evidence:
+app/repositories/order_repositories.py:91-117
+OrderRepository performs order retrieval through the Database abstraction.
+
+4. TransportationRepository
+API evidence:
+app/api/transportation.py:493-503
+The API obtains TransportationRepository through dependency injection and delegates transportation operations.
+
+Repository evidence:
+app/repositories/shipment_repositories.py:412-418
+TransportationRepository stores the Database abstraction.
+
+Database operation evidence:
+app/repositories/shipment_repositories.py:482-508
+TransportationRepository performs shipment-related database operations.
+
+Pattern interpretation:
+Across the inspected modules, API endpoints depend on repository objects rather than directly implementing the corresponding database operations. The repositories encapsulate database access through the Database abstraction. This provides source evidence for the Repository Pattern.
+
+Scope limitation:
+Only patterns supported by source-code evidence are recorded as confirmed patterns. Other possible architectural mechanisms are documented separately and are not counted as formal pattern instances without sufficient implementation evidence.

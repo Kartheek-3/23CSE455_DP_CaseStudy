@@ -1,0 +1,9 @@
+# node run_tests.js ../test-cases/cases.txt (working folder Part3/service_layer_bank/javascript)
+# runtime: Node.js v22.22.0
+PASS case1
+PASS case2
+PASS case3
+PASS case4
+PASS case5
+PASS case6
+RESULT passed=6 total=6

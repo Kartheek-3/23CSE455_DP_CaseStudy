@@ -1,0 +1,16 @@
+# observer / javascript
+# working folder: Part3/code/pattern_observer/javascript
+# runtime: Node.js v24.15.0
+$ node preferencesManager.test.js ../../../test-cases/observer.txt
+PASS no_observers_no_output
+PASS single_observer
+PASS changed_value_notifies_again
+PASS unchanged_value_not_announced
+PASS registration_order
+PASS unsubscribed_not_notified
+PASS unknown_off_ignored
+PASS listener_error_propagates
+passed 8/8
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 50.3, 46.6, 46.1, 45.6, 43.5 -> median 46.1

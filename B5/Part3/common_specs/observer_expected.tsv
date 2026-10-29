@@ -1,0 +1,8 @@
+case_id	status	message_id_or_error	subject	recipient
+O01	LOGGED	mail-001	Travel receipt	alice@example.test
+O02	NO_NOTIFICATION
+O03	NO_NOTIFICATION
+O04	LOGGED	mail-004	Updated trip plan	dana@example.test
+O05	ERROR	INVALID_RECIPIENT
+O06	ERROR	INVALID_FLAG
+O07	NO_NOTIFICATION

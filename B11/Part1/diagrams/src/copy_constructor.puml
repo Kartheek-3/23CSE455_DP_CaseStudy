@@ -1,0 +1,12 @@
+@startuml copy_constructor
+title Copy Constructor - Users Defensive Copy
+skinparam shadowing false
+class Users {
+  +Users(Users users)
+}
+class CustomUserDetails {
+  +CustomUserDetails(Users) : super(users)
+}
+CustomUserDetails ..> Users : super(users)
+note bottom of Users : modal/Users.java:38
+@enduml

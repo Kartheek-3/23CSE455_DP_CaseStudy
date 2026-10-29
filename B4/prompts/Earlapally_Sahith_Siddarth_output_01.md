@@ -1,0 +1,3 @@
+# Architecture and baseline discovery output
+
+The request path is routes -> authentication/role/security middleware -> Form Request validation -> controllers -> Eloquent Active Records -> Blade view or redirect. Five collaborations have source evidence: MVC request coordination, Active Record persistence, the middleware Chain of Responsibility, Form Request Template Method, and Laravel Facade access in tenant registration. Property, owner, tenant, authentication, receipt/payment, deposit, and view modules are present. A dedicated lease entity and application notification workflow are absent at baseline and are reported as scope gaps. Exact mappings are stored in `data/patterns.csv`.

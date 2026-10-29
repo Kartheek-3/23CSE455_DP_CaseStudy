@@ -1,0 +1,32 @@
+Pattern: Template Method
+Instance: Picture Elements Konva Canvas Base
+Language: Java
+Compiler/Runtime: javac 23.0.2 / OpenJDK Java 23.0.2+7-58
+Warmup + 5 Runs Raw Output:
+--- Run 1 ---
+RESULT: 5/5 passed
+TIME_MS: 3.899
+
+
+--- Run 2 ---
+RESULT: 5/5 passed
+TIME_MS: 5.714
+
+
+--- Run 3 ---
+RESULT: 5/5 passed
+TIME_MS: 3.447
+
+
+--- Run 4 ---
+RESULT: 5/5 passed
+TIME_MS: 3.172
+
+
+--- Run 5 ---
+RESULT: 5/5 passed
+TIME_MS: 4.957
+
+
+Measured Milliseconds: [3.899, 5.714, 3.447, 3.172, 4.957]
+Computed Median Milliseconds: 3.899

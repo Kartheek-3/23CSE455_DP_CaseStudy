@@ -1,0 +1,9 @@
+# Layer Supertype / java
+working folder: Part3/layer_supertype_module_base/java
+$ javac -d out AbstractBaseController.java ModuleBaseTest.java
+
+[compile exit code: 0]
+$ java -cp out ModuleBaseTest
+Layer Supertype tests: 11/11 passed
+
+[exit code: 0]

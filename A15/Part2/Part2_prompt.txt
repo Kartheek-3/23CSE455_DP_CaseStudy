@@ -1,0 +1,64 @@
+PART 2 PROMPTS (exact text sent to the LLM; one per team member / change)
+Model/date: see llm.csv
+
+==================================================================
+[Member 1 prompt - Part 2, change CH01]
+You are assisting with a university Design Patterns case study (course 23CSE455), Part 2 (evolution and refactoring).
+INPUT: input_ch01_source_before.txt = numbered Java source (src/main/java) of a Quarkus bank REST API.
+The existing JUnit 5 characterization tests use an in-memory EntityManager fake and a small CDI-like container (no database needed).
+
+CHANGE CH01 - Account-type policies (overdraft for checking, exact-balance withdrawal)
+Business requirement: deposit bonus and withdrawal limits must depend on the account type, and a checking account may go into overdraft.
+- Savings (CONTA_POUPANCA): deposits still receive the 0.5 bonus; withdrawal allowed only while amount <= balance (the original code rejected a withdrawal of exactly the balance - this boundary is changed on purpose).
+- Checking (CONTA_CORRENTE): no bonus; withdrawal allowed while balance - amount >= -500.00 (overdraft limit).
+- Amounts <= 0 are still rejected with HTTP 400; unknown accounts still 404.
+
+DELIVER:
+1. The code change as a unified diff (production code and JUnit 5 tests). Keep the existing style (field @Inject, @ApplicationScoped, WebApplicationException-based errors).
+2. One test per acceptance criterion; do not weaken existing tests except where the requirement changes behaviour - say which.
+3. Pattern effects: for every pattern instance in the current code say preserved / modified / extended / replaced / removed / newly_introduced and why.
+4. The refactoring: the real code smell, the technique, and how behaviour preservation is shown.
+5. Say honestly what you could not verify.
+
+
+==================================================================
+[Member 2 prompt - Part 2, change CH02]
+You are assisting with a university Design Patterns case study (course 23CSE455), Part 2 (evolution and refactoring).
+INPUT: input_ch02_source_before.txt = numbered Java source (src/main/java) of a Quarkus bank REST API.
+The existing JUnit 5 characterization tests use an in-memory EntityManager fake and a small CDI-like container (no database needed).
+
+CHANGE CH02 - Transaction events: audit log and high-value alert observers
+Business requirement: every completed deposit or withdrawal must be recorded in an audit trail that can be read per account, and transactions of 10,000.00 or more must raise an alert, without the account service depending on the audit/alert code.
+- AccountService publishes a TransactionEvent (account id, kind DEPOSIT/WITHDRAWAL, amount, balance after, timestamp) after the balance is saved.
+- TransactionAuditLog stores events per account in order; GET /api/v1/accounts/{id}/audit returns them (404 for an unknown account).
+- HighValueAlertObserver records and logs events with amount >= 10,000.00.
+- Rejected operations (400/404) publish nothing.
+
+DELIVER:
+1. The code change as a unified diff (production code and JUnit 5 tests). Keep the existing style (field @Inject, @ApplicationScoped, WebApplicationException-based errors).
+2. One test per acceptance criterion; do not weaken existing tests except where the requirement changes behaviour - say which.
+3. Pattern effects: for every pattern instance in the current code say preserved / modified / extended / replaced / removed / newly_introduced and why.
+4. The refactoring: the real code smell, the technique, and how behaviour preservation is shown.
+5. Say honestly what you could not verify.
+
+
+==================================================================
+[Member 3 prompt - Part 2, change CH03]
+You are assisting with a university Design Patterns case study (course 23CSE455), Part 2 (evolution and refactoring).
+INPUT: input_ch03_source_before.txt = numbered Java source (src/main/java) of a Quarkus bank REST API.
+The existing JUnit 5 characterization tests use an in-memory EntityManager fake and a small CDI-like container (no database needed).
+
+CHANGE CH03 - Atomic funds transfer; business rules move into Account
+Business requirement: customers can transfer money between two accounts atomically.
+- POST /api/v1/accounts/transfer with fromAccountId, toAccountId, amount.
+- The source account applies its own policy (overdraft for checking, none for savings); the target is credited without the savings deposit bonus.
+- Same account, missing ids and amount <= 0 -> 400; unknown account -> 404; insufficient funds -> 400. In every failure neither account changes.
+- The operation is one transaction (service-level @Transactional) and publishes TRANSFER_OUT and TRANSFER_IN events.
+Refactoring that enables it: the deposit/withdraw rules move from AccountService into the Account entity so that deposit, withdraw and transfer share one implementation.
+
+DELIVER:
+1. The code change as a unified diff (production code and JUnit 5 tests). Keep the existing style (field @Inject, @ApplicationScoped, WebApplicationException-based errors).
+2. One test per acceptance criterion; do not weaken existing tests except where the requirement changes behaviour - say which.
+3. Pattern effects: for every pattern instance in the current code say preserved / modified / extended / replaced / removed / newly_introduced and why.
+4. The refactoring: the real code smell, the technique, and how behaviour preservation is shown.
+5. Say honestly what you could not verify.

@@ -1,0 +1,12 @@
+node_modules/@upstash/redis/error-DOszGRxg.d.ts(5587,81): error TS2493: Tuple type '[message?: string | undefined]' of length '1' has no element at index '1'.
+node_modules/@upstash/redis/error-DOszGRxg.d.ts(5592,44): error TS2304: Cannot find name 'ErrorOptions'.
+src/infrastructure/database/MongoUserRepository.ts(33,14): error TS2352: Conversion of type 'UserDocument & Required<{ _id: ObjectId; }> & { __v: number; }' to type 'User' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Types of property '_id' are incompatible.
+    Type 'ObjectId' is missing the following properties from type 'ObjectId': schemaName, auto, $conditionalHandlers, OptionsConstructor, and 21 more.
+src/infrastructure/services/Accountservice.ts(8,5): error TS2322: Type '"2025-03-31.basil"' is not assignable to type '"2025-08-27.basil"'.
+src/infrastructure/services/StripeService.ts(14,7): error TS2322: Type '"2025-03-31.basil"' is not assignable to type '"2025-08-27.basil"'.
+src/presentation/controllers/BookingController.ts(105,7): error TS2322: Type 'string | string[]' is not assignable to type 'string'.
+  Type 'string[]' is not assignable to type 'string'.
+src/presentation/controllers/UserController.ts(207,56): error TS2345: Argument of type 'string | string[]' is not assignable to parameter of type 'string'.
+  Type 'string[]' is not assignable to type 'string'.
+tsc exit 2

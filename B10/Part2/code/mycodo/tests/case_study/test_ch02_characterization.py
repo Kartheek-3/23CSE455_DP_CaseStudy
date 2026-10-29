@@ -1,0 +1,75 @@
+# coding=utf-8
+"""CH02 characterization tests: lock in the behaviour (after CH01) of the code CH02 touches.
+
+CH02 replaces the direction conditional in bang_bang.CustomModule.loop() and adds
+options to FUNCTION_INFORMATION. These tests pin what must not change:
+the existing options, the direction decisions combined with crop profiles,
+multi-step hysteresis behaviour and the guard behaviour per direction.
+"""
+from mycodo.tests.case_study.helpers import run_loop
+
+EXISTING_OPTIONS = [
+    ('measurement', 'select_measurement', ''),
+    ('measurement_max_age', 'integer', 360),
+    ('output', 'select_measurement_channel', ''),
+    ('crop_profile', 'select', 'custom'),
+    ('setpoint', 'float', 50),
+    ('hysteresis', 'float', 1),
+    ('direction', 'select', 'raise'),
+    ('update_period', 'float', 5),
+]
+
+
+def test_char2_existing_options_keep_id_type_default_and_order():
+    from mycodo.functions.bang_bang import FUNCTION_INFORMATION
+    existing_ids = {option_id for option_id, _type, _default in EXISTING_OPTIONS}
+    options = [(o['id'], o['type'], o['default_value'])
+               for o in FUNCTION_INFORMATION['custom_options'] if o['id'] in existing_ids]
+    assert options == EXISTING_OPTIONS
+
+
+def test_char2_direction_values_offered():
+    from mycodo.functions.bang_bang import FUNCTION_INFORMATION
+    direction = next(o for o in FUNCTION_INFORMATION['custom_options'] if o['id'] == 'direction')
+    assert [v for v, _label in direction['options_select']] == ['raise', 'lower']
+
+
+def test_char2_lower_direction_uses_crop_band(make_bang_bang):
+    module = make_bang_bang(crop_profile='tomato', direction='lower')  # band 60..70
+    run_loop(module, 70.5, output_state='off')
+    module.control.output_on.assert_called_once_with('out-dev', output_channel=0)
+    module.control.reset_mock()
+    run_loop(module, 59.5, output_state='on')
+    module.control.output_off.assert_called_once_with('out-dev', output_channel=0)
+
+
+def test_char2_raise_sequence_follows_output_state(make_bang_bang):
+    module = make_bang_bang(crop_profile='wheat')  # band 45..55
+    commands = []
+    state = 'off'
+    for reading in (50, 44, 47, 52, 56, 50, 44):
+        module.control.reset_mock()
+        run_loop(module, reading, output_state=state)
+        if module.control.output_on.called:
+            commands.append('on')
+            state = 'on'
+        elif module.control.output_off.called:
+            commands.append('off')
+            state = 'off'
+        else:
+            commands.append(None)
+    assert commands == [None, 'on', None, None, 'off', None, 'on']
+
+
+def test_char2_missing_value_turns_off_for_lower_direction(make_bang_bang):
+    module = make_bang_bang(direction='lower')
+    run_loop(module, None, output_state='on')
+    module.control.output_off.assert_called_once_with('out-dev', output_channel=0)
+    module.control.output_on.assert_not_called()
+
+
+def test_char2_unknown_direction_still_reads_measurement_and_state(make_bang_bang):
+    module = make_bang_bang(direction='sideways')
+    run_loop(module, 10.0)
+    module.get_last_measurement.assert_called_once_with('meas-dev', 'meas-id', max_age=360)
+    module.control.output_state.assert_called_once_with('out-dev', 0)

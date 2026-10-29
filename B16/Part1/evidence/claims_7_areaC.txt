@@ -1,0 +1,75 @@
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/TestExecutionListener.java|76|public interface TestExecutionListener
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/TestExecutionListener.java|86|default void testPlanExecutionStarted
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/TestExecutionListener.java|146|default void executionStarted
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/TestExecutionListener.java|175|default void executionFinished
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/TestExecutionListener.java|187|default void reportingEntryPublished
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/LauncherSessionListener.java|43|public interface LauncherSessionListener
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/LauncherSessionListener.java|48|LauncherSessionListener NOOP
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/DefaultLauncher.java|80|registerTestExecutionListeners
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/DefaultLauncher.java|83|testExecutionListeners.addAll(listeners)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/LauncherFactory.java|197|isTestExecutionListenerAutoRegistrationEnabled()
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/LauncherFactory.java|198|loadAndFilterTestExecutionListeners
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/LauncherFactory.java|209|ServiceLoaderRegistry.load(TestExecutionListener.class
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineExecutionOrchestrator.java|240|buildListenerRegistryForExecution
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineExecutionOrchestrator.java|245|ListenerRegistry.copyOf(this.listenerRegistry).addAll(listeners)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineExecutionOrchestrator.java|66|EngineExecutionListener.NOOP
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/CompositeTestExecutionListener.java|28|class CompositeTestExecutionListener implements TestExecutionListener
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/CompositeTestExecutionListener.java|67|public void executionFinished
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/CompositeTestExecutionListener.java|68|IterationOrder.REVERSED
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/CompositeTestExecutionListener.java|71|IterationOrder.REVERSED
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/CompositeTestExecutionListener.java|104|private static <T extends TestExecutionListener> void notifyEach
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/CompositeTestExecutionListener.java|108|consumer.accept(listener)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/CompositeTestExecutionListener.java|110|catch (Throwable throwable)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/CompositeTestExecutionListener.java|112|threw exception for method
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/CompositeTestExecutionListener.java|118|EagerTestExecutionListener
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/SummaryGeneratingListener.java|36|public class SummaryGeneratingListener implements TestExecutionListener
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/SummaryGeneratingListener.java|60|new MutableTestExecutionSummary(testPlan)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/LoggingListener.java|39|public class LoggingListener implements TestExecutionListener
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/LoggingListener.java|62|forJavaUtilLogging(Level logLevel)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/LoggingListener.java|82|forBiConsumer
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/LoggingListener.java|86|BiConsumer<@Nullable Throwable, Supplier<String>> logger
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/LoggingListener.java|88|private LoggingListener
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/UniqueIdTrackingListener.java|94|public class UniqueIdTrackingListener implements TestExecutionListener
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/UniqueIdTrackingListener.java|147|this.enabled
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/jfr/FlightRecordingExecutionListener.java|43|FlightRecordingExecutionListener
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/DefaultLauncherSession.java|71|launcherSessionOpened(this)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/DefaultLauncherSession.java|87|launcherSessionClosed(this)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/CompositeEngineExecutionListener.java|27|class CompositeEngineExecutionListener implements EngineExecutionListener
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/CompositeEngineExecutionListener.java|31|List<EngineExecutionListener> engineExecutionListeners
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/CompositeEngineExecutionListener.java|78|notifyEach
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/session/CompositeLauncherSessionListener.java|24|class CompositeLauncherSessionListener implements LauncherSessionListener
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/session/CompositeLauncherSessionListener.java|34|listeners.forEach
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/ListenerRegistry.java|27|class ListenerRegistry
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/ListenerRegistry.java|29|Function<List<T>, T> compositeListenerFactory
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/ListenerRegistry.java|40|create(CompositeTestExecutionListener::new)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/ListenerRegistry.java|44|create(CompositeEngineExecutionListener::new)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/ListenerRegistry.java|51|copyOf
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/ListenerRegistry.java|89|compositeListenerFactory.apply(this.listeners)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/IterationOrder.java|18|enum IterationOrder
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/IterationOrder.java|20|ORIGINAL
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/IterationOrder.java|27|REVERSED
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/IterationOrder.java|30|forEachInReverseOrder(listeners, action)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/IterationOrder.java|34|abstract <T> void forEach
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/TestReporter.java|47|public interface TestReporter
+junit-jupiter-api/src/main/java/org/junit/jupiter/api/TestReporter.java|58|void publishEntry(Map<String, String> map)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/TestExecutionSummary.java|155|printFailuresTo
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/extension/DefaultTestReporter.java|24|class DefaultTestReporter implements TestReporter
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/extension/DefaultTestReporter.java|34|publishReportEntry(map)
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/AbstractExtensionContext.java|141|public void publishReportEntry(Map<String, String> values)
+junit-jupiter-engine/src/main/java/org/junit/jupiter/engine/descriptor/AbstractExtensionContext.java|142|reportingEntryPublished(this.testDescriptor, ReportEntry.from(values))
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/StreamInterceptor.java|27|class StreamInterceptor extends PrintStream
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/StreamInterceptor.java|31|PrintStream originalStream
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/StreamInterceptor.java|52|streamSetter.accept(interceptor)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/StreamInterceptor.java|58|super(originalStream)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/StreamInterceptor.java|84|public void write(int b)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/StreamInterceptor.java|88|out.write(b)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/StreamInterceptor.java|90|super.write(b)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/StreamInterceptingTestExecutionListener.java|85|executionJustFinished
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/StreamInterceptingTestExecutionListener.java|87|StreamInterceptor::consume
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/StreamInterceptingTestExecutionListener.java|96|ReportEntry.from(map)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineExecutionOrchestrator.java|165|reportingEntryPublished
+junit-platform-engine/src/main/java/org/junit/platform/engine/EngineExecutionListener.java|39|EngineExecutionListener NOOP
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/session/LauncherSessionListeners.java|37|LauncherSessionListener.NOOP
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/listeners/session/LauncherSessionListeners.java|42|new CompositeLauncherSessionListener(listeners)
+junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/LauncherListenerRegistry.java|16|LauncherListenerRegistry
+junit-platform-engine/src/main/java/org/junit/platform/engine/reporting/ReportEntry.java|34|class ReportEntry

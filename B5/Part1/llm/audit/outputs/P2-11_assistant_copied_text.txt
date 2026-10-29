@@ -1,0 +1,397 @@
+# DaPlanStan — External Integration Pattern Verification
+
+Candidate Review 05 · Original source archive · 23CSE455
+
+## 1. Verification decisions
+
+Both candidates have identifiable application-level responsibilities supported by the source. The mail observer also matches the documented Action Mailer and Mail gem contracts for the dependency versions specified in the repository.
+
+GRASP Controller
+
+OAuth Sign-in and Identity Linking Coordination
+
+CONFIRMED
+
+Observer
+
+Outbound Mail Delivery Logging
+
+CONFIRMED
+
+These are static structural confirmations, not claims of successful OAuth sign-in or mail delivery in a running application. Independent human reviewer sign-off is still pending.
+
+The distinction is important: GRASP Controller is confirmed from the responsibility assigned to `SessionsController`, while Observer is confirmed from an explicit application-defined observer and a real framework notification contract.
+
+## 2. Candidate A — GRASP Controller: OAuth Sign-in and Identity Linking Coordination
+
+### Essential responsibility and system event
+
+GRASP Controller assigns responsibility for receiving and coordinating a system event to an object representing the system, a subsystem or a use case.
+
+System event: An external OAuth authentication callback has returned to DaPlanStan, and the application must establish the corresponding local user identity and access.
+
+Receiving object: `SessionsController#create`.
+
+Source: `app/controllers/sessions_controller.rb:4–41`, reached through `config/routes.rb:12`.
+
+The event is not the user's entire OAuth exchange. That exchange takes place through OmniAuth and the provider before the application processes the normalized result.
+
+### What OmniAuth has already done
+
+By the time the successful callback reaches `SessionsController#create`, OmniAuth is expected to have supplied `request.env["omniauth.auth"]`.
+
+The application consumes the provider identifier, UID, email, name, image and optional access token. It does not implement the provider's authorization-code exchange or Google/Apple-specific token processing here.
+
+Provider configuration appears in `config/initializers/omniauth.rb:1–16`, where Google and Apple are registered.
+
+### What DaPlanStan decides afterward
+
+\#chatgpt-mermaid-\_r_2gr\_{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;fill:rgb(237, 237, 237);}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#chatgpt-mermaid-\_r_2gr\_ .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-\_r_2gr\_ .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-\_r_2gr\_ .error-icon{fill:rgb(48, 48, 48);}#chatgpt-mermaid-\_r_2gr\_ .error-text{fill:rgb(237, 237, 237);stroke:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2gr\_ .edge-thickness-normal{stroke-width:1px;}#chatgpt-mermaid-\_r_2gr\_ .edge-thickness-thick{stroke-width:3.5px;}#chatgpt-mermaid-\_r_2gr\_ .edge-pattern-solid{stroke-dasharray:0;}#chatgpt-mermaid-\_r_2gr\_ .edge-thickness-invisible{stroke-width:0;fill:none;}#chatgpt-mermaid-\_r_2gr\_ .edge-pattern-dashed{stroke-dasharray:3;}#chatgpt-mermaid-\_r_2gr\_ .edge-pattern-dotted{stroke-dasharray:2;}#chatgpt-mermaid-\_r_2gr\_ .marker{fill:rgb(175, 175, 175);stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_2gr\_ .marker.cross{stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_2gr\_ svg{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;}#chatgpt-mermaid-\_r_2gr\_ p{margin:0;}#chatgpt-mermaid-\_r_2gr\_ .label{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2gr\_ .cluster-label text{fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2gr\_ .cluster-label span{color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2gr\_ .cluster-label span p{background-color:transparent;}#chatgpt-mermaid-\_r_2gr\_ .label text,#chatgpt-mermaid-\_r_2gr\_ span{fill:rgb(237, 237, 237);color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2gr\_ .node rect,#chatgpt-mermaid-\_r_2gr\_ .node circle,#chatgpt-mermaid-\_r_2gr\_ .node ellipse,#chatgpt-mermaid-\_r_2gr\_ .node polygon,#chatgpt-mermaid-\_r_2gr\_ .node path{fill:rgb(9, 23, 44);stroke:rgb(31, 78, 148);stroke-width:1px;}#chatgpt-mermaid-\_r_2gr\_ .rough-node .label text,#chatgpt-mermaid-\_r_2gr\_ .node .label text,#chatgpt-mermaid-\_r_2gr\_ .image-shape .label,#chatgpt-mermaid-\_r_2gr\_ .icon-shape .label{text-anchor:middle;}#chatgpt-mermaid-\_r_2gr\_ .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#chatgpt-mermaid-\_r_2gr\_ .rough-node .label,#chatgpt-mermaid-\_r_2gr\_ .node .label,#chatgpt-mermaid-\_r_2gr\_ .image-shape .label,#chatgpt-mermaid-\_r_2gr\_ .icon-shape .label{text-align:center;}#chatgpt-mermaid-\_r_2gr\_ .node.clickable{cursor:pointer;}#chatgpt-mermaid-\_r_2gr\_ .root .anchor path{fill:rgb(175, 175, 175)!important;stroke-width:0;stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_2gr\_ .arrowheadPath{fill:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_2gr\_ .edgePath .path{stroke:rgb(175, 175, 175);stroke-width:1px;}#chatgpt-mermaid-\_r_2gr\_ .flowchart-link{stroke:rgb(175, 175, 175);fill:none;}#chatgpt-mermaid-\_r_2gr\_ .edgeLabel{background-color:rgb(0, 0, 0);text-align:center;}#chatgpt-mermaid-\_r_2gr\_ .edgeLabel p{background-color:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_2gr\_ .edgeLabel rect{opacity:0.5;background-color:rgb(0, 0, 0);fill:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_2gr\_ .labelBkg{background-color:rgba(0, 0, 0, 0.5);}#chatgpt-mermaid-\_r_2gr\_ .cluster rect{fill:rgb(48, 48, 48);stroke:rgba(255, 255, 255, 0.15);stroke-width:1px;}#chatgpt-mermaid-\_r_2gr\_ .cluster text{fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2gr\_ .cluster span{color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2gr\_ div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:12px;background:rgb(48, 48, 48);border:1px solid rgba(255, 255, 255, 0.15);border-radius:2px;pointer-events:none;z-index:100;}#chatgpt-mermaid-\_r_2gr\_ .flowchartTitleText{text-anchor:middle;font-size:18px;fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2gr\_ rect.text{fill:none;stroke-width:0;}#chatgpt-mermaid-\_r_2gr\_ .icon-shape,#chatgpt-mermaid-\_r_2gr\_ .image-shape{background-color:rgb(0, 0, 0);text-align:center;}#chatgpt-mermaid-\_r_2gr\_ .icon-shape p,#chatgpt-mermaid-\_r_2gr\_ .image-shape p{background-color:rgb(0, 0, 0);padding:2px;}#chatgpt-mermaid-\_r_2gr\_ .icon-shape .label rect,#chatgpt-mermaid-\_r_2gr\_ .image-shape .label rect{opacity:0.5;background-color:rgb(0, 0, 0);fill:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_2gr\_ .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#chatgpt-mermaid-\_r_2gr\_ .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#chatgpt-mermaid-\_r_2gr\_ .node .neo-node{stroke:rgb(31, 78, 148);}#chatgpt-mermaid-\_r_2gr\_ [data-look="neo"].node rect,#chatgpt-mermaid-\_r_2gr\_ [data-look="neo"].cluster rect,#chatgpt-mermaid-\_r_2gr\_ [data-look="neo"].node polygon{stroke:url(#chatgpt-mermaid-\_r_2gr\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_2gr\_ [data-look="neo"].swimlane.cluster rect{filter:none;}#chatgpt-mermaid-\_r_2gr\_ [data-look="neo"].node path{stroke:url(#chatgpt-mermaid-\_r_2gr\_-gradient);stroke-width:1px;}#chatgpt-mermaid-\_r_2gr\_ [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_2gr\_ [data-look="neo"].node .neo-line path{stroke:rgb(31, 78, 148);filter:none;}#chatgpt-mermaid-\_r_2gr\_ [data-look="neo"].node circle{stroke:url(#chatgpt-mermaid-\_r_2gr\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_2gr\_ [data-look="neo"].node circle .state-start{fill:#000000;}#chatgpt-mermaid-\_r_2gr\_ [data-look="neo"].icon-shape .icon{fill:url(#chatgpt-mermaid-\_r_2gr\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_2gr\_ [data-look="neo"].icon-shape .icon-neo path{stroke:url(#chatgpt-mermaid-\_r_2gr\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_2gr\_ .node text{font-size:14px;font-weight:600;letter-spacing:normal;fill:rgb(153, 206, 255);}#chatgpt-mermaid-\_r_2gr\_ .edgeLabels text{font-size:13px;font-weight:600;letter-spacing:-0.08px;fill:rgb(153, 206, 255);}#chatgpt-mermaid-\_r_2gr\_ .node tspan[font-weight="normal"],#chatgpt-mermaid-\_r_2gr\_ .edgeLabels tspan[font-weight="normal"]{font-weight:600;}#chatgpt-mermaid-\_r_2gr\_ .edgeLabel .label rect{opacity:1;rx:13px;ry:13px;fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-width:1px;}#chatgpt-mermaid-\_r_2gr\_ .node rect,#chatgpt-mermaid-\_r_2gr\_ .node circle,#chatgpt-mermaid-\_r_2gr\_ .node ellipse,#chatgpt-mermaid-\_r_2gr\_ .node polygon,#chatgpt-mermaid-\_r_2gr\_ .node path{fill:rgb(0, 40, 77);stroke:rgba(255, 255, 255, 0.1);stroke-width:1px;}#chatgpt-mermaid-\_r_2gr\_ .node rect{rx:16px;ry:16px;}#chatgpt-mermaid-\_r_2gr\_ .node.mermaid-decision .label-container{fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-dasharray:2,2;}#chatgpt-mermaid-\_r_2gr\_ .edgePaths .flowchart-link{stroke:rgb(175, 175, 175);stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;}#chatgpt-mermaid-\_r_2gr\_ .marker{fill:rgb(175, 175, 175);stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_2gr\_ :root{--mermaid-font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";}OAuth callback dataSessionsController#createProvider + UID identity exists?Reuse identity.userFind or initialize User by emailSave User and createUserIdentityEstablish session user_idAccept pending TravelerprofilesUser owns Account?Redirect to tripsExisting Traveler profiles?provision_account_or_gateOpen signup or valid invite?Create Account and ownerTravelerClear session and redirect towaitlistYesNoYesNoYesNoYesNo
+
+| Decision                            | Actual implementation                                    | Source lines                  |
+| ----------------------------------- | -------------------------------------------------------- | ----------------------------- |
+| Existing provider identity          | `UserIdentity.find_by(provider: ..., provider_uid: ...)` | `sessions_controller.rb:7–11` |
+| Email-based user resolution         | `User.find_or_initialize_by(email: auth.info.email)`     | `13–17`                       |
+| New provider identity association   | `user.user_identities.create!`                           | `19–24`                       |
+| Session establishment               | `session[:user_id] = user.id`                            | `26`                          |
+| Pending traveler acceptance         | Query unlinked travelers and call `Traveler#accept!`     | `28–31`                       |
+| Existing account or membership      | Decide between redirect and provisioning                 | `33–40`                       |
+| Open signup versus invitation       | `provision_account_or_gate`                              | `54–76`                       |
+| Account and owner traveler creation | `create_account_for`                                     | `78–81`                       |
+
+These decisions are directly implemented in the application. Rails and OmniAuth provide the surrounding infrastructure, but not DaPlanStan's business rules.&#x20;
+
+### Actual participants and delegation
+
+| Role                             | Participant                                    | Reliable source location                          |
+| -------------------------------- | ---------------------------------------------- | ------------------------------------------------- |
+| GRASP system-event controller    | `SessionsController#create`                    | `app/controllers/sessions_controller.rb:4–41`     |
+| Account eligibility coordinator  | `SessionsController#provision_account_or_gate` | Same file, `54–76`                                |
+| Account initialization operation | `SessionsController#create_account_for`        | Same file, `78–81`                                |
+| Provider identity record         | `UserIdentity`                                 | `app/models/user_identity.rb:1–8`                 |
+| Application user                 | `User`                                         | `app/models/user.rb:11–22`                        |
+| Invitation-linked traveler       | `Traveler#accept!`                             | `app/models/traveler.rb:26–28`                    |
+| Account record                   | `Account`                                      | `app/models/account.rb:1–11`                      |
+| Invitation eligibility           | `Invite#usable?`, `#email_matches?`            | `app/models/invite.rb:12–17`                      |
+| Prior invite-token entry         | `InvitesController#accept`                     | `app/controllers/invites_controller.rb:5–15`      |
+| Current-session lookup           | `ApplicationController#current_user`           | `app/controllers/application_controller.rb:14–16` |
+| Provider configuration           | OmniAuth initializer                           | `config/initializers/omniauth.rb:1–16`            |
+| Callback entry                   | Authentication route                           | `config/routes.rb:12–14`                          |
+
+The controller delegates persistence to Active Record, user-to-account relationships to model associations, traveler acceptance to `Traveler#accept!`, and invitation-validity decisions to `Invite`.
+
+However, it retains most of the sequencing itself.
+
+### Why this is more than a conventional OAuth callback
+
+The callback does not merely retrieve a user and establish a session.
+
+It coordinates a cohesive application use case involving several domain responsibilities:
+
+- Existing-provider identity recognition.
+- Linking a new provider identity to an existing or new user.
+- Connecting previously invited travelers.
+- Determining whether a user already has account or membership access.
+- Provisioning an independent account when permitted.
+- Applying a beta-invitation gate otherwise.
+
+This is an application-defined system-event workflow with meaningful domain outcomes. The presence of OmniAuth does not explain those decisions.
+
+### Strongest objection
+
+The code is controller-heavy.
+
+`SessionsController#create` and `#provision_account_or_gate` contain authentication-adjacent business rules, identity resolution, account provisioning and access decisions.
+
+There is no dedicated application service coordinating those operations, and the controller directly executes many database writes.
+
+This is a valid design concern. However, GRASP Controller identifies responsibility for handling the system event; it does not require that every domain operation be perfectly separated.
+
+In this case, the controller coordinates a complete sign-in and onboarding use case and delegates some substantive responsibilities.
+
+Origin: Mixed, with application-owned post-authentication coordination.
+
+### Comparison with previously confirmed GRASP Controller instances
+
+| Instance                                        | Event                            | Distinguishing outcome                                          |
+| ----------------------------------------------- | -------------------------------- | --------------------------------------------------------------- |
+| Inbound Travel Email Intake Coordination        | An email arrives                 | Route it to the correct trip and initiate review/processing     |
+| Trip Creation Coordination                      | A user creates a trip            | Establish trip and initial owner membership                     |
+| Trip Membership Management Coordination         | A user adds/removes participants | Change membership in an existing trip                           |
+| Bulk Itinerary Import Coordination              | User confirms itinerary JSON     | Import ideas and schedule geocoding                             |
+| OAuth Sign-in and Identity Linking Coordination | OAuth callback completes         | Resolve local identity, session, invitations and account access |
+
+OAuth sign-in is independent of all four previously confirmed system-event collaborations. It can occur without creating a trip, adding a trip member, importing an itinerary or processing an inbound email.
+
+Therefore, it should not be merged into a general `Rails Controller` instance.
+
+### Final decision
+
+CONFIRMED
+
+Stable instance name: `OAuth Sign-in and Identity Linking Coordination`
+
+Counting: One new GRASP Controller collaboration. Google and Apple do not create separate instances because they use the same application callback and identity-linking responsibility.
+
+## 3. Candidate B — Observer: Outbound Mail Delivery Logging
+
+### Essential Observer mechanism
+
+A defensible Observer collaboration requires:
+
+1. A subject or publisher capable of notifying interested observers.
+2. An observer implementing an expected notification operation.
+3. A registration relationship connecting the observer to the publisher.
+4. A defined event that causes notification without the event-producing client directly calling the observer.
+
+The application does not have to implement its own subscription registry if a framework supplies that machinery and the application explicitly defines and registers a concrete observer.
+
+### Actual DaPlanStan implementation
+
+The complete application-specific implementation appears in `config/initializers/mail_logger.rb:1–7`.
+
+```
+module MailLogger
+  def self.delivered_email(message)
+    Rails.logger.info "[Mailer] Sent '#{message.subject}' to #{Array(message.to).join(', ')}"
+  end
+end
+
+ActionMailer::Base.register_observer(MailLogger)
+```
+
+This is more than a method coincidentally named `delivered_email`.
+
+The application:
+
+- Defines `MailLogger` as a Ruby module.
+- Provides the callback `MailLogger.delivered_email(message)`.
+- Explicitly registers the module as an observer.
+- Leaves the responsibility for invoking the callback to the mail-delivery infrastructure.
+
+### Verification against the actual framework contract
+
+The repository's `Gemfile.lock` specifies Action Mailer 8.1.3 and the Mail gem 2.9.0.&#x20;
+
+
+
+The framework contract is explicit.
+
+Framework notification chain
+
+\#chatgpt-mermaid-\_r_2i4\_{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;fill:rgb(237, 237, 237);}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#chatgpt-mermaid-\_r_2i4\_ .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-\_r_2i4\_ .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-\_r_2i4\_ .error-icon{fill:rgb(48, 48, 48);}#chatgpt-mermaid-\_r_2i4\_ .error-text{fill:rgb(237, 237, 237);stroke:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2i4\_ .edge-thickness-normal{stroke-width:1px;}#chatgpt-mermaid-\_r_2i4\_ .edge-thickness-thick{stroke-width:3.5px;}#chatgpt-mermaid-\_r_2i4\_ .edge-pattern-solid{stroke-dasharray:0;}#chatgpt-mermaid-\_r_2i4\_ .edge-thickness-invisible{stroke-width:0;fill:none;}#chatgpt-mermaid-\_r_2i4\_ .edge-pattern-dashed{stroke-dasharray:3;}#chatgpt-mermaid-\_r_2i4\_ .edge-pattern-dotted{stroke-dasharray:2;}#chatgpt-mermaid-\_r_2i4\_ .marker{fill:rgb(175, 175, 175);stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_2i4\_ .marker.cross{stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_2i4\_ svg{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;}#chatgpt-mermaid-\_r_2i4\_ p{margin:0;}#chatgpt-mermaid-\_r_2i4\_ .label{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2i4\_ .cluster-label text{fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2i4\_ .cluster-label span{color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2i4\_ .cluster-label span p{background-color:transparent;}#chatgpt-mermaid-\_r_2i4\_ .label text,#chatgpt-mermaid-\_r_2i4\_ span{fill:rgb(237, 237, 237);color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2i4\_ .node rect,#chatgpt-mermaid-\_r_2i4\_ .node circle,#chatgpt-mermaid-\_r_2i4\_ .node ellipse,#chatgpt-mermaid-\_r_2i4\_ .node polygon,#chatgpt-mermaid-\_r_2i4\_ .node path{fill:rgb(9, 23, 44);stroke:rgb(31, 78, 148);stroke-width:1px;}#chatgpt-mermaid-\_r_2i4\_ .rough-node .label text,#chatgpt-mermaid-\_r_2i4\_ .node .label text,#chatgpt-mermaid-\_r_2i4\_ .image-shape .label,#chatgpt-mermaid-\_r_2i4\_ .icon-shape .label{text-anchor:middle;}#chatgpt-mermaid-\_r_2i4\_ .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#chatgpt-mermaid-\_r_2i4\_ .rough-node .label,#chatgpt-mermaid-\_r_2i4\_ .node .label,#chatgpt-mermaid-\_r_2i4\_ .image-shape .label,#chatgpt-mermaid-\_r_2i4\_ .icon-shape .label{text-align:center;}#chatgpt-mermaid-\_r_2i4\_ .node.clickable{cursor:pointer;}#chatgpt-mermaid-\_r_2i4\_ .root .anchor path{fill:rgb(175, 175, 175)!important;stroke-width:0;stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_2i4\_ .arrowheadPath{fill:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_2i4\_ .edgePath .path{stroke:rgb(175, 175, 175);stroke-width:1px;}#chatgpt-mermaid-\_r_2i4\_ .flowchart-link{stroke:rgb(175, 175, 175);fill:none;}#chatgpt-mermaid-\_r_2i4\_ .edgeLabel{background-color:rgb(0, 0, 0);text-align:center;}#chatgpt-mermaid-\_r_2i4\_ .edgeLabel p{background-color:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_2i4\_ .edgeLabel rect{opacity:0.5;background-color:rgb(0, 0, 0);fill:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_2i4\_ .labelBkg{background-color:rgba(0, 0, 0, 0.5);}#chatgpt-mermaid-\_r_2i4\_ .cluster rect{fill:rgb(48, 48, 48);stroke:rgba(255, 255, 255, 0.15);stroke-width:1px;}#chatgpt-mermaid-\_r_2i4\_ .cluster text{fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2i4\_ .cluster span{color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2i4\_ div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:12px;background:rgb(48, 48, 48);border:1px solid rgba(255, 255, 255, 0.15);border-radius:2px;pointer-events:none;z-index:100;}#chatgpt-mermaid-\_r_2i4\_ .flowchartTitleText{text-anchor:middle;font-size:18px;fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2i4\_ rect.text{fill:none;stroke-width:0;}#chatgpt-mermaid-\_r_2i4\_ .icon-shape,#chatgpt-mermaid-\_r_2i4\_ .image-shape{background-color:rgb(0, 0, 0);text-align:center;}#chatgpt-mermaid-\_r_2i4\_ .icon-shape p,#chatgpt-mermaid-\_r_2i4\_ .image-shape p{background-color:rgb(0, 0, 0);padding:2px;}#chatgpt-mermaid-\_r_2i4\_ .icon-shape .label rect,#chatgpt-mermaid-\_r_2i4\_ .image-shape .label rect{opacity:0.5;background-color:rgb(0, 0, 0);fill:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_2i4\_ .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#chatgpt-mermaid-\_r_2i4\_ .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#chatgpt-mermaid-\_r_2i4\_ .node .neo-node{stroke:rgb(31, 78, 148);}#chatgpt-mermaid-\_r_2i4\_ [data-look="neo"].node rect,#chatgpt-mermaid-\_r_2i4\_ [data-look="neo"].cluster rect,#chatgpt-mermaid-\_r_2i4\_ [data-look="neo"].node polygon{stroke:url(#chatgpt-mermaid-\_r_2i4\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_2i4\_ [data-look="neo"].swimlane.cluster rect{filter:none;}#chatgpt-mermaid-\_r_2i4\_ [data-look="neo"].node path{stroke:url(#chatgpt-mermaid-\_r_2i4\_-gradient);stroke-width:1px;}#chatgpt-mermaid-\_r_2i4\_ [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_2i4\_ [data-look="neo"].node .neo-line path{stroke:rgb(31, 78, 148);filter:none;}#chatgpt-mermaid-\_r_2i4\_ [data-look="neo"].node circle{stroke:url(#chatgpt-mermaid-\_r_2i4\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_2i4\_ [data-look="neo"].node circle .state-start{fill:#000000;}#chatgpt-mermaid-\_r_2i4\_ [data-look="neo"].icon-shape .icon{fill:url(#chatgpt-mermaid-\_r_2i4\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_2i4\_ [data-look="neo"].icon-shape .icon-neo path{stroke:url(#chatgpt-mermaid-\_r_2i4\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_2i4\_ .node text{font-size:14px;font-weight:600;letter-spacing:normal;fill:rgb(153, 206, 255);}#chatgpt-mermaid-\_r_2i4\_ .edgeLabels text{font-size:13px;font-weight:600;letter-spacing:-0.08px;fill:rgb(153, 206, 255);}#chatgpt-mermaid-\_r_2i4\_ .node tspan[font-weight="normal"],#chatgpt-mermaid-\_r_2i4\_ .edgeLabels tspan[font-weight="normal"]{font-weight:600;}#chatgpt-mermaid-\_r_2i4\_ .edgeLabel .label rect{opacity:1;rx:13px;ry:13px;fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-width:1px;}#chatgpt-mermaid-\_r_2i4\_ .node rect,#chatgpt-mermaid-\_r_2i4\_ .node circle,#chatgpt-mermaid-\_r_2i4\_ .node ellipse,#chatgpt-mermaid-\_r_2i4\_ .node polygon,#chatgpt-mermaid-\_r_2i4\_ .node path{fill:rgb(0, 40, 77);stroke:rgba(255, 255, 255, 0.1);stroke-width:1px;}#chatgpt-mermaid-\_r_2i4\_ .node rect{rx:16px;ry:16px;}#chatgpt-mermaid-\_r_2i4\_ .node.mermaid-decision .label-container{fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-dasharray:2,2;}#chatgpt-mermaid-\_r_2i4\_ .edgePaths .flowchart-link{stroke:rgb(175, 175, 175);stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;}#chatgpt-mermaid-\_r_2i4\_ .marker{fill:rgb(175, 175, 175);stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_2i4\_ :root{--mermaid-font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";}InvitationMailer / TripMailerdeliver_laterAction Mailermessage deliveryInitializerregister_observer(MailLogger)Mail.register_observerMail observer registryMail::Message delivery lifecycleMail.inform_observersMailLogger.delivered_email(message)Rails.logger.info
+
+The relevant contracts are:
+
+- `ActionMailer::Base.register_observer` delegates registration to `Mail.register_observer`.&#x20;
+
+  [image](https://www.google.com/s2/favicons?domain=https://www.rubydoc.info\&sz=32)
+
+  RubyDoc
+
+- `Mail.register_observer` retains the observer in a notification registry.&#x20;
+
+  [image](https://www.google.com/s2/favicons?domain=https://www.rubydoc.info\&sz=32)
+
+  RubyDoc
+
+- `Mail.inform_observers` invokes `delivered_email(mail)` on each registered observer.&#x20;
+
+  [image](https://www.google.com/s2/favicons?domain=https://rubydoc.info\&sz=32)
+
+  RubyDoc
+
+- The Mail delivery lifecycle invokes the observer-notification operation after its delivery operation.&#x20;
+
+  [image](https://www.google.com/s2/favicons?domain=https://www.rubydoc.info\&sz=32)
+
+  RubyDoc
+
+
+
+Therefore, `delivered_email` is an actual framework-defined observer callback, not an application naming convention.
+
+This is sufficient to establish the static structural pattern.
+
+### Participant-role mapping
+
+| Observer role                             | Actual participant                                                                               | Source                                                                     |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| Subject/publisher infrastructure          | Mail gem delivery notification mechanism, including `Mail::Message` and `Mail` observer registry | Mail 2.9.0 framework contract                                              |
+| Application-facing registration interface | `ActionMailer::Base.register_observer`                                                           | Action Mailer 8.1.3                                                        |
+| ConcreteObserver                          | `MailLogger`                                                                                     | `config/initializers/mail_logger.rb:1–5`                                   |
+| Observer notification operation           | `MailLogger.delivered_email(message)`                                                            | Same file, `2–4`                                                           |
+| Registration operation                    | `ActionMailer::Base.register_observer(MailLogger)`                                               | Same file, `7`                                                             |
+| Event-producing mailers                   | `InvitationMailer`, `TripMailer`                                                                 | `app/mailers/invitation_mailer.rb:1–13`; `app/mailers/trip_mailer.rb:1–10` |
+
+There is no separately declared application-owned `Subject` interface.
+
+The subject-side responsibilities are provided by the Mail framework, while `ActionMailer::Base` exposes the registration interface.
+
+This distinction should be preserved in the participant-role mapping rather than incorrectly labeling `TripMailer` itself as a custom ConcreteSubject.
+
+### Why it is a genuine Observer instance
+
+The important evidence is the complete notification relationship:
+
+- DaPlanStan explicitly registers a concrete observer.
+- The observer satisfies the documented callback contract.
+- The mail delivery machinery maintains the registry and invokes notifications.
+- Individual mailers do not directly call `MailLogger`.
+
+This matches the essential Observer mechanism.
+
+A framework-mediated Observer implementation is defensible because the faculty permits framework idioms, provided the application/framework boundary is identified accurately.
+
+### Strongest objection
+
+DaPlanStan did not implement the observer registry, notification-dispatching algorithm or delivery lifecycle.
+
+It supplies only a concrete observer and explicitly registers that observer through Action Mailer's existing API.
+
+That means the implementation should not be presented as a fully application-written GoF Observer framework.
+
+It is a mixed-origin Observer collaboration, with its infrastructure supplied by Rails and the Mail gem.
+
+However, this does not negate the pattern: the application has deliberately participated in an actual observer contract, unlike a generic callback or an ordinary mailer method.
+
+### Comparison with Turbo-mediated Observer
+
+| Dimension                 | Outbound Mail Delivery Logging     | Trip-Scoped Turbo Refresh Notifications |
+| ------------------------- | ---------------------------------- | --------------------------------------- |
+| Event                     | Mail delivery                      | Model change or explicit trip refresh   |
+| Publisher                 | Mail delivery infrastructure       | Turbo Streams infrastructure            |
+| Subscriber                | `MailLogger`                       | Subscribed browser stream               |
+| Registration              | `register_observer(MailLogger)`    | `turbo_stream_from @trip`               |
+| Callback/action           | `delivered_email(message)`         | Client-side Turbo refresh               |
+| Application participation | Concrete observer and registration | Subscription and broadcast declarations |
+| Status                    | CONFIRMED                          | UNCERTAIN                               |
+
+These are different event relationships with different frameworks, participants and notification effects.
+
+The mail Observer does not resolve the previously uncertain Turbo classification. Nor should it be merged with the Turbo candidate merely because both use asynchronous notifications.
+
+### Final decision
+
+CONFIRMED
+
+Stable instance name: `Outbound Mail Delivery Logging`
+
+Pattern type: Observer — GoF Behavioral, framework-mediated implementation.
+
+Counting: One confirmed instance, not one instance per email sent or per mailer class.
+
+## 4. Final decision table
+
+| Candidate                                                          | Evidence establishing responsibility or mechanism                                                                                              | Strongest objection                                                      | Origin                                                                     | Final decision |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | -------------------------------------------------------------------------- | -------------- |
+| OAuth Sign-in and Identity Linking Coordination — GRASP Controller | `SessionsController#create` coordinates provider identity lookup, user linking, session creation, traveler acceptance and account provisioning | Application logic is concentrated in a procedural controller callback    | Mixed; application owns domain decisions                                   | CONFIRMED      |
+| Outbound Mail Delivery Logging — Observer                          | `MailLogger` implements `delivered_email`; Action Mailer explicitly registers it; Mail gem maintains and invokes observers                     | Most Observer machinery is framework-provided, not written by DaPlanStan | Mixed; framework-owned infrastructure, application-owned concrete observer | CONFIRMED      |
+
+## 5. Stable names and counting decision
+
+Results of this verification
+
+# +1
+
+GRASP Controller instance
+
+# +1
+
+Observer instance
+
+Both are new collaborations, distinct from those previously identified.
+
+For the reviewed areas so far, this brings the provisional source-confirmed GRASP Controller count to five. `Outbound Mail Delivery Logging` is the first confirmed Observer instance; the Turbo candidate remains excluded.
+
+Each confirmed collaboration should have one inventory record. Google and Apple should not generate separate sign-in Controller instances, and multiple mailers should not generate separate delivery-logging Observer instances.
+
+## 6. Source evidence to preserve
+
+Preserve these source excerpts and supporting framework references for the reviewer.
+
+| Evidence                       | Exact location                                                             | Purpose                                           |
+| ------------------------------ | -------------------------------------------------------------------------- | ------------------------------------------------- |
+| OAuth route                    | `config/routes.rb:12–14`                                                   | Establish callback entry                          |
+| OAuth provider configuration   | `config/initializers/omniauth.rb:1–16`                                     | Distinguish provider setup from application logic |
+| Identity linking               | `app/controllers/sessions_controller.rb:4–26`                              | Establish matching and new identity creation      |
+| Traveler acceptance and gating | Same file, `28–40, 54–81`                                                  | Prove application-owned sign-in decisions         |
+| Identity model                 | `app/models/user_identity.rb:1–8`                                          | Establish stored provider identity                |
+| User/traveler associations     | `app/models/user.rb:11–22`; `app/models/traveler.rb:26–28`                 | Establish collaborating objects                   |
+| Observer implementation        | `config/initializers/mail_logger.rb:1–5`                                   | Identify concrete observer                        |
+| Observer registration          | Same file, `7`                                                             | Establish subscription operation                  |
+| Mailer implementations         | `app/mailers/invitation_mailer.rb:1–13`; `app/mailers/trip_mailer.rb:1–10` | Identify producers of delivered messages          |
+| Framework contract             | Action Mailer 8.1.3 and Mail 2.9.0 documentation                           | Verify registration and callback semantics        |
+
+The Observer evidence should include both the application initializer and the dependency contract. The initializer alone identifies the registration, but the framework documentation explains exactly why that registration causes `delivered_email` to be invoked.
+
+## 7. Remaining runtime and design uncertainties
+
+The structural classifications can be settled without executing the application. The following questions concern runtime correctness and design quality instead.
+
+OAuth:
+
+- Whether Google and Apple callbacks succeed with the actual configuration.
+- Whether provider emails are sufficiently verified before being matched to an existing `User`.
+- Whether concurrent callbacks can create conflicting identity records.
+- Whether a new user and identity remain persisted when beta account provisioning is denied.
+- Whether account and owner-traveler creation always complete consistently.
+
+Mail Observer:
+
+- Whether the initializer loads successfully in the intended environment.
+- Whether successful email delivery produces the expected log entry.
+- Whether delivery failures bypass the success notification as expected.
+- Whether the mail delivery error handler in `mail_logger.rb:11–14` affects failure reporting.
+
+A successful delivery callback indicates that the framework's delivery operation completed; it does not prove that a recipient actually received or opened the email.
+
+## 8. Candidate-review record
+
+### External Integrations and Identity — Final Candidate Verification
+
+**Source:** DaPlanStan original source ZIP\
+**Method:** Static source and framework-contract verification\
+**Independent human review:** Pending\
+**Runtime testing:** Not performed
+
+**Candidate 1 — OAuth Sign-in and Identity Linking Coordination**
+
+Pattern: GRASP Controller\
+Status: CONFIRMED\
+Origin: Mixed, with application-owned coordination
+
+`SessionsController#create` receives the completed OAuth authentication event and coordinates provider identity recognition, email-based user association, provider identity creation, session establishment, pending traveler acceptance and account-provisioning eligibility.
+
+The collaboration is distinct from trip creation, trip membership management, itinerary importing and inbound email processing. Its event and resulting identity/access state are independently identifiable.
+
+The implementation remains controller-heavy, but the GRASP Controller responsibility assignment is supported by the application's actual decisions and delegation.
+
+**Candidate 2 — Outbound Mail Delivery Logging**
+
+Pattern: Observer\
+Status: CONFIRMED\
+Origin: Framework-mediated, with an application-defined concrete observer
+
+DaPlanStan defines `MailLogger.delivered_email(message)` and explicitly registers the module through `ActionMailer::Base.register_observer(MailLogger)`.
+
+Action Mailer 8.1.3 delegates observer registration to the Mail library. The Mail gem's observer contract requires `delivered_email` and its notification infrastructure invokes that callback for registered observers following the delivery operation.
+
+This establishes a genuine Observer collaboration, even though DaPlanStan does not implement the framework's observer registry.
+
+**Counting decision**
+
+- OAuth Sign-in and Identity Linking Coordination: one new GRASP Controller instance.
+- Outbound Mail Delivery Logging: one new Observer instance.
+- Do not count separate instances per OAuth provider, mailer class or delivered message.
+- The previously uncertain Turbo-mediated Observer remains separate and unconfirmed.
+
+**Limitations**
+
+Static pattern confirmation does not establish runtime success, provider security, email receipt or ideal design quality. Preserve these concerns in separate verification notes.
+
+**Inventory recommendation**
+
+Both collaborations may be proposed for the baseline `patterns.csv` inventory using the stable names above, subject to independent human review of role mapping, source locations and counting consistency.
+
+Final conclusion: Both candidates meet their respective defining mechanisms. The OAuth collaboration demonstrates an application-owned system-event responsibility; the mail logger demonstrates an explicit, contract-backed Observer relationship. Neither requires a successful runtime test to establish its static structural classification.

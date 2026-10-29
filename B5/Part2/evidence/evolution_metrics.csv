@@ -1,0 +1,5 @@
+source_version,application_source_loc,pattern_instances,pattern_types,unique_concrete_variable_role_classes,actual_test_evidence
+baseline,1797,9,3,8,No baseline application test suite in supplied archive
+scenario1_personalized_itinerary,2011,10,3,8,6 runs / 20 assertions isolated checks; historical Rails blocked
+scenario2_multiple_booking_providers,2197,12,4,11,10 runs / 67 assertions isolated checks; historical Rails blocked
+scenario3_cancellation_policies,2332,14,5,15,10 runs / 45 assertions isolated checks; final cumulative Rails: 59 runs / 359 assertions / 0 failures / 0 errors / 0 skips

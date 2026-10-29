@@ -1,0 +1,21 @@
+# router / cpp
+# working folder: Part3/code/pattern_router/cpp
+# runtime: g++ 16.1.1 20260625, -std=c++17
+$ mkdir -p build
+
+
+$ g++ -std=c++17 -Wall -Wextra -o build/test nirax.test.cpp
+
+
+$ build/test ../../../test-cases/router.txt
+PASS home
+PASS param_route
+PASS query_and_hash
+PASS login_required_logged_out
+PASS login_required_logged_in
+PASS unmatched_has_no_change_event
+PASS two_navigations
+passed 7/7
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 3.6, 3.5, 3.4, 3.4, 3.3 -> median 3.4

@@ -1,0 +1,20 @@
+Timing evidence — 2026-10-11
+
+Method: launch the complete fixture as a fresh process; perform one warm-up,
+then record five measured process durations with a monotonic timer. The median
+is reported in cross_language.csv. These are local process-startup-inclusive
+fixture timings, not application throughput or a statistically powered
+benchmark. They are most useful only as a rough within-environment comparison.
+
+Python 3.12.14 — bundled interpreter
+Warm-up: completed; fixture assertions: 4/4 passed
+Measured milliseconds: 93.291, 93.604, 93.575, 92.503, 92.936
+Median: 93.291 ms
+
+Node.js v24.19.0
+Warm-up: completed; fixture assertions: 4/4 passed
+Measured milliseconds: 63.641, 62.132, 62.994, 63.374, 63.647
+Median: 63.374 ms
+
+Java and C++: not measured because JDK/javac and a C++ compiler were unavailable
+in the supplied execution environment. Timing cells are intentionally blank.

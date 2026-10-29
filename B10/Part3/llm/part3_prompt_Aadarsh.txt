@@ -1,0 +1,66 @@
+You are helping with a cross-language design-pattern comparison. I will give you the list of confirmed design pattern types found in an application. For EACH pattern type, write a small standalone program of that pattern in Java, Python, JavaScript and C++ (C++17). All four languages must use the same inputs and give the same outputs.
+
+PATTERN TYPES (one representative instance each):
+1. [PATTERN NAME] - instance: "[INSTANCE NAME]" - roles/participants: [LIST ROLES AND CLASS NAMES FROM patterns.csv]
+2. [PATTERN NAME] - instance: "[INSTANCE NAME]" - roles/participants: [...]
+3. [PATTERN NAME] - instance: "[INSTANCE NAME]" - roles/participants: [...]
+(add or remove lines to match my confirmed pattern types)
+
+STEP A: Shared specification (write this FIRST, before any code)
+For each pattern, give a SPEC section with:
+- A role table: Role | Name used in every language | Job
+- Input, output, rules and error cases (e.g. negative input -> error, unknown name -> error)
+Then give a shared test-case CSV for each pattern with the header: case_id,<inputs>,expected
+- 6-8 cases per pattern, including at least two ERROR cases
+- Use the expected value ERROR for error cases
+- Every language must pass all cases
+
+STEP B: Production code
+For each pattern and each language, write the production code in a single file:
+- Java: <Name>.java, with the pattern participants as public static nested classes/interfaces
+- Python: snake_case .py, using abc.ABC and @abstractmethod where relevant
+- JavaScript: camelCase .js, using classes and module.exports
+- C++: .hpp header-only, using virtual functions, std::shared_ptr or std::unique_ptr, and <stdexcept>
+Rules:
+- Use ONLY the standard library (no Maven, pip packages or npm packages)
+- Keep each file small (30-90 lines)
+- Keep the SAME role and class names in every language
+- Use composition where the pattern calls for it
+- No comments inside the production code (I count LOC without comments)
+- Do not add extra features beyond the spec
+
+STEP C: Test runners (a SEPARATE file from the production code)
+For each pattern and language, write a test runner that:
+- Reads the shared CSV from ../../test-cases/<pattern>_cases.csv
+- Runs every case and treats an exception/error as the result "ERROR"
+- Compares numbers with a tolerance of 1e-9
+- Prints failures as "FAIL <case_id>: expected X, got Y"
+- Ends with exactly one line in the format "<Pattern> tests: X/Y passed" (identical wording in all four languages)
+- Exits with code 0 if all pass, otherwise 1
+Java: use Files.readAllLines. JavaScript: use fs.readFileSync. C++: use std::ifstream and include every needed header (<fstream>, <sstream>, <string>, <vector>, <cmath>, <iostream>, <stdexcept>).
+
+STEP D: Commands
+For each language folder, give a short README with the exact compile and run commands:
+- Java: javac <files> then java <TestClass>
+- Python: python <test file>
+- JavaScript: node <test file>
+- C++: g++ -std=c++17 -O2 -Wall -Wextra <test file> -o <exe> then run it
+Include the expected output line.
+
+STEP E: Language comparison notes
+For each pattern, write 1-2 sentences per language about how it handles the pattern, covering:
+- how each role is written (interface / ABC / base class / pure virtual class)
+- whether the language enforces the contract at compile time or at runtime
+- memory/ownership (garbage collector vs smart pointers)
+- static vs dynamic typing and what errors are caught early
+- why the lines of code and complexity might differ
+Do NOT claim that any language is faster or better overall. Only state what is true of this small program.
+
+OUTPUT ORDER and FORMAT:
+1. SPEC for all patterns
+2. The test-case CSVs (one code block per CSV, labelled with the file name)
+3. For each pattern: Java, Python, JavaScript, C++ production code, then the test runners, then the README commands (every file in its own code block, labelled with its path)
+4. Language comparison notes
+5. A list of any assumptions you made or anything you are unsure about
+
+Do not skip any pattern or language. Do not use external libraries. If something cannot be done the same way in all four languages, say so explicitly instead of silently changing the behaviour.

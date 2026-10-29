@@ -1,0 +1,354 @@
+diff --git a/src/main/java/br/com/michaelcruz/event/TransactionKind.java b/src/main/java/br/com/michaelcruz/event/TransactionKind.java
+index aafa0c8..8eae35b 100644
+--- a/src/main/java/br/com/michaelcruz/event/TransactionKind.java
++++ b/src/main/java/br/com/michaelcruz/event/TransactionKind.java
+@@ -2,5 +2,7 @@ package br.com.michaelcruz.event;
+ 
+ public enum TransactionKind {
+     DEPOSIT,
+-    WITHDRAWAL
++    WITHDRAWAL,
++    TRANSFER_OUT,
++    TRANSFER_IN
+ }
+diff --git a/src/main/java/br/com/michaelcruz/persistence/dto/TransferDTO.java b/src/main/java/br/com/michaelcruz/persistence/dto/TransferDTO.java
+new file mode 100644
+index 0000000..6584ba4
+--- /dev/null
++++ b/src/main/java/br/com/michaelcruz/persistence/dto/TransferDTO.java
+@@ -0,0 +1,21 @@
++package br.com.michaelcruz.persistence.dto;
++
++import jakarta.validation.constraints.NotNull;
++
++public class TransferDTO {
++
++    @NotNull(message = "Precisa ser informada a conta de origem")
++    private Long fromAccountId;
++
++    @NotNull(message = "Precisa ser informada a conta de destino")
++    private Long toAccountId;
++
++    private double amount;
++
++    public Long getFromAccountId() { return fromAccountId; }
++    public void setFromAccountId(Long fromAccountId) { this.fromAccountId = fromAccountId; }
++    public Long getToAccountId() { return toAccountId; }
++    public void setToAccountId(Long toAccountId) { this.toAccountId = toAccountId; }
++    public double getAmount() { return amount; }
++    public void setAmount(double amount) { this.amount = amount; }
++}
+diff --git a/src/main/java/br/com/michaelcruz/persistence/model/Account.java b/src/main/java/br/com/michaelcruz/persistence/model/Account.java
+index 73b0d7c..04e2499 100644
+--- a/src/main/java/br/com/michaelcruz/persistence/model/Account.java
++++ b/src/main/java/br/com/michaelcruz/persistence/model/Account.java
+@@ -1,5 +1,7 @@
+ package br.com.michaelcruz.persistence.model;
+ 
++import br.com.michaelcruz.domain.policy.AccountPolicy;
++import br.com.michaelcruz.exception.BadRequestException;
+ import jakarta.persistence.*;
+ 
+ @Entity
+@@ -41,4 +43,28 @@ public class Account {
+     public void setUser(User user) {
+         this.user = user;
+     }
++
++    /** Applies a deposit; the policy decides the bonus for this account type. */
++    public void deposit(double amount, AccountPolicy policy) {
++        if (amount <= 0) {
++            throw new BadRequestException("Valor do depósito precisa ser maior que zero");
++        }
++        this.balance += amount + policy.bonusOnDeposit(amount);
++    }
++
++    /** Applies a withdrawal if the policy allows it for the current balance. */
++    public void withdraw(double amount, AccountPolicy policy) {
++        if (amount <= 0 || !policy.allowsWithdrawal(this.balance, amount)) {
++            throw new BadRequestException("Valor do saque indisponível na conta");
++        }
++        this.balance -= amount;
++    }
++
++    /** Receives transferred money (no deposit bonus). */
++    public void credit(double amount) {
++        if (amount <= 0) {
++            throw new BadRequestException("Valor da transferência precisa ser maior que zero");
++        }
++        this.balance += amount;
++    }
+ }
+diff --git a/src/main/java/br/com/michaelcruz/rest/AccountController.java b/src/main/java/br/com/michaelcruz/rest/AccountController.java
+index 519f215..0405b9a 100644
+--- a/src/main/java/br/com/michaelcruz/rest/AccountController.java
++++ b/src/main/java/br/com/michaelcruz/rest/AccountController.java
+@@ -3,6 +3,7 @@ package br.com.michaelcruz.rest;
+ import br.com.michaelcruz.event.TransactionEvent;
+ import br.com.michaelcruz.persistence.dto.AccountDTO;
+ import br.com.michaelcruz.persistence.dto.TransactionDTO;
++import br.com.michaelcruz.persistence.dto.TransferDTO;
+ import br.com.michaelcruz.persistence.model.Account;
+ import br.com.michaelcruz.service.AccountService;
+ import jakarta.inject.Inject;
+@@ -48,6 +49,13 @@ public class AccountController {
+         return Response.status(Response.Status.OK).entity(accounts).build();
+     }
+ 
++    @Path("/transfer")
++    @POST
++    public Response transfer(TransferDTO transferDTO) {
++        this.accountService.transfer(transferDTO.getFromAccountId(), transferDTO.getToAccountId(), transferDTO.getAmount());
++        return Response.status(Response.Status.OK).entity("Transferência realizada com sucesso").build();
++    }
++
+     @Path("/{accountId}/audit")
+     @GET
+     public Response listAudit(@PathParam("accountId") Long accountId) {
+diff --git a/src/main/java/br/com/michaelcruz/service/AccountService.java b/src/main/java/br/com/michaelcruz/service/AccountService.java
+index ca292e0..18559a7 100644
+--- a/src/main/java/br/com/michaelcruz/service/AccountService.java
++++ b/src/main/java/br/com/michaelcruz/service/AccountService.java
+@@ -1,24 +1,24 @@
+ package br.com.michaelcruz.service;
+ 
++import br.com.michaelcruz.domain.policy.AccountPolicyResolver;
+ import br.com.michaelcruz.event.TransactionAuditLog;
+ import br.com.michaelcruz.event.TransactionEvent;
+ import br.com.michaelcruz.event.TransactionKind;
+ import br.com.michaelcruz.exception.BadRequestException;
+ import br.com.michaelcruz.exception.NotFoundException;
+ import br.com.michaelcruz.persistence.dao.AccountDAO;
+-import br.com.michaelcruz.domain.policy.AccountPolicyResolver;
+-import br.com.michaelcruz.util.AccountUtil;
+ import br.com.michaelcruz.persistence.dto.AccountDTO;
+ import br.com.michaelcruz.persistence.dto.UserDTO;
+ import br.com.michaelcruz.persistence.model.Account;
++import br.com.michaelcruz.util.AccountUtil;
+ import jakarta.enterprise.context.ApplicationScoped;
+ import jakarta.enterprise.event.Event;
+ import jakarta.inject.Inject;
++import jakarta.transaction.Transactional;
+ import jakarta.validation.Valid;
+ 
+ import java.time.Instant;
+ import java.util.List;
+-import java.util.Optional;
+ 
+ @ApplicationScoped
+ public class AccountService {
+@@ -47,48 +47,49 @@ public class AccountService {
+         accountDAO.save(account);
+     }
+ 
+-    public void depositToAccount(@Valid Long accountId, double amount){
+-
+-        Optional<Account> optionalAccount = accountDAO.findById(accountId);
++    @Transactional
++    public void depositToAccount(@Valid Long accountId, double amount) {
++        Account account = loadAccount(accountId);
+ 
+-        if(optionalAccount != null && optionalAccount.isPresent()){
+-            Account account = optionalAccount.get();
++        account.deposit(amount, policyResolver.forType(account.getType()));
+ 
+-            if (amount > 0){
+-                double newBalance = account.getBalance() + amount
+-                        + policyResolver.forType(account.getType()).bonusOnDeposit(amount);
+-
+-                account.setBalance(newBalance);
+-                accountDAO.update(account);
+-                transactionEvents.fire(new TransactionEvent(accountId, TransactionKind.DEPOSIT, amount, newBalance, Instant.now()));
+-            } else {
+-                throw new BadRequestException("Valor do depósito precisa ser maior que zero");
+-            }
+-        } else {
+-            throw new NotFoundException("Conta informada não encontrada");
+-        }
++        accountDAO.update(account);
++        publish(accountId, TransactionKind.DEPOSIT, amount, account.getBalance());
+     }
+ 
++    @Transactional
+     public void withdraw(@Valid Long accountId, double amount) {
++        Account account = loadAccount(accountId);
+ 
+-        Optional<Account> optionalAccount = accountDAO.findById(accountId);
++        account.withdraw(amount, policyResolver.forType(account.getType()));
+ 
+-        if(optionalAccount != null && optionalAccount.isPresent()){
+-            Account account = optionalAccount.get();
++        accountDAO.update(account);
++        publish(accountId, TransactionKind.WITHDRAWAL, amount, account.getBalance());
++    }
+ 
+-            if(amount > 0 && policyResolver.forType(account.getType()).allowsWithdrawal(account.getBalance(), amount)) {
+-                double newBalance = account.getBalance() - amount;
++    /** Moves money atomically: all rules are checked on the in-memory accounts before either is persisted. */
++    @Transactional
++    public void transfer(Long fromAccountId, Long toAccountId, double amount) {
++        if (fromAccountId == null || toAccountId == null) {
++            throw new BadRequestException("Conta de origem e conta de destino precisam ser informadas");
++        }
++        if (fromAccountId.equals(toAccountId)) {
++            throw new BadRequestException("Conta de origem e conta de destino precisam ser diferentes");
++        }
++        if (amount <= 0) {
++            throw new BadRequestException("Valor da transferência precisa ser maior que zero");
++        }
+ 
+-                account.setBalance(newBalance);
++        Account from = loadAccount(fromAccountId);
++        Account to = loadAccount(toAccountId);
+ 
+-                accountDAO.update(account);
+-                transactionEvents.fire(new TransactionEvent(accountId, TransactionKind.WITHDRAWAL, amount, newBalance, Instant.now()));
+-            } else {
+-                throw new BadRequestException("Valor do saque indisponível na conta");
+-            }
+-        } else {
+-            throw new NotFoundException("Conta informada não encontrada");
+-        }
++        from.withdraw(amount, policyResolver.forType(from.getType()));
++        to.credit(amount);
++
++        accountDAO.update(from);
++        accountDAO.update(to);
++        publish(fromAccountId, TransactionKind.TRANSFER_OUT, amount, from.getBalance());
++        publish(toAccountId, TransactionKind.TRANSFER_IN, amount, to.getBalance());
+     }
+ 
+     public List<TransactionEvent> getAuditTrail(Long accountId) {
+@@ -100,4 +101,13 @@ public class AccountService {
+         return this.accountDAO.getAll();
+     }
+ 
++    private Account loadAccount(Long accountId) {
++        return accountDAO.findById(accountId)
++                .orElseThrow(() -> new NotFoundException("Conta informada não encontrada"));
++    }
++
++    private void publish(Long accountId, TransactionKind kind, double amount, double balanceAfter) {
++        transactionEvents.fire(new TransactionEvent(accountId, kind, amount, balanceAfter, Instant.now()));
++    }
++
+ }
+diff --git a/src/test/java/br/com/michaelcruz/Change3TransferTest.java b/src/test/java/br/com/michaelcruz/Change3TransferTest.java
+new file mode 100644
+index 0000000..154cf3c
+--- /dev/null
++++ b/src/test/java/br/com/michaelcruz/Change3TransferTest.java
+@@ -0,0 +1,113 @@
++package br.com.michaelcruz;
++
++import br.com.michaelcruz.domain.policy.CheckingAccountPolicy;
++import br.com.michaelcruz.domain.policy.SavingsAccountPolicy;
++import br.com.michaelcruz.event.TransactionAuditLog;
++import br.com.michaelcruz.event.TransactionEvent;
++import br.com.michaelcruz.event.TransactionKind;
++import br.com.michaelcruz.persistence.dto.*;
++import br.com.michaelcruz.persistence.model.Account;
++import br.com.michaelcruz.persistence.model.AccountType;
++import br.com.michaelcruz.support.TestApp;
++import jakarta.ws.rs.WebApplicationException;
++import jakarta.ws.rs.core.Response;
++import org.junit.jupiter.api.BeforeEach;
++import org.junit.jupiter.api.Test;
++
++import java.util.List;
++
++import static org.junit.jupiter.api.Assertions.*;
++
++/** CH03 acceptance: atomic transfer between accounts; business rules moved into the Account domain object. */
++class Change3TransferTest {
++
++    TestApp app;
++
++    @BeforeEach
++    void setUp() {
++        app = new TestApp();
++        UserDTO u = new UserDTO();
++        u.setName("Duda"); u.setAge(35); u.setPhone("555-0103"); u.setAddress("Rua D");
++        app.users.createUser(u);
++        open(AccountType.CONTA_CORRENTE, 100.0);   // id 1
++        open(AccountType.CONTA_POUPANCA, 50.0);    // id 2
++    }
++
++    private void open(AccountType type, double balance) {
++        AccountDTO dto = new AccountDTO();
++        dto.setType(type); dto.setBalance(balance); dto.setUserId(1L);
++        app.accounts.createAccount(dto);
++    }
++
++    private static TransferDTO transfer(Long from, Long to, double amount) {
++        TransferDTO t = new TransferDTO(); t.setFromAccountId(from); t.setToAccountId(to); t.setAmount(amount); return t;
++    }
++
++    private double balance(int i) { return app.accountService.listAllAccounts().get(i).getBalance(); }
++
++    private int status(Runnable r) { return assertThrows(WebApplicationException.class, r).getResponse().getStatus(); }
++
++    @Test
++    void ac1TransferMovesTheAmountWithoutDepositBonus() {
++        Response r = app.accounts.transfer(transfer(1L, 2L, 30.0));
++        assertEquals(200, r.getStatus());
++        assertEquals(70.0, balance(0), 0.0001);
++        assertEquals(80.0, balance(1), 0.0001);          // savings target: no 0.5 bonus on transfers
++    }
++
++    @Test
++    void ac2InsufficientFundsChangesNeitherAccount() {
++        assertEquals(400, status(() -> app.accounts.transfer(transfer(2L, 1L, 50.01))));   // savings: no overdraft
++        assertEquals(100.0, balance(0), 0.0001);
++        assertEquals(50.0, balance(1), 0.0001);
++    }
++
++    @Test
++    void ac3CheckingSourceMayUseItsOverdraft() {
++        app.accounts.transfer(transfer(1L, 2L, 600.0));
++        assertEquals(-500.0, balance(0), 0.0001);
++        assertEquals(650.0, balance(1), 0.0001);
++    }
++
++    @Test
++    void ac4SameAccountAndNonPositiveAmountAndMissingIdsAreBadRequests() {
++        assertEquals(400, status(() -> app.accounts.transfer(transfer(1L, 1L, 5))));
++        assertEquals(400, status(() -> app.accounts.transfer(transfer(1L, 2L, 0))));
++        assertEquals(400, status(() -> app.accounts.transfer(transfer(1L, 2L, -3))));
++        assertEquals(400, status(() -> app.accounts.transfer(transfer(null, 2L, 3))));
++        assertEquals(100.0, balance(0), 0.0001);
++        assertEquals(50.0, balance(1), 0.0001);
++    }
++
++    @Test
++    void ac5UnknownAccountIsNotFoundAndNothingChanges() {
++        assertEquals(404, status(() -> app.accounts.transfer(transfer(1L, 99L, 5))));
++        assertEquals(404, status(() -> app.accounts.transfer(transfer(99L, 1L, 5))));
++        assertEquals(100.0, balance(0), 0.0001);
++    }
++
++    @Test
++    void ac6TransferPublishesOutAndInEvents() {
++        app.accounts.transfer(transfer(1L, 2L, 10.0));
++        TransactionAuditLog log = app.c.get(TransactionAuditLog.class);
++        List<TransactionEvent> out = log.entriesFor(1L), in = log.entriesFor(2L);
++        assertEquals(TransactionKind.TRANSFER_OUT, out.get(0).kind());
++        assertEquals(90.0, out.get(0).balanceAfter(), 0.0001);
++        assertEquals(TransactionKind.TRANSFER_IN, in.get(0).kind());
++        assertEquals(60.0, in.get(0).balanceAfter(), 0.0001);
++    }
++
++    @Test
++    void ac7AccountEnforcesItsOwnRulesWithoutTheService() {       // refactoring evidence: rules live on the entity
++        Account a = new Account();
++        a.setType(AccountType.CONTA_POUPANCA);
++        a.setBalance(10.0);
++        a.deposit(5.0, new SavingsAccountPolicy());
++        assertEquals(15.5, a.getBalance(), 0.0001);
++        a.withdraw(15.5, new SavingsAccountPolicy());
++        assertEquals(0.0, a.getBalance(), 0.0001);
++        assertEquals(400, status(() -> a.withdraw(0.01, new SavingsAccountPolicy())));
++        assertEquals(400, status(() -> a.deposit(0, new CheckingAccountPolicy())));
++        assertEquals(400, status(() -> a.credit(-1)));
++    }
++}

@@ -1,0 +1,17 @@
+[Unit]
+Description=Mycodo server
+After=syslog.target network.target
+StartLimitIntervalSec=500
+StartLimitBurst=5
+
+[Service]
+Restart=on-failure
+RestartSec=20
+TimeoutSec=0
+ExecStart=/opt/Mycodo/env/bin/python /opt/Mycodo/mycodo/mycodo_daemon.py
+ExecStop=/opt/Mycodo/env/bin/python /opt/Mycodo/mycodo/mycodo_client.py -t
+ExecReload=/opt/Mycodo/env/bin/python /opt/Mycodo/mycodo/mycodo_client.py -t && /opt/Mycodo/env/bin/python /opt/Mycodo/mycodo/mycodo_daemon.py
+
+[Install]
+WantedBy=multi-user.target
+Alias=mycodo.service

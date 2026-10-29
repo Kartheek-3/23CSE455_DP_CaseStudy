@@ -1,0 +1,223 @@
+Prompts V1 and V2 of the Part 3 verification session (Claude Sonnet 5.5, 2026-10-11; times UTC).
+
+===== PROMPT V1 (2026-10-11T05:37:09.770Z) =====
+## Part 3 — Design Pattern Case Study (Misskey): Complete Verification
+
+Perform the complete verification of Part 3 of the Team A13 design pattern case study. Rohit Prasanth is a member of Team A13. Complete the verification work, independently evaluate the evidence, and prepare the final results for submission according to the assignment requirements.
+
+**Starting point:** `Part3/llm/verification/human_review_checklist.md`
+
+### Tasks
+
+1. Verify pattern selection and source claims in `Part3/llm/outputs/selection_phase_output.md`.
+2. Verify the 60 implementations, tests, fixtures, and READMEs under `Part3/code/<pattern>/`.
+3. Verify the review and corrections documented in `Part3/llm/outputs/review_phase_output.md`.
+4. Verify the consistency of the recorded evidence, measurements, test results, and known limitations.
+
+### Required checks
+
+**Source verification**
+
+- Inspect the cited Misskey source files and line ranges at commit `53ac6808ae4921305e761c545863ee6593edd1f4`.
+- Examine Factory, Front Controller, Service Layer, and Repository particularly carefully.
+- Determine whether the cited source actually supports each pattern claim.
+
+**Implementation and testing**
+
+- Select two or three representative patterns.
+- Run the documented test commands for the relevant languages.
+- Check that the four language implementations use the same intended fixtures in `Part3/test-cases/`.
+- Record actual test outcomes and any environmental limitations.
+
+**Measurements**
+
+- Inspect `data/cross_language.csv`, `Part3/evidence/timing/raw_timing.csv`, and `Part3/evidence/environment.txt`.
+- Independently calculate the median of five runs for one or two representative rows.
+- Check that the recorded versions agree with the environment evidence.
+
+**Known limitations**
+
+- Review section 8 of the checklist.
+- Account for the missing warm-up run time and the Observer finding that was based on source inspection rather than execution.
+- Identify any additional unsupported claims or inconsistencies.
+
+### Labels
+
+Assign exactly one label to each task:
+
+- `correct` — the claims are supported by the evidence.
+- `partial` — the work is mostly correct but contains errors or evidence gaps.
+- `incorrect` — the principal claims are materially wrong.
+- `cannot confirm` — the available evidence is insufficient.
+
+Do not simply copy the existing AI-proposed labels. Reach your own conclusions from the evidence.
+
+### Submission requirements
+
+Prepare the final assessment for submission by Team A13, retaining the existing project authorship and documentation conventions.
+
+Include:
+
+- One label and one-line reason for each of the four tasks.
+- Supporting evidence for each conclusion.
+- The actual review date.
+- Specific corrections required.
+- Checks that could not be completed and why.
+
+Use the existing project format for the proposed updates to `data/llm.csv`, section 6 of the checklist, and the reviewer record.
+
+### Constraints
+
+- Do not fabricate test results, measurements, source inspections, or other evidence.
+- Do not claim that a test passed unless it was actually executed and the result observed.
+- Preserve existing authorship information, implementations, fixtures, and evidence.
+- Do not edit, delete, or overwrite repository files during the initial verification.
+- Present the completed findings and proposed file changes first.
+
+Begin by reading the checklist and the relevant output files. Complete the checks using the available repository and execution environment, then return the final results in a concise, submission-ready format.
+===== PROMPT V2 (2026-10-11T05:43:37.198Z) =====
+# Complete Part 3 Verification, Corrections, and Finalization
+
+You are working on the Team A13 design pattern case study (Part 3 — Misskey). Take responsibility for completing the remaining verification, resolving the reported issues, and finalizing the project documentation and records.
+
+**Start here:** `Part3/llm/verification/human_review_checklist.md`
+
+Rohit Prasanth is a member of Team A13. Preserve the existing project authorship and name throughout the repository. Follow the assignment instructions and the established project conventions for recording the reviewer and verification results.
+
+## Phase 1 — Inspect the repository and existing findings
+
+Read the checklist, the selection-phase output, the review-phase output, `data/llm.csv`, and the relevant evidence files.
+
+Inspect the repository status before making changes. Preserve unrelated user changes and do not overwrite unrelated work.
+
+Use the existing verification findings as a starting point, not as unquestionable conclusions. Resolve every inconsistency you can establish from the repository.
+
+## Phase 2 — Complete source verification
+
+Verify the cited Misskey source at commit:
+
+`53ac6808ae4921305e761c545863ee6593edd1f4`
+
+Inspect the cited files and relevant line ranges, especially:
+
+- Factory
+- Front Controller
+- Service Layer
+- Repository
+
+Check the other pattern claims in the checklist as well, including the rows previously identified as uncertain.
+
+For each claim, determine whether the implementation supports the stated pattern, supports it only partially, or contradicts it. Distinguish a simple factory from Factory Method or Abstract Factory, centralized request processing from a single entry point, an individual service from a layer-wide pattern, and TypeORM-based repository usage from a separately defined repository abstraction.
+
+Correct unsupported classifications and stale references. Use actual source locations, not guessed line numbers.
+
+## Phase 3 — Complete implementation and test verification
+
+Inspect all 60 implementations under `Part3/code/<pattern>/`.
+
+Run the documented test commands from the READMEs in an isolated scratch copy where appropriate. Check all documented commands, not just the first few representative patterns, if the environment permits.
+
+Verify:
+
+- All implementations run successfully.
+- Test counts are accurate.
+- The four language implementations use the intended shared fixtures in `Part3/test-cases/`.
+- The README instructions match the actual project structure.
+- Python documentation does not instruct users to remove nonexistent build directories.
+- Any test failures, warnings, unavailable dependencies, or skipped checks are accurately recorded.
+
+Do not claim success for a test that was not executed. Preserve the original repository contents while conducting tests.
+
+## Phase 4 — Verify measurements and evidence
+
+Inspect:
+
+- `data/cross_language.csv`
+- `Part3/evidence/timing/raw_timing.csv`
+- `Part3/evidence/environment.txt`
+- The checklist's known-gaps section
+- The relevant LOC and complexity evidence
+
+Recalculate the five-run medians and compare them with the summary CSV. Check the recorded software versions against the environment file.
+
+Investigate the reported warm-up timing gap, the Observer finding that was based on source inspection rather than execution, the C++ `#pragma once` LOC discrepancy, and any stale evidence references.
+
+If `lizard` or `radon` is unavailable, determine whether it can reasonably be installed or run in an isolated environment. Otherwise, record the metric as unverified rather than inventing a result.
+
+Identify missing transcripts, access-tier evidence, incomplete slide-deck checks, or other limitations that affect the conclusions.
+
+## Phase 5 — Reconcile the four task labels
+
+Assign one evidence-based label to each task:
+
+- `correct`
+- `partial`
+- `incorrect`
+- `cannot confirm`
+
+Evaluate:
+
+1. Pattern selection and source verification.
+2. Implementations, tests, fixtures, and READMEs.
+3. Review and corrections.
+4. Evidence, measurements, and consistency.
+
+Resolve the inconsistency between the previous findings table and the proposed `data/llm.csv` mapping. Ensure each row has the correct label for the corresponding task.
+
+Do not retain a label simply because an earlier AI output proposed it. Use the evidence and assignment definitions to determine the final result.
+
+## Phase 6 — Apply the necessary project updates
+
+After verification, update the relevant project records and documentation:
+
+- `data/llm.csv`
+- Section 6 of `Part3/llm/verification/human_review_checklist.md`
+- Section 8 of the checklist where corrections to claims, evidence, or line references are necessary
+- The reviewer record, using the repository's existing format
+- Relevant documentation containing inaccurate claims or instructions
+
+Make the smallest set of changes needed. Preserve existing source references, implementations, fixtures, test logs, prompts, outputs, and authorship information unless a specific correction is necessary.
+
+Use the actual completion date. Do not fabricate a review date, test result, execution history, or evidence file.
+
+## Phase 7 — Record the verification work
+
+Keep the verification evidence reproducible and the record consistent with the existing repository schema.
+
+If the repository tracks LLM interactions, determine whether this verification session should be recorded as an additional interaction. Only add a row when the schema and assignment call for it. Use the actual model, available session metadata, and real file paths. Do not invent prompt or output paths for artifacts that do not exist.
+
+Keep these categories distinct:
+
+- Original project authorship.
+- AI-assisted verification and corrections.
+- Tests actually executed.
+- Static source inspection.
+- Measurements independently recalculated.
+- Checks that remain unverified.
+
+## Phase 8 — Final quality checks
+
+After applying the changes:
+
+1. Review the diff.
+2. Confirm that unrelated files and user changes remain untouched.
+3. Recheck CSV formatting and row-to-task mappings.
+4. Check Markdown formatting and source references.
+5. Run relevant validation and tests again if the changes affect executable files.
+6. Confirm that every correction claimed in the report exists in the repository.
+7. Ensure no unsupported claims of successful verification remain.
+
+Do not discard changes merely because they predate this task.
+
+## Final response
+
+Return a concise completion report containing:
+
+- The four final labels and one-line reasons.
+- The checks actually executed and their results.
+- Corrections applied, with file paths.
+- Remaining limitations or unavailable checks.
+- Files changed and a summary of the diff.
+- The actual verification completion date.
+
+Complete all technically verifiable work within the available environment. Do not stop after producing recommendations if the necessary changes can safely be applied. If an operation is blocked, explain the specific blocker and complete the remaining work.

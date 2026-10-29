@@ -1,0 +1,7 @@
+$ (cd Part3/chain-of-responsibility-interceptors/java) java -cp out chain.ChainTest
+PASS report matches expected-output.txt
+PASS a handler can stop the chain before later links
+PASS invalid input is rejected with expected-error.txt
+3 passed, 0 failed
+[exit 0]
+result: 3/3 passed

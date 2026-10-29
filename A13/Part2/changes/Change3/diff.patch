@@ -1,0 +1,2013 @@
+diff --git a/packages/backend/migration/1787000000000-flagged-links.js b/packages/backend/migration/1787000000000-flagged-links.js
+new file mode 100644
+index 0000000000..6ffe9115bc
+--- /dev/null
++++ b/packages/backend/migration/1787000000000-flagged-links.js
+@@ -0,0 +1,42 @@
++/*
++ * SPDX-FileCopyrightText: syuilo and misskey-project
++ * SPDX-License-Identifier: AGPL-3.0-only
++ */
++
++export class FlaggedLinks1787000000000 {
++	name = 'FlaggedLinks1787000000000';
++
++	async up(queryRunner) {
++		await queryRunner.query(`
++			CREATE TABLE "flagged_link" (
++				"id" character varying(32) NOT NULL,
++				"url" text NOT NULL,
++				"canonicalUrl" character varying(1024) NOT NULL,
++				"domain" character varying(255) NOT NULL,
++				"riskCategory" character varying(32) NOT NULL,
++				"reason" text NOT NULL,
++				"threatType" character varying(64) NOT NULL DEFAULT 'spam',
++				"source" character varying(64) NOT NULL DEFAULT 'reputation',
++				"userId" character varying(32),
++				"noteId" character varying(32),
++				"resolved" boolean NOT NULL DEFAULT false,
++				"createdAt" TIMESTAMP WITH TIME ZONE NOT NULL,
++				"updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL,
++				CONSTRAINT "PK_flagged_link_id" PRIMARY KEY ("id"),
++				CONSTRAINT "FK_flagged_link_userId" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE SET NULL ON UPDATE NO ACTION,
++				CONSTRAINT "FK_flagged_link_noteId" FOREIGN KEY ("noteId") REFERENCES "note"("id") ON DELETE SET NULL ON UPDATE NO ACTION
++			)
++		`);
++
++		await queryRunner.query(`CREATE INDEX "IDX_flagged_link_canonicalUrl" ON "flagged_link" ("canonicalUrl")`);
++		await queryRunner.query(`CREATE INDEX "IDX_flagged_link_domain" ON "flagged_link" ("domain")`);
++		await queryRunner.query(`CREATE INDEX "IDX_flagged_link_riskCategory" ON "flagged_link" ("riskCategory")`);
++		await queryRunner.query(`CREATE INDEX "IDX_flagged_link_userId" ON "flagged_link" ("userId")`);
++		await queryRunner.query(`CREATE INDEX "IDX_flagged_link_noteId" ON "flagged_link" ("noteId")`);
++		await queryRunner.query(`CREATE INDEX "IDX_flagged_link_resolved" ON "flagged_link" ("resolved")`);
++	}
++
++	async down(queryRunner) {
++		await queryRunner.query(`DROP TABLE "flagged_link"`);
++	}
++}
+diff --git a/packages/backend/src/core/CoreModule.ts b/packages/backend/src/core/CoreModule.ts
+index b372062bc0..469441701a 100644
+--- a/packages/backend/src/core/CoreModule.ts
++++ b/packages/backend/src/core/CoreModule.ts
+@@ -31,6 +31,7 @@ import { DriveService } from './DriveService.js';
+ import { EmailService } from './EmailService.js';
+ import { EventService } from './EventService.js';
+ import { AudioTranscriptService } from './AudioTranscriptService.js';
++import { LinkSafetyService } from './security/LinkSafetyService.js';
+ import { FederatedInstanceService } from './FederatedInstanceService.js';
+ import { FetchInstanceMetadataService } from './FetchInstanceMetadataService.js';
+ import { GlobalEventService } from './GlobalEventService.js';
+@@ -235,6 +236,7 @@ const $ReversiService: Provider = { provide: 'ReversiService', useExisting: Reve
+ const $PageService: Provider = { provide: 'PageService', useExisting: PageService };
+ const $EventService: Provider = { provide: 'EventService', useExisting: EventService };
+ const $AudioTranscriptService: Provider = { provide: 'AudioTranscriptService', useExisting: AudioTranscriptService };
++const $LinkSafetyService: Provider = { provide: 'LinkSafetyService', useExisting: LinkSafetyService };
+ 
+ const $ChartLoggerService: Provider = { provide: 'ChartLoggerService', useExisting: ChartLoggerService };
+ const $FederationChart: Provider = { provide: 'FederationChart', useExisting: FederationChart };
+@@ -390,6 +392,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
+ 		PageService,
+ 		EventService,
+ 		AudioTranscriptService,
++		LinkSafetyService,
+ 
+ 		ChartLoggerService,
+ 		FederationChart,
+@@ -543,6 +546,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
+ 		$PageService,
+ 		$EventService,
+ 		$AudioTranscriptService,
++		$LinkSafetyService,
+ 
+ 		$ChartLoggerService,
+ 		$FederationChart,
+@@ -696,6 +700,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
+ 		PageService,
+ 		EventService,
+ 		AudioTranscriptService,
++		LinkSafetyService,
+ 
+ 		FederationChart,
+ 		NotesChart,
+@@ -847,6 +852,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
+ 		$PageService,
+ 		$EventService,
+ 		$AudioTranscriptService,
++		$LinkSafetyService,
+ 
+ 		$FederationChart,
+ 		$NotesChart,
+diff --git a/packages/backend/src/core/security/LinkReputationProvider.ts b/packages/backend/src/core/security/LinkReputationProvider.ts
+new file mode 100644
+index 0000000000..bf5e8b16ba
+--- /dev/null
++++ b/packages/backend/src/core/security/LinkReputationProvider.ts
+@@ -0,0 +1,265 @@
++/*
++ * SPDX-FileCopyrightText: syuilo and misskey-project
++ * SPDX-License-Identifier: AGPL-3.0-only
++ */
++
++export interface NormalizedUrl {
++	raw: string;
++	canonical: string;
++	protocol: string;
++	hostname: string;
++	port: string;
++	pathname: string;
++	search: string;
++	hasUserInfo: boolean;
++	userInfo?: string;
++	isIp: boolean;
++	ipAddress?: string;
++	isPunycode: boolean;
++	unicodeHostname: string;
++}
++
++export type LinkRiskCategory = 'malicious' | 'suspicious' | 'benign' | 'unknown';
++
++export type LinkThreatType =
++	| 'phishing'
++	| 'malware'
++	| 'spam'
++	| 'shortener'
++	| 'homograph'
++	| 'userinfo_obfuscation'
++	| 'ip_direct'
++	| 'reputation_blocklist'
++	| 'none';
++
++export interface LinkReputationResult {
++	category: LinkRiskCategory;
++	threatType: LinkThreatType;
++	reason: string;
++	confidence: number;
++	provider: string;
++}
++
++/**
++ * Strategy pattern interface for link reputation intelligence providers.
++ */
++export interface LinkReputationProvider {
++	readonly name: string;
++	classify(target: NormalizedUrl): Promise<LinkReputationResult>;
++}
++
++/**
++ * Local administrator-configurable list provider with known shorteners and rules.
++ */
++export class LocalListReputationProvider implements LinkReputationProvider {
++	public readonly name = 'local-reputation-list';
++
++	private blockedDomains = new Set<string>([
++		'malware-test.example.com',
++		'phishing-test.example.com',
++		'evil-spam-site.net',
++	]);
++
++	private allowedDomains = new Set<string>([
++		'misskey.io',
++		'github.com',
++		'wikipedia.org',
++	]);
++
++	private knownShorteners = new Set<string>([
++		'bit.ly',
++		'tinyurl.com',
++		't.co',
++		'goo.gl',
++		'ow.ly',
++		'is.gd',
++		'buff.ly',
++		'adf.ly',
++		'cutt.ly',
++		'rb.gy',
++	]);
++
++	constructor(options?: {
++		blockedDomains?: string[];
++		allowedDomains?: string[];
++		knownShorteners?: string[];
++	}) {
++		if (options?.blockedDomains) {
++			for (const d of options.blockedDomains) this.blockedDomains.add(d.toLowerCase());
++		}
++		if (options?.allowedDomains) {
++			for (const d of options.allowedDomains) this.allowedDomains.add(d.toLowerCase());
++		}
++		if (options?.knownShorteners) {
++			for (const s of options.knownShorteners) this.knownShorteners.add(s.toLowerCase());
++		}
++	}
++
++	public blockDomain(domain: string): void {
++		this.blockedDomains.add(domain.toLowerCase().trim());
++		this.allowedDomains.delete(domain.toLowerCase().trim());
++	}
++
++	public allowDomain(domain: string): void {
++		this.allowedDomains.add(domain.toLowerCase().trim());
++		this.blockedDomains.delete(domain.toLowerCase().trim());
++	}
++
++	public removeDomain(domain: string): void {
++		const d = domain.toLowerCase().trim();
++		this.blockedDomains.delete(d);
++		this.allowedDomains.delete(d);
++	}
++
++	public getBlockedDomains(): string[] {
++		return Array.from(this.blockedDomains);
++	}
++
++	public getAllowedDomains(): string[] {
++		return Array.from(this.allowedDomains);
++	}
++
++	public async classify(target: NormalizedUrl): Promise<LinkReputationResult> {
++		const host = target.hostname.toLowerCase();
++		const unicodeHost = target.unicodeHostname.toLowerCase();
++
++		// Check allowlist first
++		if (this.isDomainOrSubdomain(host, this.allowedDomains) || this.isDomainOrSubdomain(unicodeHost, this.allowedDomains)) {
++			return {
++				category: 'benign',
++				threatType: 'none',
++				reason: 'Domain is in instance trusted allowlist',
++				confidence: 1.0,
++				provider: this.name,
++			};
++		}
++
++		// Check blocklist
++		if (this.isDomainOrSubdomain(host, this.blockedDomains) || this.isDomainOrSubdomain(unicodeHost, this.blockedDomains)) {
++			return {
++				category: 'malicious',
++				threatType: 'reputation_blocklist',
++				reason: 'Domain is explicitly blocklisted by instance administrator',
++				confidence: 1.0,
++				provider: this.name,
++			};
++		}
++
++		// Check URL shorteners
++		if (this.knownShorteners.has(host)) {
++			return {
++				category: 'suspicious',
++				threatType: 'shortener',
++				reason: `Known URL shortener service (${host}) obscures final destination`,
++				confidence: 0.85,
++				provider: this.name,
++			};
++		}
++
++		// Check userinfo obfuscation (e.g. https://google.com@evil.com)
++		if (target.hasUserInfo) {
++			return {
++				category: 'suspicious',
++				threatType: 'userinfo_obfuscation',
++				reason: 'URL includes misleading credentials before hostname',
++				confidence: 0.9,
++				provider: this.name,
++			};
++		}
++
++		// Check bare IP destinations
++		if (target.isIp) {
++			return {
++				category: 'suspicious',
++				threatType: 'ip_direct',
++				reason: 'Direct numeric IP address destination instead of registered domain',
++				confidence: 0.7,
++				provider: this.name,
++			};
++		}
++
++		return {
++			category: 'unknown',
++			threatType: 'none',
++			reason: 'No conclusive threat intelligence available for domain',
++			confidence: 0.0,
++			provider: this.name,
++		};
++	}
++
++	private isDomainOrSubdomain(host: string, list: Set<string>): boolean {
++		if (list.has(host)) return true;
++		const parts = host.split('.');
++		for (let i = 1; i < parts.length; i++) {
++			const parent = parts.slice(i).join('.');
++			if (list.has(parent)) return true;
++		}
++		return false;
++	}
++}
++
++/**
++ * Deterministic mock reputation provider for automated testing and isolated CI environments.
++ */
++export class MockReputationProvider implements LinkReputationProvider {
++	public readonly name = 'mock-reputation-provider';
++
++	private verdicts = new Map<string, LinkReputationResult>();
++	private shouldThrow = false;
++	private throwError: Error = new Error('Mock provider connection error');
++
++	public setVerdict(domainOrUrl: string, verdict: Partial<LinkReputationResult> & { category: LinkRiskCategory }): void {
++		this.verdicts.set(domainOrUrl.toLowerCase(), {
++			category: verdict.category,
++			threatType: verdict.threatType ?? 'none',
++			reason: verdict.reason ?? `Mock verdict for ${domainOrUrl}`,
++			confidence: verdict.confidence ?? 0.9,
++			provider: this.name,
++		});
++	}
++
++	public setShouldThrow(shouldThrow: boolean, error?: Error): void {
++		this.shouldThrow = shouldThrow;
++		if (error) this.throwError = error;
++	}
++
++	public async classify(target: NormalizedUrl): Promise<LinkReputationResult> {
++		if (this.shouldThrow) {
++			throw this.throwError;
++		}
++
++		const directMatch = this.verdicts.get(target.canonical.toLowerCase())
++			?? this.verdicts.get(target.raw.toLowerCase())
++			?? this.verdicts.get(target.hostname.toLowerCase())
++			?? this.verdicts.get(target.unicodeHostname.toLowerCase());
++
++		if (directMatch) {
++			return directMatch;
++		}
++
++		return {
++			category: 'unknown',
++			threatType: 'none',
++			reason: 'Domain not found in mock provider registry',
++			confidence: 0.0,
++			provider: this.name,
++		};
++	}
++}
++
++/**
++ * Disabled reputation provider for when external lookups are deactivated.
++ */
++export class DisabledReputationProvider implements LinkReputationProvider {
++	public readonly name = 'disabled-reputation-provider';
++
++	public async classify(target: NormalizedUrl): Promise<LinkReputationResult> {
++		return {
++			category: 'unknown',
++			threatType: 'none',
++			reason: 'Reputation intelligence checks are currently disabled',
++			confidence: 0.0,
++			provider: this.name,
++		};
++	}
++}
+diff --git a/packages/backend/src/core/security/LinkSafetyService.ts b/packages/backend/src/core/security/LinkSafetyService.ts
+new file mode 100644
+index 0000000000..b5bdccd01c
+--- /dev/null
++++ b/packages/backend/src/core/security/LinkSafetyService.ts
+@@ -0,0 +1,596 @@
++/*
++ * SPDX-FileCopyrightText: syuilo and misskey-project
++ * SPDX-License-Identifier: AGPL-3.0-only
++ */
++
++import * as net from 'node:net';
++import punycode from 'node:punycode';
++import ipaddr from 'ipaddr.js';
++import { Inject, Injectable, Optional } from '@nestjs/common';
++import { DI } from '@/di-symbols.js';
++import type { FlaggedLinksRepository, AbuseUserReportsRepository } from '@/models/_.js';
++import { MiFlaggedLink, type LinkRiskCategory, type LinkThreatType, type LinkFlagSource } from '@/models/FlaggedLink.js';
++import { IdService } from '@/core/IdService.js';
++import {
++	type LinkReputationProvider,
++	type LinkReputationResult,
++	type NormalizedUrl,
++	LocalListReputationProvider,
++} from './LinkReputationProvider.js';
++
++export interface LinkRiskAssessment {
++	url: string;
++	canonicalUrl: string;
++	domain: string;
++	category: LinkRiskCategory;
++	threatType: LinkThreatType;
++	reason: string;
++	confidence: number;
++	provider: string;
++	checkedAt: string;
++}
++
++interface CacheEntry {
++	assessment: LinkRiskAssessment;
++	expiresAt: number;
++}
++
++interface PostingEvent {
++	userId?: string;
++	ip?: string;
++	canonicalUrl: string;
++	domain: string;
++	timestamp: number;
++}
++
++const PROTECTED_DOMAINS = [
++	'misskey.io',
++	'google.com',
++	'paypal.com',
++	'github.com',
++	'apple.com',
++	'microsoft.com',
++	'amazon.com',
++	'facebook.com',
++	'twitter.com',
++	'x.com',
++	'instagram.com',
++];
++
++const HOMOGLYPH_MAP: Record<string, string> = {
++	'а': 'a', 'с': 'c', 'е': 'e', 'о': 'o', 'р': 'p', 'х': 'x', 'у': 'y', 'і': 'i', 'ј': 'j', 'ѕ': 's', 'ԁ': 'd', 'ԛ': 'q',
++	'α': 'a', 'ο': 'o', 'ρ': 'p', 'ν': 'v', 'τ': 't', 'ι': 'i',
++};
++
++@Injectable()
++export class LinkSafetyService {
++	private provider: LinkReputationProvider;
++	private cache = new Map<string, CacheEntry>();
++	private postingHistory: PostingEvent[] = [];
++
++	constructor(
++		@Optional() @Inject(DI.flaggedLinksRepository)
++		private flaggedLinksRepository?: FlaggedLinksRepository,
++		@Optional() @Inject(DI.abuseUserReportsRepository)
++		private abuseUserReportsRepository?: AbuseUserReportsRepository,
++		@Optional() @Inject(DI.id)
++		private idService?: IdService,
++		provider?: LinkReputationProvider,
++	) {
++		this.provider = provider ?? new LocalListReputationProvider();
++	}
++
++	public setProvider(provider: LinkReputationProvider): void {
++		this.provider = provider;
++	}
++
++	public getProvider(): LinkReputationProvider {
++		return this.provider;
++	}
++
++	public normalizeUrl(raw: string): NormalizedUrl | null {
++		const trimmed = raw.trim();
++		let parsed: URL;
++		try {
++			parsed = new URL(trimmed);
++		} catch {
++			return null;
++		}
++
++		if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
++			return null;
++		}
++
++		let hostname = parsed.hostname.toLowerCase();
++		while (hostname.endsWith('.')) {
++			hostname = hostname.slice(0, -1);
++		}
++
++		if (!hostname) {
++			return null;
++		}
++
++		const hasUserInfo = parsed.username !== '' || parsed.password !== '';
++		const userInfo = hasUserInfo ? `${parsed.username}:${parsed.password}` : undefined;
++
++		let port = parsed.port;
++		if ((parsed.protocol === 'http:' && port === '80') || (parsed.protocol === 'https:' && port === '443')) {
++			port = '';
++		}
++
++		const isIp = net.isIP(hostname) !== 0 || ipaddr.isValid(hostname);
++		let ipAddress: string | undefined;
++		if (isIp) {
++			ipAddress = hostname.replace(/^\[|\]$/g, '');
++		}
++
++		const isPunycode = hostname.startsWith('xn--') || hostname.includes('.xn--');
++		let unicodeHostname = hostname;
++		try {
++			if (isPunycode) {
++				unicodeHostname = punycode.toUnicode(hostname);
++			}
++		} catch {
++			unicodeHostname = hostname;
++		}
++
++		const canonicalPort = port ? `:${port}` : '';
++		const canonical = `${parsed.protocol}//${hostname}${canonicalPort}${parsed.pathname}${parsed.search}`;
++
++		return {
++			raw: trimmed,
++			canonical,
++			protocol: parsed.protocol,
++			hostname,
++			port,
++			pathname: parsed.pathname,
++			search: parsed.search,
++			hasUserInfo,
++			userInfo,
++			isIp,
++			ipAddress,
++			isPunycode,
++			unicodeHostname,
++		};
++	}
++
++	public validateDestinationSafety(rawOrHost: string): { safe: boolean; reason?: string; ip?: string } {
++		let host = rawOrHost.trim().toLowerCase();
++		if (host.includes('://')) {
++			try {
++				host = new URL(host).hostname.toLowerCase();
++			} catch {
++				return { safe: false, reason: 'Malformed destination URL' };
++			}
++		}
++
++		while (host.endsWith('.')) {
++			host = host.slice(0, -1);
++		}
++
++		if (host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.local')) {
++			return { safe: false, reason: 'Destination host is loopback or internal local name' };
++		}
++
++		const cleanIp = host.replace(/^\[|\]$/g, '');
++		if (ipaddr.isValid(cleanIp)) {
++			try {
++				let parsed = ipaddr.parse(cleanIp);
++				if (parsed.kind() === 'ipv6' && (parsed as ipaddr.IPv6).isIPv4MappedAddress()) {
++					parsed = (parsed as ipaddr.IPv6).toIPv4Address();
++				}
++
++				const range = parsed.range();
++				if (range !== 'unicast') {
++					return {
++						safe: false,
++						ip: cleanIp,
++						reason: `Destination IP is non-unicast/prohibited range: ${range}`,
++					};
++				}
++			} catch (err) {
++				return { safe: false, ip: cleanIp, reason: 'Invalid or unparsable IP destination' };
++			}
++		}
++
++		return { safe: true };
++	}
++
++	public detectHomographs(target: NormalizedUrl): { isHomograph: boolean; matchedDomain?: string; reason?: string } {
++		const host = target.hostname;
++		const unicodeHost = target.unicodeHostname;
++
++		// Convert unicode characters using homoglyph mapping
++		let skeleton = '';
++		for (const char of unicodeHost) {
++			skeleton += HOMOGLYPH_MAP[char] ?? char;
++		}
++
++		for (const protectedDomain of PROTECTED_DOMAINS) {
++			if (host === protectedDomain) {
++				continue;
++			}
++
++			if (skeleton === protectedDomain || skeleton.endsWith(`.${protectedDomain}`)) {
++				return {
++					isHomograph: true,
++					matchedDomain: protectedDomain,
++					reason: `Suspicious homograph / IDN lookalike imitating trusted domain '${protectedDomain}'`,
++				};
++			}
++		}
++
++		return { isHomograph: false };
++	}
++
++	public recordPostingActivity(
++		userId: string | undefined,
++		ip: string | undefined,
++		canonicalUrl: string,
++		domain: string,
++	): void {
++		const now = Date.now();
++		this.postingHistory.push({
++			userId,
++			ip,
++			canonicalUrl,
++			domain,
++			timestamp: now,
++		});
++
++		// Prune older than 10 minutes
++		const cutoff = now - 10 * 60 * 1000;
++		this.postingHistory = this.postingHistory.filter(e => e.timestamp >= cutoff);
++	}
++
++	public analyzeSpamFrequency(
++		userId: string | undefined,
++		ip: string | undefined,
++		canonicalUrl: string,
++		domain: string,
++	): { isSpam: boolean; reason?: string } {
++		if (!userId && !ip) {
++			return { isSpam: false };
++		}
++
++		const now = Date.now();
++		const fiveMinAgo = now - 5 * 60 * 1000;
++		const tenMinAgo = now - 10 * 60 * 1000;
++
++		const userEvents = this.postingHistory.filter(e =>
++			(userId && e.userId === userId) || (ip && e.ip === ip),
++		);
++
++		// Signal 1: Repeated identical URL posted > 2 times within 5 minutes
++		const identicalUrlCount = userEvents.filter(e =>
++			e.timestamp >= fiveMinAgo && e.canonicalUrl === canonicalUrl,
++		).length;
++
++		if (identicalUrlCount >= 2) {
++			return {
++				isSpam: true,
++				reason: `Repeated promotional posting of the same link (${identicalUrlCount + 1} occurrences in 5m)`,
++			};
++		}
++
++		// Signal 2: High volume of links to the same destination domain within 10 minutes
++		const sameDomainCount = userEvents.filter(e =>
++			e.timestamp >= tenMinAgo && e.domain === domain,
++		).length;
++
++		if (sameDomainCount >= 4) {
++			return {
++				isSpam: true,
++				reason: `High-frequency link bursts to destination domain '${domain}' (${sameDomainCount + 1} occurrences in 10m)`,
++			};
++		}
++
++		return { isSpam: false };
++	}
++
++	public async checkAbuseReportsForDomain(domain: string): Promise<{ reported: boolean; count: number; reason?: string }> {
++		if (!this.abuseUserReportsRepository) {
++			return { reported: false, count: 0 };
++		}
++
++		try {
++			const reports = await this.abuseUserReportsRepository.find({
++				take: 100,
++				order: { createdAt: 'DESC' },
++			});
++
++			const relevant = reports.filter(r => r.comment && r.comment.includes(domain));
++			// Deduplicate by reporter to resist coordinated gaming
++			const uniqueReporters = new Set(relevant.map(r => r.reporterId));
++			const count = uniqueReporters.size;
++
++			if (count >= 3) {
++				return {
++					reported: true,
++					count,
++					reason: `Destination domain has ${count} independent abuse reports on record`,
++				};
++			}
++
++			return { reported: false, count };
++		} catch {
++			return { reported: false, count: 0 };
++		}
++	}
++
++	public async checkUrl(
++		rawUrl: string,
++		context?: { userId?: string; ip?: string; noteId?: string },
++	): Promise<LinkRiskAssessment> {
++		const nowIso = new Date().toISOString();
++		const normalized = this.normalizeUrl(rawUrl);
++
++		if (!normalized) {
++			return {
++				url: rawUrl,
++				canonicalUrl: rawUrl,
++				domain: '',
++				category: 'suspicious',
++				threatType: 'none',
++				reason: 'Malformed URL or unsupported scheme (only http/https permitted)',
++				confidence: 0.9,
++				provider: 'url-canonicalizer',
++				checkedAt: nowIso,
++			};
++		}
++
++		// Check SSRF & prohibited destination addresses
++		const destSafety = this.validateDestinationSafety(normalized.canonical);
++		if (!destSafety.safe) {
++			const assessment: LinkRiskAssessment = {
++				url: rawUrl,
++				canonicalUrl: normalized.canonical,
++				domain: normalized.hostname,
++				category: 'malicious',
++				threatType: 'ip_direct',
++				reason: destSafety.reason ?? 'Prohibited network destination',
++				confidence: 1.0,
++				provider: 'ssrf-guard',
++				checkedAt: nowIso,
++			};
++			await this.persistFlagRecord(assessment, context);
++			return assessment;
++		}
++
++		// Check homograph / confusable spoofing
++		const homographResult = this.detectHomographs(normalized);
++		if (homographResult.isHomograph) {
++			const assessment: LinkRiskAssessment = {
++				url: rawUrl,
++				canonicalUrl: normalized.canonical,
++				domain: normalized.hostname,
++				category: 'suspicious',
++				threatType: 'homograph',
++				reason: homographResult.reason!,
++				confidence: 0.9,
++				provider: 'homograph-detector',
++				checkedAt: nowIso,
++			};
++			this.setCache(normalized.canonical, assessment, 60 * 60 * 1000);
++			await this.persistFlagRecord(assessment, context);
++			return assessment;
++		}
++
++		// Check spam repetition signals for current context
++		const spamCheck = this.analyzeSpamFrequency(
++			context?.userId,
++			context?.ip,
++			normalized.canonical,
++			normalized.hostname,
++		);
++		if (spamCheck.isSpam) {
++			const assessment: LinkRiskAssessment = {
++				url: rawUrl,
++				canonicalUrl: normalized.canonical,
++				domain: normalized.hostname,
++				category: 'suspicious',
++				threatType: 'spam',
++				reason: spamCheck.reason!,
++				confidence: 0.85,
++				provider: 'spam-frequency-analyzer',
++				checkedAt: nowIso,
++			};
++			this.recordPostingActivity(context?.userId, context?.ip, normalized.canonical, normalized.hostname);
++			await this.persistFlagRecord(assessment, context);
++			return assessment;
++		}
++
++		// Check cache for reputation & static results
++		const cacheKey = normalized.canonical;
++		const cached = this.cache.get(cacheKey);
++		if (cached && cached.expiresAt > Date.now()) {
++			this.recordPostingActivity(context?.userId, context?.ip, normalized.canonical, normalized.hostname);
++			return cached.assessment;
++		}
++
++		// Query reputation provider strategy
++		let providerResult: LinkReputationResult;
++		try {
++			providerResult = await this.provider.classify(normalized);
++		} catch (err) {
++			// Gracefully handle provider timeout/error without falsely labelling safe or malicious
++			const fallback: LinkRiskAssessment = {
++				url: rawUrl,
++				canonicalUrl: normalized.canonical,
++				domain: normalized.hostname,
++				category: 'unknown',
++				threatType: 'none',
++				reason: `Reputation provider failed: ${(err as Error).message}`,
++				confidence: 0.0,
++				provider: this.provider.name,
++				checkedAt: nowIso,
++			};
++			this.setCache(cacheKey, fallback, 2 * 60 * 1000); // short TTL for transient failures
++			return fallback;
++		}
++
++		// Check abuse reports correlation if domain is still unknown
++		if (providerResult.category === 'unknown') {
++			const reportCheck = await this.checkAbuseReportsForDomain(normalized.hostname);
++			if (reportCheck.reported) {
++				providerResult = {
++					category: 'suspicious',
++					threatType: 'spam',
++					reason: reportCheck.reason!,
++					confidence: 0.75,
++					provider: 'abuse-reports-correlator',
++				};
++			}
++		}
++
++		const finalAssessment: LinkRiskAssessment = {
++			url: rawUrl,
++			canonicalUrl: normalized.canonical,
++			domain: normalized.hostname,
++			category: providerResult.category,
++			threatType: providerResult.threatType,
++			reason: providerResult.reason,
++			confidence: providerResult.confidence,
++			provider: providerResult.provider,
++			checkedAt: nowIso,
++		};
++
++		// Cache TTL: 1 hr for risks, 6 hrs for benign, 5 min for unknown
++		const ttl = providerResult.category === 'benign'
++			? 6 * 60 * 60 * 1000
++			: providerResult.category === 'unknown'
++				? 5 * 60 * 1000
++				: 60 * 60 * 1000;
++
++		this.setCache(cacheKey, finalAssessment, ttl);
++
++		// Record posting history if valid
++		this.recordPostingActivity(context?.userId, context?.ip, normalized.canonical, normalized.hostname);
++
++		// Persist for admin review if flagged
++		if (finalAssessment.category === 'malicious' || finalAssessment.category === 'suspicious') {
++			await this.persistFlagRecord(finalAssessment, context);
++		}
++
++		return finalAssessment;
++	}
++
++	public async checkText(
++		text: string,
++		context?: { userId?: string; ip?: string; noteId?: string },
++	): Promise<LinkRiskAssessment[]> {
++		const urlRegex = /https?:\/\/[^\s<>"'()[\]{}]+/gi;
++		const matches = text.match(urlRegex) ?? [];
++		const unique = Array.from(new Set(matches));
++
++		const results: LinkRiskAssessment[] = [];
++		for (const u of unique) {
++			results.push(await this.checkUrl(u, context));
++		}
++		return results;
++	}
++
++	private setCache(key: string, assessment: LinkRiskAssessment, ttlMs: number): void {
++		this.cache.set(key, {
++			assessment,
++			expiresAt: Date.now() + ttlMs,
++		});
++	}
++
++	public clearCache(): void {
++		this.cache.clear();
++	}
++
++	private async persistFlagRecord(
++		assessment: LinkRiskAssessment,
++		context?: { userId?: string; ip?: string; noteId?: string },
++	): Promise<void> {
++		if (!this.flaggedLinksRepository) return;
++
++		try {
++			const existing = await this.flaggedLinksRepository.findOne({
++				where: { canonicalUrl: assessment.canonicalUrl },
++			});
++
++			const now = new Date();
++			if (existing) {
++				existing.reason = assessment.reason;
++				existing.riskCategory = assessment.category as any;
++				existing.threatType = assessment.threatType as any;
++				existing.updatedAt = now;
++				await this.flaggedLinksRepository.save(existing);
++				return;
++			}
++
++			const record = new MiFlaggedLink();
++			record.id = this.idService ? this.idService.generate() : Math.random().toString(36).slice(2, 18);
++			record.url = assessment.url;
++			record.canonicalUrl = assessment.canonicalUrl;
++			record.domain = assessment.domain;
++			record.riskCategory = assessment.category as any;
++			record.reason = assessment.reason;
++			record.threatType = assessment.threatType as any;
++			record.source = (assessment.threatType === 'spam' ? 'spam_frequency' :
++				assessment.threatType === 'homograph' ? 'homograph' :
++				assessment.threatType === 'userinfo_obfuscation' ? 'userinfo' : 'reputation') as LinkFlagSource;
++			record.userId = context?.userId ?? null;
++			record.noteId = context?.noteId ?? null;
++			record.resolved = false;
++			record.createdAt = now;
++			record.updatedAt = now;
++
++			await this.flaggedLinksRepository.save(record);
++		} catch {
++			// Fail open on audit persistence errors so user experience is not blocked
++		}
++	}
++
++	public async getFlaggedLinks(options?: {
++		limit?: number;
++		sinceId?: string;
++		untilId?: string;
++		unresolvedOnly?: boolean;
++	}): Promise<MiFlaggedLink[]> {
++		if (!this.flaggedLinksRepository) return [];
++
++		const query = this.flaggedLinksRepository.createQueryBuilder('flag')
++			.orderBy('flag.createdAt', 'DESC')
++			.take(Math.min(options?.limit ?? 30, 100));
++
++		if (options?.unresolvedOnly) {
++			query.andWhere('flag.resolved = false');
++		}
++
++		if (options?.sinceId) {
++			query.andWhere('flag.id > :sinceId', { sinceId: options.sinceId });
++		}
++
++		if (options?.untilId) {
++			query.andWhere('flag.id < :untilId', { untilId: options.untilId });
++		}
++
++		return await query.getMany();
++	}
++
++	public async resolveFlaggedLink(id: string, resolved = true): Promise<boolean> {
++		if (!this.flaggedLinksRepository) return false;
++		const record = await this.flaggedLinksRepository.findOne({ where: { id } });
++		if (!record) return false;
++		record.resolved = resolved;
++		record.updatedAt = new Date();
++		await this.flaggedLinksRepository.save(record);
++		return true;
++	}
++
++	public updateDomainRule(domain: string, action: 'block' | 'allow' | 'remove'): void {
++		if (this.provider instanceof LocalListReputationProvider) {
++			if (action === 'block') {
++				this.provider.blockDomain(domain);
++			} else if (action === 'allow') {
++				this.provider.allowDomain(domain);
++			} else if (action === 'remove') {
++				this.provider.removeDomain(domain);
++			}
++		}
++	}
++}
+diff --git a/packages/backend/src/di-symbols.ts b/packages/backend/src/di-symbols.ts
+index 5ed82a0bae..cee4244ae5 100644
+--- a/packages/backend/src/di-symbols.ts
++++ b/packages/backend/src/di-symbols.ts
+@@ -94,5 +94,6 @@ export const DI = {
+ 	eventsRepository: Symbol('eventsRepository'),
+ 	eventRsvpsRepository: Symbol('eventRsvpsRepository'),
+ 	audioTranscriptsRepository: Symbol('audioTranscriptsRepository'),
++	flaggedLinksRepository: Symbol('flaggedLinksRepository'),
+ 	//#endregion
+ };
+diff --git a/packages/backend/src/models/FlaggedLink.ts b/packages/backend/src/models/FlaggedLink.ts
+new file mode 100644
+index 0000000000..1582794c79
+--- /dev/null
++++ b/packages/backend/src/models/FlaggedLink.ts
+@@ -0,0 +1,132 @@
++/*
++ * SPDX-FileCopyrightText: syuilo and misskey-project
++ * SPDX-License-Identifier: AGPL-3.0-only
++ */
++
++import { PrimaryColumn, Entity, Index, JoinColumn, Column, ManyToOne } from 'typeorm';
++import { id } from './util/id.js';
++import { MiUser } from './User.js';
++import { MiNote } from './Note.js';
++
++export const linkRiskCategories = ['malicious', 'suspicious'] as const;
++export type LinkRiskCategory = typeof linkRiskCategories[number];
++
++export const linkThreatTypes = [
++	'phishing',
++	'malware',
++	'spam',
++	'shortener',
++	'homograph',
++	'userinfo_obfuscation',
++	'ip_direct',
++	'reputation_blocklist',
++] as const;
++export type LinkThreatType = typeof linkThreatTypes[number];
++
++export const linkFlagSources = [
++	'reputation',
++	'homograph',
++	'userinfo',
++	'spam_frequency',
++	'report',
++	'admin_manual',
++] as const;
++export type LinkFlagSource = typeof linkFlagSources[number];
++
++@Entity('flagged_link')
++export class MiFlaggedLink {
++	@PrimaryColumn(id())
++	public id: string;
++
++	@Column('text', {
++		comment: 'Original raw URL submitted or detected.',
++	})
++	public url: string;
++
++	@Index()
++	@Column('varchar', {
++		length: 1024,
++		comment: 'Normalized canonical URL used for deduplication.',
++	})
++	public canonicalUrl: string;
++
++	@Index()
++	@Column('varchar', {
++		length: 255,
++		comment: 'Parsed destination domain / hostname.',
++	})
++	public domain: string;
++
++	@Index()
++	@Column('varchar', {
++		length: 32,
++		comment: 'Assessed risk category (malicious or suspicious).',
++	})
++	public riskCategory: LinkRiskCategory;
++
++	@Column('text', {
++		comment: 'Human-readable advisory reason.',
++	})
++	public reason: string;
++
++	@Column('varchar', {
++		length: 64,
++		default: 'spam',
++		comment: 'Identified threat or suspicion type.',
++	})
++	public threatType: LinkThreatType;
++
++	@Column('varchar', {
++		length: 64,
++		default: 'reputation',
++		comment: 'Source signal or analysis mechanism responsible for the flag.',
++	})
++	public source: LinkFlagSource;
++
++	@Index()
++	@Column({
++		...id(),
++		nullable: true,
++		comment: 'User who posted or submitted the flagged link, if known.',
++	})
++	public userId: MiUser['id'] | null;
++
++	@ManyToOne(() => MiUser, {
++		nullable: true,
++		onDelete: 'SET NULL',
++	})
++	@JoinColumn()
++	public user: MiUser | null;
++
++	@Index()
++	@Column({
++		...id(),
++		nullable: true,
++		comment: 'Associated Note ID, if link was in a note.',
++	})
++	public noteId: MiNote['id'] | null;
++
++	@ManyToOne(() => MiNote, {
++		nullable: true,
++		onDelete: 'SET NULL',
++	})
++	@JoinColumn()
++	public note: MiNote | null;
++
++	@Index()
++	@Column('boolean', {
++		default: false,
++		comment: 'Whether an administrator or moderator resolved/reviewed this record.',
++	})
++	public resolved: boolean;
++
++	@Column('timestamp with time zone', {
++		comment: 'The created date.',
++	})
++	public createdAt: Date;
++
++	@Column('timestamp with time zone', {
++		comment: 'The updated date.',
++	})
++	public updatedAt: Date;
++}
+diff --git a/packages/backend/src/models/RepositoryModule.ts b/packages/backend/src/models/RepositoryModule.ts
+index f49ccdd9b9..ff7acd7fd6 100644
+--- a/packages/backend/src/models/RepositoryModule.ts
++++ b/packages/backend/src/models/RepositoryModule.ts
+@@ -31,6 +31,7 @@ import {
+ 	MiEvent,
+ 	MiEventRsvp,
+ 	MiAudioTranscript,
++	MiFlaggedLink,
+ 	MiFlash,
+ 	MiFlashLike,
+ 	MiFollowing,
+@@ -565,6 +566,12 @@ const $audioTranscriptsRepository: Provider = {
+ 	inject: [DI.db],
+ };
+ 
++const $flaggedLinksRepository: Provider = {
++	provide: DI.flaggedLinksRepository,
++	useFactory: (db: DataSource) => db.getRepository(MiFlaggedLink).extend(miRepository as MiRepository<MiFlaggedLink>),
++	inject: [DI.db],
++};
++
+ @Module({
+ 	imports: [],
+ 	providers: [
+@@ -647,6 +654,7 @@ const $audioTranscriptsRepository: Provider = {
+ 		$eventsRepository,
+ 		$eventRsvpsRepository,
+ 		$audioTranscriptsRepository,
++		$flaggedLinksRepository,
+ 	],
+ 	exports: [
+ 		$usersRepository,
+@@ -728,6 +736,7 @@ const $audioTranscriptsRepository: Provider = {
+ 		$eventsRepository,
+ 		$eventRsvpsRepository,
+ 		$audioTranscriptsRepository,
++		$flaggedLinksRepository,
+ 	],
+ })
+ export class RepositoryModule {
+diff --git a/packages/backend/src/models/_.ts b/packages/backend/src/models/_.ts
+index 2a56346778..a596fd4734 100644
+--- a/packages/backend/src/models/_.ts
++++ b/packages/backend/src/models/_.ts
+@@ -38,6 +38,7 @@ import { MiEmoji } from '@/models/Emoji.js';
+ import { MiEvent } from '@/models/Event.js';
+ import { MiEventRsvp } from '@/models/EventRsvp.js';
+ import { MiAudioTranscript } from '@/models/AudioTranscript.js';
++import { MiFlaggedLink } from '@/models/FlaggedLink.js';
+ import { MiFlash } from '@/models/Flash.js';
+ import { MiFlashLike } from '@/models/FlashLike.js';
+ import { MiFollowing } from '@/models/Following.js';
+@@ -177,6 +178,7 @@ export {
+ 	MiBubbleGameRecord,
+ 	MiReversiGame,
+ 	MiAudioTranscript,
++	MiFlaggedLink,
+ };
+ 
+ export type AbuseUserReportsRepository = Repository<MiAbuseUserReport> & MiRepository<MiAbuseUserReport>;
+@@ -260,3 +262,4 @@ export type ReversiGamesRepository = Repository<MiReversiGame> & MiRepository<Mi
+ export type EventsRepository = Repository<MiEvent> & MiRepository<MiEvent>;
+ export type EventRsvpsRepository = Repository<MiEventRsvp> & MiRepository<MiEventRsvp>;
+ export type AudioTranscriptsRepository = Repository<MiAudioTranscript> & MiRepository<MiAudioTranscript>;
++export type FlaggedLinksRepository = Repository<MiFlaggedLink> & MiRepository<MiFlaggedLink>;
+diff --git a/packages/backend/src/postgres.ts b/packages/backend/src/postgres.ts
+index 73c35ad2c9..11935303e8 100644
+--- a/packages/backend/src/postgres.ts
++++ b/packages/backend/src/postgres.ts
+@@ -34,6 +34,7 @@ import { MiEmoji } from '@/models/Emoji.js';
+ import { MiEvent } from '@/models/Event.js';
+ import { MiEventRsvp } from '@/models/EventRsvp.js';
+ import { MiAudioTranscript } from '@/models/AudioTranscript.js';
++import { MiFlaggedLink } from '@/models/FlaggedLink.js';
+ import { MiFollowing } from '@/models/Following.js';
+ import { MiFollowRequest } from '@/models/FollowRequest.js';
+ import { MiGalleryLike } from '@/models/GalleryLike.js';
+@@ -221,6 +222,7 @@ export const entities = [
+ 	MiEvent,
+ 	MiEventRsvp,
+ 	MiAudioTranscript,
++	MiFlaggedLink,
+ 	MiHashtag,
+ 	MiSwSubscription,
+ 	MiSystemAccount,
+diff --git a/packages/backend/src/server/api/endpoint-list.ts b/packages/backend/src/server/api/endpoint-list.ts
+index e0fa33a42f..6c34550270 100644
+--- a/packages/backend/src/server/api/endpoint-list.ts
++++ b/packages/backend/src/server/api/endpoint-list.ts
+@@ -62,6 +62,8 @@ export * as 'admin/get-table-stats' from './endpoints/admin/get-table-stats.js';
+ export * as 'admin/get-user-ips' from './endpoints/admin/get-user-ips.js';
+ export * as 'admin/invite/create' from './endpoints/admin/invite/create.js';
+ export * as 'admin/invite/list' from './endpoints/admin/invite/list.js';
++export * as 'admin/links/flagged' from './endpoints/admin/links/flagged.js';
++export * as 'admin/links/rules/update' from './endpoints/admin/links/rules/update.js';
+ export * as 'admin/meta' from './endpoints/admin/meta.js';
+ export * as 'admin/promo/create' from './endpoints/admin/promo/create.js';
+ export * as 'admin/queue/clear' from './endpoints/admin/queue/clear.js';
+@@ -317,6 +319,7 @@ export * as 'invite/create' from './endpoints/invite/create.js';
+ export * as 'invite/delete' from './endpoints/invite/delete.js';
+ export * as 'invite/limit' from './endpoints/invite/limit.js';
+ export * as 'invite/list' from './endpoints/invite/list.js';
++export * as 'links/check' from './endpoints/links/check.js';
+ export * as 'meta' from './endpoints/meta.js';
+ export * as 'miauth/gen-token' from './endpoints/miauth/gen-token.js';
+ export * as 'mute/create' from './endpoints/mute/create.js';
+diff --git a/packages/backend/src/server/api/endpoints/admin/links/flagged.ts b/packages/backend/src/server/api/endpoints/admin/links/flagged.ts
+new file mode 100644
+index 0000000000..93811fbe2d
+--- /dev/null
++++ b/packages/backend/src/server/api/endpoints/admin/links/flagged.ts
+@@ -0,0 +1,86 @@
++/*
++ * SPDX-FileCopyrightText: syuilo and misskey-project
++ * SPDX-License-Identifier: AGPL-3.0-only
++ */
++
++import { Injectable } from '@nestjs/common';
++import ms from 'ms';
++import { Endpoint } from '@/server/api/endpoint-base.js';
++import { LinkSafetyService } from '@/core/security/LinkSafetyService.js';
++
++export const meta = {
++	tags: ['admin', 'security'],
++	requireCredential: true,
++	requireModerator: true,
++	kind: 'read:admin:links',
++	limit: {
++		duration: ms('1hour'),
++		max: 100,
++	},
++	res: {
++		type: 'array',
++		optional: false,
++		nullable: false,
++		items: {
++			type: 'object',
++			properties: {
++				id: { type: 'string' },
++				url: { type: 'string' },
++				canonicalUrl: { type: 'string' },
++				domain: { type: 'string' },
++				riskCategory: { type: 'string' },
++				reason: { type: 'string' },
++				threatType: { type: 'string' },
++				source: { type: 'string' },
++				userId: { type: 'string', nullable: true },
++				noteId: { type: 'string', nullable: true },
++				resolved: { type: 'boolean' },
++				createdAt: { type: 'string' },
++				updatedAt: { type: 'string' },
++			},
++			required: ['id', 'url', 'canonicalUrl', 'domain', 'riskCategory', 'reason', 'resolved'],
++		},
++	},
++} as const;
++
++export const paramDef = {
++	type: 'object',
++	properties: {
++		limit: { type: 'integer', minimum: 1, maximum: 100, default: 30 },
++		sinceId: { type: 'string', format: 'misskey:id', nullable: true },
++		untilId: { type: 'string', format: 'misskey:id', nullable: true },
++		unresolvedOnly: { type: 'boolean', default: false },
++	},
++} as const;
++
++@Injectable()
++export default class extends Endpoint<typeof meta, typeof paramDef> {
++	constructor(
++		private linkSafetyService: LinkSafetyService,
++	) {
++		super(meta, paramDef, async (ps) => {
++			const flagged = await this.linkSafetyService.getFlaggedLinks({
++				limit: ps.limit,
++				sinceId: ps.sinceId ?? undefined,
++				untilId: ps.untilId ?? undefined,
++				unresolvedOnly: ps.unresolvedOnly,
++			});
++
++			return flagged.map(f => ({
++				id: f.id,
++				url: f.url,
++				canonicalUrl: f.canonicalUrl,
++				domain: f.domain,
++				riskCategory: f.riskCategory,
++				reason: f.reason,
++				threatType: f.threatType,
++				source: f.source,
++				userId: f.userId,
++				noteId: f.noteId,
++				resolved: f.resolved,
++				createdAt: f.createdAt.toISOString(),
++				updatedAt: f.updatedAt.toISOString(),
++			}));
++		});
++	}
++}
+diff --git a/packages/backend/src/server/api/endpoints/admin/links/rules/update.ts b/packages/backend/src/server/api/endpoints/admin/links/rules/update.ts
+new file mode 100644
+index 0000000000..1c95b9023d
+--- /dev/null
++++ b/packages/backend/src/server/api/endpoints/admin/links/rules/update.ts
+@@ -0,0 +1,59 @@
++/*
++ * SPDX-FileCopyrightText: syuilo and misskey-project
++ * SPDX-License-Identifier: AGPL-3.0-only
++ */
++
++import { Injectable } from '@nestjs/common';
++import ms from 'ms';
++import { Endpoint } from '@/server/api/endpoint-base.js';
++import { LinkSafetyService } from '@/core/security/LinkSafetyService.js';
++
++export const meta = {
++	tags: ['admin', 'security'],
++	requireCredential: true,
++	requireAdmin: true,
++	kind: 'write:admin:links',
++	limit: {
++		duration: ms('1hour'),
++		max: 60,
++	},
++	res: {
++		type: 'object',
++		optional: false,
++		nullable: false,
++		properties: {
++			success: { type: 'boolean' },
++			domain: { type: 'string' },
++			action: { type: 'string' },
++		},
++		required: ['success', 'domain', 'action'],
++	},
++} as const;
++
++export const paramDef = {
++	type: 'object',
++	properties: {
++		domain: { type: 'string', minLength: 1 },
++		action: {
++			type: 'string',
++			enum: ['block', 'allow', 'remove'],
++		},
++	},
++	required: ['domain', 'action'],
++} as const;
++
++@Injectable()
++export default class extends Endpoint<typeof meta, typeof paramDef> {
++	constructor(
++		private linkSafetyService: LinkSafetyService,
++	) {
++		super(meta, paramDef, async (ps) => {
++			this.linkSafetyService.updateDomainRule(ps.domain, ps.action as 'block' | 'allow' | 'remove');
++			return {
++				success: true,
++				domain: ps.domain,
++				action: ps.action,
++			};
++		});
++	}
++}
+diff --git a/packages/backend/src/server/api/endpoints/links/check.ts b/packages/backend/src/server/api/endpoints/links/check.ts
+new file mode 100644
+index 0000000000..6b6991fdd6
+--- /dev/null
++++ b/packages/backend/src/server/api/endpoints/links/check.ts
+@@ -0,0 +1,84 @@
++/*
++ * SPDX-FileCopyrightText: syuilo and misskey-project
++ * SPDX-License-Identifier: AGPL-3.0-only
++ */
++
++import { Injectable } from '@nestjs/common';
++import ms from 'ms';
++import { Endpoint } from '@/server/api/endpoint-base.js';
++import { LinkSafetyService } from '@/core/security/LinkSafetyService.js';
++
++export const meta = {
++	tags: ['links', 'security'],
++	requireCredential: false,
++	kind: 'read:links',
++	limit: {
++		duration: ms('1hour'),
++		max: 300,
++	},
++	res: {
++		type: 'object',
++		optional: false,
++		nullable: false,
++		properties: {
++			results: {
++				type: 'array',
++				items: {
++					type: 'object',
++					properties: {
++						url: { type: 'string' },
++						canonicalUrl: { type: 'string' },
++						domain: { type: 'string' },
++						category: { type: 'string' },
++						threatType: { type: 'string' },
++						reason: { type: 'string' },
++						confidence: { type: 'number' },
++						provider: { type: 'string' },
++						checkedAt: { type: 'string' },
++					},
++					required: ['url', 'canonicalUrl', 'category', 'reason'],
++				},
++			},
++		},
++		required: ['results'],
++	},
++} as const;
++
++export const paramDef = {
++	type: 'object',
++	properties: {
++		text: { type: 'string', nullable: true },
++		urls: {
++			type: 'array',
++			items: { type: 'string' },
++			nullable: true,
++		},
++	},
++} as const;
++
++@Injectable()
++export default class extends Endpoint<typeof meta, typeof paramDef> {
++	constructor(
++		private linkSafetyService: LinkSafetyService,
++	) {
++		super(meta, paramDef, async (ps, me) => {
++			const context = {
++				userId: me?.id,
++			};
++
++			if (ps.text) {
++				const results = await this.linkSafetyService.checkText(ps.text, context);
++				return { results };
++			}
++
++			if (ps.urls && ps.urls.length > 0) {
++				const results = await Promise.all(
++					ps.urls.map(u => this.linkSafetyService.checkUrl(u, context)),
++				);
++				return { results };
++			}
++
++			return { results: [] };
++		});
++	}
++}
+diff --git a/packages/backend/test/unit/LinkSafetyService.test.ts b/packages/backend/test/unit/LinkSafetyService.test.ts
+new file mode 100644
+index 0000000000..104a81ac4b
+--- /dev/null
++++ b/packages/backend/test/unit/LinkSafetyService.test.ts
+@@ -0,0 +1,393 @@
++/*
++ * SPDX-FileCopyrightText: syuilo and misskey-project
++ * SPDX-License-Identifier: AGPL-3.0-only
++ */
++
++import { describe, beforeEach, test, expect, vi } from 'vitest';
++import {
++	LinkSafetyService,
++	type LinkRiskAssessment,
++} from '@/core/security/LinkSafetyService.js';
++import {
++	LocalListReputationProvider,
++	MockReputationProvider,
++	DisabledReputationProvider,
++} from '@/core/security/LinkReputationProvider.js';
++import type { FlaggedLinksRepository, AbuseUserReportsRepository } from '@/models/_.js';
++import { MiFlaggedLink } from '@/models/FlaggedLink.js';
++import { IdService } from '@/core/IdService.js';
++
++describe('LinkSafetyService (CH03)', () => {
++	let service: LinkSafetyService;
++	let flaggedLinksStore: Map<string, MiFlaggedLink>;
++	let flaggedLinksRepoMock: Partial<FlaggedLinksRepository>;
++	let abuseReportsRepoMock: Partial<AbuseUserReportsRepository>;
++	let idServiceMock: Partial<IdService>;
++
++	let idCounter = 1;
++
++	beforeEach(() => {
++		flaggedLinksStore = new Map();
++		idCounter = 1;
++
++		flaggedLinksRepoMock = {
++			findOne: vi.fn(async (options: any) => {
++				const where = options?.where ?? {};
++				for (const item of flaggedLinksStore.values()) {
++					if (where.id && item.id === where.id) return item;
++					if (where.canonicalUrl && item.canonicalUrl === where.canonicalUrl) return item;
++				}
++				return null;
++			}),
++			save: vi.fn(async (entity: any) => {
++				if (!entity.id) {
++					entity.id = `flag_${idCounter++}`;
++				}
++				flaggedLinksStore.set(entity.id, entity);
++				return entity;
++			}),
++			createQueryBuilder: vi.fn(() => {
++				const query: any = {
++					orderBy: vi.fn().mockReturnThis(),
++					take: vi.fn().mockReturnThis(),
++					andWhere: vi.fn().mockReturnThis(),
++					getMany: vi.fn(async () => Array.from(flaggedLinksStore.values())),
++				};
++				return query;
++			}),
++		};
++
++		abuseReportsRepoMock = {
++			find: vi.fn(async () => []),
++		};
++
++		idServiceMock = {
++			generate: vi.fn(() => `flag_${idCounter++}`),
++		};
++
++		service = new LinkSafetyService(
++			flaggedLinksRepoMock as FlaggedLinksRepository,
++			abuseReportsRepoMock as AbuseUserReportsRepository,
++			idServiceMock as IdService,
++			new LocalListReputationProvider(),
++		);
++	});
++
++	describe('13.1 URL syntax and normalisation', () => {
++		test('normalises benign HTTP and HTTPS URLs', () => {
++			const norm1 = service.normalizeUrl('https://example.com/blog/article');
++			expect(norm1).not.toBeNull();
++			expect(norm1?.canonical).toBe('https://example.com/blog/article');
++			expect(norm1?.hostname).toBe('example.com');
++
++			const norm2 = service.normalizeUrl('http://example.org/test');
++			expect(norm2).not.toBeNull();
++			expect(norm2?.protocol).toBe('http:');
++		});
++
++		test('normalises hostname to lowercase and strips trailing dot', () => {
++			const norm = service.normalizeUrl('HTTPS://ExAmPle.cOM./path');
++			expect(norm).not.toBeNull();
++			expect(norm?.hostname).toBe('example.com');
++			expect(norm?.canonical).toBe('https://example.com/path');
++		});
++
++		test('strips default ports 80 (http) and 443 (https) while preserving non-default ports', () => {
++			const httpDefault = service.normalizeUrl('http://example.com:80/page');
++			expect(httpDefault?.canonical).toBe('http://example.com/page');
++
++			const httpsDefault = service.normalizeUrl('https://example.com:443/page');
++			expect(httpsDefault?.canonical).toBe('https://example.com/page');
++
++			const customPort = service.normalizeUrl('https://example.com:8443/page');
++			expect(customPort?.canonical).toBe('https://example.com:8443/page');
++		});
++
++		test('detects embedded userinfo in URLs', () => {
++			const withUser = service.normalizeUrl('https://admin:secret@example.com/dashboard');
++			expect(withUser).not.toBeNull();
++			expect(withUser?.hasUserInfo).toBe(true);
++			expect(withUser?.userInfo).toBe('admin:secret');
++		});
++
++		test('rejects unsupported or dangerous schemes', async () => {
++			const jsUrl = service.normalizeUrl('javascript:alert(1)');
++			expect(jsUrl).toBeNull();
++
++			const fileUrl = service.normalizeUrl('file:///etc/passwd');
++			expect(fileUrl).toBeNull();
++
++			const ftpUrl = service.normalizeUrl('ftp://ftp.example.com/file');
++			expect(ftpUrl).toBeNull();
++
++			const checkResult = await service.checkUrl('javascript:alert(1)');
++			expect(checkResult.category).toBe('suspicious');
++			expect(checkResult.reason).toContain('unsupported scheme');
++		});
++
++		test('handles internationalised and Punycode hostnames', () => {
++			const puny = service.normalizeUrl('https://xn--e1afmkfd.xn--p1ai/test');
++			expect(puny).not.toBeNull();
++			expect(puny?.isPunycode).toBe(true);
++		});
++	});
++
++	describe('13.2 SSRF and destination safety safeguards', () => {
++		test('prohibits IPv4 loopback destinations', () => {
++			expect(service.validateDestinationSafety('127.0.0.1').safe).toBe(false);
++			expect(service.validateDestinationSafety('127.0.10.1').safe).toBe(false);
++			expect(service.validateDestinationSafety('http://127.0.0.1:8080/admin').safe).toBe(false);
++		});
++
++		test('prohibits RFC1918 private IPv4 networks', () => {
++			expect(service.validateDestinationSafety('10.0.0.1').safe).toBe(false);
++			expect(service.validateDestinationSafety('172.16.5.10').safe).toBe(false);
++			expect(service.validateDestinationSafety('192.168.1.1').safe).toBe(false);
++		});
++
++		test('prohibits link-local, carrier-grade NAT, and multicast destinations', () => {
++			expect(service.validateDestinationSafety('169.254.1.1').safe).toBe(false);
++			expect(service.validateDestinationSafety('100.64.0.1').safe).toBe(false);
++			expect(service.validateDestinationSafety('224.0.0.1').safe).toBe(false);
++		});
++
++		test('prohibits IPv6 loopback and IPv4-mapped IPv6 loopback', () => {
++			expect(service.validateDestinationSafety('::1').safe).toBe(false);
++			expect(service.validateDestinationSafety('::ffff:127.0.0.1').safe).toBe(false);
++			expect(service.validateDestinationSafety('::ffff:192.168.1.1').safe).toBe(false);
++		});
++
++		test('prohibits localhost and local hostnames', () => {
++			expect(service.validateDestinationSafety('localhost').safe).toBe(false);
++			expect(service.validateDestinationSafety('internal.localhost').safe).toBe(false);
++			expect(service.validateDestinationSafety('router.local').safe).toBe(false);
++		});
++
++		test('allows valid public unicast IP addresses', () => {
++			expect(service.validateDestinationSafety('93.184.216.34').safe).toBe(true);
++		});
++
++		test('marks SSRF attempt as malicious when checked via checkUrl', async () => {
++			const res = await service.checkUrl('http://127.0.0.1/internal/secrets');
++			expect(res.category).toBe('malicious');
++			expect(res.provider).toBe('ssrf-guard');
++			expect(res.reason).toContain('prohibited range');
++		});
++	});
++
++	describe('13.3 Homograph / confusable domain detection', () => {
++		test('flags Cyrillic homoglyph lookalikes imitating protected domains', () => {
++			// 'gооgle.com' with Cyrillic 'о' (U+043E)
++			const cyrillicGoogle = service.normalizeUrl('https://gооgle.com/login');
++			expect(cyrillicGoogle).not.toBeNull();
++
++			const detected = service.detectHomographs(cyrillicGoogle!);
++			expect(detected.isHomograph).toBe(true);
++			expect(detected.matchedDomain).toBe('google.com');
++		});
++
++		test('flags lookalikes imitating paypal.com', () => {
++			// 'раypal.com' with Cyrillic 'р' (U+0440) and 'а' (U+0430)
++			const fakePaypal = service.normalizeUrl('https://раypal.com/verify');
++			expect(fakePaypal).not.toBeNull();
++
++			const detected = service.detectHomographs(fakePaypal!);
++			expect(detected.isHomograph).toBe(true);
++			expect(detected.matchedDomain).toBe('paypal.com');
++		});
++
++		test('does not flag genuine protected domain', () => {
++			const genuine = service.normalizeUrl('https://google.com/search');
++			expect(genuine).not.toBeNull();
++
++			const detected = service.detectHomographs(genuine!);
++			expect(detected.isHomograph).toBe(false);
++		});
++	});
++
++	describe('13.4 Reputation provider strategy and caching', () => {
++		test('LocalListReputationProvider returns benign for allowlisted domain', async () => {
++			const res = await service.checkUrl('https://github.com/misskey-dev/misskey');
++			expect(res.category).toBe('benign');
++			expect(res.provider).toBe('local-reputation-list');
++		});
++
++		test('LocalListReputationProvider returns malicious for blocklisted domain', async () => {
++			const res = await service.checkUrl('https://malware-test.example.com/bad.exe');
++			expect(res.category).toBe('malicious');
++			expect(res.threatType).toBe('reputation_blocklist');
++		});
++
++		test('LocalListReputationProvider returns suspicious for known URL shortener', async () => {
++			const res = await service.checkUrl('https://bit.ly/abcdef');
++			expect(res.category).toBe('suspicious');
++			expect(res.threatType).toBe('shortener');
++			expect(res.reason).toContain('URL shortener');
++		});
++
++		test('MockReputationProvider returns deterministic verdicts', async () => {
++			const mockProvider = new MockReputationProvider();
++			mockProvider.setVerdict('custom-phish.net', {
++				category: 'malicious',
++				threatType: 'phishing',
++				reason: 'Verified credential phishing simulation',
++			});
++
++			service.setProvider(mockProvider);
++			const res = await service.checkUrl('https://custom-phish.net/login');
++			expect(res.category).toBe('malicious');
++			expect(res.threatType).toBe('phishing');
++			expect(res.provider).toBe('mock-reputation-provider');
++		});
++
++		test('handles provider failure gracefully without falsely labelling safe or malicious', async () => {
++			const mockProvider = new MockReputationProvider();
++			mockProvider.setShouldThrow(true, new Error('Network timeout'));
++			service.setProvider(mockProvider);
++
++			const res = await service.checkUrl('https://some-unseen-site.org/page');
++			expect(res.category).toBe('unknown');
++			expect(res.reason).toContain('Reputation provider failed: Network timeout');
++			expect(res.confidence).toBe(0.0);
++		});
++
++		test('DisabledReputationProvider returns unknown', async () => {
++			service.setProvider(new DisabledReputationProvider());
++			const res = await service.checkUrl('https://example.org/test');
++			expect(res.category).toBe('unknown');
++			expect(res.reason).toContain('disabled');
++		});
++
++		test('caches positive verdict and avoids duplicate lookups', async () => {
++			const mockProvider = new MockReputationProvider();
++			const classifySpy = vi.spyOn(mockProvider, 'classify');
++			mockProvider.setVerdict('https://cached-safe.org/page', {
++				category: 'benign',
++				reason: 'Cached test verdict',
++			});
++
++			service.setProvider(mockProvider);
++
++			// First check
++			const res1 = await service.checkUrl('https://cached-safe.org/page');
++			expect(res1.category).toBe('benign');
++			expect(classifySpy).toHaveBeenCalledTimes(1);
++
++			// Second check should hit cache
++			const res2 = await service.checkUrl('https://cached-safe.org/page');
++			expect(res2.category).toBe('benign');
++			expect(classifySpy).toHaveBeenCalledTimes(1);
++		});
++	});
++
++	describe('13.5 Spam and repeated promotional-pattern analysis', () => {
++		test('flags repeated identical URL posting within 5 minutes', async () => {
++			const userId = 'spammer_123';
++			const testUrl = 'https://promo-affiliate.com/deal';
++
++			// Normal initial post: unknown or benign, recorded
++			const res1 = await service.checkUrl(testUrl, { userId });
++			expect(res1.threatType).not.toBe('spam');
++
++			// Second post within interval
++			const res2 = await service.checkUrl(testUrl, { userId });
++			expect(res2.threatType).not.toBe('spam');
++
++			// Third post of exact same link within interval -> flags suspicious spam
++			const res3 = await service.checkUrl(testUrl, { userId });
++			expect(res3.category).toBe('suspicious');
++			expect(res3.threatType).toBe('spam');
++			expect(res3.reason).toContain('Repeated promotional posting');
++		});
++
++		test('flags high-frequency link bursts to the same domain within 10 minutes', async () => {
++			const userId = 'domain_spammer';
++
++			// Post 4 different links to same domain
++			await service.checkUrl('https://promo-burst.com/page1', { userId });
++			await service.checkUrl('https://promo-burst.com/page2', { userId });
++			await service.checkUrl('https://promo-burst.com/page3', { userId });
++			await service.checkUrl('https://promo-burst.com/page4', { userId });
++
++			// 5th post to same domain triggers burst warning
++			const res5 = await service.checkUrl('https://promo-burst.com/page5', { userId });
++			expect(res5.category).toBe('suspicious');
++			expect(res5.threatType).toBe('spam');
++			expect(res5.reason).toContain('High-frequency link bursts');
++		});
++
++		test('deduplicates abuse reports to prevent coordinated manipulation', async () => {
++			const fakeDomain = 'reported-site.org';
++
++			// 5 reports, but all by same malicious reporter 'bad_actor'
++			const duplicateReports = [
++				{ id: '1', reporterId: 'bad_actor', comment: `Abuse on ${fakeDomain}`, createdAt: new Date() },
++				{ id: '2', reporterId: 'bad_actor', comment: `More abuse on ${fakeDomain}`, createdAt: new Date() },
++				{ id: '3', reporterId: 'bad_actor', comment: `Third report ${fakeDomain}`, createdAt: new Date() },
++				{ id: '4', reporterId: 'bad_actor', comment: `Fourth report ${fakeDomain}`, createdAt: new Date() },
++				{ id: '5', reporterId: 'bad_actor', comment: `Fifth report ${fakeDomain}`, createdAt: new Date() },
++			];
++
++			abuseReportsRepoMock.find = vi.fn(async () => duplicateReports as any);
++
++			const check = await service.checkAbuseReportsForDomain(fakeDomain);
++			// Unique reporters = 1, threshold of 3 independent reporters not met
++			expect(check.reported).toBe(false);
++			expect(check.count).toBe(1);
++
++			// Now 3 distinct independent reporters
++			const independentReports = [
++				{ id: '1', reporterId: 'user_a', comment: `Abuse on ${fakeDomain}`, createdAt: new Date() },
++				{ id: '2', reporterId: 'user_b', comment: `Spam on ${fakeDomain}`, createdAt: new Date() },
++				{ id: '3', reporterId: 'user_c', comment: `Phishing on ${fakeDomain}`, createdAt: new Date() },
++			];
++
++			abuseReportsRepoMock.find = vi.fn(async () => independentReports as any);
++			const check2 = await service.checkAbuseReportsForDomain(fakeDomain);
++			expect(check2.reported).toBe(true);
++			expect(check2.count).toBe(3);
++			expect(check2.reason).toContain('3 independent abuse reports');
++		});
++	});
++
++	describe('13.6 Post text scanning and admin review', () => {
++		test('extracts and checks multiple URLs from post text', async () => {
++			const text = 'Check out https://github.com and also http://127.0.0.1:3000/internal for details';
++			const results = await service.checkText(text);
++
++			expect(results).toHaveLength(2);
++			const githubResult = results.find(r => r.domain === 'github.com');
++			const ssrfResult = results.find(r => r.domain === '127.0.0.1');
++
++			expect(githubResult?.category).toBe('benign');
++			expect(ssrfResult?.category).toBe('malicious');
++		});
++
++		test('persists flagged link audit records and allows admin review and resolution', async () => {
++			// Trigger a flag
++			await service.checkUrl('https://malware-test.example.com/trojan');
++
++			expect(flaggedLinksStore.size).toBeGreaterThanOrEqual(1);
++			const storedList = await service.getFlaggedLinks();
++			expect(storedList).toHaveLength(1);
++			expect(storedList[0].domain).toBe('malware-test.example.com');
++			expect(storedList[0].resolved).toBe(false);
++
++			// Admin resolves the flagged link
++			const resolved = await service.resolveFlaggedLink(storedList[0].id, true);
++			expect(resolved).toBe(true);
++			expect(flaggedLinksStore.get(storedList[0].id)?.resolved).toBe(true);
++		});
++
++		test('admin can dynamically update domain rules', async () => {
++			service.updateDomainRule('custom-blocked.com', 'block');
++			const res1 = await service.checkUrl('https://custom-blocked.com/bad');
++			expect(res1.category).toBe('malicious');
++
++			service.updateDomainRule('custom-blocked.com', 'allow');
++			service.clearCache();
++			const res2 = await service.checkUrl('https://custom-blocked.com/bad');
++			expect(res2.category).toBe('benign');
++		});
++	});
++});
+diff --git a/packages/frontend/src/components/MkPostForm.vue b/packages/frontend/src/components/MkPostForm.vue
+index d4bf048956..7fd65b761a 100644
+--- a/packages/frontend/src/components/MkPostForm.vue
++++ b/packages/frontend/src/components/MkPostForm.vue
+@@ -71,6 +71,10 @@ SPDX-License-Identifier: AGPL-3.0-only
+ 		</I18n> - <button class="_textButton" @click="cancelSchedule()">{{ i18n.ts.cancel }}</button>
+ 	</MkInfo>
+ 	<MkInfo v-if="hasNotSpecifiedMentions" warn :class="$style.hasNotSpecifiedMentions">{{ i18n.ts.notSpecifiedMentionWarning }} - <button class="_textButton" @click="addMissingMention()">{{ i18n.ts.add }}</button></MkInfo>
++	<MkInfo v-if="linkSafetyWarning != null" warn :class="$style.hasNotSpecifiedMentions">
++		<i class="ti ti-alert-triangle" style="margin-right: 4px;"></i>
++		<span>{{ linkSafetyWarning }}</span> - <button class="_textButton" @click="linkSafetyWarning = null">{{ i18n.ts.dismiss ?? 'Dismiss' }}</button>
++	</MkInfo>
+ 	<div v-show="useCw" :class="$style.cwOuter">
+ 		<input ref="cwInputEl" v-model="cw" :class="$style.cw" :placeholder="i18n.ts.annotation" @keydown="onKeydown" @keyup="onKeyup" @compositionend="onCompositionEnd">
+ 		<div v-if="maxCwTextLength - cwTextLength < 20" :class="['_acrylic', $style.cwTextCount, { [$style.cwTextOver]: cwTextLength > maxCwTextLength }]">{{ maxCwTextLength - cwTextLength }}</div>
+@@ -215,6 +219,34 @@ const scheduledAt = ref<number | null>(null);
+ const draghover = ref(false);
+ const quoteId = ref<string | null>(null);
+ const hasNotSpecifiedMentions = ref(false);
++const linkSafetyWarning = ref<string | null>(null);
++let linkCheckDebounceTimer: any = null;
++let lastCheckedText = '';
++
++watch(text, (val) => {
++	if (!val || !val.includes('http')) {
++		linkSafetyWarning.value = null;
++		return;
++	}
++	if (val === lastCheckedText) return;
++
++	if (linkCheckDebounceTimer) clearTimeout(linkCheckDebounceTimer);
++	linkCheckDebounceTimer = setTimeout(async () => {
++		lastCheckedText = val;
++		try {
++			const res = await os.api('links/check', { text: val });
++			const risky = res.results?.find((r: any) => r.category === 'malicious' || r.category === 'suspicious');
++			if (risky) {
++				linkSafetyWarning.value = `Link Safety Advisory: destination '${risky.domain}' flagged as ${risky.category} (${risky.reason})`;
++			} else {
++				linkSafetyWarning.value = null;
++			}
++		} catch {
++			// Fail open on check errors to avoid blocking drafting
++		}
++	}, 600);
++});
++
+ const recentHashtags = ref(JSON.parse(miLocalStorage.getItem('hashtags') ?? '[]'));
+ const imeText = ref('');
+ const showingOptions = ref(false);
+diff --git a/packages/frontend/src/components/global/MkUrl.vue b/packages/frontend/src/components/global/MkUrl.vue
+index 14beede818..a6a10d7fbb 100644
+--- a/packages/frontend/src/components/global/MkUrl.vue
++++ b/packages/frontend/src/components/global/MkUrl.vue
+@@ -7,6 +7,7 @@ SPDX-License-Identifier: AGPL-3.0-only
+ <component
+ 	:is="self ? 'MkA' : 'a'" ref="el" :class="$style.root" class="_link" :[attr]="maybeRelativeUrl" :rel="rel ?? 'nofollow noopener'" :target="target"
+ 	:behavior="props.navigationBehavior"
++	@click="onClick"
+ 	@contextmenu.stop="() => {}"
+ >
+ 	<template v-if="!self">
+@@ -20,12 +21,13 @@ SPDX-License-Identifier: AGPL-3.0-only
+ 	<span v-if="pathname != ''" :class="$style.pathname">{{ self ? pathname.substring(1) : pathname }}</span>
+ 	<span :class="$style.query">{{ query }}</span>
+ 	<span :class="$style.hash">{{ hash }}</span>
++	<i v-if="isSuspicious" :class="[$style.icon, $style.warnIcon]" class="ti ti-alert-triangle" v-tooltip="suspicionReason"></i>
+ 	<i v-if="target === '_blank'" :class="$style.icon" class="ti ti-external-link"></i>
+ </component>
+ </template>
+ 
+ <script lang="ts" setup>
+-import { defineAsyncComponent, ref } from 'vue';
++import { computed, defineAsyncComponent, ref } from 'vue';
+ import { url as local } from '@@/js/config.js';
+ import { maybeMakeRelative, parseUrlForDisplay } from '@@/js/url.js';
+ import type { MkABehavior } from '@/components/global/MkA.vue';
+@@ -47,6 +49,48 @@ const self = maybeRelativeUrl !== props.url;
+ const { schema, hostname, port, pathname, query, hash } = parseUrlForDisplay(props.url);
+ const el = ref();
+ 
++const isSuspicious = computed(() => {
++	if (self) return false;
++	try {
++		const u = new URL(props.url);
++		if (u.username || u.password) return true;
++		if (u.hostname.startsWith('xn--') || u.hostname.includes('.xn--')) return true;
++		if (/^(\d{1,3}\.){3}\d{1,3}$/.test(u.hostname)) return true;
++	} catch {
++		return true;
++	}
++	return false;
++});
++
++const suspicionReason = computed(() => {
++	if (!isSuspicious.value) return '';
++	try {
++		const u = new URL(props.url);
++		if (u.username || u.password) return 'Suspicious URL: contains embedded credentials';
++		if (u.hostname.startsWith('xn--') || u.hostname.includes('.xn--')) return 'Advisory: Internationalized/Punycode domain';
++		if (/^(\d{1,3}\.){3}\d{1,3}$/.test(u.hostname)) return 'Advisory: Numeric IP destination';
++	} catch {
++		return 'Malformed destination URL';
++	}
++	return 'Potential link safety advisory';
++});
++
++async function onClick(ev: MouseEvent) {
++	if (isSuspicious.value) {
++		ev.preventDefault();
++		const { canceled } = await os.confirm({
++			type: 'warning',
++			title: 'External Link Security Warning',
++			text: `Destination: ${hostname}\nRisk Advisory: ${suspicionReason.value}\nAre you sure you want to proceed to this external website?`,
++			okText: 'Proceed to website',
++			cancelText: 'Cancel',
++		});
++		if (!canceled) {
++			window.open(props.url, '_blank', 'noopener,noreferrer');
++		}
++	}
++}
++
+ if (props.showUrlPreview && isEnabledUrlPreview.value) {
+ 	useTooltip(el, (showing) => {
+ 		const { dispose } = os.popup(defineAsyncComponent(() => import('@/components/MkUrlPreviewPopup.vue')), {
+@@ -64,6 +108,11 @@ const target = self ? null : '_blank';
+ </script>
+ 
+ <style lang="scss" module>
++.warnIcon {
++	color: var(--warn, #f59e0b);
++	margin-left: 2px;
++	font-size: 0.95em;
++}
+ .root {
+ 	word-break: break-all;
+ }

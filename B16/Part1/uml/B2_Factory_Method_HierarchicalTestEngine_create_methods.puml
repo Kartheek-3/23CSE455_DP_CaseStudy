@@ -1,0 +1,36 @@
+@startuml B2
+!pragma layout smetana
+title B2 Factory Method: HierarchicalTestEngine create methods
+
+abstract class "HierarchicalTestEngine<C>" as HierarchicalTestEngine <<Creator>> {
+  +{method} final execute(ExecutionRequest)
+  #createExecutorService(...) : HierarchicalTestExecutorService
+  #createExecutionContext(...) : C
+  #createThrowableCollectorFactory(...) : ThrowableCollector.Factory
+}
+class JupiterTestEngine <<ConcreteCreator>>
+interface HierarchicalTestExecutorService <<Product, not counted>> #E6E6E6
+interface EngineExecutionContext <<Product, not counted>> #E6E6E6
+interface "ThrowableCollector.Factory" as TCFactory <<Product, not counted>> #E6E6E6
+class SameThreadHierarchicalTestExecutorService <<ConcreteProduct, not counted>> #E6E6E6
+class JupiterEngineExecutionContext <<ConcreteProduct>>
+
+JupiterTestEngine --|> HierarchicalTestEngine
+SameThreadHierarchicalTestExecutorService ..|> HierarchicalTestExecutorService
+JupiterEngineExecutionContext ..|> EngineExecutionContext
+HierarchicalTestEngine ..> SameThreadHierarchicalTestExecutorService : default createExecutorService()
+JupiterTestEngine ..> JupiterEngineExecutionContext : createExecutionContext()
+HierarchicalTestEngine ..> HierarchicalTestExecutorService : uses
+HierarchicalTestEngine ..> EngineExecutionContext : uses
+HierarchicalTestEngine ..> TCFactory : uses
+' aligned-with-record
+legend right
+  <b>Counted participants</b> (record in the dataset)
+  Creator (factory method): HierarchicalTestEngine#createExecutorService
+  ConcreteCreator: JupiterTestEngine#createExecutorService
+  ConcreteCreator: JupiterTestEngine#createExecutionContext
+  ConcreteCreator: JupiterTestEngine#createThrowableCollectorFactory
+  ConcreteProduct: JupiterEngineExecutionContext
+  Grey classes: real, shown for context, not counted
+endlegend
+@enduml

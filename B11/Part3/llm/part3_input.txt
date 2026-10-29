@@ -1,0 +1,10 @@
+Input supplied to the model:
+- The four confirmed Part 1 pattern instances, reframed to the case-management
+  domain so each is meaningful in isolation:
+    Strategy        -> late-fee policy (RegularFine / AdvocateFine)
+    Adapter         -> user-to-security (Users -> UserDetails)
+    Template Method -> case-report generator (header/body/footer hooks)
+    Observer        -> hearing notification (subject + email/SMS observers)
+- Shared test cases per pattern (fixed inputs, expected output lines).
+- Toolchain for measurement recorded in cross_language.csv (runtime_compiler column)
+  and in README (LOC / cyclomatic-complexity / timing rules).

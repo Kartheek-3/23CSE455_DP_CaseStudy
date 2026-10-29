@@ -1,0 +1,49 @@
+
+Part 1 — Existing-System Investigation and Design-Pattern Identification
+
+Repository:
+https://github.com/manjurulhoque/django-job-portal
+
+Recorded baseline commit:
+f6e5efb33e9aac7334a364ee46d6e2ad1321db30
+
+Objective:
+Analyze the existing Django Job Portal using actual source-code evidence. Identify confirmed design-pattern collaborations, document uncertain candidates, reconstruct the architecture, and prepare the Part 1 inventory.
+
+Tasks:
+1. Inspect the README, dependency files, settings, models, serializers, views, permissions, URLs, GraphQL components, and relevant tests.
+2. Identify the application's implemented domain concepts and trace representative request flows where supported by the code.
+3. Reconstruct the architecture and describe the responsibilities and relationships of major components.
+4. Investigate GoF and framework-related patterns, including Strategy, Template Method, Factory Method, Observer, State, Adapter, Decorator, and other plausible candidates.
+5. For every candidate, document its pattern name, participants, source locations, supporting evidence, confidence, benefits, limitations, and any additional verification required.
+6. Do not classify a pattern merely because a class uses inheritance, a framework hook, a callback, or a familiar name. Mark incomplete evidence as partial or uncertain.
+7. Create:
+   - Part1/patterns.csv
+   - Part1/Pattern_count.csv
+   - Part1/pattern_architecture diagram source/image
+   - Part1/Part1_prompt.txt
+   - Part1/llm.csv
+
+Required patterns.csv columns:
+source_version,pattern_name,pattern_type,instance_name,participant_roles,source_locations,intent_and_evidence
+
+Required Pattern_count.csv columns:
+source_version,summary,pattern_name,count
+
+Required llm.csv columns:
+part,model_and_date,prompt_file,input_file,output_file,evaluation,verification_file
+
+Baseline inventory recorded in the case study:
+- Strategy: 2 instances
+- Template Method: 2 instances
+- Factory Method: 1 qualified candidate
+
+This is a total of five documented instances across three pattern types. Preserve the qualification on Factory Method and do not treat uncertain candidates as confirmed patterns.
+
+Quality requirements:
+- Ground classifications in source code and cite file paths and line ranges.
+- Count distinct collaborations consistently.
+- Keep baseline findings separate from later Part 2 changes.
+- Record actual test commands and results; do not invent successful tests, metrics, or verification.
+- If exact historical prompts or raw outputs were not retained, disclose that limitation in llm.csv.
+- Ensure the report, diagrams, and CSV counts agree.

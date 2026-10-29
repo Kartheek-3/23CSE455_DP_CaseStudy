@@ -1,0 +1,13 @@
+Analyze the supplied MBTA API source code for possible design pattern instances.
+
+For every candidate:
+1. Identify the pattern type and meaningful instance name.
+2. Identify the context, common interface or behaviour, and concrete participants.
+3. Record exact source file paths and line ranges.
+4. Explain the relationships and delegation calls that support the pattern.
+5. Distinguish confirmed patterns from uncertain or rejected candidates.
+6. Do not infer participants or source evidence that are not present in the supplied code.
+
+Focus on Strategy pattern candidates involving rate-limiter backend selection and state-data parsing.
+
+Return evidence-backed findings and clearly identify any details that cannot be verified.

@@ -1,0 +1,37 @@
+@startuml B8
+!pragma layout smetana
+title B8 Observer: NodeTestTask and EngineExecutionListener
+
+class "NodeTestTask<C>" as NodeTestTask <<Subject>> {
+  -taskContext : NodeTestTaskContext
+  -reportCompletion()
+}
+interface EngineExecutionListener <<Observer>> {
+  +executionSkipped(...)
+  +executionStarted(...)
+  +executionFinished(...)
+  +dynamicTestRegistered(...)
+}
+class ExecutionListenerAdapter <<ConcreteObserver>>
+class CompositeEngineExecutionListener <<ConcreteObserver, not counted>> #E6E6E6
+class DelegatingEngineExecutionListener <<ConcreteObserver, not counted>> #E6E6E6
+class ExecutionRequest <<Carrier>> {
+  +getEngineExecutionListener()
+}
+
+ExecutionListenerAdapter ..|> EngineExecutionListener
+CompositeEngineExecutionListener ..|> EngineExecutionListener
+DelegatingEngineExecutionListener ..|> EngineExecutionListener
+ExecutionRequest o--> EngineExecutionListener : listener
+NodeTestTask ..> EngineExecutionListener : taskContext.listener().executionStarted() / executionFinished()
+' aligned-with-record
+legend right
+  <b>Counted participants</b> (record in the dataset)
+  Observer: EngineExecutionListener
+  ConcreteObserver: OutcomeDelayingEngineExecutionListener (not drawn)
+  ConcreteObserver: ExecutionListenerAdapter
+  Subject (notify): NodeTestTask#executeRecursively
+  Subject (notify): NodeTestTask#reportCompletion
+  Grey classes: real, shown for context, not counted
+endlegend
+@enduml

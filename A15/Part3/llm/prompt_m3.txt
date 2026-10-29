@@ -1,0 +1,16 @@
+[Member 3 prompt - Part 3, cross-language comparison]
+You are assisting with a university Design Patterns case study (course 23CSE455), Part 3.
+INPUT: input_m3_source.txt = numbered Java source of a Quarkus bank REST API (the final evolved source (after Change3)). Every line starts with its real line number and '|'.
+
+TASK: for each pattern instance below, reduce the real collaboration to a SMALL problem and implement it in
+Java 21, Python 3, JavaScript (Node.js) and C++17, preserving the same pattern roles and the same behaviour.
+   - strategy_account_policy: pattern Strategy, instance "Account Type Policy"
+   - observer_transaction_events: pattern Observer, instance "Transaction Audit and Alert Notification"
+   - domain_model_account: pattern Domain Model, instance "Account Balance Domain Model"
+
+RULES:
+1. One shared fixture file per problem, test-cases/cases.txt. Line format: `commands separated by ';' => expected output of the LAST command`; lines starting with '#' are comments. Output numbers with exactly two decimals.
+2. Per language: one production file (Snippet.java / snippet.py / snippet.js / snippet.hpp) and a separate test driver that reads the fixture file, prints PASS/FAIL per case and a final line `RESULT passed=N total=M`.
+3. Use the same role/class names in all four languages. Do not invent classes for roles that a duck-typed language leaves implicit - say so.
+4. Keep the behaviour of the original collaboration (including error cases: not found, bad request).
+5. State what you could not verify.

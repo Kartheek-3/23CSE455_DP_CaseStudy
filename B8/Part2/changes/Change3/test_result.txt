@@ -1,0 +1,27 @@
+Change3 (attendance notifications) test run - 2026-10-11 20:46
+Backend: FastAPI TestClient on a temporary copy of backend/gym_system.db
+
+[PASS] publisher has 4 subscribed observers  (InAppNotificationObserver, EmailNotificationObserver, SmsNotificationObserver, TrainerAlertObserver)
+[PASS] all subscribers implement AttendanceObserver
+[PASS] trainer marks attendance
+[PASS] member gets in-app check-in and 3-day streak notifications  (attendance_marked, streak_milestone)
+[PASS] unread count is 2
+[PASS] assigned trainer is alerted about the streak
+[PASS] closing a class before it starts is rejected (400)
+[PASS] members cannot close a class (403)
+[PASS] closing a class marks remaining bookings as no-shows  ({'class_name': 'Test Yoga', 'no_shows': 1, 'members': ['Jane Member']})
+[PASS] closing again finds no new no-shows
+[PASS] member gets a missed-class notification
+[PASS] assigned trainer gets a missed-class alert
+[PASS] member marks a notification read
+[PASS] users cannot mark someone else's notification (404)
+[PASS] mark all read clears the rest
+[PASS] unread count is 0
+[PASS] email records are updated after delivery attempt  (attendance_marked=failed, streak_milestone=failed, class_missed=failed (no SMTP configured, so failed is expected))
+[PASS] member turns attendance alerts off
+[PASS] opted-out member gets no email
+[PASS] opted-out member still gets the in-app notification
+[PASS] streak endpoint still works after refactor
+
+Result: 21 passed, 0 failed
+Frontend: ng build --configuration development -> success (final code after Change3)

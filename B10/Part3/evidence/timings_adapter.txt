@@ -1,0 +1,55 @@
+# Timings for Adapter (adapter_sensor_driver)
+# time.perf_counter() around subprocess.run(); 1 warmup + 5 measured runs; milliseconds
+# machine: <host>, measured with Python 3.12.7
+
+[java]
+working folder: B10\Part3\adapter_sensor_driver\java
+compile command: javac -d out AbstractInput.java SensorDriverTest.java
+run command: java -cp out SensorDriverTest
+warmup_ms: 227.482
+run_1_ms: 156.345
+run_2_ms: 156.190
+run_3_ms: 157.819
+run_4_ms: 156.406
+run_5_ms: 153.867
+median_ms: 156.345
+last run exit code: 0; last line: Adapter tests: 12/12 passed
+
+[python]
+working folder: B10\Part3\adapter_sensor_driver\python
+compile command: (none)
+run command: python test_sensor_driver.py
+warmup_ms: 74.545
+run_1_ms: 72.979
+run_2_ms: 72.500
+run_3_ms: 73.645
+run_4_ms: 74.263
+run_5_ms: 66.118
+median_ms: 72.979
+last run exit code: 0; last line: Adapter tests: 12/12 passed
+
+[javascript]
+working folder: B10\Part3\adapter_sensor_driver\javascript
+compile command: (none)
+run command: node test_sensor_driver.js
+warmup_ms: 94.156
+run_1_ms: 92.091
+run_2_ms: 91.967
+run_3_ms: 93.583
+run_4_ms: 103.203
+run_5_ms: 92.718
+median_ms: 92.718
+last run exit code: 0; last line: Adapter tests: 12/12 passed
+
+[cpp]
+working folder: B10\Part3\adapter_sensor_driver\cpp
+compile command: g++ -std=c++14 -O2 -Wall -o test_sensor_driver.exe test_sensor_driver.cpp
+run command: B10\Part3\adapter_sensor_driver\cpp\test_sensor_driver.exe
+warmup_ms: 280.634
+run_1_ms: 32.800
+run_2_ms: 34.373
+run_3_ms: 36.924
+run_4_ms: 30.442
+run_5_ms: 30.386
+median_ms: 32.800
+last run exit code: 0; last line: Adapter tests: 12/12 passed

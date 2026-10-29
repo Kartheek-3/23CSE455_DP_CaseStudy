@@ -1,0 +1,199 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type Seat {
+  seatNo: Float!
+  isAvailable: Boolean!
+  rowNo: Float!
+  flightId: String!
+}
+
+type Booking {
+  id: ID!
+  user: User!
+  flight: Flight!
+  userId: String!
+  flightId: String!
+  seatId: [String!]!
+  createdAt: DateTime!
+  seat: [Seat!]!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type Flight {
+  id: ID!
+  flightNumber: Int!
+  departureAirport: String!
+  destinationAirport: String!
+  date: String!
+  departureTime: String!
+  arrivalTime: String!
+  airLine: String!
+  availableSeats: Int!
+  responsibleBy: User
+  bookings: [Booking!]
+}
+
+type User {
+  id: ID!
+  role: Role!
+  firstName: String
+  lastName: String
+  email: String!
+  password: String
+  passwordResetToken: String
+  passwordResetTokenExpirationDate: DateTime
+  passportId: String
+  nationality: String
+  employeeID: String
+  approved: Boolean!
+  ResponsibleFlights: [Flight!]
+  bookedFlights: [Booking!]
+}
+
+"""Available user roles"""
+enum Role {
+  USER
+  ADMIN
+  CREW
+  SECURITY
+}
+
+type forgetPasswordResponse {
+  message: String!
+}
+
+type FlightResponse {
+  message: String!
+}
+
+type FlightPaginationResponse {
+  flights: [Flight!]
+  total: Float!
+  lastPage: Float!
+  currentPage: Float!
+  perPage: Float!
+}
+
+type responseMessage {
+  message: String!
+}
+
+type Query {
+  forgetPassword(resetPasswordDto: resetPasswordDto!): forgetPasswordResponse!
+  hello: String!
+  flights(flightFilter: FlightFilterDto!): FlightPaginationResponse!
+  myAssignedFlights: [Flight!]!
+  AllSeatsBookings(bookingId: String!): [Seat!]!
+}
+
+input resetPasswordDto {
+  email: String!
+}
+
+input FlightFilterDto {
+  page: Int! = 1
+  limit: Int! = 10
+  departureTime: String
+
+  """Filter by destination airport code"""
+  destinationAirport: String!
+  departureAirport: String!
+
+  """Filter by airline name"""
+  airLine: String
+
+  """Filter by departure date (YYYY-MM-DD)"""
+  date: String!
+}
+
+type Mutation {
+  signupUser(createUserInput: CreateUserInput!): User!
+  loginUser(LoginUserInput: LoginUserInput!): User!
+  updateUserInfo(UpdateUserInput: UpdateUserInput!, id: String!): User!
+  logoutUser(id: String!): Boolean!
+  resetPassword(forgetPassword: forgetPasswordDto!, token: String!): forgetPasswordResponse!
+  approveMembers(id: String!): User!
+  createFlight(CreateFlightInput: CreateFlightInput!): Flight!
+  updateFlight(id: String!, UpdateFlightInput: UpdateFlightInput!): Flight!
+  removeFlight(id: String!): FlightResponse!
+  assignFlight(assignflight: FlightAssign!): Flight!
+  unAssignFlight(assignflight: FlightAssign!): Flight!
+  createBooking(createBooking: CreateBooking!): Booking!
+  cancelBooking(cancelBooking: CancelBooking!): responseMessage!
+}
+
+input CreateUserInput {
+  role: Role!
+  firstName: String!
+  lastName: String
+  email: String!
+  password: String!
+  passportId: String!
+  nationality: String!
+  employeeID: String
+}
+
+input LoginUserInput {
+  email: String!
+  password: String!
+}
+
+input UpdateUserInput {
+  email: String
+  firstName: String
+  lastName: String
+}
+
+input forgetPasswordDto {
+  email: String!
+  password: String!
+}
+
+input CreateFlightInput {
+  """Example field (placeholder)"""
+  flightNumber: Int!
+  departureAirport: String!
+  destinationAirport: String!
+  date: String!
+  departureTime: String!
+  arrivalTime: String!
+  airLine: String!
+  availableSeats: Int!
+}
+
+input UpdateFlightInput {
+  """Example field (placeholder)"""
+  flightNumber: Int
+  departureAirport: String
+  destinationAirport: String
+  date: String
+  departureTime: String
+  arrivalTime: String
+  airLine: String
+  availableSeats: Int
+}
+
+input FlightAssign {
+  flightId: String!
+  userId: String!
+}
+
+input CreateBooking {
+  seats: [CreateSeatInput!]!
+}
+
+input CreateSeatInput {
+  rowNo: Float!
+  seatNo: Float!
+  flightId: String!
+}
+
+input CancelBooking {
+  bookingId: String!
+}

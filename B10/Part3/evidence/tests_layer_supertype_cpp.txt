@@ -1,0 +1,9 @@
+# Layer Supertype / cpp
+working folder: Part3/layer_supertype_module_base/cpp
+$ g++ -std=c++14 -O2 -Wall -o test_module_base.exe test_module_base.cpp
+
+[compile exit code: 0]
+$ test_module_base.exe
+Layer Supertype tests: 11/11 passed
+
+[exit code: 0]

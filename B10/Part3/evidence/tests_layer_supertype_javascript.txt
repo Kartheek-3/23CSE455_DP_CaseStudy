@@ -1,0 +1,6 @@
+# Layer Supertype / javascript
+working folder: Part3/layer_supertype_module_base/javascript
+$ node test_module_base.js
+Layer Supertype tests: 11/11 passed
+
+[exit code: 0]

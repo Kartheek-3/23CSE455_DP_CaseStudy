@@ -1,0 +1,4 @@
+Command: python test_runner.py
+Result: PASS
+Output: PASS: Alert parser strategy delegation
+Note: Illustrative parser delegation; simplified behavior.

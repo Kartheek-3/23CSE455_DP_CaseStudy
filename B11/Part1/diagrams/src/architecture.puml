@@ -1,0 +1,27 @@
+@startuml architecture
+title legalSystem - Layered Architecture & Request/Event Flow
+skinparam componentStyle rectangle
+skinparam shadowing false
+
+actor User
+actor Scheduler as "Scheduler\n(@EnableScheduling)"
+
+package "Spring Boot (com.dcm)" {
+  [Controllers\n(rest/, main/)] as C
+  [Services\n(service/)] as S
+  [Repositories\n(repository/)] as R
+  [Entities\n(modal/)] as M
+  [Security\n(config/)] as SEC
+  [Mail\n(mail/EmailServiceImpl)] as MAIL
+}
+database "MySQL\n(legal)" as DB
+
+User --> C : HTTP (JSP views)
+C --> S : delegates
+S --> R : CRUD / @Query
+R --> DB : JPA / Hibernate
+R ..> M : maps rows
+SEC --> S : authenticates (CustomUserDetailsService)
+Scheduler --> MAIL : @Scheduled hearing/birthday reminders
+MAIL --> User : email
+@enduml

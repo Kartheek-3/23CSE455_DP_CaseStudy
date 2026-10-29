@@ -1,0 +1,587 @@
+# DaPlanStan — Scenario 3: Different Cancellation Policies
+
+Design-only stage | 11 October 2026
+
+Source reinspection complete
+
+I re-inspected the actual `scenario2_multiple_booking_providers_AFTER.zip`, including the models, controllers, mailbox, Anthropic parser, provider implementations, routes, views, schema, migrations and existing tests.
+
+The extracted source was verified against the ZIP contents. No source files were edited.
+
+Recommended design: Implement three deterministic cancellation-policy calculators that produce hypothetical refund quotes for eligible email-confirmed itinerary items, without changing any booking, itinerary or financial records.
+
+| Decision                    | Recommendation                                    |
+| --------------------------- | ------------------------------------------------- |
+| Starting version            | `scenario2_multiple_booking_providers`            |
+| Proposed AFTER version      | `scenario3_cancellation_policies`                 |
+| Feature                     | Local cancellation-policy quote comparison        |
+| Policies                    | Flexible, Moderate, Strict                        |
+| Architecture                | Interchangeable policy objects with one evaluator |
+| Real external cancellation  | No                                                |
+| Persist cancellation status | No                                                |
+| Database migration          | No                                                |
+| Confirmed pattern counts    | Remain 12 instances and 4 types                   |
+
+## 1. Verified Scenario 3 BEFORE state
+
+### Existing cancellation-related behavior
+
+| Existing action            | Actual behavior                                  | Source evidence                                       |
+| -------------------------- | ------------------------------------------------ | ----------------------------------------------------- |
+| Delete a TripItem          | Deletes a local itinerary record                 | `app/controllers/trip_items_controller.rb:97–100`     |
+| Edit a TripItem            | Updates itinerary details                        | `trip_items_controller.rb:89–95`                      |
+| Confirm/unconfirm          | Toggles `idea` and `confirmed`                   | `trip_items_controller.rb:102–106`                    |
+| Delete an Expense          | Deletes the expense record                       | `app/controllers/expenses_controller.rb:74–77`        |
+| Confirm an Expense         | Toggles paid/confirmed timestamps                | `expenses_controller.rb:79–85`                        |
+| Confirm an extracted email | Links or creates TripItems and eligible Expenses | `app/models/inbox_item.rb:27–58,67–207`               |
+| Add a demo provider offer  | Creates an idea without real reservation data    | `app/controllers/booking_options_controller.rb:18–57` |
+
+The current `TripItem` status enum contains only `idea` and `confirmed` (`app/models/trip_item.rb:21–24`).
+
+The source search found no application-level cancellation-policy engine, refund calculator, cancellation deadline or booking-cancellation operation.
+
+The Cancel control in `app/views/trip_items/_form.html.erb:149–161` merely exits the editing form.
+
+Deleting a TripItem is not the same as cancelling a booking. In addition, `TripItem` has a `has_one :expense, dependent: :nullify` relationship (`trip_item.rb:7`), so deleting an item can leave its related expense as a separate record.
+
+### Genuine email booking workflow
+
+Booking confirmation email
+
+TripMailbox#process
+
+InboxItem created and approved sender checked
+
+ParseInboxItemJob → Anthropic extraction
+
+Structured booking, provider, date, amount and reference
+
+InboxItemsController#update → confirm
+
+InboxItem#confirm_and_create_items!
+
+TripItem status confirmed; Expense created when eligible
+
+Key evidence:
+
+- `app/mailboxes/trip_mailbox.rb:2–31`
+- `app/jobs/parse_inbox_item_job.rb:6–18,20–97,99–139`
+- `app/controllers/inbox_items_controller.rb:16–35`
+- `app/models/inbox_item.rb:79–99,101–185,191–207`
+
+The existing parser can extract confirmation references, dates and prices, but it does not extract cancellation terms.
+
+Furthermore, `InboxItem#fill_missing_links!` can match a previously existing item by name without necessarily changing its status. Therefore, merely having an `inbox_item_id` is not sufficient proof that an item represents a confirmed reservation.
+
+### Scenario 2 demo offers
+
+`BookingOptionsController#create` explicitly assigns:
+
+```
+status: :idea,
+starts_at: nil,
+ends_at: nil,
+confirmation_ref: nil,
+inbox_item_id: nil
+```
+
+See `app/controllers/booking_options_controller.rb:36–46`.
+
+These demo options are not bookings and must remain ineligible for cancellation-policy quotes.
+
+## 2. Scope and architecture comparison
+
+| Approach                           | Fit and complexity                                                      | Database impact     | Testability and pattern assessment                          |
+| ---------------------------------- | ----------------------------------------------------------------------- | ------------------- | ----------------------------------------------------------- |
+| A. Hard-coded conditionals         | Small but mixes refund rules with controller/model responsibilities     | None                | Easy initially; no separate Strategy collaboration          |
+| B. Separate policy objects         | Good separation of distinct refund behaviors                            | None for quote-only | Highly testable; possible Strategy                          |
+| C. JSON-only policy definitions    | Compact data-driven calculation                                         | None                | Deterministic but may simply be table-driven logic          |
+| D. Real provider cancellation APIs | Poor fit with current demo and email-only integrations; high complexity | Likely substantial  | Credentials and API access required; pattern not guaranteed |
+| E. Small local policy abstraction  | Best fit for distinct deterministic policy behavior                     | None                | Independent tests; plausible Strategy collaboration         |
+
+Selected: E — a small local policy abstraction.
+
+Use three concrete policies, one evaluator and one Rails controller. No payment gateway, booking-client API, policy database table or persistent cancellation workflow is necessary.
+
+This is not a claim that a provider will honor the calculated refund. The application must prominently label all results as hypothetical demonstration estimates.
+
+## 3. Eligible TripItem rule
+
+A TripItem may receive a cancellation-policy quote only when all the following conditions hold:
+
+1. `item.confirmed?` is true.
+2. `item.inbox_item_id` is present.
+3. Its associated InboxItem has `review_status == confirmed`.
+4. The item's own `confirmation_ref` is nonblank.
+5. `starts_at` is present and interpretable.
+6. `amount` is present and nonnegative.
+7. `currency` is supported.
+
+The evaluator must check these conditions independently of the UI.
+
+This excludes manually created ideas, generated ideas and Scenario 2 provider-demo ideas, even if an ordinary user later toggles their status to `confirmed`.
+
+The requirement for the item's own reference is intentional: `TripItemsController#show` can display a reference inherited from a sibling item (`:16–28`). That display fallback should not establish cancellation-quote eligibility for an item lacking its own booking reference.
+
+Known limitation: Genuine email bookings without a confirmation reference, amount or start time will not be eligible for a quote in V1. They remain visible and otherwise functional.
+
+## 4. Cancellation outcome: quote-only
+
+Selected: Calculate and display only
+
+V1 will not create a `cancelled` status, change booking data, alter an Expense or send a cancellation request.
+
+The existing `TripItem` record stays unchanged after an estimate.
+
+This is appropriate because DaPlanStan does not know the real provider's contractual policy and has no external cancellation integration.
+
+A persistent cancellation state could falsely imply that a reservation was cancelled. It would also require additional model semantics, UI changes, lifecycle rules and testing. Those are unnecessary for this coursework feature.
+
+### Proposed AFTER workflow
+
+Trip owner opens eligible confirmed TripItem
+
+Selects Estimate cancellation (demo)
+
+CancellationQuotesController checks access and eligibility
+
+User chooses Flexible, Moderate or Strict
+
+CancellationPolicies::QuoteEvaluator selects the policy
+
+Concrete policy determines applicable fee percentage
+
+Evaluator calculates fee and hypothetical refund
+
+UI displays amounts, currency and explanation
+
+No booking or database record is changed
+
+## 5. Exact cancellation-policy rules
+
+Define the time difference as:
+
+\\[ \Delta = \text{item.starts\\\_at} - \text{evaluated\\\_at} \\]
+
+Use elapsed seconds to determine each boundary. The calculation should receive an explicit evaluation timestamp, allowing reproducible unit tests without relying on wall-clock time.
+
+All three policies are fictional application policies.
+
+| Time until start                   | Flexible | Moderate | Strict   |
+| ---------------------------------- | -------- | -------- | -------- |
+| At least 72 hours                  | 0% fee   | 0% fee   | 100% fee |
+| At least 24 but less than 72 hours | 0% fee   | 50% fee  | 100% fee |
+| More than 0 but less than 24 hours | 10% fee  | 100% fee | 100% fee |
+| At or after start                  | 100% fee | 100% fee | 100% fee |
+
+The table deliberately specifies inclusive boundaries:
+
+- At exactly 72 hours, Moderate has no fee.
+- At exactly 24 hours, Flexible has no fee and Moderate charges 50%.
+- One second before start, Flexible charges 10%.
+- At exactly the start timestamp and afterward, every policy charges 100%.
+
+### Example: original amount of €200
+
+Illustrative policy quote calculator
+
+Demo only
+
+Policy
+
+Flexible
+
+Moderate
+
+Strict
+
+Hours until itinerary item starts48 hours
+
+Original amount (EUR)
+
+€200
+
+Hypothetical fee
+
+## €100.00
+
+Hypothetical refund
+
+## €100.00
+
+This interactive example illustrates the proposed rules only. It is not connected to DaPlanStan and does not represent actual provider terms or perform cancellation.
+
+The production implementation must use decimal-safe arithmetic, not JavaScript floating-point calculations.
+
+### Required monetary rules
+
+Use `BigDecimal` for amounts and rates.
+
+\\[ \text{fee}=\operatorname{round}\_{2}(\text{amount}\times\text{fee rate}) \\]
+
+\\[ \text{refund}=\text{amount}-\text{fee} \\]
+
+Round the fee to two decimal places with a documented rounding mode such as `BigDecimal::ROUND_HALF_UP`. Derive the refund by subtracting the rounded fee so that:
+
+\\[ \text{fee}+\text{refund}=\text{original amount} \\]
+
+For the first version, support EUR, GBP and USD, which fit the application's two-decimal amount representation. Other currencies, including JPY, should receive a clear unsupported-currency message rather than an inaccurately rounded quote.
+
+### Edge-case policy
+
+| Input                                              | Required handling                                |
+| -------------------------------------------------- | ------------------------------------------------ |
+| Missing amount                                     | Do not calculate; explain missing booking amount |
+| Zero amount                                        | Valid; zero fee and zero refund                  |
+| Negative amount                                    | Reject                                           |
+| Missing start time                                 | Reject; do not guess from Trip dates             |
+| Missing currency                                   | Reject                                           |
+| Unsupported currency                               | Reject clearly                                   |
+| Unknown policy                                     | Reject before calculation                        |
+| Item is an idea                                    | Ineligible                                       |
+| Item has no genuine confirmed email link/reference | Ineligible                                       |
+| Cancellation at/after start                        | Apply after-start tier                           |
+| Exactly at a deadline                              | Apply explicitly inclusive boundary              |
+| Evaluation time missing from direct service call   | Reject; controller supplies `Time.current`       |
+| Malformed timestamp                                | Reject                                           |
+| Valid currency                                     | Preserve it unchanged in the result              |
+
+`refundable` in the result should mean `refund_amount > 0`. A zero-cost item can have a zero fee without a positive refundable amount.
+
+## 6. Proposed classes and interfaces
+
+The implementation does not need a large class hierarchy.
+
+| New class                              | Responsibility                                                   | Public method                                   |
+| -------------------------------------- | ---------------------------------------------------------------- | ----------------------------------------------- |
+| `CancellationPolicies::Flexible`       | Determine Flexible policy fee rate                               | `fee_rate(seconds_until_start:)`                |
+| `CancellationPolicies::Moderate`       | Determine Moderate policy fee rate                               | `fee_rate(seconds_until_start:)`                |
+| `CancellationPolicies::Strict`         | Determine Strict policy fee rate                                 | `fee_rate(seconds_until_start:)`                |
+| `CancellationPolicies::QuoteEvaluator` | Validate the booking, select a policy, calculate monetary result | `call(trip_item:, policy_code:, evaluated_at:)` |
+| `CancellationQuotesController`         | Authorize and coordinate quote requests                          | `new`, `create`                                 |
+
+The three policies return decimal fee rates between zero and one. They must be stateless and must not know about controllers, the database or external providers.
+
+`QuoteEvaluator` acts as the common context. It uses a fixed policy-code-to-class map, performs eligibility and monetary validation, invokes the selected policy, and returns a consistent result.
+
+A separate registry class or abstract superclass is unnecessary in V1.
+
+### Proposed output structure
+
+```
+{
+  policy_code: "moderate",
+  policy_name: "Moderate",
+  original_amount: BigDecimal("200.00"),
+  fee_amount: BigDecimal("100.00"),
+  refund_amount: BigDecimal("100.00"),
+  currency: "EUR",
+  refundable: true,
+  explanation: "The selected demo policy applies a 50% fee."
+}
+```
+
+This is a proposed result contract, not an output currently produced by the application.
+
+The evaluator should raise controlled, distinguishable errors for ineligible bookings, unknown policies, missing data and unsupported amounts/currencies. The controller will display a friendly message without exposing internal exceptions.
+
+## 7. Database migration decision
+
+No migration required
+
+The current `db/structure.sql:91–104` shows:
+
+| Field              | Existing type |
+| ------------------ | ------------- |
+| `status`           | String        |
+| `starts_at`        | Datetime      |
+| `amount`           | Decimal(10,2) |
+| `currency`         | String        |
+| `confirmation_ref` | String        |
+| `inbox_item_id`    | Foreign key   |
+| `notes`            | Text          |
+
+Those fields are sufficient to calculate a hypothetical cancellation quote.
+
+The `expenses` table (`db/structure.sql:105–125`) should remain unchanged.
+
+No `cancellation_policy`, `cancelled_at`, `cancellation_fee` or `refund_amount` columns are necessary because no cancellation or quote is persisted.
+
+The user selects the demonstration policy each time. The selection must not be treated as the real contractual policy for that booking.
+
+## 8. Existing production files to modify
+
+| Existing file                                | Current responsibility                  | Proposed modification                                                 |
+| -------------------------------------------- | --------------------------------------- | --------------------------------------------------------------------- |
+| `config/routes.rb:21–49`                     | Nested trip and item routes             | Add nested singular `cancellation_quote` new/create routes            |
+| `app/views/trip_items/show.html.erb:127–257` | Itinerary item details and actions      | Add owner-only Estimate cancellation (demo) link for qualifying items |
+| `README.md`                                  | Application and coursework instructions | Explain policies, quote-only limitation, tests and behavior           |
+
+Suggested route within `resources :trip_items`:
+
+```
+resource :cancellation_quote, only: [ :new, :create ]
+```
+
+This uses Rails' existing nested resource conventions without changing JSON import, generation, item editing or provider routes.
+
+### Existing files deliberately left unchanged
+
+`TripItem`, `TripItemsController`, `InboxItem`, `InboxItemsController`, `TripMailbox`, `ParseInboxItemJob`, `Expense`, `ExpensesController`, `BookingOptionsController`, `ItinerarySuggestionGenerator`, `Geocodable` and `GeocodeTripItemsJob` should not need source changes for this design.
+
+The quote evaluator may read their data and relationships, but no existing business responsibility needs to be moved or rewritten.
+
+## 9. New files to add
+
+| Proposed path                                             | Purpose                                                      |
+| --------------------------------------------------------- | ------------------------------------------------------------ |
+| `app/controllers/cancellation_quotes_controller.rb`       | Owner authorization and quote request coordination           |
+| `app/services/cancellation_policies/flexible.rb`          | Flexible fee-rate algorithm                                  |
+| `app/services/cancellation_policies/moderate.rb`          | Moderate fee-rate algorithm                                  |
+| `app/services/cancellation_policies/strict.rb`            | Strict fee-rate algorithm                                    |
+| `app/services/cancellation_policies/quote_evaluator.rb`   | Eligibility, selection, calculation and standardized quote   |
+| `app/views/cancellation_quotes/new.html.erb`              | Policy selector, quote result, error and back link           |
+| `test/services/cancellation_policies_test.rb`             | Policy boundaries, arithmetic and validation                 |
+| `test/controllers/cancellation_quotes_controller_test.rb` | Authorization, eligibility, rendering and read-only behavior |
+
+No new job, migration, payment integration or booking-provider client is required.
+
+### Authorization
+
+Use the source's existing mechanisms:
+
+```
+@trip = current_user.trips.find(params[:trip_id])
+@item = @trip.trip_items.find(params[:trip_item_id])
+
+head :forbidden unless current_member_for(@trip)&.owner?
+```
+
+For V1:
+
+- Trip owners may request quotes.
+- Planners, contributors and viewers cannot request them.
+- Users who do not belong to the trip cannot access its items.
+- Every GET/POST must enforce authorization server-side.
+- The frontend link's visibility is not an authorization control.
+
+The `new` action displays eligible booking details and a policy selector; `create` evaluates the selected policy and renders the result without writing to the database.
+
+## 10. Acceptance criteria
+
+| ID   | Acceptance criterion                                    | Expected result                                         |
+| ---- | ------------------------------------------------------- | ------------------------------------------------------- |
+| AC01 | Eligible confirmed booking opened by owner              | Quote interface available                               |
+| AC02 | Flexible selected                                       | Correct Flexible calculation                            |
+| AC03 | Moderate selected                                       | Correct Moderate calculation                            |
+| AC04 | Strict selected                                         | Correct Strict calculation                              |
+| AC05 | Different policies receive same inputs                  | Same evaluation contract, different applicable outcomes |
+| AC06 | Unknown policy submitted                                | Controlled validation error                             |
+| AC07 | Exactly 72 hours before start                           | Moderate returns full refund                            |
+| AC08 | Exactly 24 hours before start                           | Flexible returns full refund; Moderate returns 50%      |
+| AC09 | Start time reached or passed                            | After-start rule applies                                |
+| AC10 | Missing amount or start                                 | Quote denied with reason                                |
+| AC11 | Negative amount or unsupported currency                 | Calculation rejected                                    |
+| AC12 | Zero amount                                             | Zero fee and refund                                     |
+| AC13 | Scenario 1 generated idea selected                      | Ineligible                                              |
+| AC14 | Scenario 2 demo offer selected                          | Ineligible                                              |
+| AC15 | Genuine confirmed email-linked item with complete data  | Quote produced                                          |
+| AC16 | Non-owner attempts a quote                              | Access denied                                           |
+| AC17 | Quote calculated                                        | No TripItem, InboxItem or Expense changes               |
+| AC18 | Quote calculated                                        | No external cancellation API call                       |
+| AC19 | Existing generation, import and provider workflows used | Existing behavior preserved                             |
+| AC20 | Quote shown to user                                     | Explicit hypothetical-only disclaimer                   |
+
+The UI should display:
+
+> This is a hypothetical cancellation estimate based on a demonstration policy. No reservation has been cancelled and no actual refund is guaranteed. Check your booking provider's terms.
+
+## 11. Test plan
+
+Policy unit tests
+
+Verify all three algorithms using fixed timestamps, especially exactly 72 hours, exactly 24 hours, one second before each deadline, at start and after start. Verify zero/negative amounts, decimal rounding, currency preservation and unknown policies.
+
+Evaluator and controller tests
+
+Verify policy selection, normalized quote fields, missing booking data, eligible inbox-linked bookings, owner authorization, rejection of unrelated users, and no persistence on GET or POST.
+
+Regression tests
+
+Retain Scenario 1 generation, preview, JSON import and manual creation coverage. Retain Scenario 2 provider-normalization, demo idea and duplicate-protection coverage. Check email-confirmation linking, expense creation and the existing geocoding/Turbo workflows.
+
+Manual/runtime checks
+
+With a compatible Rails environment, open an eligible confirmed item, select all three policies, inspect the quotes, and confirm that database records remain unchanged. Verify that demo ideas do not offer the quote action.
+
+All calculation tests must pass `evaluated_at` explicitly. Do not introduce external API requests into policy tests.
+
+The previously identified Rails environment blocker still needs resolution before full integration testing. No Scenario 3 tests have been executed during this design step.
+
+## 12. Regression risks
+
+| Risk                                            | Safeguard                                                                       |
+| ----------------------------------------------- | ------------------------------------------------------------------------------- |
+| Confirmed itinerary idea mistaken for a booking | Require confirmed InboxItem, item confirmation reference and `confirmed` status |
+| Real policy implied without evidence            | Label every policy and quote as hypothetical                                    |
+| Client manipulates booking amount               | Evaluator reads amount from the server-loaded TripItem                          |
+| Incorrect deadline handling                     | Compare timestamps in seconds; test exact boundaries                            |
+| Money calculation inaccuracies                  | BigDecimal and explicit two-decimal rounding                                    |
+| Existing expense accidentally adjusted          | Never write to Expense                                                          |
+| Real booking marked cancelled                   | Quote-only; no cancelled status                                                 |
+| Scenario 2 demo offer considered cancellable    | Require confirmed email linkage, which demo offers lack                         |
+| Scenario 1 changes accidentally                 | Do not edit generation/import source                                            |
+| Turbo/geocoding behavior disturbed              | No changes to those participants                                                |
+
+## 13. Tentative pattern candidates
+
+These are candidates only. Confirmation requires inspecting the actual future implementation.
+
+### Candidate A — Strategy (GoF): Cancellation Policy Evaluation
+
+| Role               | Proposed concrete participant          |
+| ------------------ | -------------------------------------- |
+| Context            | `CancellationPolicies::QuoteEvaluator` |
+| Strategy contract  | `fee_rate(seconds_until_start:)`       |
+| ConcreteStrategy 1 | `CancellationPolicies::Flexible`       |
+| ConcreteStrategy 2 | `CancellationPolicies::Moderate`       |
+| ConcreteStrategy 3 | `CancellationPolicies::Strict`         |
+| Client             | `CancellationQuotesController#create`  |
+
+Why it may qualify: Different algorithms for computing the fee are interchangeable under a stable contract. The evaluator selects one and delegates the variable behavior.
+
+Why it might be rejected later: If implementation reduces to a single method with hard-coded conditionals or policy configuration values rather than actual interchangeable behavior objects, a separate Strategy classification may not be justified.
+
+If eventually confirmed, all three concrete policies would form one Strategy instance, not three.
+
+### Candidate B — Controller (GRASP): Cancellation Quote Coordination
+
+The potential coordinator is `CancellationQuotesController`, handling the distinct user event of requesting a hypothetical cancellation quote.
+
+Its collaborators would be Trip, TripItem, TripMember, InboxItem and QuoteEvaluator.
+
+This differs from P05 import, S1-N01 personalized generation and S2-N02 provider option coordination.
+
+However, merely introducing a Rails controller does not confirm a new Controller pattern. The implemented responsibility, participants and delegation must be verified afterward.
+
+### Factory assessment
+
+A fixed map from `"flexible"`, `"moderate"` and `"strict"` to classes is ordinary selection logic. Do not plan to count Factory Method or Abstract Factory without separate structural evidence.
+
+## 14. Expected impact on existing 12 patterns
+
+These are impact predictions, not evolution statuses.
+
+| ID     | Existing collaboration                          | Expected impact                                                  |
+| ------ | ----------------------------------------------- | ---------------------------------------------------------------- |
+| P01    | Parsed Email to Trip Record Linking             | Possibly affected — quote eligibility reads email-linked records |
+| P02    | Inbound Travel Email Intake Coordination        | Likely unchanged                                                 |
+| P03    | Trip Creation Coordination                      | Likely unchanged                                                 |
+| P04    | Trip Membership Management Coordination         | Likely unchanged                                                 |
+| P05    | Bulk Itinerary Import Coordination              | Likely unchanged                                                 |
+| P06    | OAuth Sign-in and Identity Linking Coordination | Likely unchanged                                                 |
+| P07    | Account Traveler Enrollment Coordination        | Likely unchanged                                                 |
+| P08    | Outbound Mail Delivery Logging                  | Likely unchanged                                                 |
+| P09    | Trip-Scoped Turbo Refresh Notifications         | Likely unchanged                                                 |
+| S1-N01 | Personalized Itinerary Generation Coordination  | Likely unchanged                                                 |
+| S2-N01 | Multiple Booking Provider Normalization         | Likely unchanged                                                 |
+| S2-N02 | Multiple Booking Provider Option Coordination   | Likely unchanged                                                 |
+
+The new quote workflow reads existing participant data, but no existing collaboration needs to be modified under the proposed scope.
+
+The frozen current counts remain:
+
+| Type                       | Current count |
+| -------------------------- | ------------- |
+| Controller (GRASP)         | 8             |
+| Information Expert (GRASP) | 1             |
+| Observer (GoF)             | 2             |
+| Adapter (GoF)              | 1             |
+| Total                      | 12            |
+| Distinct types             | 4             |
+
+No Strategy or additional Controller has been counted yet.
+
+## 15. File-by-file coding sequence for the next prompt
+
+1
+
+Prepare separate AFTER version
+
+Copy the complete Scenario 2 source to scenario3_cancellation_policies; record the source ZIP checksum and preserve the previous snapshot.
+
+2
+
+Write policy unit-test cases
+
+Define fixed timestamps, fee-rate boundaries, expected monetary results and invalid-input behavior before implementation.
+
+3
+
+Implement three policies
+
+Create Flexible, Moderate and Strict with the common fee_rate(seconds_until_start:) contract.
+
+4
+
+Implement the QuoteEvaluator
+
+Validate eligibility and monetary data, select the approved policy, calculate amounts and produce the normalized result.
+
+5
+
+Add controller tests
+
+Cover owner/member authorization, eligible/ineligible records, policy selection, read-only operation and missing data.
+
+6
+
+Implement CancellationQuotesController
+
+Add new/create actions, authentication, trip-scoped item lookup, owner authorization and controlled error handling.
+
+7
+
+Add nested routes
+
+Update config/routes.rb with the singular cancellation_quote new/create resource without disturbing existing routes.
+
+8
+
+Create the cancellation quote UI
+
+Add app/views/cancellation_quotes/new\.html.erb with policy selection, output and hypothetical-only notice.
+
+9
+
+Add TripItem entry point
+
+Modify app/views/trip_items/show\.html.erb with the owner-only Estimate cancellation (demo) link.
+
+10
+
+Run verification
+
+Attempt Rails tests, record actual counts or exact environment blockers, check syntax and run any isolated deterministic policy tests.
+
+11
+
+Check regressions
+
+Compare Scenario 2 and Scenario 3 source; verify generation, import, providers, inbox, Expenses, geocoding and schema remain unaffected.
+
+12
+
+Package change evidence
+
+Write SCENARIO3_CHANGE_RECORD.md, source patch, test logs and the complete Scenario 3 AFTER ZIP. Defer final pattern classification.
+
+## Final Scenario 3 design decision
+
+Implement a quote-only cancellation-policy demonstration using Flexible, Moderate and Strict calculation objects, with one evaluator and one controller.
+
+The design deliberately avoids persistence and actual cancellation because the existing application does not have provider cancellation contracts or booking APIs. It uses real fields already present on email-linked TripItems, protects Scenario 1 and Scenario 2, and permits deterministic testing.
+
+The source version for the next implementation step will be `scenario3_cancellation_policies`.
+
+Scenario 3 design is complete. No source edits, migrations, pattern-status assignments or count changes were made.

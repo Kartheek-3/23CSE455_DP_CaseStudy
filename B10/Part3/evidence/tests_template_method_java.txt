@@ -1,0 +1,9 @@
+# Template Method / java
+working folder: Part3/template_method_setpoint_interpolation/java
+$ javac -d out DateMethod.java SetpointInterpolationTest.java
+
+[compile exit code: 0]
+$ java -cp out SetpointInterpolationTest
+Template Method tests: 12/12 passed
+
+[exit code: 0]

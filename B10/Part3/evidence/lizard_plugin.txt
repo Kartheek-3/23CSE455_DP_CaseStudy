@@ -1,0 +1,64 @@
+# lizard 1.24.1 on the production files only; working folder: Part3/plugin_module_loading
+$ lizard java/InputController.java python/module_loading.py javascript/module_loading.js cpp/module_loading.hpp
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       3      1     23      1       3 InputController::InputController@34-36@java/InputController.java
+       7      2     44      1       7 InputController::loadModuleFromFile@39-45@java/InputController.java
+      21      9    213      2      21 InputController::parseInputInformation@48-68@java/InputController.java
+       5      3     65      2       5 InputController::initialize@71-75@java/InputController.java
+       1      1     13      1       1 AbstractInput::AbstractInput@82-82@java/InputController.java
+       3      1     26      0       3 AbstractInput::describe@86-88@java/InputController.java
+       1      1     12      1       1 SoilInputModule::SoilInputModule@95-95@java/InputController.java
+       1      1      8      0       1 SoilInputModule::inputInformation@97-97@java/InputController.java
+       1      1     12      1       1 WeatherInputModule::WeatherInputModule@104-104@java/InputController.java
+       1      1      8      0       1 WeatherInputModule::inputInformation@106-106@java/InputController.java
+       4      1     32      2       4 PluginModule::PluginModule@114-117@java/InputController.java
+       2      1     12      2       2 __init__@17-18@python/module_loading.py
+       3      1     21      1       3 describe@20-22@python/module_loading.py
+       3      1     23      3       3 __init__@38-40@python/module_loading.py
+       2      1      9      0       2 _broken_module@43-44@python/module_loading.py
+       5      2     29      1       6 load_module_from_file@57-62@python/module_loading.py
+      19      8    121      1      20 parse_input_information@65-84@python/module_loading.py
+       2      1     12      2       2 __init__@90-91@python/module_loading.py
+       5      3     52      3       5 initialize@93-97@python/module_loading.py
+       3      1     11      1       3 constructor@15-17@javascript/module_loading.js
+       4      1     24      0       4 describe@19-22@javascript/module_loading.js
+       4      1     23      2       4 constructor@37-40@javascript/module_loading.js
+       2      1     11      0       2 (anonymous)@44-45@javascript/module_loading.js
+       2      1     11      0       2 (anonymous)@45-46@javascript/module_loading.js
+       2      1     11      0       2 (anonymous)@46-47@javascript/module_loading.js
+       2      1      6      0       2 (anonymous)@47-48@javascript/module_loading.js
+       1      1      9      0       1 (anonymous)@48-48@javascript/module_loading.js
+       2      1     13      0       2 (anonymous)@49-50@javascript/module_loading.js
+       7      2     34      1       7 loadModuleFromFile@53-59@javascript/module_loading.js
+      20      9    173      1      20 parseInputInformation@62-81@javascript/module_loading.js
+       3      1     11      1       3 constructor@85-87@javascript/module_loading.js
+       5      3     61      2       5 initialize@89-93@javascript/module_loading.js
+       1      1     19      1       1 AbstractInput::AbstractInput@21-21@cpp/module_loading.hpp
+       3      1     27      0       3 AbstractInput::describe@24-26@cpp/module_loading.hpp
+       5      1     32      0       5 SoilInputModule::info@33-37@cpp/module_loading.hpp
+       1      1     12      0       1 SoilInputModule::input_information@38-38@cpp/module_loading.hpp
+       5      1     32      0       5 WeatherInputModule::info@44-48@cpp/module_loading.hpp
+       1      1     12      0       1 WeatherInputModule::input_information@49-49@cpp/module_loading.hpp
+       1      1     26      1       1 make_input@60-60@cpp/module_loading.hpp
+      10      1    174      0      10 module_catalog@62-71@cpp/module_loading.hpp
+       8      2     71      1       8 load_module_from_file@74-81@cpp/module_loading.hpp
+      17      8    224      2      17 parse_input_information@86-102@cpp/module_loading.hpp
+       1      1     17      1       1 InputController::InputController@107-107@cpp/module_loading.hpp
+       6      3     87      2       6 InputController::initialize@108-113@cpp/module_loading.hpp
+4 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+     87       4.4     2.0       41.5        11     java/InputController.java
+     61       5.1     2.2       34.9         8     python/module_loading.py
+     75       4.4     1.8       30.6        13     javascript/module_loading.js
+     94       4.9     1.8       61.1        12     cpp/module_loading.hpp
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+       317       4.7     2.0       42.4       44            0      0.00    0.00

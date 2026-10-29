@@ -1,0 +1,92 @@
+[
+  {
+    "part": "Pattern discovery (application study)",
+    "model_and_date": "Claude Opus 5.5 (claude-opus-5-5) in Claude Code desktop app, paid tier, 2026-10-11",
+    "prompt_file": "prompts/Dilip_Kumar_Reddy_claude_prompt_01.txt",
+    "input_file": "Part1/code",
+    "output_file": "prompts/Dilip_Kumar_Reddy_claude_output_01.md",
+    "evaluation": "Partially correct: Repository, DI, Singleton, Adapter (Socket.IO, Stripe), Observer, Chain of Responsibility, Data Mapper and Layered Architecture were confirmed; Twilio/Cloudinary adapters are unused or out of scope; Gateway and catchAsync Decorator were missed; ON_TRIP proposal was replaced by SUSPENDED.",
+    "verification_file": "prompts/Dilip_Kumar_Reddy_claude_verification_01.md"
+  },
+  {
+    "part": "Pattern discovery",
+    "model_and_date": "ChatGPT (chatgpt.com free tier, logged out; model name not displayed), 2026-10-11 - run from Dilip Kumar Reddy's session, browser driven by Claude Code",
+    "prompt_file": "prompts/Dilip_Kumar_Reddy_prompt_01.txt",
+    "input_file": "Part1/code/src (excerpts embedded in the prompt)",
+    "output_file": "prompts/Dilip_Kumar_Reddy_output_01.md",
+    "evaluation": "Partial: agrees on Repository, DI, Layered Architecture, Adapter, middleware chain and on all 6 rejected candidates; disputes our Observer, catchAsync Decorator and module Singleton; Data Mapper and Gateway code was not in the excerpt.",
+    "verification_file": "prompts/Dilip_Kumar_Reddy_verification_01.md"
+  },
+  {
+    "part": "Evolution CH01 (new driver status)",
+    "model_and_date": "ChatGPT (chatgpt.com free tier, logged out; model name not displayed), 2026-10-11 - run from Dilip Kumar Reddy's session, browser driven by Claude Code",
+    "prompt_file": "prompts/Sai_Sameer_prompt_01.txt",
+    "input_file": "Part1/code/src (excerpts embedded in the prompt)",
+    "output_file": "prompts/Sai_Sameer_output_01.md",
+    "evaluation": "Correct defect analysis (5/5 baseline defects confirmed); partial design: its 'State' is a transition table, not state objects; it flags an activePayment check and a suspend/accept race that remain open in our CH01.",
+    "verification_file": "prompts/Sai_Sameer_verification_01.md"
+  },
+  {
+    "part": "Cross-language analysis (Observer)",
+    "model_and_date": "ChatGPT (chatgpt.com free tier, logged out; model name not displayed), 2026-10-11 - run from Dilip Kumar Reddy's session, browser driven by Claude Code",
+    "prompt_file": "prompts/Sai_Sameer_prompt_02.txt",
+    "input_file": "Part3/test-cases/observer_spec.md",
+    "output_file": "prompts/Sai_Sameer_output_02.md",
+    "evaluation": "Partial: all 4 generated implementations compile and pass O1-O6; verbosity ranking wrong for its own Java/C++; its C++ hub keeps observers alive with shared_ptr (ours uses weak_ptr).",
+    "verification_file": "prompts/Sai_Sameer_verification_02.md"
+  },
+  {
+    "part": "Evolution CH02 (ride cancellation)",
+    "model_and_date": "ChatGPT (chatgpt.com free tier, logged out; model name not displayed), 2026-10-11 - run from Dilip Kumar Reddy's session, browser driven by Claude Code",
+    "prompt_file": "prompts/M_Kumar_prompt_01.txt",
+    "input_file": "Part1/code/src (excerpts embedded in the prompt)",
+    "output_file": "prompts/M_Kumar_output_01.md",
+    "evaluation": "Partial: accurate defects including the non-atomic read-then-update, which is still present in our CH02; recommends Strategy (matches ours) but advises against State (we chose State); one formula glitch and one unsafe driverId! sample.",
+    "verification_file": "prompts/M_Kumar_verification_01.md"
+  },
+  {
+    "part": "Cross-language analysis (State)",
+    "model_and_date": "ChatGPT (chatgpt.com free tier, logged out; model name not displayed), 2026-10-11 - run from Dilip Kumar Reddy's session, browser driven by Claude Code",
+    "prompt_file": "prompts/M_Kumar_prompt_02.txt",
+    "input_file": "Part3/test-cases/state_spec.md",
+    "output_file": "prompts/M_Kumar_output_02.md",
+    "evaluation": "Correct: all 4 generated implementations pass T1-T8; size ranking matches its code; 'same complexity' claim only partly true (max CC 2-4 vs 6).",
+    "verification_file": "prompts/M_Kumar_verification_02.md"
+  },
+  {
+    "part": "Evolution CH03 (ride types and dynamic pricing)",
+    "model_and_date": "ChatGPT (chatgpt.com free tier, logged out; model name not displayed), 2026-10-11 - run from Dilip Kumar Reddy's session, browser driven by Claude Code",
+    "prompt_file": "prompts/K_Harish_prompt_01.txt",
+    "input_file": "Part1/code/src (excerpts embedded in the prompt)",
+    "output_file": "prompts/K_Harish_output_01.md",
+    "evaluation": "Partial: smells and Strategy design match our CH03; rule pipeline instead of our Decorator (equivalent x1.5 stacking); km-validation 'defect' already handled by Zod schema; hourly billing not rounded to started hours.",
+    "verification_file": "prompts/K_Harish_verification_01.md"
+  },
+  {
+    "part": "Cross-language analysis (Strategy)",
+    "model_and_date": "ChatGPT (chatgpt.com free tier, logged out; model name not displayed), 2026-10-11 - run from Dilip Kumar Reddy's session, browser driven by Claude Code",
+    "prompt_file": "prompts/K_Harish_prompt_02.txt",
+    "input_file": "Part3/test-cases/strategy_spec.md",
+    "output_file": "prompts/K_Harish_output_02.md",
+    "evaluation": "Partial: all 4 generated implementations pass S1-S8; comparison table wrongly lists inheritance for its JS; size ranking holds only when tests are inside the files.",
+    "verification_file": "prompts/K_Harish_verification_02.md"
+  },
+  {
+    "part": "Pattern discovery (dataset audit)",
+    "model_and_date": "ChatGPT (chatgpt.com free tier, logged out; model name not displayed), 2026-10-11 - run from Dilip Kumar Reddy's session, browser driven by Claude Code",
+    "prompt_file": "prompts/S_Leela_Shankar_prompt_01.txt",
+    "input_file": "data/patterns.csv; data/pattern_counts.csv",
+    "output_file": "prompts/S_Leela_Shankar_output_01.md",
+    "evaluation": "Correct: counts and participant roles confirmed with no errors; its caveats (Observer combined roles, framework CoR, function Decorator) are already recorded in the dataset.",
+    "verification_file": "prompts/S_Leela_Shankar_verification_01.md"
+  },
+  {
+    "part": "Cross-language analysis (metrics)",
+    "model_and_date": "ChatGPT (chatgpt.com free tier, logged out; model name not displayed), 2026-10-11 - run from Dilip Kumar Reddy's session, browser driven by Claude Code",
+    "prompt_file": "prompts/S_Leela_Shankar_prompt_02.txt",
+    "input_file": "data/cross_language.csv",
+    "output_file": "prompts/S_Leela_Shankar_output_02.md",
+    "evaluation": "Correct: reproduces every number and gives sound threats to validity; two minor slips (CC remark; says raw timings are missing although they are in Part3/evidence).",
+    "verification_file": "prompts/S_Leela_Shankar_verification_02.md"
+  }
+]

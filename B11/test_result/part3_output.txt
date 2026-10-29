@@ -1,0 +1,26 @@
+=== STRATEGY (all 4 identical) ===
+regular,0,0.00
+regular,3,15.00
+regular,7,35.00
+regular,10,50.00
+advocate,0,0.00
+advocate,3,6.00
+advocate,7,14.00
+advocate,10,23.00
+=== ADAPTER (all 4 identical) ===
+username,rakshann
+password,secret
+enabled,true
+authorities,ROLE_ADMIN|ROLE_LAWYER
+=== TEMPLATE METHOD (all 4 identical) ===
+HEARING REPORT C-101
+Next hearing scheduled for C-101
+-- end --
+PAYMENT REPORT C-205
+Outstanding dues for C-205
+-- accounts dept --
+=== OBSERVER (all 4 identical) ===
+email,C-101,2026-10-15
+sms,C-101,2026-10-15
+email,C-205,2026-10-18
+sms,C-205,2026-10-18

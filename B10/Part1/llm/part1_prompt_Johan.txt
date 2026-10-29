@@ -1,0 +1,146 @@
+You are a software design expert helping with a university Design Patterns case study.
+This is a READ-ONLY analysis task.
+
+APPLICATION
+- Name: Mycodo (Flask-based environmental monitoring and regulation system, used here as an
+  agriculture management application)
+- Repository: https://github.com/kizniche/Mycodo.git
+- Baseline commit: ee70a111c622e2a81026fd5c1553a948acf8161e
+- The original source at that commit is in data/code/
+
+HARD CONSTRAINTS
+- Do NOT modify, create, move or delete anything under data/code/.
+- Do NOT install packages, run the application, or access the network.
+- Write ONLY the three output files listed under OUTPUT FILES.
+- Analyse ONLY the files in SCOPE. Do not use outside knowledge of Mycodo and do not
+  make claims about files outside SCOPE. If a participant is defined outside SCOPE, say
+  "defined outside scope" instead of guessing.
+
+SCOPE (read every one of these files completely before answering)
+Core abstractions
+- data/code/mycodo/abstract_base_controller.py
+- data/code/mycodo/databases/__init__.py
+Sensor management
+- data/code/mycodo/inputs/base_input.py
+- data/code/mycodo/inputs/adafruit_i2c_soil.py
+- data/code/mycodo/controllers/base_controller.py
+- data/code/mycodo/controllers/controller_input.py
+- data/code/mycodo/utils/inputs.py
+Weather
+- data/code/mycodo/inputs/weather_openweathermap_weather.py
+Irrigation / outputs
+- data/code/mycodo/outputs/base_output.py
+- data/code/mycodo/outputs/pump_gpio.py
+- data/code/mycodo/outputs/on_off_gpio.py
+- data/code/mycodo/utils/outputs.py
+- data/code/mycodo/functions/base_function.py
+- data/code/mycodo/functions/bang_bang.py
+Setpoint schedules
+- data/code/mycodo/utils/method.py
+Module loading
+- data/code/mycodo/utils/modules.py
+Alerts
+- data/code/mycodo/controllers/base_conditional.py
+- data/code/mycodo/controllers/controller_conditional.py
+- data/code/mycodo/actions/base_action.py
+- data/code/mycodo/actions/email.py
+- data/code/mycodo/actions/output_on_off.py
+UI-to-daemon communication
+- data/code/mycodo/mycodo_client.py
+User management
+- data/code/mycodo/databases/models/user.py
+- data/code/mycodo/databases/models/role.py
+
+TASK
+Find the design pattern instances in the SCOPE files: GoF (creational, structural,
+behavioral) and architectural (e.g. Repository, Active Record, Plugin, Proxy, Layer
+Supertype, MVC). A framework pattern counts ONLY if application code takes part in it
+(e.g. the app overrides a framework hook); say which side is framework and which is
+application.
+GRASP: report a GRASP pattern ONLY if it is not already covered by a GoF or architectural
+instance for the same collaboration. Never report Information Expert, Creator, Low Coupling
+or High Cohesion as instances; mention them only in Limitations if relevant.
+
+STRICT RULES
+1. A pattern instance is one COLLABORATION of participants, not one class. Two concrete
+   strategies in the same collaboration = ONE Strategy instance. Never count the same
+   collaboration under two pattern names.
+2. Map EVERY role of the pattern to an actual class, interface, method or function, with
+   "path:startline-endline", where path starts with "data/code/" and the line numbers are the
+   real line numbers in that file.
+3. Before writing any line range, confirm it with the Read tool or `grep -n`. For a class,
+   the range runs from the "class" line to its last line; for a method, the "def" line to
+   its last line. If you cannot confirm a range, write "line range uncertain".
+4. If a role does not exist in the code, write "not separately declared". If one class
+   plays two roles, say so (e.g. "ConcreteSubject=Library (also performs Subject role)").
+   NEVER invent classes, methods or line numbers.
+5. A class name, docstring, annotation or comment alone is NOT evidence. Evidence must be
+   the interaction: who holds whom, who calls whom, what can be swapped/extended, which line.
+6. Classify each candidate as CONFIRMED, UNCERTAIN or REJECTED and give the reason.
+   Actively check and report rejections for these common false positives: Singleton,
+   Factory (vs. a plain function that returns an object), Facade, Decorator (Python
+   @decorators are not automatically the GoF Decorator), Template Method on plain overrides
+   that call super(), Command, Composite, Observer, Repository on simple ORM queries.
+7. Where the same mechanism repeats across many subclasses (e.g. many input modules),
+   treat it as one instance and list only the concrete classes present in SCOPE.
+
+OUTPUT FILES
+A. Part1/llm_output/part1_raw_output.md  - your complete answer, sections 1-8 below, verbatim.
+B. Part1/llm_output/patterns_llm_draft.csv - the section 5 rows, header included.
+C. Part1/llm_output/pattern_counts_llm_draft.csv - the section 6 rows, header included.
+These are DRAFTS for human verification; do not write to Part1/patterns.csv or any
+existing file.
+
+OUTPUT FORMAT (use exactly these sections)
+
+## 1. Architecture summary
+- Main components/layers and their files (5-10 bullets).
+- One request/event flow from entry point to storage/output, naming real functions
+  (e.g. a sensor reading, or a conditional triggering an action).
+- A Mermaid flowchart of the architecture.
+
+## 2. Candidate list
+Table: # | Candidate pattern | Files involved | Result (CONFIRMED / UNCERTAIN / REJECTED)
+
+## 3. One record per CONFIRMED instance
+For each:
+- Instance name: a meaningful collaboration name (e.g. "Sensor Measurement Acquisition"),
+  not just the pattern name.
+- Pattern name and category (GoF Creational/Structural/Behavioral, Architectural, GRASP).
+- Origin: application / framework / dependency (and which participants come from where).
+- Purpose: the problem this collaboration solves in this application.
+- Participant mapping table: Pattern role | Actual symbol | path:lines
+- Evidence: 2-4 sentences describing the interactions, plus the 3-10 most important
+  code lines quoted with their line numbers.
+- How to prove it with a test: one small behaviour test idea (e.g. swap the strategy
+  and the result changes).
+- Mermaid class diagram using only the real class/method names.
+
+## 4. Rejected and uncertain candidates
+Table: Candidate | Result | Reason (with path:line)
+
+## 5. patterns.csv rows
+UTF-8 CSV with exactly this header, one row per CONFIRMED instance, cells containing
+commas or semicolons in double quotes, roles separated by "; ", locations separated by "; ":
+source_version,pattern_name,pattern_type,instance_name,participant_roles,source_locations,intent_and_evidence
+Use source_version = "Original code". Paths must start with "data/code/".
+Role format example: Subject=not separately declared; ConcreteSubject=Library (also performs subject role); Observer=ReturnListener
+
+## 6. pattern_counts.csv rows
+Header: source_version,summary,pattern_name,count
+One "per_pattern" row per pattern name, then "total_pattern_types" and
+"total_pattern_instances" rows (pattern_name blank). source_version = "Original code".
+
+## 7. Baseline totals
+- Confirmed pattern types (names + number)
+- Confirmed pattern instances (number)
+- Concrete participant classes (classes filling variable roles such as ConcreteStrategy,
+  ConcreteObserver; list + number)
+- Unique participant symbols (all mapped symbols, shared ones counted once; list + number)
+- Rejected count and uncertain count
+- Which two confirmed pattern types are best suited to a small standalone
+  re-implementation in Java, Python, JavaScript and C++, and why.
+
+## 8. Limitations
+What you could not verify from the SCOPE files alone, including any participant defined
+outside SCOPE.

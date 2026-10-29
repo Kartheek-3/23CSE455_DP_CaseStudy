@@ -1,0 +1,7 @@
+$ (cd Part3/factory-method-executors/cpp) ./factory_test
+PASS report matches expected-output.txt
+PASS a subclass changes only the created product
+PASS invalid input is rejected with expected-error.txt
+3 passed, 0 failed
+[exit 0]
+result: 3/3 passed

@@ -1,0 +1,91 @@
+﻿
+Django Job Portal Design Pattern Case Study — Part 2
+
+Context
+
+Modify the existing Django Job Portal codebase for a design-pattern case study. Preserve existing behavior unless a change explicitly requires otherwise. Do not rewrite unrelated files.
+
+General Requirements
+
+1. Make each change independently understandable and testable.
+2. Keep each change's patch limited to that change. If a source file is shared by multiple changes, separate the relevant hunks instead of including the combined diff in every patch.
+3. Add or update focused tests for the behavior introduced.
+4. Do not claim tests pass unless they have actually been run. Record the command and observed result.
+5. Keep documentation, diagrams, pattern counts, and evaluation consistent with the implementation.
+6. Distinguish a confirmed design pattern from a partial candidate or a framework feature that merely resembles a pattern.
+
+Change 1 — Observer Pattern: Job-Creation Notifications
+
+Implement an Observer-style notification mechanism for job creation.
+
+- Define a subject/notification mechanism and an observer interface or equivalent contract.
+- Connect the mechanism to the relevant job-creation flow so registered observers are notified when a job is created successfully.
+- Support subscribing and unsubscribing observers.
+- Prevent duplicate subscriptions from causing duplicate notifications.
+- Ensure one observer's failure does not prevent other observers from being notified.
+- Add focused tests for subscription, unsubscription, notification, duplicate registration, and failure isolation.
+- Keep this patch limited to Observer-related code and tests.
+
+Change 2 — GraphQL Recruiter Authorization
+
+Add a recruiter-only GraphQL query for recruiter-owned jobs, using the project's existing authentication and permission conventions.
+
+- Add or extend the appropriate permission class.
+- Implement the recruiter jobs query and resolver.
+- Restrict results according to the agreed business rules, such as published and unfilled jobs.
+- Add tests for authorized recruiter access, unauthorized access, and query behavior.
+- Preserve the existing public jobs query behavior.
+
+Do not classify a permission check alone as a Strategy pattern. Classify it as a Strategy extension only if the implementation demonstrates interchangeable policies or algorithms used through an appropriate common mechanism. Otherwise, record it as an authorization improvement or partial Strategy candidate.
+
+Change 3 — State Pattern: Application Status
+
+Encapsulate application-status behavior in state classes, including the project's supported states, such as Pending, Accepted, and Rejected, and a factory or equivalent state-selection mechanism.
+
+- Inspect the existing applicant model, status field, serializer, view, and authorization rules before changing code.
+- Define the permitted status transitions based on the project's intended business rules.
+- Integrate the state behavior into the application-status update endpoint.
+- Handle invalid status values and invalid transitions consistently.
+- Add tests for valid transitions, invalid transitions, and invalid status values.
+- Keep this patch limited to State-related code and tests.
+
+Implementation and Verification
+
+For each change:
+
+1. Record the requirement and acceptance criteria.
+2. Inspect the existing implementation before editing.
+3. Implement only the required change.
+4. Add focused tests.
+5. Record the changed files and explain why each changed.
+6. Generate an isolated source_changes.patch for that change.
+7. Run the relevant tests in the project's configured Python environment.
+8. Save the actual command and test output.
+9. Inspect the diff for unrelated changes, regressions, and overlap with other changes.
+10. Document limitations and unresolved issues.
+
+Required Deliverables
+
+- Updated source code in the combined Part 2 code snapshot.
+- One isolated source_changes.patch per change.
+- Requirement documentation and honest test logs for each change.
+- Updated Pattern_count.csv and pattern_evalution.csv.
+- Updated diagrams that match the actual implementation.
+- A concise report of implementation, pattern effects, and limitations.
+- Part2/Part2_prompt.txt.
+- Part2/llm.csv using the assignment's required columns, if specified.
+
+For llm.csv, record actual LLM-assisted work, including the part, model/date, prompt file, input file, output file, evaluation, and verification evidence. If exact historical prompts or raw responses were not retained, state that limitation instead of fabricating them.
+
+Pattern Evaluation
+
+- Do not count a pattern merely because a class, enum, mixin, or framework hook exists.
+- Preserve the identity of existing pattern collaborations when they are modified.
+- Distinguish patterns added, modified, retained, removed, and uncertain.
+- Keep pattern counts consistent with the source code and documented counting method.
+- Do not describe selected-file LOC as whole-project LOC.
+- Do not claim that a refactoring improved design solely because the code or LOC changed.
+
+Final Review
+
+Before finalizing, inspect all diffs, run relevant tests, verify the CSVs and diagrams against the implementation, and report the actual results and remaining limitations. Do not invent commit IDs, test results, metrics, or verification evidence.

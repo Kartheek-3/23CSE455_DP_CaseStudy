@@ -1,0 +1,32 @@
+Pattern: Strategy
+Instance: Visibility Condition Evaluator Dispatch
+Language: C++
+Compiler/Runtime: g++ MinGW GCC 6.3.0 (-O2 -std=c++14)
+Warmup + 5 Runs Raw Output:
+--- Run 1 ---
+RESULT: 6/6 passed
+TIME_MS: 0.0386
+
+
+--- Run 2 ---
+RESULT: 6/6 passed
+TIME_MS: 0.0553
+
+
+--- Run 3 ---
+RESULT: 6/6 passed
+TIME_MS: 0.0624
+
+
+--- Run 4 ---
+RESULT: 6/6 passed
+TIME_MS: 0.0556
+
+
+--- Run 5 ---
+RESULT: 6/6 passed
+TIME_MS: 0.0460
+
+
+Measured Milliseconds: [0.0386, 0.0553, 0.0624, 0.0556, 0.046]
+Computed Median Milliseconds: 0.055

@@ -1,0 +1,236 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=20mm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern,tabularx,booktabs,longtable,graphicx,float,xcolor,url,caption,enumitem}
+\usepackage[hidelinks]{hyperref}
+\setlength{\parindent}{0pt}\setlength{\parskip}{5pt}
+\setlist{itemsep=1pt,topsep=2pt}
+\urlstyle{tt}\sloppy
+\expandafter\def\expandafter\UrlBreaks\expandafter{\UrlBreaks\do\a\do\b\do\c\do\d\do\e\do\f\do\g\do\h\do\i\do\j\do\k\do\l\do\m\do\n\do\o\do\p\do\q\do\r\do\s\do\t\do\u\do\v\do\w\do\x\do\y\do\z\do\A\do\B\do\C\do\D\do\E\do\F\do\G\do\H\do\I\do\J\do\K\do\L\do\M\do\N\do\O\do\P\do\Q\do\R\do\S\do\T\do\U\do\V\do\W\do\X\do\Y\do\Z\do\0\do\1\do\2\do\3\do\4\do\5\do\6\do\7\do\8\do\9}
+\newcommand{\entry}[1]{\textbf{#1:} }
+\begin{document}
+\begin{center}\Large\textbf{23CSE455 Design Patterns}\\[4pt]\LARGE Case Study Report\end{center}
+
+\entry{Team}B16\par
+\entry{Case study}Testing frameworks (Java): \emph{Design Pattern Analysis and Evolution in the JUnit 6 Testing Framework}\par
+\entry{Application}JUnit 6.1.3, the application named in the assigned case study\par
+\entry{Date}2026-10-10\par
+\textbf{Submission repository:} \href{https://github.com/aswathymohan-amrita/23CSE455_DP_CaseStudy}{23CSE455\_DP\_CaseStudy}, folder \texttt{B16/}\par
+\textbf{Students}\par
+\begin{tabularx}{\linewidth}{@{}llX@{}}\toprule
+Roll number & Student name & Batch\\\midrule
+AM.SC.U4CSE23319 & Gautham Mohanraj & CSE D\\\bottomrule
+\end{tabularx}
+
+\section{Application and architecture}
+\entry{Original source}\url{https://github.com/junit-team/junit-framework}, tag \texttt{r6.1.3}, baseline commit \texttt{f59f60d2cebdf2224235d81f781b1f310cbc8138} (``Release 6.1.3''), accessed 2026-10-10, Eclipse Public License 2.0. An unchanged copy of the inspected code is in \path{data/code/}.
+
+\entry{Environment}Java library built with Gradle 9.5.1 (wrapper in the repository); JUnit requires Java 17 or higher at runtime. Built and tested with OpenJDK 25.0.4.1 on a Mac with Apple M3 (Darwin arm64). No database. Part~3 used Python 3.14.2, Node.js 26.11.1 and Apple clang 21.0.0 (C++20). Metrics: lizard 1.24.1. Diagrams: PlantUML.
+
+\entry{Scope}Production code (\path{src/main/java}) of four modules: \texttt{junit-platform-engine}, \texttt{junit-platform-launcher}, \texttt{junit-jupiter-api}, \texttt{junit-jupiter-engine}. They cover the four areas of the case study: (A) test discovery and descriptors, (B) engines and the execution lifecycle, (C) execution listeners and reporting, (D) Jupiter extensions and resource management. Excluded: \texttt{junit-platform-commons} (utilities used by all modules), console, suite, reporting, testkit, Vintage and params modules, and all test code, because none of them implements one of the four areas; tests are only used to run and verify the changes.
+
+\entry{Architecture}Figure~\ref{fig:arch} shows one test run. A client (IDE, build tool or console) builds a \texttt{LauncherDiscoveryRequest} and calls the \texttt{Launcher} created by \texttt{LauncherFactory}. \texttt{EngineDiscoveryOrchestrator} asks every \texttt{TestEngine} to discover a tree of \texttt{TestDescriptor}s, applies post-discovery filters, prunes empty containers, and \texttt{DefaultLauncher} turns the result into a \texttt{TestPlan}. \texttt{EngineExecutionOrchestrator} then lets each engine execute its tree: in Jupiter, \texttt{HierarchicalTestEngine} creates a \texttt{NodeTestTask} per descriptor, which runs the Jupiter lifecycle (extensions, \texttt{@BeforeEach}, the test, cleanup) and reports every event to an \texttt{EngineExecutionListener}. \texttt{ExecutionListenerAdapter} converts those engine events into \texttt{TestExecutionListener} events, which \texttt{CompositeTestExecutionListener} broadcasts to all registered listeners (IDE, summary, reports).
+
+\begin{figure}[H]\centering
+\includegraphics[width=\linewidth,height=0.48\textheight,keepaspectratio]{Part1/architecture/architecture.png}
+\caption{Components and numbered flow of one test run (\protect\path{Part1/architecture/architecture.puml}; the LLM's original version and the two corrections are in the same folder).}\label{fig:arch}
+\end{figure}
+
+\entry{Run instructions}\path{README.md} (team folder). The JUnit fork is built and tested from its root with \path{./gradlew --no-configuration-cache --no-build-cache :platform-tests:test --rerun --tests "org.junit.platform.launcher.*"} (and \path{:jupiter-tests:test}). Actual results at the baseline: 382/382 launcher tests, 2452 platform tests and 3381 Jupiter tests passed (0 failures; 6 and 165 skipped by design). Logs: \path{Part2/changes/baseline_launcher_tests.log}, \path{Part2/changes/baseline_all_platform_tests.log}, \path{Part2/changes/Change2/before_all_jupiter_tests.log}.
+
+\section{Part 1 Pattern discovery}
+\entry{Method}For each area I first asked the LLM (Claude Opus 5.5) to list the files and explain the runtime flow, checked that answer in the source, and only then asked for pattern candidates with roles, files and line numbers (12 prompts, \path{Part1/llm/}). Every claimed line was checked automatically (\path{Part1/evidence/check_lines.py}) and every role by reading the code; 102 claims are recorded in \path{Part1/evidence/verification.csv}. Two counting rules were fixed before counting: (1) \emph{Composite rule}: a class is a Composite only if it combines children of its own interface \emph{and} merges their answers into one result; (2) two views of the same classes (A2/A3, B1/B2) are counted as separate instances with an overlap note, and a class found in two areas is counted once (B6--B8 are marked ``also Area C''). Line ranges in \path{data/patterns.csv} are computed from the source by \path{data/build_part1_csv.py}.
+
+\subsection{Totals at the baseline}
+\entry{Confirmed pattern types}10 (Strategy, Adapter, Observer, Decorator, Template Method, Composite, Command, Null Object, Chain of Responsibility, Factory Method)\par
+\entry{Confirmed pattern instances}35\par
+\entry{Concrete participant classes}76\par
+\entry{Unique participant symbols}152 (177 role mappings; symbols shared by two instances counted once)\par
+\entry{Rejected and uncertain candidates}25 rejected and 8 uncertain, observed in the same four modules at commit \texttt{f59f60d} (Table~\ref{tab:rejected}).
+
+\subsection{Pattern inventory}
+\begin{longtable}{@{}p{0.17\linewidth}p{0.57\linewidth}p{0.09\linewidth}p{0.11\linewidth}@{}}\toprule
+Pattern type & Instance names & Instances & Concrete classes\\\midrule\endhead
+%%INVENTORY%%
+\bottomrule\end{longtable}
+
+\subsection{One record for each pattern instance}
+Each record gives the pattern, the purpose (as evidence) and every participant with its file and line range. Paths are shortened to module/.../file; the full paths are in \path{data/patterns.csv}. All instances are JUnit framework code. Each record names its diagram; PlantUML sources and PNGs for all 35 instances are in \path{Part1/uml/}.
+
+%%RECORDS%%
+
+\begin{longtable}{@{}p{0.06\linewidth}p{0.11\linewidth}p{0.79\linewidth}@{}}
+\caption{Rejected and uncertain candidates (reasons from \protect\path{Part1/notes.md})}\label{tab:rejected}\\\toprule
+Area & Verdict & Candidate and reason\\\midrule\endhead
+%%REJECTED%%
+\bottomrule\end{longtable}
+
+\section{Part 2 Evolution and refactoring}
+I first asked the LLM what JUnit already offers for each requested change and what the gap is (\path{Part2/llm/prompt_1_design.txt}); I verified its answer (22 claims, \path{Part2/evidence/verification.csv}: 111 of 112 line references exact, 3 design claims corrected). The changes were then implemented on branch \texttt{b16-evolution} of a JUnit fork (its five commits are exported in \path{Part2/changes/b16-evolution.bundle}, which applies on top of the public tag \texttt{r6.1.3}; the final source is also saved in \path{Part2/code/}), in the order CH03, CH01, CH02, each with its refactoring as a separate commit, and JUnit's own test suites were rerun after every commit (\path{Part2/changes/launcher_tests_by_snapshot.txt}). Each change folder contains the full record (\path{Part2/changes/ChangeN/README.md}), the diffs, test logs and a demo log that runs the same tests on the official 6.1.3 jar and on the evolved jar.
+
+\subsection*{CH03: configurable filtering policy for test selection}
+\entry{Change and acceptance criteria}Existing feature: \texttt{PostDiscoveryFilter}s such as \texttt{TagFilter} and \texttt{MethodFilter}, but they can only be built in code; no filter can be set from \texttt{junit-platform.properties}. Extension: one policy, \texttt{junit.platform.filter.policy.mode=off|exclude|only}, applied to \texttt{.tags} (tag expressions) and/or \texttt{.methods} (regexes), matched with OR. Criteria: off/unset changes nothing; \texttt{exclude} removes matching tests and prunes empty classes; \texttt{only} keeps them; the policy only narrows other filters; invalid values fail discovery with a message naming the key.
+
+\entry{Before and after}\texttt{f59f60d} $\rightarrow$ \texttt{68a60e4} (refactoring) $\rightarrow$ \texttt{6f98fbf}. New \path{junit-platform-launcher/.../launcher/core/FilterPolicy.java}; edited \path{LauncherConstants.java} (3 keys) and \path{EngineDiscoveryOrchestrator.java}. This is an \textbf{implementation change}: a \texttt{ServiceLoader} filter cannot see the request's configuration, and the only workaround (static state captured by a discovery listener) is unsafe with concurrent launchers.
+
+\entry{Implementation and tests}\texttt{FilterPolicy.fromConfiguration} parses and validates everything once per discovery and is added \emph{last} in the new \texttt{collectPostDiscoveryFilters}; \texttt{apply} only evaluates predicates, so it cannot throw (the orchestrator does not catch filter exceptions). \texttt{FilterPolicyTests}: 9 tests (one per criterion, 4 invalid configurations). Launcher tests 382 $\rightarrow$ 391, all platform tests 2452 $\rightarrow$ 2461, 0 failures; with the wiring line removed, 8 of the 9 new tests fail (mutation check). Execution order (demo log, \path{Part2/changes/Change3/demo_ch03.log}): discovery $\rightarrow$ ServiceLoader filters, request filters, policy $\rightarrow$ AND-composition and removal of excluded leaves (logged as ``2 tests were excluded by filter policy'') $\rightarrow$ pruning $\rightarrow$ \texttt{TestPlan} $\rightarrow$ execution. Filtered tests are absent, not skipped. Failure handling: invalid mode, missing tags/methods, invalid tag expression or regex $\rightarrow$ \texttt{JUnitException} naming the key, no test runs (console exit 255).
+
+\entry{Pattern effects}A3 Post-Discovery Filter Policies (Strategy): \textbf{extended} (new ConcreteStrategy \texttt{FilterPolicy}, new context method). A2 Composed Discovery Filter (Composite): \textbf{extended} (new Leaf, \texttt{CompositeFilter} unchanged). All others preserved; A1 and A6 only moved lines. Not new patterns: \texttt{FilterPolicy} ORs \texttt{Predicate}s, not filters of its own interface (fails the Composite rule), and its mode is a boolean flag, not a Strategy (the LLM's ``new enum Strategy'' claim was rejected, D1-18).
+
+\entry{Refactoring}Extract Method \texttt{collectPostDiscoveryFilters} out of \texttt{discoverSafely}, as a \emph{preparatory} refactoring (make the change easy, then make the easy change). The LLM called it a Long Method; metrics do not support that (24 NLOC, CCN 3), so the claim was corrected (D1-20). Behaviour preserved: launcher tests 382/382 before and after the refactoring commit.
+
+\entry{Before/after metrics}lizard 1.24.1, same files: \texttt{discoverSafely} 24 $\rightarrow$ 22 NLOC (CCN 3 $\rightarrow$ 3); \texttt{EngineDiscoveryOrchestrator.java} 202 $\rightarrow$ 206 NLOC, 18 $\rightarrow$ 19 functions; new \texttt{FilterPolicy.java} 74 NLOC, max CCN 5 (\path{Part2/evidence/metrics_before.txt}, \path{metrics_after_ch03.txt}).
+
+\subsection*{CH01: test execution listener with a custom summary}
+\entry{Change and acceptance criteria}Existing feature: \texttt{SummaryGeneratingListener}, which gives one set of totals for the whole run, is not auto-registered and has no settings. Extension: \texttt{ClassSummaryListener} writes one row per test class (total, passed, failed, aborted, skipped, time) and the N slowest tests to a file in the reporting output directory; keys \texttt{junit.platform.listeners.summary.enabled} (default false), \texttt{.slowest} (5), \texttt{.output.file}. Criteria: off by default; correct per-class rows whose totals equal \texttt{SummaryGeneratingListener}'s; slowest tests in descending order; bad settings and I/O errors are logged and never affect the run.
+
+\entry{Before and after}\texttt{6f98fbf} $\rightarrow$ \texttt{67d159b} (refactoring) $\rightarrow$ \texttt{e55fefe}. New \path{junit-platform-launcher/.../listeners/ClassSummaryListener.java}; one line each in \path{META-INF/services/org.junit.platform.launcher.TestExecutionListener} and \path{module-info.java}. This uses an \textbf{existing extension point} (\texttt{TestExecutionListener} + \texttt{ServiceLoader}); no JUnit behaviour changes.
+
+\entry{Implementation and tests}State is kept in concurrent maps and atomic counters because callbacks can come from several threads; a test's class is found by walking up to the nearest method or class source. \texttt{ClassSummaryListenerTests}: 5 tests, run through \texttt{LauncherFactory} so the ServiceLoader registration is tested too. Launcher tests 391 $\rightarrow$ 397, all platform tests 2461 $\rightarrow$ 2467, 0 failures; mutation checks (registration removed: 4/5 fail; skipped tests not counted: row test fails). Execution order (\path{Part2/changes/Change1/demo_ch01.log}, with a demo trace listener): \texttt{testPlanExecutionStarted} reads settings $\rightarrow$ per test \texttt{executionStarted}/\texttt{executionFinished} (or \texttt{executionSkipped}) $\rightarrow$ \texttt{testPlanExecutionFinished} writes the file. Failure handling: \texttt{slowest=abc} $\rightarrow$ warning, default used; unwritable file $\rightarrow$ error logged, same test results and exit code; an exception inside the listener is isolated by \texttt{CompositeTestExecutionListener.notifyEach}. The standard deactivation key only works as a JVM system property, not as a request parameter (found during the demo; D1-21).
+
+\entry{Pattern effects}C1 Test Execution Listeners (Observer): \textbf{extended} (new ConcreteObserver; the ConcreteObserver \texttt{SummaryGeneratingListener} was refactored internally, role unchanged). C3, B7, B8 and all others preserved. ``Disabled'' is an \texttt{enabled} flag, not a Null Object (rejected).
+
+\entry{Refactoring}Duplicated Code in \texttt{SummaryGeneratingListener}: the ``if container \dots; if test \dots'' counting pair appeared five times and the skipped-descendants stream was built twice. Extract Method \texttt{count(identifier, containers, tests)}, two separate \texttt{if}s kept because a \texttt{CONTAINER\_AND\_TEST} node counts as both. Because existing tests did not cover skipped descendants or \texttt{CONTAINER\_AND\_TEST}, a characterization test was added first and shown to pass on the \emph{original} code (16/16); it also catches the tempting \texttt{if/else} mistake.
+
+\entry{Before/after metrics}\texttt{SummaryGeneratingListener.java}: 104 $\rightarrow$ 78 NLOC, average CCN 2.4 $\rightarrow$ 1.5, \texttt{executionFinished} 33 NLOC/CCN 10 $\rightarrow$ 14/4. New \texttt{ClassSummaryListener.java}: 190 NLOC, max CCN 7 (\path{Part2/evidence/metrics_after_ch01a.txt}, \path{metrics_after_ch01.txt}).
+
+\subsection*{CH02: Jupiter extension for a managed resource}
+\entry{Change and acceptance criteria}Existing feature: \texttt{@TempDir} creates, injects and cleans up a resource, but only for \texttt{Path}/\texttt{File}; \texttt{@AutoClose} only closes a field you created yourself. Extension: \texttt{@ManagedResource(Factory.class)} on any method parameter, with \texttt{ResourceFactory<T>} (\texttt{create}, \texttt{destroy}). The lifetime follows the method that asks first: \texttt{@BeforeAll} $\rightarrow$ one per class, test or \texttt{@BeforeEach} $\rightarrow$ one per test. Criteria: per-test and per-class lifetimes with exact create/destroy order; destroyed even when the test fails; failing \texttt{create}/\texttt{destroy} and invalid use are reported as test failures; works when auto-closing of stored values is disabled.
+
+\entry{Before and after}\texttt{e55fefe} $\rightarrow$ \texttt{99987b0}. Three new files in \path{junit-jupiter-api/.../api/extension/support/}; \textbf{no existing JUnit file changed}. This uses \textbf{existing extension points only}: \texttt{ParameterResolver}, \texttt{@ExtendWith} as a meta-annotation, and \texttt{ExtensionContext.Store} for cleanup.
+
+\entry{Implementation and tests}The resource is stored, keyed by its factory class, in the store of the context where it is first requested; the store's parent lookup lets a test reuse a class-wide resource. A nested \texttt{Holder} implements both \texttt{AutoCloseable} and the deprecated \texttt{Store.CloseableResource}, so cleanup also runs when auto-close is disabled. \texttt{ManagedResourceTests}: 7 tests; all Jupiter tests 3381 $\rightarrow$ 3388, 0 failures; mutation checks (fallback removed; wrong store lifetime) are caught. Execution order (\path{Part2/changes/Change2/demo_ch02.log}, with a real \texttt{HttpServer}): class scope: create (while resolving the \texttt{@BeforeAll} parameter) $\rightarrow$ \texttt{@BeforeAll} $\rightarrow$ tests reuse it $\rightarrow$ \texttt{@AfterAll} $\rightarrow$ destroy; test scope: create $\rightarrow$ \texttt{@BeforeEach} $\rightarrow$ test $\rightarrow$ \texttt{@AfterEach} $\rightarrow$ destroy $\rightarrow$ test reported finished. Failure handling: failed test $\rightarrow$ still destroyed; \texttt{create} throws $\rightarrow$ \texttt{ParameterResolutionException}, nothing to destroy; \texttt{destroy} throws $\rightarrow$ the owning test fails with ``Failed to close extension context''. The official 6.1.3 jar cannot even compile the demo (missing \texttt{ManagedResource}, \texttt{ResourceFactory}).
+
+\entry{Pattern effects}D3 Parameter Resolution (Strategy): \textbf{extended} (new ConcreteStrategy \texttt{ManagedResourceExtension}). \textbf{Newly introduced}: N1 Managed Resource Factory (Strategy; the ConcreteStrategy role is absent from production code because users supply the factories) and N2 Managed Resource Holder (Adapter: \texttt{Holder} adapts \texttt{ResourceFactory.destroy(T)} to the \texttt{close()} the store expects). The LLM had said \texttt{Holder} is ``not a pattern''; that claim was corrected (D1-22). D1, D5, D6 and all others preserved.
+
+\entry{Refactoring}None, deliberately: CH02 changes no existing code. The nearest smell (two parallel close paths for \texttt{AutoCloseable} and the deprecated \texttt{CloseableResource}) cannot be removed without changing behaviour for users who disabled auto-close, so it would not be a refactoring.
+
+\entry{Before/after metrics}New code only: 88 NLOC, max CCN 3 (\texttt{resolveParameter} 12 NLOC). lizard does not analyse methods inside a Java \texttt{record}; by its counting rule \texttt{Holder.create} is CCN 3 and \texttt{close} CCN 1 (\path{Part2/evidence/metrics_after_ch02.txt}).
+
+\subsection{Updated pattern counts}
+Generated by \path{data/build_part2_csv.py} from the fork at each commit; one row per instance per version in \path{Part2/pattern_evolution.csv}, counts for every version in \path{data/pattern_counts.csv}. Rejected observations grow because candidates considered during the changes were recorded (CH03: \texttt{FilterPolicy} as Composite, the mode flag as Strategy; CH01: the \texttt{enabled} flag as Null Object).
+
+\begin{longtable}{@{}p{0.23\linewidth}p{0.05\linewidth}p{0.07\linewidth}p{0.07\linewidth}p{0.07\linewidth}p{0.08\linewidth}p{0.25\linewidth}@{}}\toprule
+Snapshot & Types & Instances & Concrete classes & Unique symbols & Rejected / uncertain & Changed instances\\\midrule\endhead
+%%EVOCOUNTS%%
+\bottomrule\end{longtable}
+
+\entry{Interpretation}All three changes reuse JUnit's existing patterns instead of adding new mechanisms: CH03 and CH01 add one more concrete Strategy or Observer, which is exactly what those patterns are for (open for extension, closed for modification); only CH03 needed a small change to JUnit's internals, and the preparatory refactoring kept that change to one line. CH02 shows the cost side: generalising \texttt{@TempDir} needed two small new collaborations (N1, N2), and it has to support JUnit's two parallel cleanup paths. The refactorings reduced complexity where the smell was real (CH01: CCN 10 $\rightarrow$ 4) and changed almost nothing where it was only preparatory (CH03), which is why the report does not claim a design improvement from lines of code alone. Limitations: CH03 values are split on commas, so a method regex cannot contain a comma; CH01 groups only tests, not containers; CH02 does not support constructor parameters.
+
+\section{Part 3 Cross-language comparison}
+\entry{Selected instances}One representative, verified instance for each of the 10 confirmed pattern types, so every detected type has a small problem in all four languages (Table~\ref{tab:p3sel}). Each instance was chosen because its behaviour can be reduced to a deterministic text input and output without JUnit itself, and because it is the clearest example of its type in the four areas.
+
+\begin{longtable}{@{}p{0.2\linewidth}p{0.3\linewidth}p{0.44\linewidth}@{}}
+\caption{Part 3 problems and the Part 1 instance each one models}\label{tab:p3sel}\\\toprule
+Pattern & Source instance & Folder and problem\\\midrule\endhead
+Observer & C1 Test Execution Listeners & \path{observer-test-listeners/}: listeners notified of test events; a throwing listener is isolated\\
+Composite & A1 Test Descriptor Tree & \path{composite-test-tree/}: tree of engine, classes, tests; remove tagged tests and prune\\
+Strategy & A3 Post-Discovery Filter Policies & \path{strategy-test-filters/}: three interchangeable test filters applied by one selector\\
+Adapter & B7 Engine-to-Launcher Listener Adapter & \path{adapter-listener-bridge/}: engine events with unique ids converted for a client listener\\
+Decorator & D10 Timeout Invocation Wrappers & \path{decorator-timeout-invocation/}: timeout and logging wrappers around a test invocation\\
+Template Method & B1 Hierarchical Engine Execution Skeleton & \path{template-method-engine/}: fixed \texttt{execute} with a primitive and two hooks\\
+Command & B9 Node Execution Tasks & \path{command-task-queue/}: task objects queued and run later by an executor\\
+Null Object & C7 No-op Listeners & \path{null-object-listener/}: a no-op listener instead of null checks\\
+Chain of Responsibility & D9 Invocation Interceptor Chain & \path{chain-of-responsibility-interceptors/}: interceptors that pass on or stop an invocation\\
+Factory Method & B2 Engine Collaborator Factory Methods & \path{factory-method-executors/}: engines that create their own executor\\\bottomrule
+\end{longtable}
+
+\entry{Common specifications}Every problem has a \path{test-data/} folder shared by all four languages: an input file, the exact \path{expected-output.txt} (LF, trailing newline), an invalid input and the exact message it must produce (\path{expected-error.txt}). Common rules: blank and \texttt{\#} lines are ignored, fields are split on whitespace, durations are given in the input (not measured) so output is deterministic, and a bad line stops the program with \texttt{error: line N: ...} on stderr and exit code 1. Each test runner checks three things: the exact output, the exact error for the bad input, and one property specific to the pattern (for example: a new strategy plugs in unchanged; decorators nest in any order; a handler can stop the chain; a subclass changes only the created product). The rules for each problem are in its \path{test-data/README.md}.
+
+\entry{Implementations}\path{Part3/<problem>/{java,python,javascript,cpp}/}, each with production code separate from its test runner and a README giving the commands (run from that folder) and how the pattern looks in that language. Versions: OpenJDK 25.0.4.1, Python 3.14.2, Node.js 26.11.1, Apple clang 21.0.0 \texttt{-std=c++20}; standard library only. All commands: \texttt{sh run-all.sh} in \path{Part3/}. Observer and Composite were generated on claude.ai; the other eight by Claude Code (recorded in \path{data/llm.csv}).
+
+\entry{Actual results}On my Mac: 110/110 compile, run and test commands exit 0 and all 40 programs' output is byte-identical to the expected file (\path{Part3/RUN-LOG-mac.txt}); every one of the 40 test runners passes 3/3, with one log per program in \path{Part3/evidence/test_results/}; 0 compiler warnings (\texttt{clang++ -Wall -Wextra -pedantic}; Java also clean under \texttt{javac -Xlint:all -Werror}); all ten C++ test runners are clean under AddressSanitizer and UndefinedBehaviorSanitizer and macOS \texttt{leaks} reports 0 leaks (\path{Part3/cpp-sanitizer-mac.txt}). Nothing was marked not run.
+
+\entry{Static and dynamic comparison}Measured by \path{Part3/measure.py} into \path{data/cross_language.csv}. Source LOC = lizard NLOC of production files only; max CC = highest lizard CCN of any production function; time = median wall-clock time of the whole process over 5 runs after 1 warm-up, including runtime start-up (raw values in \path{Part3/timing-raw.csv}). Summary per language over the 10 problems, then every program:
+
+\begin{tabular}{@{}lrrrr@{}}\toprule
+Language & Mean source LOC & LOC range & Max CC range & Median ms range\\\midrule
+%%CROSSSUMMARY%%
+\bottomrule\end{tabular}
+
+Per program (one test log each in \path{Part3/evidence/test_results/}, e.g.\ \path{Observer_Java.txt}, \path{TemplateMethod_Cpp.txt}):
+
+\begin{longtable}{@{}llrrlr@{}}\toprule
+Pattern & Language & Source LOC & Max function CC & Tests passed & Median ms\\\midrule\endhead
+%%CROSS%%
+\bottomrule\end{longtable}
+
+\entry{Comparison}The participants are the same in every language, but the languages express them differently. \emph{Contracts}: Java and C++ state them in the type system (Java \texttt{interface}s, records and a \texttt{final} template method; C++ pure virtual functions, \texttt{final} classes and a non-virtual \texttt{execute}), so a missing or wrong override fails at compile time. Python uses \texttt{abc.ABC} where every method is required (Strategy, Decorator, Template Method, Command, Chain of Responsibility, Composite, Factory Method) and plain base classes where callbacks are optional (Observer, Adapter, Null Object); missing methods are found at run time, when an object is created or called. JavaScript has neither interfaces nor abstract classes: abstract base classes (Strategy, Template Method, Composite, Factory Method) block \texttt{new} with \texttt{new.target} and throw from unimplemented methods, and the tests pass plain objects as strategies and listeners (duck typing). \emph{Template Method}: only Java (\texttt{final}) and C++ (non-virtual) can prevent overriding the skeleton; in Python and JavaScript it is a convention. \emph{Null Object}: in C++ the runner holds a reference, which cannot be null, so the language itself removes the null check; elsewhere a shared no-op object replaces \texttt{null}/\texttt{None}. \emph{Chain of Responsibility}: all four pass each handler a \texttt{proceed} callback (Java \texttt{Supplier}, Python lambda, JavaScript arrow function, C++ \texttt{std::function}) instead of a fixed \texttt{next} field, so handlers can be reordered; JUnit continues its chain through \texttt{Invocation.proceed()}. \emph{Decorator}: every wrapper holds the inner invocation and calls its \texttt{proceed()}, so wrappers nest in any order. \emph{Ownership} is explicit only in C++: decorators, commands and factory products are held in \texttt{std::unique\_ptr}, so building or destroying the outer object moves or frees the whole structure, while the other three rely on garbage collection. All Composite versions use the ``safe'' form (\texttt{addChild} only on containers), whereas JUnit's \texttt{TestDescriptor} is ``transparent''. Python is the shortest version for 9 of the 10 problems (JavaScript for Composite), and C++ or Java the longest, mostly because of type declarations, headers and explicit ownership. The highest complexity is in input parsing and event dispatch (Composite parsers CCN 17--24; Observer, Adapter, Command and Chain parsers 7--12), not in the pattern classes. lizard failed to parse one JavaScript file (a template literal nested inside another one); that line was rewritten without nesting and re-measured (\path{Part3/llm/verification.csv}, P3-16).
+
+\entry{Technology discussion}The times are dominated by runtime start-up, not by the pattern code: native C++ binaries run in about 5--6~ms, Python in about 21--22~ms, the JVM in about 32--37~ms and Node.js in about 91--93~ms, almost independently of the pattern (ranges over the 10 problems). In a test framework such as JUnit the JVM start-up is paid once per run, and pattern calls (listener notifications, strategy calls, interceptor hops) are in-process method calls, so their cost is negligible next to process start-up. The static/dynamic contrast matches the usual trade-off described by Gamma et al.\ (an explicit interface makes the participant roles checkable; duck typing makes them implicit but shorter) and the language documentation (Python \texttt{abc}, C++ smart pointers).
+
+\section{LLM records and human verification}
+\entry{Run and model}Claude Opus 5.5 on claude.ai (Claude Code on the web), 2026-10-10, for the analysis prompts of Parts 1--3 and the Observer and Composite programs of Part~3; Claude Code CLI (Claude Opus 5.5) on my Mac for implementing the three Part~2 changes, the other eight Part~3 problems, the measurement and verification scripts, following plans I approved. Every interaction is a row in \path{data/llm.csv} (prompts combined per part in \path{Part1/Part1_prompt.txt}, \path{Part2/Part2_prompt.txt}, \path{Part3/llm/part3_prompt.txt}).
+
+{\small\renewcommand{\UrlBreaks}{\do\/\do\_}%
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.34\linewidth}>{\raggedright\arraybackslash}p{0.15\linewidth}>{\raggedright\arraybackslash}p{0.30\linewidth}>{\raggedright\arraybackslash}p{0.13\linewidth}@{}}\toprule
+Step & Tool & Exact prompt & Evaluation\\\midrule\endhead
+%%LLM%%
+\bottomrule\end{longtable}}
+
+\entry{Inputs and outputs}Input for all analysis prompts: JUnit at commit \texttt{f59f60d} (the four modules) and my own earlier findings; raw outputs are saved unchanged next to each prompt (\path{Part1/llm/output_*.md}, \path{Part2/llm/output_1_design.md}, \path{Part3/llm/output_1_programs.zip}).
+
+\entry{Claims and evaluation}Every claim was checked against the source, tests or measurements (scripts and code reading, recorded per row with file and line evidence); the \texttt{checked\_by} column names the person who re-checked a row by hand.
+
+\begin{tabular}{@{}lrrrrrr@{}}\toprule
+Verification file & Claims & Correct & Partially & Incorrect & Cannot confirm & Re-checked by hand\\\midrule
+%%VERIFY%%
+\bottomrule\end{tabular}
+
+Examples of corrections: the LLM claimed no test instance is created for a \texttt{@Disabled} method (wrong: \texttt{prepare()} runs before \texttt{checkWhetherSkipped}); its architecture diagram had the client call the launcher from the request builder and the orchestrator build the \texttt{TestPlan} (both corrected); its UML for A2 included \texttt{EngineFilter} (removed); in Part~2 it proposed a non-existent enum Strategy, a Long Method that metrics do not support, and called the CH02 \texttt{Holder} ``not a pattern''.
+
+\entry{Generated code}Part~2: all production code, tests and demos were generated by Claude Code and accepted only after JUnit's own suites passed, new tests were shown to fail when the feature is removed (mutation checks), and every claim in the change READMEs was checked against logs. Part~3: the Observer and Composite programs were generated on claude.ai and used unchanged; the other 32 programs (eight pattern types) were written by Claude Code. All 40 were accepted only after re-running everything on my machine, sanitizers, leak checks, zero-warning builds and a check of every JUnit fact in their READMEs against the source (\path{Part3/llm/verification.csv}).
+
+\section{Findings, contributions and references}
+\entry{Findings}JUnit 6.1.3 relies on a small set of patterns used many times: Strategy (10 instances) for every variable policy (filters, executors, temp directories, parameter resolution, conditions), Observer (5) for discovery and execution events, Adapter (5) between the engine and launcher APIs, and Decorator (4) around listeners, the launcher and invocations; Composite holds the test tree everything else works on. The extension points built on these patterns made two of the three changes possible without touching JUnit's code, and the third needed one line in the launcher. Limitations: only four modules and only production code were analysed; pattern recognition depends on the stated rules (for example, the \texttt{Composite*Listener} classes are uncertain under our Composite rule); timings in Part~3 are single-machine measurements dominated by start-up.
+
+\entry{Contributions}AM.SC.U4CSE23319, Gautham Mohanraj, CSE D: whole case study (single-member team): prompts, verification and decisions in all parts, choice and design of the three changes, review of the generated code, measurements and this report; evidence as linked above.
+
+\entry{References}
+\begin{itemize}
+\item JUnit 6.1.3 source, \url{https://github.com/junit-team/junit-framework/tree/r6.1.3}, and the JUnit User Guide, \url{https://docs.junit.org/6.1.3/}.
+\item E. Gamma, R. Helm, R. Johnson, J. Vlissides, \emph{Design Patterns: Elements of Reusable Object-Oriented Software}, Addison-Wesley, 1994.
+\item B. Woolf, ``Null Object'', in \emph{Pattern Languages of Program Design 3}, Addison-Wesley, 1998.
+\item M. Fowler, \emph{Refactoring: Improving the Design of Existing Code}, 2nd ed., Addison-Wesley, 2018 (Extract Method, Duplicated Code, preparatory refactoring).
+\item Python \texttt{abc} module, \url{https://docs.python.org/3/library/abc.html}; Node.js test runner, \url{https://nodejs.org/api/test.html}; C++ smart pointers, \url{https://en.cppreference.com/w/cpp/memory}.
+\item Tools: lizard (\url{https://github.com/terryyin/lizard}), PlantUML (\url{https://plantuml.com}), Gradle (\url{https://gradle.org}).
+\end{itemize}
+
+\section{Team folder and datasets}
+The team folder is on GitHub at \url{https://github.com/angrezichatterbox/23CSE455_DP_CaseStudy/tree/b16-case-study/B16} (branch \texttt{b16-case-study} of my fork of the submission repository). Structure:
+\begin{verbatim}
+B16/
+  README.md, B16_Report.tex, B16_Report.pdf, B16_dataset.xlsx,
+  screenshots/ (the figures below)
+  data/   patterns.csv, pattern_counts.csv, cross_language.csv, llm.csv
+          (the only copy of the four datasets), code/ (baseline source),
+          test_result/ (test logs index), generator scripts
+  Part1/  Part1_prompt.txt, llm/, evidence/, uml/, architecture/, notes.md
+  Part2/  code/ (evolved source + demo/), changes/ (Change1..3/,
+          b16-evolution.bundle), pattern_evolution.csv, uml/,
+          Part2_prompt.txt, llm/, evidence/
+  Part3/  README.md, one folder per pattern type (10):
+          observer-test-listeners/, composite-test-tree/,
+          strategy-test-filters/, adapter-listener-bridge/,
+          decorator-timeout-invocation/, template-method-engine/,
+          command-task-queue/, null-object-listener/,
+          chain-of-responsibility-interceptors/, factory-method-executors/
+          (each: java, python, javascript, cpp, test-data),
+          llm/ (part3_prompt.txt, raw output, verification),
+          evidence/test_results/, run-all.sh, run logs, measure.py,
+          timing-raw.csv, lizard-raw.txt, B16_slide.tex, B16_slide.pdf
+\end{verbatim}
+
+\begin{figure}[H]\centering\includegraphics[width=\linewidth]{screenshots/1_B16.jpg}\caption{GitHub: \texttt{B16/}}\end{figure}
+\begin{figure}[H]\centering\includegraphics[width=\linewidth]{screenshots/2_data.jpg}\caption{GitHub: \texttt{B16/data/}}\end{figure}
+\begin{figure}[H]\centering\includegraphics[width=\linewidth]{screenshots/3_Part1.jpg}\caption{GitHub: \texttt{B16/Part1/}}\end{figure}
+\begin{figure}[H]\centering\includegraphics[width=\linewidth]{screenshots/4_Part2.jpg}\caption{GitHub: \texttt{B16/Part2/}}\end{figure}
+\begin{figure}[H]\centering\includegraphics[width=\linewidth]{screenshots/5_Part3.jpg}\caption{GitHub: \texttt{B16/Part3/}}\end{figure}
+
+\appendix
+\section{UML diagrams changed in Part 2}\label{app:uml}
+The diagrams that changed in Part~2 (\path{Part2/uml/}; new participants in green). Baseline diagrams for all 35 instances are not repeated here: they are in \path{Part1/uml/} (PlantUML sources and PNGs; 98 of 98 implements/extends arrows checked against the code), and each instance record above gives its path.
+
+%%UML%%
+
+\end{document}

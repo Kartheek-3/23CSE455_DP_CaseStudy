@@ -1,0 +1,85 @@
+# lizard 1.24.1 on the production files only; working folder: Part3/proxy_daemon_rpc
+$ lizard java/DaemonControl.java python/daemon_rpc.py javascript/daemon_rpc.js cpp/daemon_rpc.hpp
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       5      2     42      3       5 DaemonControl::DaemonControl@16-20@java/DaemonControl.java
+       5      2     33      1       5 DaemonControl::proxy@22-26@java/DaemonControl.java
+      17      5    106      0      17 DaemonControl::checkDaemon@29-45@java/DaemonControl.java
+       3      1     28      3       3 DaemonControl::outputOn@48-50@java/DaemonControl.java
+       3      1     23      2       3 DaemonControl::outputOff@53-55@java/DaemonControl.java
+       3      1     23      2       3 DaemonControl::outputState@58-60@java/DaemonControl.java
+      10      7     67      4      10 DaemonControl::outputOnOff@63-72@java/DaemonControl.java
+       1      1     12      1       1 CommunicationError::CommunicationError@84-84@java/DaemonControl.java
+       1      1     12      1       1 RemoteTimeoutError::RemoteTimeoutError@88-88@java/DaemonControl.java
+       4      1     22      2       4 Daemon::Daemon@97-100@java/DaemonControl.java
+       1      1      8      0       1 Daemon::checkDaemon@102-102@java/DaemonControl.java
+       4      2     51      3       4 Daemon::outputOn@104-107@java/DaemonControl.java
+       4      1     34      2       4 Daemon::outputOff@109-112@java/DaemonControl.java
+       3      1     24      2       3 Daemon::outputState@114-116@java/DaemonControl.java
+       4      1     27      2       4 RemoteProxy::RemoteProxy@125-128@java/DaemonControl.java
+       6      3     52      0       6 RemoteProxy::daemon@130-135@java/DaemonControl.java
+       1      1     14      0       1 RemoteProxy::checkDaemon@137-137@java/DaemonControl.java
+       3      1     27      3       3 RemoteProxy::outputOn@139-141@java/DaemonControl.java
+       1      1     22      2       1 RemoteProxy::outputOff@143-143@java/DaemonControl.java
+       1      1     22      2       1 RemoteProxy::outputState@145-145@java/DaemonControl.java
+       2      1     33      3       2 __init__@21-22@python/daemon_rpc.py
+       2      1      9      1       2 check_daemon@24-25@python/daemon_rpc.py
+       3      2     43      4       3 output_on@27-29@python/daemon_rpc.py
+       3      1     28      3       3 output_off@31-33@python/daemon_rpc.py
+       2      1     24      3       2 output_state@35-36@python/daemon_rpc.py
+       2      1     26      3       2 __init__@42-43@python/daemon_rpc.py
+       7      3     59      2       7 __getattr__@45-51@python/daemon_rpc.py
+       3      2     35      4       3 __init__@57-59@python/daemon_rpc.py
+       4      2     34      2       4 proxy@61-64@python/daemon_rpc.py
+      15      6     71      1      15 check_daemon@66-80@python/daemon_rpc.py
+       2      1     32      4       2 output_on@82-83@python/daemon_rpc.py
+       2      1     24      3       2 output_off@85-86@python/daemon_rpc.py
+       2      1     22      3       2 output_state@88-89@python/daemon_rpc.py
+       6      3     73      5       7 output_on_off@91-97@python/daemon_rpc.py
+       3      1     31      2       3 constructor@15-17@javascript/daemon_rpc.js
+       1      1      9      0       1 checkDaemon@19-19@javascript/daemon_rpc.js
+       5      2     61      3       5 outputOn@21-25@javascript/daemon_rpc.js
+       4      1     39      2       4 outputOff@27-30@javascript/daemon_rpc.js
+       3      2     27      2       3 outputState@32-34@javascript/daemon_rpc.js
+      11      4    103      2      11 constructor@39-49@javascript/daemon_rpc.js
+       3      2     34      3       3 constructor@55-57@javascript/daemon_rpc.js
+       5      2     35      1       5 proxy@59-63@javascript/daemon_rpc.js
+      15      5     94      0      15 checkDaemon@65-79@javascript/daemon_rpc.js
+       1      1     29      3       1 outputOn@81-81@javascript/daemon_rpc.js
+       1      1     23      2       1 outputOff@83-83@javascript/daemon_rpc.js
+       1      1     21      2       1 outputState@85-85@javascript/daemon_rpc.js
+       5      3     76      4       5 outputOnOff@88-92@javascript/daemon_rpc.js
+       1      1     27      2       1 Daemon::Daemon@30-30@cpp/daemon_rpc.hpp
+       1      1      9      0       1 Daemon::check_daemon@31-31@cpp/daemon_rpc.hpp
+       7      2     75      3       7 Daemon::output_on@32-38@cpp/daemon_rpc.hpp
+       4      1     42      2       4 Daemon::output_off@39-42@cpp/daemon_rpc.hpp
+       4      2     45      2       4 Daemon::output_state@43-46@cpp/daemon_rpc.hpp
+       1      1     29      2       1 RemoteProxy::RemoteProxy@59-59@cpp/daemon_rpc.hpp
+       1      1     15      0       1 RemoteProxy::check_daemon@60-60@cpp/daemon_rpc.hpp
+       1      1     32      3       1 RemoteProxy::output_on@61-61@cpp/daemon_rpc.hpp
+       1      1     27      2       1 RemoteProxy::output_off@62-62@cpp/daemon_rpc.hpp
+       1      1     27      2       1 RemoteProxy::output_state@63-63@cpp/daemon_rpc.hpp
+      10      3     79      0      10 RemoteProxy::daemon@67-76@cpp/daemon_rpc.hpp
+       2      1     45      3       2 DaemonControl::DaemonControl@84-85@cpp/daemon_rpc.hpp
+       5      2     42      1       5 DaemonControl::proxy@87-91@cpp/daemon_rpc.hpp
+      18      5    150      0      18 DaemonControl::check_daemon@92-109@cpp/daemon_rpc.hpp
+       1      1     32      3       1 DaemonControl::output_on@110-110@cpp/daemon_rpc.hpp
+       1      1     27      2       1 DaemonControl::output_off@111-111@cpp/daemon_rpc.hpp
+       1      1     27      2       1 DaemonControl::output_state@112-112@cpp/daemon_rpc.hpp
+       5      7     77      4       5 DaemonControl::output_on_off@115-119@cpp/daemon_rpc.hpp
+4 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+    111       4.0     1.8       32.5        20     java/DaemonControl.java
+     60       3.9     1.9       36.6        14     python/daemon_rpc.py
+     69       4.5     2.0       44.8        13     javascript/daemon_rpc.js
+    103       3.6     1.8       44.8        18     cpp/daemon_rpc.hpp
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+       343       4.0     1.8       39.2       65            0      0.00    0.00

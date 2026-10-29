@@ -1,0 +1,30 @@
+@startuml B10
+!pragma layout smetana
+title B10 Null Object: NodeUtils.noOpNode
+
+interface "Node<C>" as Node <<AbstractObject>> {
+  +prepare(C)
+  +execute(C, DynamicTestExecutor)
+  +cleanUp(C)
+}
+class "anonymous Node in NodeUtils.noOpNode" as NoOpNode <<NullObject>>
+abstract class JupiterTestDescriptor <<RealObject>>
+class NodeUtils <<Factory>> {
+  {static} +asNode(TestDescriptor) : Node<C>
+  {static} -noOpNode : Node
+}
+class "NodeTestTask<C>" as NodeTestTask <<Client>>
+
+NoOpNode ..|> Node
+JupiterTestDescriptor ..|> Node
+NodeUtils o--> NoOpNode : noOpNode
+NodeTestTask ..> NodeUtils : asNode(testDescriptor)
+' aligned-with-record
+legend right
+  <b>Counted participants</b> (record in the dataset)
+  AbstractObject: Node
+  NullObject provider: NodeUtils#asNode
+  Client: NodeTestTask
+  Grey classes: real, shown for context, not counted
+endlegend
+@enduml

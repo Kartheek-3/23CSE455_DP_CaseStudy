@@ -1,0 +1,76 @@
+Here's what Part 1 (Pattern Discovery) actually requires, based on your two PDFs and the case study brief, using `nextjs-blog-cms` as your application.
+
+## What Part 1 is
+
+You analyze the **original, unmodified code** at one fixed commit and find every real design pattern in it. Then you document each one with evidence. No code changes happen here; those start in Part 2.
+
+## Step-by-step
+
+**1. Set up and pin the baseline**
+- Clone the repo, record the exact commit hash, access date, license, and URL.
+- Record environment versions (Node, Next.js, database, key dependencies).
+- Run it (`npm install`, `npm run dev`, any tests) and note what actually happened.
+- Get your faculty's approval of the application (the template asks for this).
+
+**2. Define scope**
+- List which folders/modules you inspected (e.g., `app/` or `pages/`, `lib/`, `models/`, `api/`, `components/`) and which you excluded (e.g., `node_modules`, config, styles), with reasons.
+
+**3. Draw the architecture diagram**
+- One diagram showing components (UI, API routes, data layer, auth, DB) and explain one request flow (e.g., "user opens an article" or "admin creates a post").
+
+**4. Hunt for patterns across the 8 areas your brief lists**
+Article management, author management, categories, comments, content moderation, recommendations, subscriptions, authentication. Note that this app may not implement all of them (it's a blog CMS). If an area is missing, say so honestly. Those gaps become Part 2 additions.
+
+Likely places to find patterns in a Next.js app:
+- **Singleton**: shared DB connection or Prisma/Mongoose client in `lib/`
+- **Middleware / Chain of Responsibility**: Next.js `middleware.ts`, auth checks
+- **Facade / Repository / Service layer**: data-access or helper modules
+- **Provider / Observer-like**: React Context providers
+- **Composite / Decorator-like (HOC)**: component composition, layouts
+- **Strategy**: swappable auth providers, validation approaches
+- **MVC / layered architecture**, **Factory**, **Adapter** (wrapping external libs)
+
+Don't force patterns. A class name or an LLM saying "this is Observer" is not evidence. You must verify against actual code. There is **no minimum quota**.
+
+**5. Classify each candidate** as Confirmed, Rejected, or Uncertain, with a reason.
+
+**6. Document every confirmed instance** with:
+- Meaningful instance name (e.g., "Database Connection Singleton", not just "Singleton")
+- Pattern type and category (GoF / GRASP / architecture / framework idiom)
+- Participant mapping: each role → actual class/function → file path + line range
+- Evidence: short code excerpts showing the relationships
+- A UML diagram (source + rendered image)
+- Verification notes
+
+**7. Compute totals** (the section 2.1 numbers): confirmed pattern types, instances, concrete participant classes, unique participant symbols, rejected/uncertain counts.
+
+**8. Record LLM use** (if you use an LLM to help find patterns): save the exact prompt, the code you gave it, its raw output, and your evaluation (correct / partial / incorrect). Only log real interactions.
+
+## Deliverables for Part 1
+
+In your team folder (e.g., `A1/`):
+
+| Item | Location |
+|---|---|
+| `patterns.csv` | Part1/ |
+| `pattern_counts.csv` | Part1/ |
+| Architecture + UML diagram sources and images | Part1/ |
+| LLM prompt file, `llm.csv` | Part1/ |
+| Original source code | code/ |
+| Test results / screenshots | test_result/ |
+| README with app URL, commit, versions, scope, run commands | root |
+| Report sections 1, 2, 5, 6 in `A1_Report.tex` / PDF | root |
+
+**CSV columns for `patterns.csv`:** `source_version, pattern_name, pattern_type, instance_name, participant_roles, source_locations, intent_and_evidence`
+
+**CSV columns for `pattern_counts.csv`:** `source_version, summary, pattern_name, count` (rows for `per_pattern`, `total_pattern_types`, `total_pattern_instances`)
+
+Counting rule: two concrete classes in one collaboration = **one** instance.
+
+## Practical tips
+- Use UTF-8 CSVs, quote cells with commas, use paths relative to your team folder.
+- Reference real line ranges, so pin the commit before you start.
+- Rather than a handful of weak patterns, aim for fewer, well-verified ones.
+- Deadline in the PDF: **09/10/2026**.
+
+If you'd like, I can clone-through-search the repo structure with you, help you identify candidate patterns once you paste in key files (DB connection, auth, API routes), or draft the CSV templates and the LaTeX skeleton for Part 1.

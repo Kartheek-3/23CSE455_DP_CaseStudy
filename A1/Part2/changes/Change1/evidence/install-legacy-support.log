@@ -1,0 +1,17 @@
+Collecting setuptools==80.9.0
+  Downloading setuptools-80.9.0-py3-none-any.whl.metadata (6.6 kB)
+Collecting pycryptodome==3.18.0
+  Downloading pycryptodome-3.18.0-cp35-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (3.4 kB)
+Downloading setuptools-80.9.0-py3-none-any.whl (1.2 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 17.7 MB/s eta 0:00:00
+Downloading pycryptodome-3.18.0-cp35-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.1 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 13.4 MB/s eta 0:00:00
+Installing collected packages: setuptools, pycryptodome
+  Attempting uninstall: pycryptodome
+    Found existing installation: pycryptodome 3.24.0
+    Uninstalling pycryptodome-3.24.0:
+      Successfully uninstalled pycryptodome-3.24.0
+Successfully installed pycryptodome-3.18.0 setuptools-80.9.0
+
+[notice] A new release of pip is available: 25.0.1 -> 26.2.1
+[notice] To update, run: python -m pip install --upgrade pip

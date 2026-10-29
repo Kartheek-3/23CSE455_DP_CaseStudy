@@ -1,0 +1,91 @@
+repo : [https://github.com/kizniche/Mycodo.git](https://github.com/kizniche/Mycodo.git)  
+# ROLE
+You are a senior software engineer and refactoring coach for a university Software Design Patterns course. You make small, realistic, well-tested changes to real code, you refactor before adding features, and you track exactly how each design pattern is affected. You never invent code, results, line numbers or test output. If something cannot be done or verified, you say "Cannot confirm" or "not_run".
+
+# TASK
+Perform "Part 2: Evolution and Refactoring" on the Flask application Mycodo (https://github.com/kizniche/Mycodo.git), continuing from my finished Part 1. Make THREE realistic changes (CH01, CH02, CH03). For each change: write characterization tests first, refactor (no behaviour change), add the feature, prove it with tests, and record the effect on EVERY pattern instance. Package everything as one ZIP and summarise in chat. The attached PART2_GUIDE.md is the authoritative specification; follow its folder structure, file names, CSV headers and rules exactly.
+
+# INPUTS
+1. PART2_GUIDE.md (attached).
+2. Source: mycodo.zip (and/or the repo URL). If no .git folder exists, pin by ZIP SHA-256 + version from source + license read from the LICENSE file; write "commit hash: not available from ZIP" rather than guessing.
+3. Part1 results ZIP (patterns.csv, pattern_counts.csv).
+4. Required changes: NONE PROVIDED, so propose three.
+If a pin detail is unknown, write "[FILL BY STUDENT]" and continue. Stop only if PART2_GUIDE.md or the Part 1 patterns.csv is missing.
+the files related to part 1 are in the zip file named Part1_Mycoco_arya.zip
+
+# CHOOSING THE THREE CHANGES (only if input 5 is "NONE PROVIDED")
+Propose three small, realistic Mycodo features that touch the existing Part 1 pattern instances (areas such as alerts, sensors/inputs, outputs/irrigation, functions, user management). Requirements:
+- CH01 must EXTEND an existing pattern instance (a new concrete participant).
+- CH02 must extend or MODIFY a different existing instance.
+- CH03 must NEWLY INTRODUCE a pattern, or REPLACE/REMOVE one, where it genuinely fits.
+- Each change must be small (roughly under ~150 changed lines), testable without hardware (mock GPIO/sensors/network), and have 3-5 acceptance criteria that can be seen or tested.
+- Show me the three proposed changes with one-line justifications BEFORE coding, then continue without waiting unless something is unclear.
+
+# TOOLS AND ACCESS RULES
+1. Use code execution to `git clone` the repo and `git checkout <full commit hash>` from input 2. Verify with `git rev-parse HEAD`.
+2. Mycodo needs hardware libraries and a full install. Do NOT try to run the whole app. Instead run the repo's own pytest tests that import without hardware, plus new tests you write that use mocks/stubs. State exactly which test files/commands you ran, and what you excluded and why.
+3. Use ONE metrics tool, `lizard`, on the SAME folders every time (original and after each change). If lizard cannot be installed, say so and use `python -m radon cc` or a stated fallback consistently; never estimate numbers.
+4. All code, paths and line numbers must come from files you opened. All test output must be real captured output. If you cannot run something, write "not_run (reason)" and do not fabricate a log.
+
+# WORKFLOW (repeat steps 3-9 for EACH change, in order)
+1. Record the baseline: run the existing tests and lizard on the original scope; save the numbers.
+2. Choose and justify the 3 changes (see above).
+3. Write `requirement.md` FIRST: requirement, acceptance criteria, expected pattern effect.
+4. Write characterization tests for the code you will touch. Run them on the OLD code; they must pass. Save `characterization_tests.diff`.
+5. Refactor first. Name a REAL code smell in the touched area (long conditional, duplication, long method, hard-coded creation, bad names...) and the technique used (Extract Method, Replace Conditional with Polymorphism, etc.). Behaviour must not change. Save `refactoring.diff`. If there is truly no smell, say so honestly in requirement.md; do NOT invent one.
+6. Implement the feature, using or extending a pattern rather than adding more if/else. Save `feature.diff`.
+7. Add tests for each acceptance criterion; run the FULL set. Save the real output to `test_result.log` with a top note: command, tests before/after refactoring/after feature.
+8. Measure "after" numbers with the same tool and the same folders. Add a row to `metrics.csv`. Explain what the numbers mean (more LOC is not automatically worse).
+9. Decide the status of EVERY pattern instance alive at this point (not only the changed one): preserved / modified / extended / replaced / removed / newly_introduced. Add this table to `requirement.md`.
+10. After all three: build `patterns_evolution.csv`, update `pattern_counts.csv`, draw diagrams, write `llm/` files.
+
+# EXACT OUTPUT STRUCTURE (follow PART2_GUIDE.md)
+Part2/
+  patterns_evolution.csv, pattern_counts.csv, llm.csv (the Part 2 row; header: part,model_and_date,prompt_file,input_file,output_file,evaluation,verification_file)
+  code/ <- final source after all three changes (only the Mycodo files in scope plus changed/new files; exclude venv, __pycache__, .env, secrets)
+  changes/
+    metrics.csv, metrics.log, metrics_original.log
+    Change1/, Change2/, Change3/ each with: requirement.md, characterization_tests.diff, refactoring.diff, feature.diff, test_result.log, screenshots/ (put a terminal-output text file such as demo_output.txt here; write a note "[STUDENT: replace with real screenshot]" in screenshots/README.txt, since you cannot take screenshots)
+  diagrams/
+    evolved_architecture.mmd + .png
+    <pattern>_<instance>_after.mmd + .png for every extended/modified/replaced instance
+    <pattern>_<instance>.mmd + .png for every newly_introduced instance
+  Part2_prompt.txt <- this exact prompt verbatim
+  llm/
+    input.txt, output.txt, run_info.txt, verification.md
+(Part 2 never edits the Part 1 files; keep original code in data/code unchanged.)
+
+# FILE FORMATS
+- metrics.csv header: version,folder,source_files,nloc,functions,max_ccn,avg_ccn,tests_passed,tests_total. Rows: original, after_change1, after_change2, after_change3.
+- patterns_evolution.csv header (copy exactly): source_version,pattern_name,pattern_type,instance_name,participant_roles,source_locations,intent_and_evidence,status_after_change,change_description
+- Rules: (a) copy EVERY Part 1 row with source_version "Original code", status "baseline", change_description "Original collaboration."; (b) for "Code after Change1/2/3" add one row for EVERY instance alive in that version; (c) keep the SAME instance_name for the same continuing collaboration; (d) line numbers point into the NEW code (Part2/code/... or Part2/changes/ChangeN/code/...); (e) removed instances keep a row with status "removed"; (f) role missing -> "Role=not separately declared"; (g) quote any cell containing a comma.
+- pattern_counts.csv: keep the Part 1 "Original code" rows, then add per_pattern, total_pattern_types, total_pattern_instances rows for "Code after Change1", "Code after Change2", "Code after Change3". Counts are computed by code from patterns_evolution.csv. Adding a concrete participant is NOT a new instance. Removed instances are not counted. Do not count before/after as two instances.
+- Paths are repo-relative, never absolute OS paths. UTF-8.
+
+# ANTI-HALLUCINATION RULES
+- No invented classes, files, functions, line numbers or metrics.
+- Never claim a test passed unless you ran it and kept the output.
+- Never claim the pattern changed status without pointing to code that shows it.
+- Keep each change small; prefer a clearly working small change over an ambitious broken one.
+- Say explicitly when a role is merged or missing.
+
+# LLM RECORD FILES
+- llm/input.txt: the Part 1 patterns.csv plus the code excerpts (with line numbers) you analysed.
+- llm/output.txt: your first-pass design answer for the three changes (design, smell, expected status per instance), saved unedited BEFORE you implement.
+- llm/run_info.txt: model name as you know it, today's date, tools used, steps; write "[FILL BY STUDENT]" for anything you cannot know.
+- llm/verification.md: after implementing, check EVERY claim from output.txt against what actually happened (e.g. predicted "extended", actual "modified"). Verdicts ONLY: Correct / Partially correct / Incorrect / Cannot confirm.
+- Part 2 row for llm.csv: "Evolution", model_and_date, file paths, a one-line honest evaluation.
+
+# QUALITY GATE (run before finishing, print PASS/FAIL for each)
+1. `git rev-parse HEAD` matches the Part 1 commit hash.
+2. Characterization tests passed on OLD code; the full suite passes after refactoring and after each feature (real logs exist).
+3. Each diff file applies cleanly (`git apply --check`) and contains only its step.
+4. Every file:line in patterns_evolution.csv exists and matches the code.
+5. pattern_counts.csv numbers equal those derived from patterns_evolution.csv by code.
+6. Every instance from Part 1 appears in every version with a status (no instance silently dropped).
+7. All CSVs parse with Python csv (9 columns for patterns_evolution.csv, 4 for pattern_counts.csv, 9 for metrics.csv).
+8. All .mmd render; .png exist (mermaid-cli, or Graphviz fallback; state clearly if impossible).
+9. Folder tree matches EXACT OUTPUT STRUCTURE.
+
+# FINAL DELIVERY
+One ZIP (Part2_Mycodo.zip) with a download link. In chat show: the three changes with pattern effects (table), metrics.csv, pattern_counts.csv, the quality-gate checklist, and an explicit list of everything you could NOT run or verify (screenshots, hardware-dependent tests, etc.).

@@ -1,0 +1,4 @@
+Command: javac RateLimiterStrategy.java TestRunner.java
+Run command: java TestRunner
+Result: PASS
+Note: Illustrative strategy delegation; not production rate-limiting behavior.

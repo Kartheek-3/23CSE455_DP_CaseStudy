@@ -1,0 +1,65 @@
+{
+  "generated_at": "2026-10-10T20:23:45.211715+00:00",
+  "files": [
+    {
+      "path": "A7_Report.pdf",
+      "sha256": "9780ff7176973533f30a95dac2c8870c91664611468513e55046d261c0264d16",
+      "pages": 29,
+      "rendered_pages": [
+        "report-01.png",
+        "report-02.png",
+        "report-03.png",
+        "report-04.png",
+        "report-05.png",
+        "report-06.png",
+        "report-07.png",
+        "report-08.png",
+        "report-09.png",
+        "report-10.png",
+        "report-11.png",
+        "report-12.png",
+        "report-13.png",
+        "report-14.png",
+        "report-15.png",
+        "report-16.png",
+        "report-17.png",
+        "report-18.png",
+        "report-19.png",
+        "report-20.png",
+        "report-21.png",
+        "report-22.png",
+        "report-23.png",
+        "report-24.png",
+        "report-25.png",
+        "report-26.png",
+        "report-27.png",
+        "report-28.png",
+        "report-29.png"
+      ],
+      "visual_review": "Rebuilt from included A7_Report.tex with two successful XeLaTeX passes after normalizing source/evidence paths to the prescribed data/ hierarchy. The rebuilt report is 29 physical pages. Final page renders regenerated; previous visual review remains applicable to layout because only path labels changed, but this rebuild was also checked for page count and text references.",
+      "generated_at": "2026-10-11 (two-pass XeLaTeX rebuild after hierarchy alignment)"
+    },
+    {
+      "path": "Part3/llm/A7_slide.pdf",
+      "sha256": "6963ef7dc588ad4d789390b67a969a8e7fccae55fb4d8d9bc0bdebe2c3cce1bb",
+      "pages": 13,
+      "rendered_pages": [
+        "slides-01.png",
+        "slides-02.png",
+        "slides-03.png",
+        "slides-04.png",
+        "slides-05.png",
+        "slides-06.png",
+        "slides-07.png",
+        "slides-08.png",
+        "slides-09.png",
+        "slides-10.png",
+        "slides-11.png",
+        "slides-12.png",
+        "slides-13.png"
+      ],
+      "visual_review": "Rebuilt from included A7_slide.tex with two successful XeLaTeX passes. The prior Tectonic nullfont missing-character warning is absent. All 13 final pages were rendered to a contact sheet and visually inspected; no clipping or overlap was observed. Non-blocking hyperref metadata warnings remain.",
+      "generated_at": "2026-10-11 (two-pass XeLaTeX rebuild; contact-sheet review)"
+    }
+  ]
+}

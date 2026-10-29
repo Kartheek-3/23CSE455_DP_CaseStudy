@@ -1,0 +1,331 @@
+# DaPlanStan — Repository-Wide Pattern Coverage Sweep
+
+Baseline pre-freeze review · Original uploaded ZIP · Static source inspection
+
+## 1. Scope and counting standard
+
+I am treating the eight previously source-confirmed collaborations as the working baseline, without treating their confirmation as completed independent human verification.
+
+The final sweep examines the remaining source for independent collaborations, rather than collecting additional instances of Rails inheritance, controller actions or model methods.
+
+The distinction used throughout this review is:
+
+- Pattern evidence: An identifiable responsibility assignment or interaction mechanism involving actual source participants.
+- Ordinary application behavior: Framework conventions, CRUD operations, helper methods, conditionals and direct API calls that do not demonstrate a distinctive pattern collaboration.
+- Duplicate evidence: Another appearance of a collaboration already identified and counted.
+
+The repository archive contains additional application code outside the six focused investigations, notably the administrator controllers, invitation management, notification aggregation, account settings, general helpers and shared persistence configuration. These are important to inspect even if they yield no new pattern.
+
+## 2. Previously less-examined controller areas
+
+| Area                        | Actual source behavior                                                                                                         | Sweep assessment                                                                                 |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| Administrator authorization | `Admin::ApplicationController` uses an admin-role predicate in `require_admin!`.                                               | Shared Rails before-action authorization, not a new pattern.                                     |
+| Administrator dashboard     | `Admin::DashboardController#index` gathers counts of users, trips, items, expenses, inbox records and invites.                 | Dashboard queries and presentation preparation, not a distinct coordinated business operation.   |
+| Administrator invitations   | `Admin::InvitesController` lists, creates and destroys `Invite` records.                                                       | Conventional administrative CRUD; no new GRASP Controller justified.                             |
+| Public invitation handling  | `InvitesController#accept` validates an invitation token and places it in the session for later OAuth processing.              | Supporting phase of the already confirmed OAuth sign-in/account-provisioning collaboration.      |
+| Account settings            | `SettingsController#update` updates user preferences and synchronizes the account name if one exists.                          | Direct record updates, not a substantive separate system-event pattern instance.                 |
+| Notification index          | `NotificationsController#index` queries outstanding trip inbox records for the signed-in user.                                 | Read-only data aggregation, not a new Observer publisher or subscriber.                          |
+| Account travelers           | `TravelersController` finds or creates account-level traveler records, sends invitations and handles profile updates/deletion. | Relevant to existing invitation and identity workflows; requires careful duplicate-count review. |
+| Home/landing                | `HomeController` redirects authenticated users or serves informational pages.                                                  | Ordinary routing and controller behavior.                                                        |
+
+The relevant source locations include `app/controllers/admin/application_controller.rb:1–12`, `admin/dashboard_controller.rb:1–17`, `admin/invites_controller.rb:1–27`, `app/controllers/invites_controller.rb:4–41`, `app/controllers/settings_controller.rb:5–31` and `app/controllers/notifications_controller.rb:4–11`. &#x20;
+
+No additional GRASP Controller instance is established merely by these controllers receiving requests. Their responsibilities are either ordinary CRUD/display operations or supporting parts of previously identified use cases.
+
+## 3. New candidates found during the sweep
+
+Two responsibilities merit adversarial verification. Neither is strong enough to add directly to the baseline inventory.
+
+### Candidate A — Account Traveler Enrollment Coordination
+
+GRASP Controller · Responsibility assignment
+
+UNCONFIRMED
+
+Provisional instance name: `Account Traveler Enrollment Coordination`
+
+System event: An account owner submits the Add member form in Settings, either with an email address or with only a name.
+
+This enters `TravelersController#create`, which coordinates more than a single model insertion.
+
+\#chatgpt-mermaid-\_r_35h\_{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;fill:rgb(237, 237, 237);}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#chatgpt-mermaid-\_r_35h\_ .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-\_r_35h\_ .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-\_r_35h\_ .error-icon{fill:rgb(48, 48, 48);}#chatgpt-mermaid-\_r_35h\_ .error-text{fill:rgb(237, 237, 237);stroke:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_35h\_ .edge-thickness-normal{stroke-width:1px;}#chatgpt-mermaid-\_r_35h\_ .edge-thickness-thick{stroke-width:3.5px;}#chatgpt-mermaid-\_r_35h\_ .edge-pattern-solid{stroke-dasharray:0;}#chatgpt-mermaid-\_r_35h\_ .edge-thickness-invisible{stroke-width:0;fill:none;}#chatgpt-mermaid-\_r_35h\_ .edge-pattern-dashed{stroke-dasharray:3;}#chatgpt-mermaid-\_r_35h\_ .edge-pattern-dotted{stroke-dasharray:2;}#chatgpt-mermaid-\_r_35h\_ .marker{fill:rgb(175, 175, 175);stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_35h\_ .marker.cross{stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_35h\_ svg{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;}#chatgpt-mermaid-\_r_35h\_ p{margin:0;}#chatgpt-mermaid-\_r_35h\_ .label{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_35h\_ .cluster-label text{fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_35h\_ .cluster-label span{color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_35h\_ .cluster-label span p{background-color:transparent;}#chatgpt-mermaid-\_r_35h\_ .label text,#chatgpt-mermaid-\_r_35h\_ span{fill:rgb(237, 237, 237);color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_35h\_ .node rect,#chatgpt-mermaid-\_r_35h\_ .node circle,#chatgpt-mermaid-\_r_35h\_ .node ellipse,#chatgpt-mermaid-\_r_35h\_ .node polygon,#chatgpt-mermaid-\_r_35h\_ .node path{fill:rgb(9, 23, 44);stroke:rgb(31, 78, 148);stroke-width:1px;}#chatgpt-mermaid-\_r_35h\_ .rough-node .label text,#chatgpt-mermaid-\_r_35h\_ .node .label text,#chatgpt-mermaid-\_r_35h\_ .image-shape .label,#chatgpt-mermaid-\_r_35h\_ .icon-shape .label{text-anchor:middle;}#chatgpt-mermaid-\_r_35h\_ .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#chatgpt-mermaid-\_r_35h\_ .rough-node .label,#chatgpt-mermaid-\_r_35h\_ .node .label,#chatgpt-mermaid-\_r_35h\_ .image-shape .label,#chatgpt-mermaid-\_r_35h\_ .icon-shape .label{text-align:center;}#chatgpt-mermaid-\_r_35h\_ .node.clickable{cursor:pointer;}#chatgpt-mermaid-\_r_35h\_ .root .anchor path{fill:rgb(175, 175, 175)!important;stroke-width:0;stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_35h\_ .arrowheadPath{fill:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_35h\_ .edgePath .path{stroke:rgb(175, 175, 175);stroke-width:1px;}#chatgpt-mermaid-\_r_35h\_ .flowchart-link{stroke:rgb(175, 175, 175);fill:none;}#chatgpt-mermaid-\_r_35h\_ .edgeLabel{background-color:rgb(0, 0, 0);text-align:center;}#chatgpt-mermaid-\_r_35h\_ .edgeLabel p{background-color:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_35h\_ .edgeLabel rect{opacity:0.5;background-color:rgb(0, 0, 0);fill:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_35h\_ .labelBkg{background-color:rgba(0, 0, 0, 0.5);}#chatgpt-mermaid-\_r_35h\_ .cluster rect{fill:rgb(48, 48, 48);stroke:rgba(255, 255, 255, 0.15);stroke-width:1px;}#chatgpt-mermaid-\_r_35h\_ .cluster text{fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_35h\_ .cluster span{color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_35h\_ div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:12px;background:rgb(48, 48, 48);border:1px solid rgba(255, 255, 255, 0.15);border-radius:2px;pointer-events:none;z-index:100;}#chatgpt-mermaid-\_r_35h\_ .flowchartTitleText{text-anchor:middle;font-size:18px;fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_35h\_ rect.text{fill:none;stroke-width:0;}#chatgpt-mermaid-\_r_35h\_ .icon-shape,#chatgpt-mermaid-\_r_35h\_ .image-shape{background-color:rgb(0, 0, 0);text-align:center;}#chatgpt-mermaid-\_r_35h\_ .icon-shape p,#chatgpt-mermaid-\_r_35h\_ .image-shape p{background-color:rgb(0, 0, 0);padding:2px;}#chatgpt-mermaid-\_r_35h\_ .icon-shape .label rect,#chatgpt-mermaid-\_r_35h\_ .image-shape .label rect{opacity:0.5;background-color:rgb(0, 0, 0);fill:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_35h\_ .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#chatgpt-mermaid-\_r_35h\_ .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#chatgpt-mermaid-\_r_35h\_ .node .neo-node{stroke:rgb(31, 78, 148);}#chatgpt-mermaid-\_r_35h\_ [data-look="neo"].node rect,#chatgpt-mermaid-\_r_35h\_ [data-look="neo"].cluster rect,#chatgpt-mermaid-\_r_35h\_ [data-look="neo"].node polygon{stroke:url(#chatgpt-mermaid-\_r_35h\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_35h\_ [data-look="neo"].swimlane.cluster rect{filter:none;}#chatgpt-mermaid-\_r_35h\_ [data-look="neo"].node path{stroke:url(#chatgpt-mermaid-\_r_35h\_-gradient);stroke-width:1px;}#chatgpt-mermaid-\_r_35h\_ [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_35h\_ [data-look="neo"].node .neo-line path{stroke:rgb(31, 78, 148);filter:none;}#chatgpt-mermaid-\_r_35h\_ [data-look="neo"].node circle{stroke:url(#chatgpt-mermaid-\_r_35h\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_35h\_ [data-look="neo"].node circle .state-start{fill:#000000;}#chatgpt-mermaid-\_r_35h\_ [data-look="neo"].icon-shape .icon{fill:url(#chatgpt-mermaid-\_r_35h\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_35h\_ [data-look="neo"].icon-shape .icon-neo path{stroke:url(#chatgpt-mermaid-\_r_35h\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_35h\_ .node text{font-size:14px;font-weight:600;letter-spacing:normal;fill:rgb(153, 206, 255);}#chatgpt-mermaid-\_r_35h\_ .edgeLabels text{font-size:13px;font-weight:600;letter-spacing:-0.08px;fill:rgb(153, 206, 255);}#chatgpt-mermaid-\_r_35h\_ .node tspan[font-weight="normal"],#chatgpt-mermaid-\_r_35h\_ .edgeLabels tspan[font-weight="normal"]{font-weight:600;}#chatgpt-mermaid-\_r_35h\_ .edgeLabel .label rect{opacity:1;rx:13px;ry:13px;fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-width:1px;}#chatgpt-mermaid-\_r_35h\_ .node rect,#chatgpt-mermaid-\_r_35h\_ .node circle,#chatgpt-mermaid-\_r_35h\_ .node ellipse,#chatgpt-mermaid-\_r_35h\_ .node polygon,#chatgpt-mermaid-\_r_35h\_ .node path{fill:rgb(0, 40, 77);stroke:rgba(255, 255, 255, 0.1);stroke-width:1px;}#chatgpt-mermaid-\_r_35h\_ .node rect{rx:16px;ry:16px;}#chatgpt-mermaid-\_r_35h\_ .node.mermaid-decision .label-container{fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-dasharray:2,2;}#chatgpt-mermaid-\_r_35h\_ .edgePaths .flowchart-link{stroke:rgb(175, 175, 175);stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;}#chatgpt-mermaid-\_r_35h\_ .marker{fill:rgb(175, 175, 175);stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_35h\_ :root{--mermaid-font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";}Settings: Add account travelerTravelersController#createNormalize name and emailEmail supplied?Create name-only TravelerReject self/duplicateExisting registered User?Create Traveler linked to UserCreate email-only TravelerInvitationMailer.invitedeliver_laterNoYesYesNo
+
+#### Participant evidence
+
+| Participant                       | Source location                                | Responsibility                                                          |
+| --------------------------------- | ---------------------------------------------- | ----------------------------------------------------------------------- |
+| `TravelersController#create`      | `app/controllers/travelers_controller.rb:5–35` | Receive enrollment event, select enrollment path and arrange invitation |
+| `TravelersController#set_account` | Same file, `54–56`                             | Restrict operation to the acting account owner                          |
+| `Account`                         | `app/models/account.rb:1–11`                   | Own account-scoped traveler association                                 |
+| `User`                            | `app/models/user.rb:11–22`                     | Supply registered-user identity                                         |
+| `Traveler`                        | `app/models/traveler.rb:1–8, 18–28`            | Represent account participant and later invitation acceptance           |
+| `InvitationMailer#invite`         | `app/mailers/invitation_mailer.rb:2–6`         | Construct account invitation                                            |
+| Settings form                     | `app/views/settings/show.html.erb:114–127`     | Submit account-member enrollment                                        |
+| Route                             | `config/routes.rb:48–50`                       | Expose account-traveler creation                                        |
+
+The controller rejects missing names, self-invitations and duplicates. It distinguishes known users from new email-only travelers, creates the appropriate account record and requests an invitation.&#x20;
+
+
+
+Why GRASP Controller might fit: The controller receives a coherent account-enrollment event and coordinates identity lookup, account association, record creation and invitation delivery.
+
+Strongest false-positive explanation: This remains fairly short procedural controller logic. It performs the enrollment decisions itself and uses normal Active Record calls. The existence of branching and an email delivery request does not automatically make it a noteworthy GRASP Controller instance.
+
+#### Comparison with existing instances
+
+The closest previously confirmed collaboration is `Trip Membership Management Coordination`.
+
+There is a meaningful boundary difference:
+
+| Account traveler enrollment            | Trip membership management                                                  |
+| -------------------------------------- | --------------------------------------------------------------------------- |
+| Starts from account Settings           | Starts from an existing trip                                                |
+| Creates an account-level `Traveler`    | Creates or reuses a `Traveler`, then creates a `TripMember`                 |
+| Does not assign a trip role            | Assigns the `contributor` role                                              |
+| Can create name-only travelers         | Membership management requires a traveler selected or resolved for the trip |
+| Uses general `InvitationMailer#invite` | Can use trip-specific `InvitationMailer#invite_to_trip`                     |
+
+The two controllers have overlapping user-resolution logic, but their resulting records and immediate use-case objectives differ. The trip membership controller explicitly creates a `TripMember`; the account controller does not.&#x20;
+
+
+
+Decision: UNCONFIRMED.
+
+This is the strongest new candidate found in the sweep. The final adversarial review should decide whether it deserves a separate GRASP Controller instance or is better treated as ordinary account-traveler CRUD and invitation handling.
+
+Do not count it yet.
+
+### Candidate B — Beta Invite Eligibility Evaluation
+
+GRASP Information Expert · Responsibility assignment
+
+UNCONFIRMED
+
+Provisional instance name: `Beta Invite Eligibility Evaluation`
+
+This is a narrower and weaker candidate.
+
+Unlike a generic model-method claim, it does have specific cross-object responsibility evidence: the invitation record owns the information necessary to determine whether its token can be used and whether it applies to a particular email address.
+
+#### Actual responsibility allocation
+
+`Invite` defines:
+
+```
+def used?    = used_at.present?
+def expired? = expires_at.present? && expires_at < Time.current
+def usable?  = !used? && !expired?
+
+def email_matches?(address)
+  email.blank? || email.casecmp?(address.to_s)
+end
+```
+
+These methods appear at `app/models/invite.rb:12–18`.
+
+Two application callers use that information:
+
+- `InvitesController#accept`, `app/controllers/invites_controller.rb:5–15`, checks `usable?` before saving the invitation token in the session.
+- `SessionsController#provision_account_or_gate`, `app/controllers/sessions_controller.rb:63–75`, checks both `usable?` and `email_matches?` before creating an account and marking the invite used.
+
+
+
+
+
+#### Why Information Expert might fit
+
+The `Invite` record owns `used_at`, `expires_at` and `email`, the precise values needed for these decisions.
+
+DaPlanStan has placed the elementary eligibility rules on the object possessing that information. Two separate controller entry points reuse these predicates rather than reimplementing their conditions.
+
+This is a plausible GRASP Information Expert responsibility assignment.
+
+#### Strongest false-positive explanation
+
+The entire implementation consists of a few simple domain predicates.
+
+There is no substantial collaboration comparable to `InboxItem#fill_missing_links!`, which interprets structured information and coordinates the creation and linking of multiple related records.
+
+The more accurate explanation may be ordinary domain-model encapsulation: keeping simple validation predicates close to their data.
+
+Furthermore, the full signup eligibility decision remains in `SessionsController`. `Invite` does not independently decide whether a user should receive an account.
+
+Origin: Application-owned predicates with Active Record persistence.
+
+Closest established comparison: `Parsed Email to Trip Record Linking` — GRASP Information Expert. The proposed invite instance is materially simpler and needs a stricter significance check.
+
+Decision: UNCONFIRMED, low priority.
+
+I would not include this in the baseline merely because it is technically compatible with the Information Expert principle. It needs a positive argument that the responsibility is substantial enough to count consistently with the other instances.
+
+## 4. Areas checked with no additional pattern evidence
+
+The following negative findings are useful for demonstrating that the final inventory was not produced by pattern-name searching.
+
+| Source area                           | Relevant evidence                                                               | Reason no additional pattern is proposed                                                          |
+| ------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Admin dashboards and permissions      | `app/controllers/admin/*`                                                       | Admin checks and aggregation queries are ordinary controller responsibilities                     |
+| Admin invitation issuance             | `admin/invites_controller.rb:1–27`                                              | Basic create/list/delete operations                                                               |
+| Settings updates                      | `settings_controller.rb:5–31`                                                   | Updates user data and synchronizes account name; no separate behavioral contract                  |
+| Notification aggregation              | `notifications_controller.rb:4–11`; `application_controller.rb:27–41`           | Repeated membership-scoped queries, not an event-subscription mechanism                           |
+| `MediaItem`                           | `app/models/media_item.rb:1–6`                                                  | Associations, attachment and validation only; no application workflow using `MediaItem` was found |
+| `ApprovedSender`                      | `app/models/approved_sender.rb:1–6`; approval controller                        | Simple persistence and previously traced inbound-email approval logic                             |
+| `ApplicationRecord`                   | `app/models/application_record.rb:1–6`                                          | Shared UUID initialization through Rails callback                                                 |
+| UUID initializer                      | `config/initializers/uuid_primary_keys.rb:1–19`                                 | Adds callbacks to Rails-owned models; not application-defined Template Method                     |
+| `User` and `Traveler` display helpers | `user.rb:24–33`; `traveler.rb:10–36`                                            | Avatar/email fallbacks and simple identity predicates                                             |
+| `Trip` display/count operations       | `trip.rb:21–37`                                                                 | Count and inbound-address generation, already encountered                                         |
+| Expense and itinerary helpers         | `app/helpers/expenses_helper.rb`, `trip_items_helper.rb`                        | Static icon, label and grouping lookup tables                                                     |
+| SVG/email rendering helpers           | `application_helper.rb:5–47`; `inbox_items_helper.rb:2–51`                      | Data formatting and presentation preparation                                                      |
+| Remaining Stimulus controls           | Local pickers, clipboard, date-range, receipt, navigation and deletion controls | Ordinary component interaction using browser and Stimulus facilities                              |
+| PWA service worker                    | `app/views/pwa/service-worker.js`                                               | Example push/notification handlers are commented out; no active custom notification collaboration |
+| Geocoding and receipt jobs            | Previously traced source                                                        | Dependency calls and application processing, without additional independent collaboration         |
+
+`MediaItem` is particularly straightforward: the source declares a model and a `Trip#media_items` association, but a search of controllers, jobs and views found no application call that creates or manages `MediaItem` records. It should not be assigned a speculative object-composition pattern.&#x20;
+
+
+
+The UUID initialization code similarly uses Rails callback infrastructure. Sharing a callback is not evidence of an application-implemented Template Method or Factory.&#x20;
+
+
+
+### No additional polymorphic or interchangeable implementation family
+
+The broad source scan found no additional application-defined strategy implementations, adapter interface families, abstract factory participants or custom observer registration mechanisms.
+
+`TripItem` remains the sole application model including `Geocodable`. Rails enum values remain data values, not separate behavioral states.
+
+The scan also found no application-written services or additional `lib/` implementation supplying an overlooked algorithm abstraction.&#x20;
+
+
+
+This is negative evidence from the uploaded snapshot, not a claim about every possible runtime behavior supplied by installed gems.
+
+## 5. Previously known collaborations encountered again
+
+The sweep revisited the previously established collaborations without finding a reason to split or recount them.
+
+| Established collaboration                       | Reappearance during sweep                                        | Deduplication decision               |
+| ----------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------ |
+| Parsed Email to Trip Record Linking             | `InboxItem`, `TripItem`, `Expense` and their associations        | Existing Information Expert instance |
+| Inbound Travel Email Intake Coordination        | `TripMailbox`, approval handling and pending-inbox notifications | Existing GRASP Controller instance   |
+| Trip Creation Coordination                      | `Trip`, `Account#owner_traveler`, `TripMember`, cover job        | Existing GRASP Controller instance   |
+| Trip Membership Management Coordination         | Traveler resolution and trip invitation paths                    | Existing GRASP Controller instance   |
+| Bulk Itinerary Import Coordination              | JSON import, item creation and geocoding scheduling              | Existing GRASP Controller instance   |
+| OAuth Sign-in and Identity Linking Coordination | `SessionsController`, pending travelers, `Invite` eligibility    | Existing GRASP Controller instance   |
+| Outbound Mail Delivery Logging                  | `MailLogger` initializer and the mailer delivery chain           | Existing Observer instance           |
+| Trip-Scoped Turbo Refresh Notifications         | `InboxItem`, `GeocodeTripItemsJob`, trip and inbox views         | Existing Observer instance           |
+
+A renewed search for custom event/broadcast declarations again found the previously examined mail observer, Turbo subscription/broadcast sites and three map-specific DOM events. No second custom notification family appeared in the application source.&#x20;
+
+
+
+The two new candidate records remain outside confirmed inventory totals.
+
+## 6. Important false similarities rejected during coverage checking
+
+| Apparent similarity                                       | Why it is insufficient                                                                                              |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Admin and settings controllers as GRASP Controller        | Merely receiving Rails requests does not establish a distinct, substantive use-case coordination responsibility     |
+| `Invite` token generation as Factory/Creator              | A `before_validation` callback assigning a random token is normal model initialization                              |
+| `ApplicationRecord` UUID callbacks as Template Method     | No application-defined template algorithm with overridable primitive steps                                          |
+| `Trip`/`User`/`Traveler` relationships as Composite       | These are relational associations, not recursive part-whole objects exposing a common recursive operation           |
+| OAuth Google/Apple configuration as Strategy              | Provider implementations are configured through OmniAuth, not written as interchangeable DaPlanStan algorithms      |
+| Gravatar/avatar fallbacks as Strategy                     | Fixed preference rules, with no selectable strategy implementations                                                 |
+| Icon/label mappings as Strategy                           | Hash lookups and conditional formatting do not select behavioral objects                                            |
+| Pexels/Anthropic wrappers as Adapter                      | Direct provider API integration does not establish interface translation between incompatible application contracts |
+| `create!` calls as Factory or GRASP Creator               | Active Record construction alone does not justify a separate creation-pattern responsibility                        |
+| Model callbacks as Observer                               | Rails lifecycle hooks alone do not establish an independently meaningful publication/subscription collaboration     |
+| Map `CustomEvent` communication as Observer               | Previously rejected as targeted DOM event communication                                                             |
+| Multiple Turbo subscribers as multiple Observer instances | They use one trip-scoped framework notification mechanism                                                           |
+
+These are exclusion decisions for the inventory. They do not imply that the code is incorrect or lacks architectural structure.
+
+## 7. Coverage status and remaining ambiguity
+
+Application source inventory checked
+
+| Controllers, including administrator namespace                 | 16 |
+| -------------------------------------------------------------- | -- |
+| Models, including concern                                      | 14 |
+| Jobs                                                           | 5  |
+| Mailboxes                                                      | 2  |
+| Mailers                                                        | 3  |
+| Helpers                                                        | 4  |
+| Initializers                                                   | 11 |
+| Stimulus directory JavaScript files, including 2 startup files | 18 |
+
+Source-file inventory and cross-reference coverage, not a claim that every static asset or every framework dependency was manually analyzed.&#x20;
+
+The major application-owned code has now received either focused analysis or this final structural sweep. The remaining limitations are narrower:
+
+First, two new candidates need skeptical review. Account Traveler Enrollment Coordination is the more plausible. Beta Invite Eligibility Evaluation is structurally defensible but weak and may be better rejected as elementary encapsulation.
+
+Second, one routing discrepancy deserves separate review. `InvitesController` contains `index`, `create` and `destroy` methods referring to `settings_invites_path`, but the route file declares administrative invite resources under `namespace :admin`, not a corresponding Settings invite resource. This suggests that the non-admin invite-management actions or view may be leftover code. It is a routing-coverage observation, not pattern evidence.&#x20;
+
+
+
+Third, application execution and independent verification are missing. The uploaded archive contains no `test/` or `spec/` files, and the focused investigations did not execute the full Rails application.&#x20;
+
+
+
+The correspondence between the archive and the stated Git commit also remains unverified.
+
+Static asset bundles, framework internals unrelated to the previously identified contracts, and deployed external-service behavior have not been exhaustively audited. They are not obvious gaps in the application-owned pattern sweep, but they should remain explicit scope boundaries.
+
+## 8. Is the repository ready for final adversarial review?
+
+Yes — source coverage is sufficient
+
+The repository is sufficiently covered to begin a final adversarial assessment. It is not yet ready to freeze the inventory without that assessment.
+
+The review should challenge the eight established classifications, especially the breadth of the GRASP Controller counting rule, whether the Information Expert assignment is sufficiently distinctive and the eligibility of framework-mediated Observer instances.
+
+It should also resolve the two newly identified candidates before finalizing the records.
+
+Pre-freeze sweep result
+
+| Previously source-confirmed collaborations  | 8                                 |
+| ------------------------------------------- | --------------------------------- |
+| New candidate — account traveler enrollment | UNCONFIRMED                       |
+| New candidate — invite eligibility          | UNCONFIRMED                       |
+| New confirmed instances from sweep          | 0                                 |
+| Repository-wide application-source coverage | Sufficient for adversarial review |
+| Final inventory freeze                      | Not yet                           |
+
+## Final sweep record
+
+### DaPlanStan — Repository-Wide Pattern Discovery Sweep
+
+**Source:** Original uploaded DaPlanStan ZIP\
+**Purpose:** Identify overlooked pattern collaborations before the final adversarial review.\
+**Method:** Application-source inventory, examination of previously less-reviewed classes and controllers, cross-reference searches and comparison against established pattern boundaries.
+
+**Coverage**
+
+Reviewed remaining administrator, invitation, account-settings, traveler, notification, model, helper, initializer and JavaScript responsibilities. Rechecked the previously investigated jobs, mailboxes, mailers and model relationships for independent collaborations.
+
+**New candidates**
+
+1. **GRASP Controller — Account Traveler Enrollment Coordination — UNCONFIRMED.** `TravelersController#create` coordinates account-level traveler enrollment, existing-user lookup, creation of linked or pending traveler records and invitation delivery. Its independence from Trip Membership Management Coordination requires adversarial verification.
+2. **GRASP Information Expert — Beta Invite Eligibility Evaluation — UNCONFIRMED.** `Invite#usable?` and `#email_matches?` encapsulate eligibility checks using the invitation's own attributes. The strongest objection is that these are simple domain predicates rather than a substantial independent pattern collaboration.
+
+**Deduplication**
+
+The eight previously source-confirmed collaborations remain unchanged. Repeated use of associated models, shared invitation infrastructure, geocoding behavior, OAuth signup logic and Turbo notifications did not produce new instances.
+
+**Negative findings**
+
+No additional application-defined strategy family, adapter interface, abstract factory, custom Observer registration, recursive Composite collaboration or Template Method structure was established.
+
+Ordinary administrative CRUD, notification queries, model callbacks, enum roles, UI helpers and isolated browser events were excluded from new pattern proposals.
+
+**Outstanding limitations**
+
+The two new candidates require a final adversarial decision. Runtime tests and independent human verification have not been performed. ZIP-to-upstream-commit correspondence remains unverified.
+
+**Conclusion**
+
+Application-source coverage is sufficient to begin the final adversarial review. No new pattern was confirmed during the sweep. Do not freeze the inventory or generate final CSV files, counts or diagrams until the candidate decisions and reviewer validation are complete.
+
+Overall finding: The final sweep did not expose a missing GoF mechanism or a new confirmed pattern. It identified two narrowly defined GRASP responsibilities worth challenging, while reinforcing the existing eight-instance working inventory and the importance of consistent counting boundaries.

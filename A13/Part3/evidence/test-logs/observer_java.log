@@ -1,0 +1,19 @@
+# observer / java
+# working folder: Part3/code/pattern_observer/java
+# runtime: OpenJDK 17.0.19 (javac 17.0.19)
+$ javac -d build *.java
+
+
+$ java -cp build PreferencesManagerTest ../../../test-cases/observer.txt
+PASS no_observers_no_output
+PASS single_observer
+PASS changed_value_notifies_again
+PASS unchanged_value_not_announced
+PASS registration_order
+PASS unsubscribed_not_notified
+PASS unknown_off_ignored
+PASS listener_error_propagates
+passed 8/8
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 94.8, 95.1, 92.4, 93.3, 90.2 -> median 93.3

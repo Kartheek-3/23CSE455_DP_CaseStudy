@@ -1,0 +1,26 @@
+@startuml C7
+!pragma layout smetana
+title C7 Null Object: EngineExecutionListener.NOOP and LauncherSessionListener.NOOP
+
+interface EngineExecutionListener <<AbstractObject>>
+interface LauncherSessionListener <<AbstractObject>>
+class "EngineExecutionListener.NOOP (anonymous)" as EelNoop <<NullObject>>
+class "LauncherSessionListener.NOOP (anonymous)" as LslNoop <<NullObject>>
+class EngineExecutionOrchestrator <<Client>>
+class LauncherSessionListeners <<Client>> {
+  {static} +composite(List) : LauncherSessionListener
+}
+
+EelNoop ..|> EngineExecutionListener
+LslNoop ..|> LauncherSessionListener
+EngineExecutionOrchestrator ..> EelNoop : passes as parent listener
+LauncherSessionListeners ..> LslNoop : returns when list is empty
+' aligned-with-record
+legend right
+  <b>Counted participants</b> (record in the dataset)
+  NullObject holder: EngineExecutionListener
+  NullObject holder: LauncherSessionListener
+  Client: LauncherSessionListeners
+  Grey classes: real, shown for context, not counted
+endlegend
+@enduml

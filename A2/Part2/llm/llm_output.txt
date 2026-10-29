@@ -1,0 +1,61 @@
+﻿PART 2: DESIGN PATTERN EVOLUTION ANALYSIS
+Project: MBTA V3 API
+Model: GPT-6
+Analysis date: 2026-10-26
+
+1. PURPOSE
+Analyze three changes made to the evolved source and assess their effects on the identified Strategy pattern collaborations. The analysis uses the recorded change requirements, diffs, test logs, Part 1 pattern inventory, and Part 2 pattern evolution records.
+
+2. CHANGE 1: RATE LIMITER TEST COVERAGE
+Goal:
+Improve test coverage for the ETS rate-limiter implementation.
+
+Pattern analysis:
+The existing Strategy collaboration uses a common rate-limiter behaviour, ETS and Memcache implementations, and a context that delegates to the configured backend. The recorded change adds tests for clearing rate-limit state and keeping user counters independent. The recorded pattern evolution identifies the Strategy collaboration as preserved.
+
+Recorded test evidence:
+8 tests, 0 failures.
+The log excludes :memcache and :integration tests. This is a targeted test result, not evidence that the full project test suite passed.
+
+3. CHANGE 2: ETS RATE-LIMITER TESTS
+Goal:
+Add focused tests for ETS rate-limiter behaviour.
+
+Pattern analysis:
+The recorded tests cover requests within the limit, requests beyond the limit, independent keys, clearing state, and concurrent requests. The recorded pattern evolution identifies the existing Strategy participants and delegation as unchanged.
+
+Recorded test evidence:
+5 tests, 0 failures.
+The log excludes :memcache and :integration tests. The result applies to the executed test command only.
+
+4. CHANGE 3: STATE UPDATE ERROR HANDLING
+Goal:
+Prevent invalid state data from being reported as a successful update.
+
+Implementation summary:
+The change modifies State.Server parser error handling. According to the change requirement, a parser exception is handled before the successful update flow, and a successful update event is not published for the parsing failure.
+
+Pattern analysis:
+The State Data Parsing Strategy collaboration is recorded as preserved. The change modifies error-handling behaviour rather than intentionally replacing the parser collaboration.
+
+Recorded test evidence:
+The targeted regression test passed: 1 passed, 18 excluded.
+The test checks that invalid parsed state does not emit a successful update event. This is not evidence that the full state test suite or full project suite passed. The recorded log notes that the test was run using the already compiled code after the source change; a clean full compilation and full test suite remain unverified.
+
+5. PATTERN COUNTS AND EVOLUTION
+The current Part 1 inventory records two candidate Strategy collaborations:
+- Rate Limiter Backend Selection
+- State Data Parsing
+
+The current Part 2 pattern-count file records two Strategy instances for Original, Original + Change1, Original + Change2, and Original + Change3. These counts are provisional and should be confirmed against the source at each snapshot. A test-only change does not by itself establish a new design-pattern instance.
+
+6. LIMITATIONS AND VERIFICATION
+- The exact baseline Git commit has not been verified from the extracted source snapshot.
+- The test logs establish only the results of their recorded commands.
+- Changes 1 and 2 exclude Memcache and integration tests.
+- Change 3 has only a targeted regression-test result; clean compilation and full-suite results are not established.
+- Pattern counts and pattern preservation statements should be checked against the actual source snapshots and diffs.
+- No performance improvement, quantitative maintainability improvement, or other unmeasured metric is claimed.
+- This analysis is based on the available project records and test logs; unverified claims must not be presented as confirmed facts.
+
+END OF ANALYSIS

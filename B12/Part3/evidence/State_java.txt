@@ -1,0 +1,10 @@
+﻿PATTERN/SUITE   : State_java
+RUNTIME/COMPILER: javac 17.0.18 / openjdk version "17.0.18" 2026-01-20 
+WORKDIR         : C:\Users\eswar\OneDrive\Documents\Visual Studio Code\23CSE455_DP_CaseStudy\B12\Part3\State\java
+BUILD COMMAND   : javac EvChargingState.java StateTest.java
+BUILD OUTPUT    : 
+RUN COMMAND     : java StateTest
+PROGRAM OUTPUT  : STATE_JAVA PASS 13/13
+TIME INCLUDES   : whole process wall time (runtime startup + program execution), after 1 unmeasured warm-up
+TIMING SAMPLES  : 5 measured runs (ms): 154.7961, 147.8316, 208.0887, 186.3244, 173.1776
+MEDIAN_MS       : 173.178

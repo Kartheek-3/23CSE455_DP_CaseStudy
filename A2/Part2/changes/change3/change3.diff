@@ -1,0 +1,32 @@
+﻿diff --git "a/..\\..\\data\\code\\apps\\state\\lib\\state\\server.ex" "b/.\\apps\\state\\lib\\state\\server.ex"
+index 5595085..564d4a8 100644
+--- "a/..\\..\\data\\code\\apps\\state\\lib\\state\\server.ex"
++++ "b/.\\apps\\state\\lib\\state\\server.ex"
+@@ -608,13 +608,22 @@ defmodule State.Server do
+     :ok
+   end
+ 
+-  defp parse_new_state(module, parser, binary) when is_binary(binary) do
+-    do_handle_new_state(module, fn ->
++   defp parse_new_state(module, parser, binary) when is_binary(binary) do
++    parsed_state =
+       try do
+-        parser.parse(binary)
++        {:ok, parser.parse(binary)}
+       rescue
+-        e -> log_parse_error(module, e)
++        e ->
++          log_parse_error(module, e)
++          :error
+       end
+-    end)
++
++    case parsed_state do
++      {:ok, state} ->
++        do_handle_new_state(module, fn -> state end)
++
++      :error ->
++        :ok
++    end
+   end
+ end

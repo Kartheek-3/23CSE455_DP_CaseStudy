@@ -1,0 +1,17 @@
+CH02 Observer — authoritative result: JUnit 5 run via Maven on the submission
+machine (OpenJDK 11.0.32, Spring Boot 2.4.0).
+
+Command: ./mvnw test -Dtest=CaseRegisterTest -DfailIfNoTests=false
+Result:  CaseRegisterTest — Tests run: 2, Failures: 0, Errors: 0  (BUILD SUCCESS)
+Full log: ../../../../test_result/mvn_test.log
+
+Behaviour covered (all PASS):
+  2 observers subscribed; newHearing fired once ->
+    email,C-101,2026-10-15
+    sms,C-101,2026-10-15
+  Both channels notified from one call, caller unchanged.
+  unsubscribe stops further notifications.
+
+Note: CaseRegister is now a real Subject that maintains a list of registered
+observers, upgrading the Part-1 "uncertain" scheduler-Observer into a genuine
+subject-maintains-observers Observer (data/patterns_evolution.csv).

@@ -1,0 +1,19 @@
+# template_method / cpp
+# working folder: Part3/code/pattern_template_method/cpp
+# runtime: g++ 16.1.1 20260625, -std=c++17
+$ mkdir -p build
+
+
+$ g++ -std=c++17 -Wall -Wextra -o build/test chart.test.cpp
+
+
+$ build/test ../../../test-cases/template_method.txt
+PASS major_clamps_and_prefixes
+PASS minor_hook
+PASS negative_clamped_to_zero
+PASS empty_result_not_stored
+PASS hook_error_propagates
+passed 5/5
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 3.3, 3.3, 3.4, 3.3, 3.3 -> median 3.3

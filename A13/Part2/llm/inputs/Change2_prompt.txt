@@ -1,0 +1,645 @@
+# CH02 IMPLEMENTATION PROMPT — First-Class Audio Posts with Transcription in Misskey
+
+## 1. Task and objective
+
+Implement **Change 2 (CH02): First-Class Audio Posts with Transcription** in the actual Misskey application.
+
+You have already received the master instruction, the codebase architecture context, the preflight results and the Part 2 evidence-generation requirements. Follow those instructions.
+
+Change 1 introduced Events, RSVP and Reminder Notifications. Your current task is the audio feature only. Do not reimplement the Events feature, and do not begin link-safety detection or personalized recommendations.
+
+You must deliver both:
+
+1. A working audio-post experience integrated into Misskey, with optional speech-to-text transcription and transcript search.
+2. A complete evidence package documenting the implementation, focused automated tests, Git commit, design-pattern evolution and verification.
+
+A standalone audio player or a disconnected transcription demonstration is not sufficient.
+
+## 2. Repository and baseline
+
+Misskey application:
+
+`/home/vighnesh/DP-case_study/misskey`
+
+Case-study evidence:
+
+`/home/vighnesh/DP-case_study/A1/Part2`
+
+The original baseline commit is:
+
+`5f501341d49d2bc3fa7e817ce7548a82174326eb`
+
+Change 1's reported implementation commit is:
+
+`608b45de20dce0a78459025320bfdeb0c4e47a78`
+
+Before starting, verify the actual current branch, commit history and working-tree status. Determine the actual preceding commit for CH02. If Change 1 has subsequently received corrective commits, use the actual latest verified CH01 commit rather than blindly assuming the SHA above is the effective version.
+
+Preserve all existing user changes and completed CH01 work. Do not reset or overwrite the repository.
+
+Use the package-manager version declared by Misskey and the existing test infrastructure.
+
+## 3. Core requirement
+
+Misskey already supports audio files and other media attachments. Simply enabling audio uploads or adding a generic HTML audio element is not a sufficient implementation.
+
+Create a dedicated audio-post experience that integrates with Misskey's existing media, post composition, note rendering and content-access mechanisms.
+
+The feature must support:
+
+- Recording or uploading audio clips.
+- Audio playback with a waveform and duration.
+- Optional speech-to-text transcription.
+- Author review, correction and approval of generated transcripts.
+- Expandable and collapsible transcript presentation.
+- Searchability of published transcripts.
+- Accessibility-conscious audio and transcript controls.
+- Configurable transcription providers without mandatory dependence on a paid external API.
+
+Inspect the existing source first. Reuse Misskey's media upload, DriveFile, note, API, notification, queue and search architecture where appropriate.
+
+Do not introduce a parallel media-storage mechanism without a demonstrated technical reason.
+
+## 4. Inspect the existing audio and media workflow first
+
+Before writing code, trace how Misskey currently handles:
+
+- Audio MIME types and media metadata.
+- Drive-file uploads and storage.
+- Media attachment to a note.
+- Audio or video rendering inside a post.
+- Note composition and media previews.
+- Existing audio playback controls, if any.
+- File-size and media-type validation.
+- API endpoint validation and file ownership.
+- Backend services, dependency injection and repositories.
+- Database migrations and entity registration.
+- Background-job scheduling and processing.
+- Search indexing and queries.
+- Frontend localisation and component conventions.
+
+Identify which capabilities already exist and which are missing.
+
+Document your findings in the CH02 requirement and context files. Do not duplicate existing functionality simply because its UI or implementation has not yet been located.
+
+## 5. Audio recording and upload
+
+### 5.1 Recording
+
+Provide a recording option in the appropriate post-composition workflow using browser audio-recording capabilities supported by the existing frontend environment.
+
+Where supported, use the browser's MediaRecorder API or an appropriate existing abstraction.
+
+The recording workflow must handle:
+
+- Microphone permission requests.
+- Recording start and stop.
+- Previewing the captured audio.
+- Discarding an unwanted recording.
+- Uploading the accepted recording through Misskey's existing media-upload mechanism.
+- Unsupported browser capabilities and denied permissions.
+- Recording or upload failures without losing unrelated composer state.
+
+Do not require microphone permission merely to view or play an existing audio post.
+
+### 5.2 Uploading existing audio files
+
+Allow users to select supported audio files using the existing file-selection and upload conventions.
+
+Reuse Misskey's existing validation and storage infrastructure. Do not trust the filename or client-provided MIME type alone.
+
+Apply the existing or appropriately configured file-size limits and validate the format on the backend.
+
+Handle unsupported, malformed and empty audio files with meaningful errors.
+
+Do not weaken existing media validation to make the feature easier to implement.
+
+### 5.3 Audio metadata
+
+Extract or calculate the metadata necessary to display and handle the clip, including its duration where available.
+
+Use the existing media metadata when it is reliable. Avoid storing redundant copies of metadata that already exists unless there is a clear requirement.
+
+Handle audio files whose metadata cannot be decoded. The original audio should remain manageable even when waveform or duration extraction fails.
+
+## 6. Waveform and player UI
+
+Implement a dedicated, accessible audio-post presentation integrated with the existing post display.
+
+It should provide:
+
+- Play and pause controls.
+- Current playback position and total duration where available.
+- A waveform or waveform-like representation that reflects the actual audio data.
+- A usable playback-position control when supported.
+- A clear loading and failure state.
+- A fallback when waveform decoding is unavailable.
+- Keyboard-accessible controls and meaningful accessible labels.
+
+Prefer existing media-player patterns and frontend components when suitable.
+
+Do not introduce a large charting or waveform dependency without justification.
+
+If waveform generation requires decoding audio in the browser, account for large files and decoding failures. Do not load excessively large audio files fully into memory without appropriate safeguards.
+
+Existing audio attachments must continue working after the change. Do not regress ordinary images, video, files or existing note presentation.
+
+## 7. Speech-to-text transcription
+
+### 7.1 Transcription workflow
+
+Implement an optional transcription workflow that can be initiated for an eligible audio post.
+
+The workflow should:
+
+1. Identify the audio asset and its access permissions.
+2. Submit an appropriate transcription job when transcription is requested and available.
+3. Obtain transcription output from the configured provider.
+4. Store the result as a draft transcript.
+5. Allow the author to inspect and edit it.
+6. Publish it only after explicit author approval.
+7. Display the published transcript to users who are permitted to access the associated content.
+
+The workflow must represent job states accurately, for example:
+
+- Not requested.
+- Queued.
+- Processing.
+- Draft available for review.
+- Approved and published.
+- Failed.
+
+Use states appropriate to the final design. Avoid unnecessary states that do not represent meaningful behaviour.
+
+### 7.2 Provider abstraction
+
+Do not hard-code the feature to a paid speech-recognition service.
+
+Introduce a small provider interface or use an existing suitable abstraction in Misskey. It must separate the application's transcription workflow from the provider implementation.
+
+Provide configuration that permits an administrator to enable or disable transcription and select or configure a supported provider according to the repository's configuration conventions.
+
+The implementation must have a meaningful, non-paid deployment path, such as a configurable local or self-hosted transcription service, where feasible.
+
+If a concrete transcription provider cannot run in the current development environment, separate provider integration from the domain workflow and use a deterministic provider double for automated tests. Clearly document what has and has not been verified.
+
+Do not claim that transcription works with a real speech-recognition engine when only a mocked provider was tested.
+
+Do not introduce a mandatory external API key, paid-service dependency or network requirement for the ordinary audio playback workflow.
+
+### 7.3 Failure handling
+
+Handle:
+
+- A transcription provider that is not configured.
+- Provider unavailability.
+- Unsupported audio formats.
+- Invalid or empty provider output.
+- Processing timeouts.
+- Job retries.
+- Duplicate job execution.
+- A user requesting transcription more than once.
+- An audio file becoming unavailable before processing completes.
+- An author editing or discarding a draft transcript.
+
+Failures must be reported accurately. A transcription provider being unavailable must not make the underlying audio post unusable.
+
+Use the existing background-processing architecture if it is suitable for this work. Do not implement unreliable in-memory scheduling for long-running transcription jobs.
+
+## 8. Transcript review, correction and publication
+
+The author must be able to inspect the draft generated by the provider.
+
+Implement a suitable interface or workflow that allows the author to:
+
+- View the draft.
+- Edit its text.
+- Save the corrected transcript.
+- Approve and publish the transcript.
+- Reject or discard a draft if appropriate.
+- See a meaningful processing or error state.
+
+Enforce authorisation in the backend. Frontend controls are not sufficient to protect transcript modification.
+
+A transcript must not become publicly searchable merely because a transcription job completed successfully.
+
+Use an explicit approval state or equivalent clear publication mechanism. Keep draft content inaccessible to unauthorised readers.
+
+Once approved, the transcript should be displayed in the audio-post experience and inherit the relevant visibility and access restrictions of its associated content.
+
+Editing and republishing should update the stored transcript and its search representation consistently.
+
+Do not publish a generated transcript automatically without the required author approval.
+
+## 9. Transcript persistence and data modelling
+
+Determine the appropriate data model after inspecting Misskey's existing note, DriveFile and media attachment structures.
+
+Use a dedicated table or existing entity extension only when justified by the current architecture.
+
+The model must represent the relationship between the audio asset or post and its transcript, along with the necessary publication and processing state.
+
+Consider:
+
+- Ownership and access control.
+- Draft versus published state.
+- Transcript updates.
+- Approval metadata, if required by the design.
+- Failed transcription attempts.
+- Creation and update timestamps.
+- Search-index updates.
+- Removal or replacement of associated audio.
+- Consistency during asynchronous processing.
+
+Add migrations following repository conventions when required. Do not rewrite historical migrations.
+
+Verify that the chosen model does not create duplicate transcript records for the same intended resource or expose draft content through a public API.
+
+## 10. Transcript search
+
+Making published transcripts searchable is part of this requirement, not an optional future enhancement.
+
+Inspect Misskey's existing search architecture and identify the smallest appropriate integration.
+
+Where appropriate, integrate transcript content with an existing supported search mechanism. If the current search infrastructure cannot safely or reasonably support this, implement a focused search path that fits the existing API and data-access conventions.
+
+Search must return only transcripts that are approved and published.
+
+It must respect:
+
+- The access permissions of the associated note or audio content.
+- Note visibility restrictions.
+- Existing block, mute and access-control rules where applicable.
+- Draft and deleted content exclusions.
+- Appropriate pagination and query-size limits.
+- Updates to corrected or unpublished transcripts.
+
+Do not leak a transcript from a private or otherwise inaccessible post through search results.
+
+Do not treat an arbitrary full-text SQL scan over all transcripts as an adequate long-term design without evaluating the existing indexing and query conventions.
+
+Implement the smallest practical search integration and test it using deterministic data.
+
+## 11. Security and privacy
+
+The implementation must:
+
+- Require appropriate authorisation for recording uploads, transcript creation and transcript modification.
+- Respect ownership of audio files.
+- Prevent access to draft transcripts by unrelated users.
+- Avoid exposing audio content or transcripts through unrestricted endpoints.
+- Use existing upload limits and file-validation mechanisms.
+- Treat transcription output as untrusted text.
+- Render transcript content safely using the existing text-rendering rules.
+- Avoid executing commands using unsanitised user-supplied filenames or text.
+- Protect any configured provider credentials.
+- Avoid transmitting audio to a third-party provider unless the instance administrator has configured that provider and the workflow explicitly uses it.
+- Handle changes to content visibility consistently across playback, transcript display and search.
+
+If an implementation detail creates a privacy risk, fix the design instead of documenting the risk as an acceptable limitation.
+
+## 12. Frontend, API and client-type integration
+
+Implement the necessary frontend and backend parts of the feature.
+
+Inspect and follow the current Misskey conventions for:
+
+- API endpoint definitions.
+- Request and response schemas.
+- Authentication and authorisation.
+- Core services.
+- Entity or DTO packing.
+- Generated API metadata and SDK types.
+- Frontend API calls.
+- Vue component state and error handling.
+- Localisation.
+- Background-job state and user-facing feedback.
+
+Do not manually edit generated SDK output when the repository expects it to be regenerated.
+
+A backend-only implementation does not fully satisfy this requirement. Users must have a usable way to create or upload an audio post, play it, request transcription where configured, review the draft and read the approved transcript.
+
+At the same time, do not create unnecessary pages or duplicate controls if they can be integrated cleanly into existing composer and note-rendering workflows.
+
+## 13. Automated testing: focused CLI verification
+
+Automated tests are mandatory. Do not run the entire Misskey test suite.
+
+Inspect the existing tests and package scripts first. Use the currently installed test-runner version and the repository's established conventions.
+
+Add tests for the actual implementation rather than constructing a separate mock application.
+
+### 13.1 Required behaviour to test
+
+Create a focused collection of meaningful tests covering the following applicable cases.
+
+**Audio handling**
+- A valid audio asset can use the new audio-post workflow.
+- Invalid or unsupported uploads are rejected appropriately.
+- Existing audio attachments remain compatible.
+- Metadata or waveform extraction failures do not break ordinary playback.
+
+**Transcription**
+- A configured provider can return a valid draft transcript.
+- Missing provider configuration is handled correctly.
+- Provider failure or invalid output produces the appropriate job status.
+- Repeated job execution does not create duplicate effective results.
+- The transcription result is stored as a draft rather than immediately published.
+- The author can correct and approve a transcript.
+- Unauthorised users cannot edit or approve another author's draft.
+
+**Publication and search**
+- Approved transcripts are visible to authorised readers.
+- Unapproved transcripts are not publicly displayed or searchable.
+- Corrected transcripts update the published content and search representation.
+- Search respects content visibility and does not expose inaccessible transcripts.
+- Removing or unpublishing a transcript updates the relevant search results.
+
+**Frontend behaviour**
+- The relevant player or transcript component can be tested using the repository's existing frontend unit-testing tools where practical.
+- Recording permission denial and unsupported recording capabilities are handled appropriately when a browser API mock is suitable.
+- Audio playback remains usable when transcription is disabled.
+
+These are coverage objectives, not instructions to create an unnecessarily large number of redundant tests. Design the smallest reasonable test suite that establishes the required behaviour.
+
+### 13.2 Test scope
+
+Run focused tests for:
+
+- The new or modified backend service.
+- Transcript persistence and state transitions.
+- The transcription job workflow.
+- The relevant search and access-control logic.
+- Relevant frontend components or utilities where practical.
+
+Run a focused type-check or lint command if appropriate.
+
+Do not automatically run:
+
+- The full backend test suite.
+- The full frontend test suite.
+- All end-to-end tests.
+- Full browser automation.
+- Federation tests against remote servers.
+- Large load tests.
+- Unrelated package test suites.
+
+Use deterministic mocks for unrelated external dependencies. If real PostgreSQL, Redis or a local transcription engine is essential to a particular integration check, test it when available and record limitations when it is not.
+
+A provider mock verifies the provider contract and job workflow; it does not establish speech-recognition accuracy.
+
+### 13.3 Test failure policy
+
+If a test fails:
+
+1. Inspect the actual failure.
+2. Distinguish an implementation defect from an environment issue.
+3. Fix real defects.
+4. Rerun the relevant failed test.
+5. Save the actual final result.
+
+Do not remove valid assertions simply to get a passing result. Do not fabricate output or mark a failed test as successful.
+
+Record skipped or unexecuted checks with their actual reason and `not_run` status where appropriate.
+
+### 13.4 Test log
+
+Save the real test output to:
+
+`A1/Part2/changes/Change2/test_result.log`
+
+Include the exact commands, working directory, relevant tool versions, actual output, exit codes, passed/total results where available, and the reason for any unexecuted test.
+
+## 14. Git commit requirements
+
+Implement CH02 in the actual Misskey repository.
+
+Before staging:
+
+- Inspect `git diff`.
+- Run `git diff --check`.
+- Verify changed paths.
+- Review the test results.
+- Check that unrelated modifications are not staged.
+
+Create one dedicated local implementation commit with a descriptive message, for example:
+
+`feat: add first-class audio posts with transcription`
+
+Use the actual repository conventions if they differ.
+
+Include the necessary implementation, migrations and relevant automated tests. Do not include the external `A1/Part2/` evidence folder in the Misskey application commit.
+
+Do not push to a remote repository.
+
+After the commit, record its actual SHA and verify the working tree and source diff.
+
+Save commit metadata in:
+
+`A1/Part2/changes/Change2/commit.txt`
+
+## 15. Required Change 2 evidence
+
+Create or update the following files using actual results.
+
+### `requirement.md`
+
+Path:
+
+`A1/Part2/changes/Change2/requirement.md`
+
+Record the feature requirement, observable acceptance criteria, source scope, architectural decisions, assumptions and exclusions.
+
+### `diff.patch`
+
+Path:
+
+`A1/Part2/changes/Change2/diff.patch`
+
+Generate the actual patch between the preceding verified snapshot and the CH02 implementation commit. Confirm it corresponds to the recorded SHAs.
+
+### `test_result.log`
+
+Path:
+
+`A1/Part2/changes/Change2/test_result.log`
+
+Save the genuine CLI test commands and results.
+
+### `commit.txt`
+
+Path:
+
+`A1/Part2/changes/Change2/commit.txt`
+
+Record the preceding commit, implementation commit SHA, commit message, relevant source paths and actual date.
+
+### `metrics.csv`
+
+Path:
+
+`A1/Part2/changes/Change2/metrics.csv`
+
+Measure comparable source LOC before and after CH02 using the same documented scope and tool.
+
+Identify the actual source commits. Report production code separately from tests. Record relevant test results, and leave unavailable metrics unreported rather than estimating them.
+
+### `pattern_effects.md`
+
+Path:
+
+`A1/Part2/changes/Change2/pattern_effects.md`
+
+Document:
+
+- Existing pattern collaborations affected by CH02.
+- Actual participants before and after.
+- Whether each collaboration was preserved, architectural decisions, and refactoring techniques.
+- Any genuinely new confirmed pattern collaboration.
+- Source evidence and reasoning.
+- The real code smell addressed and refactoring technique used.
+- Focused test evidence supporting behaviour preservation.
+
+Do not invent a pattern or a code smell merely to increase the count.
+
+## 16. Update pattern evolution and counts
+
+Update the root-level files:
+
+`A1/Part2/pattern_evalution.csv`
+
+`A1/Part2/Pattern_count.csv`
+
+Preserve their existing column schemas.
+
+For `pattern_evalution.csv`, use:
+
+`source_version,pattern_name,pattern_type,instance_name,participant_roles,source_locations,intent_and_evidence,status_after_change,change_description`
+
+For `Pattern_count.csv`, use:
+
+`source_version,summary,pattern_name,count`
+
+Retain the verified baseline and CH01 history. Add the records applicable to the resulting CH02 source version.
+
+Use consistent source-version identifiers:
+
+- `baseline`
+- `CH01`
+- `CH02`
+
+Keep the same `instance_name` when the same collaboration continues across versions. Retain removals in the history and exclude them from the active count in the resulting snapshot.
+
+Update participants, source locations and evidence based on the actual committed code.
+
+Recalculate the per-pattern totals, distinct pattern types and total pattern instances from the confirmed records. Do not guess counts or include a pattern merely because its class or service name sounds familiar.
+
+Do not add any CH03 or later feature records at this stage.
+
+## 17. Architecture diagrams
+
+Store the relevant diagrams in:
+
+`A1/Part2/diagrams/Change2/`
+
+Where the audio feature materially affects the design or pattern collaborations, provide an editable PlantUML file and a rendered image, for example:
+
+- `class_diagram.puml`
+- `class_diagram.png`
+
+Show the actual components and relationships needed to understand the audio asset, playback, transcript workflow, provider abstraction, background processing and search integration where applicable.
+
+The diagram must correspond to the implemented source. Do not depict unimplemented provider integrations or hypothetical services.
+
+If an additional diagram would not meaningfully clarify the architecture, document why rather than generating a misleading diagram.
+
+## 18. LLM input, output and verification evidence
+
+Create the following records.
+
+### Prompt
+
+`A1/Part2/llm/inputs/Change2_prompt.txt`
+
+Save the actual Change 2 prompt used for the implementation.
+
+### Context
+
+`A1/Part2/llm/inputs/Change2_context.md`
+
+Record the actual preceding source commit, relevant source files, inspected media/audio/search implementations, and the context supplied to the coding agent.
+
+### Output
+
+`A1/Part2/llm/outputs/Change2_output.txt`
+
+Preserve the actual available implementation report or execution output. Do not invent an agent transcript. If a complete raw transcript cannot be captured, state the limitation and preserve the available output.
+
+### Verification
+
+`A1/Part2/llm/verification/Change2_verification.md`
+
+Record the claims checked, actual source evidence, test commands and results, resulting commit SHA, and any limitations.
+
+Distinguish application-level tests from a real transcription engine, real search-index, or external service integration that was not executed.
+
+## 19. Update `llm.csv`
+
+Update:
+
+`A1/Part2/llm.csv`
+
+Use the existing prescribed header:
+
+`part,model_and_date,prompt_file,input_file,output_file,evaluation,verification_file`
+
+Create a record linking the actual CH02 prompt, context, output and verification evidence. Use paths relative to the `A1/` team folder.
+
+For example:
+
+- `prompt_file`: `Part2/llm/inputs/Change2_prompt.txt`
+- `input_file`: `Part2/llm/inputs/Change2_context.md`
+- `output_file`: `Part2/llm/outputs/Change2_output.txt`
+- `verification_file`: `Part2/llm/verification/Change2_verification.md`
+
+Use the actual model identifier and interaction date when available. Never invent them.
+
+Every path must refer to a real file, and the evaluation must be supported by evidence.
+
+## 20. Update the evolved source README
+
+Update:
+
+`A1/Part2/code/README.md`
+
+Include the actual CH02 commit SHA, the preceding source SHA, the changed source paths, migrations if applicable, focused test commands, test results, metric methodology and limitations.
+
+Make sure `Part2/code/` contains the required evolved application source evidence for the changes completed so far, using correct source-relative paths, together with its README. Do not copy dependency caches, compiled artifacts or unrelated files.
+
+## 21. Final validation and completion report
+
+Before declaring CH02 complete, verify that:
+
+1. The audio-post workflow is integrated into Misskey's actual composer and note presentation.
+2. Existing audio attachments continue to work.
+3. Audio recording/upload, playback and metadata handling work according to the implementation.
+4. Transcription can be configured without requiring a paid API.
+5. Generated transcripts remain drafts until approved by the author.
+6. Transcript correction, publication and access controls work correctly.
+7. Published transcript search respects visibility and does not expose drafts.
+8. Background processing and retries behave as tested.
+9. Focused automated tests have actually executed and their results are logged.
+10. The implementation has its own separate local commit.
+11. The actual diff and commit metadata are saved.
+12. Before/after metrics are reproducible.
+13. Pattern evolution and counts agree with the actual source versions.
+14. Relevant diagrams reflect the implemented design.
+15. The prompt, available actual output and verification evidence are saved.
+16. `llm.csv` maps the CH02 records correctly.
+17. The source README describes the resulting application.
+18. No unrelated user changes have been overwritten.
+19. No claim of successful integration has been made for an unexecuted test.
+
+After completion, report the implemented feature, changed files, migration status, actual focused test results, test limitations, commit SHAs, source metrics, pattern effects and evidence-file paths.
+
+Do not begin link-safety detection or personalized recommendations. Finish CH02, report the actual results, and wait for my next requirement.

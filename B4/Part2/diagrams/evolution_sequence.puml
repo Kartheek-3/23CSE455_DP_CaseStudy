@@ -1,0 +1,17 @@
+@startuml
+actor Tenant
+participant PropertySearchService
+participant AndSpecification
+participant PricingService
+participant DynamicPricing
+participant DigitalContract
+Tenant -> PropertySearchService : advanced(specification)
+PropertySearchService -> AndSpecification : isSatisfiedBy(property)
+Tenant -> PricingService : quote(property, context)
+PricingService -> DynamicPricing : price(property, context)
+Tenant -> DigitalContract : send()
+DigitalContract -> DigitalContract : Draft -> Sent
+Tenant -> DigitalContract : sign(hash)
+DigitalContract -> DigitalContract : Sent -> Signed
+@enduml
+

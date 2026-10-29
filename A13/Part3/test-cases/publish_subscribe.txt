@@ -1,0 +1,6 @@
+# case|commands: sub <name> <channel>; unsub <name> <channel>; main <userId> <type> <body>; broadcast <type> <body>|expected (deliveries joined by ~)
+subscriber_receives|sub A mainStream:7;main 7 note hi|A<-mainStream:7:{"type":"note","body":"hi"}
+only_matching_channel|sub A mainStream:7;sub B broadcast;main 7 note hi|A<-mainStream:7:{"type":"note","body":"hi"}
+subscribers_in_order|sub A broadcast;sub B broadcast;broadcast announce x|A<-broadcast:{"type":"announce","body":"x"}~B<-broadcast:{"type":"announce","body":"x"}
+unsubscribe|sub A broadcast;sub B broadcast;unsub A broadcast;broadcast announce x|B<-broadcast:{"type":"announce","body":"x"}
+no_subscriber_message_dropped|broadcast announce x|dropped:broadcast

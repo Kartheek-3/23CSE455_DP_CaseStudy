@@ -1,0 +1,21 @@
+# front_controller / cpp
+# working folder: Part3/code/pattern_front_controller/cpp
+# runtime: g++ 16.1.1 20260625, -std=c++17
+$ mkdir -p build
+
+
+$ g++ -std=c++17 -Wall -Wextra -o build/test api_controller.test.cpp
+
+
+$ build/test ../../../test-cases/front_controller.txt
+PASS public_endpoint
+PASS authenticated_endpoint
+PASS unknown_endpoint
+PASS missing_credential
+PASS bad_token
+PASS rate_limit_per_actor
+PASS anonymous_is_limited_too
+passed 7/7
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 3.9, 3.5, 3.3, 3.3, 3.3 -> median 3.3

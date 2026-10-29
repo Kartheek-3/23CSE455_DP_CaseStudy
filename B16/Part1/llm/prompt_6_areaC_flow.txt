@@ -1,0 +1,5 @@
+Now do the same for Area C (execution listeners and result reporting) using the files
+from your first answer. Explain in simple steps how the result of a test travels from
+the engine to the IDE: who creates the events, how they reach each listener, and how
+reports and summaries are built. Use a small example with one passing and one failing
+test. Just answer in chat.

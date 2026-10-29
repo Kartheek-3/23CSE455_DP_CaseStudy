@@ -1,0 +1,45 @@
+# Toolchains recorded 2026-10-11T21:00:27Z
+## Operating system
+$ cmd /c ver
+Microsoft Windows [Version 10.0.26300.9550]
+$ uname -a  (Git Bash)
+MINGW64_NT-10.0-26300 <host> 3.6.10-5a1665c8.x86_64 2026-09-28 10:40 UTC x86_64 Msys
+
+## Java (JDK 21.0.2, not on PATH; full paths used)
+$ java -version
+openjdk version "21.0.2" 2024-01-16
+OpenJDK Runtime Environment (build 21.0.2+13-58)
+OpenJDK 64-Bit Server VM (build 21.0.2+13-58, mixed mode, sharing)
+$ javac -version
+javac 21.0.2
+(for reference, the java on PATH:)
+$ java -version
+java version "1.8.0_461"
+Java(TM) SE Runtime Environment (build 1.8.0_461-b11)
+Java HotSpot(TM) 64-Bit Server VM (build 25.461-b11, mixed mode)
+$ javac -version
+/usr/bin/bash: line 12: javac: command not found
+
+## Python
+$ python --version
+Python 3.12.7
+
+## Node
+$ node --version
+v23.11.0
+
+## C++
+$ g++ --version
+g++.exe (MinGW.org GCC-6.3.0-1) 6.3.0
+Copyright (C) 2016 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+
+## lizard (dev tool, installed with pip in the venv <venv>)
+$ lizard --version
+1.24.1
+$ python -m pip show lizard
+Name: lizard
+Version: 1.24.1
+Summary: A code analyzer without caring the C/C++ header files. It works with Java, C/C++, JavaScript, Python, Ruby, Swift, Objective C. Metrics includes cyclomatic complexity number etc.

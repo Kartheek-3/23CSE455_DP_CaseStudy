@@ -1,0 +1,20 @@
+{
+  "Strategy": {
+    "Java": "Nominal FareStrategy interface plus nested static classes and a Trip record; the compiler rejects a strategy that lacks calculate(). HashMap registry in the context. Median dominated by JVM start-up (~100 ms).",
+    "Python": "typing.Protocol gives a structural interface that is only checked by a type checker, not at runtime; frozen dataclass for the trip. Importing dataclasses/typing roughly doubles start-up versus the State snippet (60 vs 31 ms).",
+    "JavaScript": "Duck typing: any object with calculate(trip) is accepted; a private #strategies Map holds the registry. ES module; the role names exist only as class names.",
+    "C++": "Abstract base class with pure virtual calculate(); the context owns strategies through std::unique_ptr in a std::map, so ownership is explicit. Header-only snippet compiled with -O2; native binary starts in ~2 ms (measured inside the container)."
+  },
+  "State": {
+    "Java": "Interface + abstract BaseState supplying refusing defaults, concrete states as nested classes; the context maps event names with a switch expression, which gives the highest function CC (6).",
+    "Python": "Base class with refusing methods; concrete states override; the context dispatches with getattr(state, event)(), so no branch per event (CC 2). No typing/dataclass imports, hence the fastest Python start-up (31 ms).",
+    "JavaScript": "Same shape as Python: class inheritance for default refusals and dynamic dispatch with state[event](); class fields hold the state name.",
+    "C++": "Virtual methods returning std::unique_ptr<TripState>; [[noreturn]] refuse() in the base. The context owns the current state and replaces it on each transition; event dispatch is an if-chain (CC 6) because C++ has no reflective method lookup."
+  },
+  "Observer": {
+    "Java": "Observer interface, RecordingObserver collecting events in a List and a HashMap subscriber registry; lambdas in the test runner. Static typing forces every observer to implement update().",
+    "Python": "Protocol for Observer and a dict registry; broadcast is a one-line generator sum. Observers need no common base class at runtime.",
+    "JavaScript": "Any object with update() can subscribe; Map registry and Array.filter for broadcast give the smallest source (24 LOC) and lowest CC (2).",
+    "C++": "Hub stores std::weak_ptr so it never extends an observer's lifetime; notify() locks the pointer and skips destroyed observers - an ownership question the garbage-collected languages do not need to answer."
+  }
+}

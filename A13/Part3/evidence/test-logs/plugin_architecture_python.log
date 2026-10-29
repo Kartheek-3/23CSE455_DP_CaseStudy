@@ -1,0 +1,15 @@
+# plugin_architecture / python
+# working folder: Part3/code/pattern_plugin_architecture/python
+# runtime: CPython 3.14.6
+$ python3 -B test_plugin_host.py ../../../test-cases/plugin_architecture.txt
+PASS no_plugins_no_change
+PASS interruptors_run_in_install_order
+PASS abort_removes_handlers
+PASS actions_collected
+PASS reinstall_after_abort
+PASS failed_install_keeps_handlers
+PASS abort_cleans_failed_plugin
+passed 7/7
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 26.1, 25.0, 25.0, 24.0, 23.7 -> median 25.0

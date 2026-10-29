@@ -1,0 +1,5 @@
+CPU(s):                                  2
+Model name:                              Intel(R) Xeon(R) Processor @ 2.10GHz
+Thread(s) per core:                      1
+Linux 6.18.44-fc-v114
+date: 2026-10-11 (sandbox container, shared; timings are indicative only)

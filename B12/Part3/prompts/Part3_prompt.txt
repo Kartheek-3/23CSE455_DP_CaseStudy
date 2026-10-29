@@ -1,0 +1,21 @@
+PART 3 — PROMPT RECORD (CROSS-LANGUAGE ANALYSIS)
+================================================
+
+No new LLM prompt was issued for Part 3. This is stated deliberately rather than
+back-filled with a reconstructed prompt.
+
+The pattern selection (Strategy and State) and the cross-language plan were
+derived from prior LLM-assisted research that the team had already performed:
+
+  - the shared ChatGPT conversation,
+    https://chatgpt.com/share/6aca22a9-2844-83ec-8126-e6f81ef8e85e
+  - the research DOCX (kept at its original path, not modified),
+  - both catalogued in B12/LLM_RESEARCH_REFERENCES.md.
+
+That material proposed the pattern set; it was NOT used as evidence for any
+pattern, count, metric or test result. Every number reported for Part 3 comes
+from the real implementations and real test runs recorded under Part3/evidence/.
+
+There is therefore no verbatim Part 3 prompt to paste here. If a Part 3 prompt is
+used later, paste it verbatim with the model and date, and register it in
+data/llm.csv.

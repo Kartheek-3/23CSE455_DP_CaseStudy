@@ -1,0 +1,15 @@
+# plugin_architecture / javascript
+# working folder: Part3/code/pattern_plugin_architecture/javascript
+# runtime: Node.js v24.15.0
+$ node pluginHost.test.js ../../../test-cases/plugin_architecture.txt
+PASS no_plugins_no_change
+PASS interruptors_run_in_install_order
+PASS abort_removes_handlers
+PASS actions_collected
+PASS reinstall_after_abort
+PASS failed_install_keeps_handlers
+PASS abort_cleans_failed_plugin
+passed 7/7
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 44.4, 45.7, 48.7, 46.3, 50.9 -> median 46.3

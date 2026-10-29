@@ -1,0 +1,9 @@
+Target source files:
+- src/seat/entities/seat.entity.ts
+- src/seat/dtos/create-seat.dto.ts
+- src/seat/seat.service.ts
+- src/seat/seat.service.spec.ts
+- src/seat/enums/seat-class.enum.ts
+- src/booking/booking.resolver.ts
+Context: Codebase commit b731f57 (after Change 1).
+Existing seat model had seatNo (1-6) and rowNo (1-20), uniform without classes.

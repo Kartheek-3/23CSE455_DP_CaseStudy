@@ -1,0 +1,213 @@
+CH01 demo run on 2026-10-10 18:39, openjdk version "25.0.4.1" 2026-08-18 LTS
+Tests: demo.CheckoutTests (2 pass, 1 flaky fails), demo.InventoryTests (1 flaky fails),
+summarydemo.ReportTests (3 pass incl. 2 slow, 1 aborted by assumption, 1 @Disabled)
+
+================================================================
+== 1 BEFORE: official 6.1.3 does not know the summary keys
+== jar: junit-platform-console-standalone-6.1.3.jar   args: --config junit.platform.listeners.summary.enabled=true
+================================================================
+Failures (2):
+       org.junit.jupiter.api.Assertions.assertTrue(Assertions.java:232)
+       demo.InventoryTests.warehouseSync(InventoryTests.java:13)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1210)
+       demo.CheckoutTests.paymentGatewayTimeout(CheckoutTests.java:25)
+Test run finished after 423 ms
+[         6 containers found      ]
+[         6 containers started    ]
+[         6 containers successful ]
+[         9 tests found           ]
+[         1 tests skipped         ]
+[         8 tests started         ]
+[         1 tests aborted         ]
+[         5 tests successful      ]
+[         2 tests failed          ]
+== exit code: 1
+== no summary file in build/ch01/reports/1
+
+================================================================
+== 2 AFTER, no keys: listener is registered but disabled by default
+== jar: junit-console-b16-ch01.jar   args: 
+================================================================
+Failures (2):
+       org.junit.jupiter.api.Assertions.assertTrue(Assertions.java:232)
+       demo.InventoryTests.warehouseSync(InventoryTests.java:13)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1210)
+       demo.CheckoutTests.paymentGatewayTimeout(CheckoutTests.java:25)
+Test run finished after 426 ms
+[         6 containers found      ]
+[         6 containers started    ]
+[         6 containers successful ]
+[         9 tests found           ]
+[         1 tests skipped         ]
+[         8 tests started         ]
+[         1 tests aborted         ]
+[         5 tests successful      ]
+[         2 tests failed          ]
+== exit code: 1
+== no summary file in build/ch01/reports/2
+
+================================================================
+== 3 AFTER, enabled, slowest=3, with demo OrderTracer: callback order and the summary file
+== jar: junit-console-b16-ch01.jar   args: -cp build/ch01/tracer --config junit.platform.listeners.summary.enabled=true --config junit.platform.listeners.summary.slowest=3
+================================================================
+[trace] testPlanExecutionStarted
+[trace]   executionStarted  JUnit Platform Suite
+[trace]   executionFinished JUnit Platform Suite SUCCESSFUL
+[trace]   executionStarted  JUnit Jupiter
+[trace]   executionStarted  InventoryTests
+[trace]   executionStarted  warehouseSync()
+[trace]   executionFinished warehouseSync() FAILED
+[trace]   executionFinished InventoryTests SUCCESSFUL
+[trace]   executionStarted  CheckoutTests
+[trace]   executionStarted  paymentGatewayTimeout()
+[trace]   executionFinished paymentGatewayTimeout() FAILED
+[trace]   executionStarted  fastTotal()
+[trace]   executionFinished fastTotal() SUCCESSFUL
+[trace]   executionStarted  fastDiscount()
+[trace]   executionFinished fastDiscount() SUCCESSFUL
+[trace]   executionFinished CheckoutTests SUCCESSFUL
+[trace]   executionStarted  ReportTests
+[trace]   executionStarted  onlyOnCi()
+[trace]   executionFinished onlyOnCi() ABORTED
+[trace]   executionSkipped  newFormat() (waiting for new report format)
+[trace]   executionStarted  quickCheck()
+[trace]   executionFinished quickCheck() SUCCESSFUL
+[trace]   executionStarted  slowExport()
+[trace]   executionFinished slowExport() SUCCESSFUL
+[trace]   executionStarted  slowImport()
+[trace]   executionFinished slowImport() SUCCESSFUL
+[trace]   executionFinished ReportTests SUCCESSFUL
+[trace]   executionFinished JUnit Jupiter SUCCESSFUL
+[trace]   executionStarted  JUnit Vintage
+[trace]   executionFinished JUnit Vintage SUCCESSFUL
+[trace] testPlanExecutionFinished
+[JUL INFO] Class summary written to build/ch01/reports/3/junit-class-summary.txt
+Failures (2):
+       org.junit.jupiter.api.Assertions.assertTrue(Assertions.java:232)
+       demo.InventoryTests.warehouseSync(InventoryTests.java:13)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1210)
+       demo.CheckoutTests.paymentGatewayTimeout(CheckoutTests.java:25)
+Test run finished after 429 ms
+[         6 containers found      ]
+[         6 containers started    ]
+[         6 containers successful ]
+[         9 tests found           ]
+[         1 tests skipped         ]
+[         8 tests started         ]
+[         1 tests aborted         ]
+[         5 tests successful      ]
+[         2 tests failed          ]
+== exit code: 1
+== build/ch01/reports/3/junit-class-summary.txt:
+CLASS                                                         TOTAL PASSED FAILED ABORTED SKIPPED  TIME(ms)
+demo.CheckoutTests                                                3      2      1       0       0         3
+demo.InventoryTests                                               1      0      1       0       0         8
+summarydemo.ReportTests                                           5      3      0       1       1       385
+TOTAL                                                             9      5      2       1       1       398
+
+Slowest 3 tests
+      260 ms  summarydemo.ReportTests > slowExport()
+      124 ms  summarydemo.ReportTests > slowImport()
+        8 ms  demo.InventoryTests > warehouseSync()
+
+================================================================
+== 4 AFTER, enabled + CH03 policy exclude tags=flaky: filtered tests are absent, not skipped
+== jar: junit-console-b16-ch01.jar   args: --config junit.platform.listeners.summary.enabled=true --config junit.platform.filter.policy.mode=exclude --config junit.platform.filter.policy.tags=flaky
+================================================================
+[JUL CONFIG] 0 containers and 2 tests were excluded by filter policy (mode=exclude)
+[JUL INFO] Class summary written to build/ch01/reports/4/junit-class-summary.txt
+== exit code: 0
+== build/ch01/reports/4/junit-class-summary.txt:
+CLASS                                                         TOTAL PASSED FAILED ABORTED SKIPPED  TIME(ms)
+demo.CheckoutTests                                                2      2      0       0       0         8
+summarydemo.ReportTests                                           5      3      0       1       1       381
+TOTAL                                                             7      5      0       1       1       389
+
+Slowest 5 tests
+      256 ms  summarydemo.ReportTests > slowExport()
+      123 ms  summarydemo.ReportTests > slowImport()
+        6 ms  demo.CheckoutTests > fastTotal()
+        1 ms  demo.CheckoutTests > fastDiscount()
+        1 ms  summarydemo.ReportTests > onlyOnCi()
+
+================================================================
+== 5 AFTER, failure handling: slowest=abc -> warning, default 5 used, run unaffected
+== jar: junit-console-b16-ch01.jar   args: --config junit.platform.listeners.summary.enabled=true --config junit.platform.listeners.summary.slowest=abc
+================================================================
+[JUL WARNING] Invalid value 'abc' for configuration parameter 'junit.platform.listeners.summary.slowest'; using default 5
+[JUL INFO] Class summary written to build/ch01/reports/5/junit-class-summary.txt
+Failures (2):
+       org.junit.jupiter.api.Assertions.assertTrue(Assertions.java:232)
+       demo.InventoryTests.warehouseSync(InventoryTests.java:13)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1210)
+       demo.CheckoutTests.paymentGatewayTimeout(CheckoutTests.java:25)
+Test run finished after 424 ms
+[         6 containers found      ]
+[         6 containers started    ]
+[         6 containers successful ]
+[         9 tests found           ]
+[         1 tests skipped         ]
+[         8 tests started         ]
+[         1 tests aborted         ]
+[         5 tests successful      ]
+[         2 tests failed          ]
+== exit code: 1
+== build/ch01/reports/5/junit-class-summary.txt:
+CLASS                                                         TOTAL PASSED FAILED ABORTED SKIPPED  TIME(ms)
+demo.CheckoutTests                                                3      2      1       0       0         3
+demo.InventoryTests                                               1      0      1       0       0         8
+summarydemo.ReportTests                                           5      3      0       1       1       385
+TOTAL                                                             9      5      2       1       1       396
+
+Slowest 5 tests
+      255 ms  summarydemo.ReportTests > slowExport()
+      127 ms  summarydemo.ReportTests > slowImport()
+        8 ms  demo.InventoryTests > warehouseSync()
+        2 ms  demo.CheckoutTests > paymentGatewayTimeout()
+        1 ms  summarydemo.ReportTests > onlyOnCi()
+
+================================================================
+== 6 AFTER, failure handling: output file in a missing directory -> error logged, run unaffected
+== jar: junit-console-b16-ch01.jar   args: --config junit.platform.listeners.summary.enabled=true --config junit.platform.listeners.summary.output.file=missing-dir/summary.txt
+================================================================
+[JUL SEVERE] Failed to write class summary file 'missing-dir/summary.txt'
+Failures (2):
+       org.junit.jupiter.api.Assertions.assertTrue(Assertions.java:232)
+       demo.InventoryTests.warehouseSync(InventoryTests.java:13)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1210)
+       demo.CheckoutTests.paymentGatewayTimeout(CheckoutTests.java:25)
+Test run finished after 429 ms
+[         6 containers found      ]
+[         6 containers started    ]
+[         6 containers successful ]
+[         9 tests found           ]
+[         1 tests skipped         ]
+[         8 tests started         ]
+[         1 tests aborted         ]
+[         5 tests successful      ]
+[         2 tests failed          ]
+== exit code: 1
+== no summary file in build/ch01/reports/6
+
+================================================================
+== 7 AFTER, switched off with the standard deactivate key (JVM system property; as a --config request parameter it has no effect because listeners are loaded before the request)
+== jar: junit-console-b16-ch01.jar   jvm: -Djunit.platform.execution.listeners.deactivate=*ClassSummaryListener   args: --config junit.platform.listeners.summary.enabled=true
+================================================================
+Failures (2):
+       org.junit.jupiter.api.Assertions.assertTrue(Assertions.java:232)
+       demo.InventoryTests.warehouseSync(InventoryTests.java:13)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1210)
+       demo.CheckoutTests.paymentGatewayTimeout(CheckoutTests.java:25)
+Test run finished after 430 ms
+[         6 containers found      ]
+[         6 containers started    ]
+[         6 containers successful ]
+[         9 tests found           ]
+[         1 tests skipped         ]
+[         8 tests started         ]
+[         1 tests aborted         ]
+[         5 tests successful      ]
+[         2 tests failed          ]
+== exit code: 1
+== no summary file in build/ch01/reports/7
+

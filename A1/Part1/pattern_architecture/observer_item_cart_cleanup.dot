@@ -1,0 +1,30 @@
+// Observer instance "Item Unavailability Cart Cleanup" (baseline 83998629).
+digraph observer_signal {
+  graph [rankdir=TB, fontname="Helvetica", fontsize=13, nodesep=0.5, ranksep=0.45];
+  node  [shape=plain, fontname="Helvetica", fontsize=13];
+  edge  [fontname="Helvetica", fontsize=11, color="#444444"];
+  signal [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="3" bgcolor="#e8eef7">
+    <tr><td><b>Subject (framework)</b></td></tr>
+    <tr><td>django.db.models.signals.post_save : Signal</td></tr>
+    <tr><td align="left">+ connect(receiver, sender)  [via @receiver]</td></tr>
+    <tr><td align="left">+ send(sender, instance, created, ...)</td></tr></table>>];
+  item [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="3" bgcolor="#f4f4f4">
+    <tr><td><b>ConcreteSubject (sender)</b></td></tr>
+    <tr><td>canteenapp.models.Item</td></tr>
+    <tr><td align="left">is_available, count</td></tr>
+    <tr><td align="left">+ save(): is_available = (count != 0);</td></tr>
+    <tr><td align="left">  super().save() → Model.save_base() sends post_save</td></tr></table>>];
+  receiver [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="3" bgcolor="#f4f4f4">
+    <tr><td><b>ConcreteObserver (function)</b></td></tr>
+    <tr><td>signals.remove_unavailable_item_from_cart</td></tr>
+    <tr><td align="left">(sender, instance, **kwargs)</td></tr>
+    <tr><td align="left">if not instance.is_available: Cart.objects.filter(item=instance).delete()</td></tr></table>>];
+  cart [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="3">
+    <tr><td><b>Affected state</b></td></tr><tr><td>canteenapp.models.Cart</td></tr></table>>];
+  ready [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="3">
+    <tr><td><b>Registration</b></td></tr><tr><td>apps.CanteenappConfig.ready()</td></tr><tr><td>imports canteenapp.signals</td></tr></table>>];
+  item -> signal [label="save() triggers send()"];
+  signal -> receiver [label="notifies registered receiver\n(sender='canteenapp.Item')"];
+  receiver -> cart [label="deletes rows", style=dashed];
+  ready -> receiver [label="loads @receiver\ndecorator", style=dotted];
+}

@@ -1,0 +1,36 @@
+@startuml B4
+!pragma layout smetana
+title B4 Strategy: ParallelExecutionConfigurationStrategy
+
+interface ParallelExecutionConfigurationStrategy <<Strategy>> {
+  +createConfiguration(ConfigurationParameters) : ParallelExecutionConfiguration
+}
+enum DefaultParallelExecutionConfigurationStrategy <<ConcreteStrategy>> {
+  FIXED
+  DYNAMIC
+  CUSTOM
+  {static} +getStrategy(ConfigurationParameters)
+  {static} +toConfiguration(ConfigurationParameters)
+}
+interface ParallelExecutionConfiguration <<Result>>
+class ParallelHierarchicalTestExecutorServiceFactory <<Context>>
+
+DefaultParallelExecutionConfigurationStrategy ..|> ParallelExecutionConfigurationStrategy
+ParallelExecutionConfigurationStrategy ..> ParallelExecutionConfiguration : returns
+ParallelHierarchicalTestExecutorServiceFactory ..> DefaultParallelExecutionConfigurationStrategy : toConfiguration()
+
+note right of DefaultParallelExecutionConfigurationStrategy
+  Each constant overrides createConfiguration().
+  CUSTOM loads a user-supplied
+  ParallelExecutionConfigurationStrategy class.
+end note
+' aligned-with-record
+legend right
+  <b>Counted participants</b> (record in the dataset)
+  Strategy: ParallelExecutionConfigurationStrategy
+  ConcreteStrategy (enum FIXED/DYNAMIC/CUSTOM): DefaultParallelExecutionConfigurationStrategy
+  Selection: DefaultParallelExecutionConfigurationStrategy#getStrategy
+  Context: ParallelHierarchicalTestExecutorServiceFactory
+  Grey classes: real, shown for context, not counted
+endlegend
+@enduml

@@ -1,0 +1,1385 @@
+{
+  "srcDir": "Part2/code/src",
+  "files": 229,
+  "total": {
+    "nloc": 8680,
+    "functions": 460,
+    "max_cc": 18
+  },
+  "rows": [
+    {
+      "file": "application/dto/admin/AdminResponseDto.ts",
+      "nloc": 68,
+      "functions": 4,
+      "max_cc": 17
+    },
+    {
+      "file": "application/dto/auth/AuthRequestDto.ts",
+      "nloc": 14,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/dto/auth/AuthResponseDto.ts",
+      "nloc": 15,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/dto/booking/BookingResponseDto.ts",
+      "nloc": 44,
+      "functions": 2,
+      "max_cc": 17
+    },
+    {
+      "file": "application/dto/driver/DriverResponseDto.ts",
+      "nloc": 62,
+      "functions": 3,
+      "max_cc": 11
+    },
+    {
+      "file": "application/dto/payment/PaymentDto.ts",
+      "nloc": 8,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/dto/review/ReviewDto.ts",
+      "nloc": 11,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/dto/user/UserRequestDto.ts",
+      "nloc": 2,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/dto/user/UserResponseDto.ts",
+      "nloc": 28,
+      "functions": 1,
+      "max_cc": 2
+    },
+    {
+      "file": "application/dto/vehicle/VehicleRequestDto.ts",
+      "nloc": 11,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/dto/vehicle/VehicleResponseDto.ts",
+      "nloc": 28,
+      "functions": 2,
+      "max_cc": 10
+    },
+    {
+      "file": "application/dto/wallet/WalletDto.ts",
+      "nloc": 36,
+      "functions": 2,
+      "max_cc": 3
+    },
+    {
+      "file": "application/services/Accountservice.ts",
+      "nloc": 6,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/services/AuthService.ts",
+      "nloc": 20,
+      "functions": 3,
+      "max_cc": 3
+    },
+    {
+      "file": "application/services/chatService.ts",
+      "nloc": 24,
+      "functions": 3,
+      "max_cc": 3
+    },
+    {
+      "file": "application/services/Emailservice.ts",
+      "nloc": 85,
+      "functions": 3,
+      "max_cc": 3
+    },
+    {
+      "file": "application/services/FareCalculatorService.ts",
+      "nloc": 6,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/services/GoogleDistanceService.ts",
+      "nloc": 43,
+      "functions": 3,
+      "max_cc": 4
+    },
+    {
+      "file": "application/services/HashService.ts",
+      "nloc": 4,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/services/MSService.ts",
+      "nloc": 3,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/services/NotificationService.ts",
+      "nloc": 14,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/services/ReferralCodeService.ts",
+      "nloc": 16,
+      "functions": 2,
+      "max_cc": 2
+    },
+    {
+      "file": "application/services/WalletService.ts",
+      "nloc": 67,
+      "functions": 5,
+      "max_cc": 4
+    },
+    {
+      "file": "application/use_cases/Admin/AdminChangeDriverStatus.ts",
+      "nloc": 32,
+      "functions": 2,
+      "max_cc": 3
+    },
+    {
+      "file": "application/use_cases/Admin/BlockOrUnblockDriver.ts",
+      "nloc": 19,
+      "functions": 2,
+      "max_cc": 2
+    },
+    {
+      "file": "application/use_cases/Admin/BlockUser.ts",
+      "nloc": 21,
+      "functions": 2,
+      "max_cc": 2
+    },
+    {
+      "file": "application/use_cases/Admin/GetAdminDashboardStats.ts",
+      "nloc": 56,
+      "functions": 4,
+      "max_cc": 10
+    },
+    {
+      "file": "application/use_cases/Admin/GetAllRides.ts",
+      "nloc": 14,
+      "functions": 2,
+      "max_cc": 1
+    },
+    {
+      "file": "application/use_cases/Admin/GetAllusers.ts",
+      "nloc": 15,
+      "functions": 2,
+      "max_cc": 2
+    },
+    {
+      "file": "application/use_cases/Admin/Getdriverbooking.ts",
+      "nloc": 14,
+      "functions": 2,
+      "max_cc": 1
+    },
+    {
+      "file": "application/use_cases/Admin/GetDrivers.ts",
+      "nloc": 19,
+      "functions": 2,
+      "max_cc": 1
+    },
+    {
+      "file": "application/use_cases/Admin/Interfaces/IAdminChangeDriverStatus.ts",
+      "nloc": 9,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/Admin/Interfaces/IBlockOrUnblockDriverUseCase.ts",
+      "nloc": 3,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/Admin/Interfaces/IBlockUserUseCase.ts",
+      "nloc": 4,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/Admin/Interfaces/IGetAdminDashboardStatsUseCase.ts",
+      "nloc": 21,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/Admin/Interfaces/IGetAllBookingsUseCase.ts",
+      "nloc": 4,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/Admin/Interfaces/IGetAllUsersUseCase.ts",
+      "nloc": 4,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/Admin/Interfaces/IGetDriversUseCase.ts",
+      "nloc": 5,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/Auth/ChangePassword.ts",
+      "nloc": 37,
+      "functions": 2,
+      "max_cc": 7
+    },
+    {
+      "file": "application/use_cases/Auth/ForgotPasswordUseCase.ts",
+      "nloc": 44,
+      "functions": 2,
+      "max_cc": 8
+    },
+    {
+      "file": "application/use_cases/Auth/googleAuth.ts",
+      "nloc": 75,
+      "functions": 2,
+      "max_cc": 11
+    },
+    {
+      "file": "application/use_cases/Auth/interface/IChangePasswordUseCase.ts",
+      "nloc": 8,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/Auth/interface/IForgotPasswordUseCase.ts",
+      "nloc": 3,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/Auth/interface/IResetPasswordUseCase.ts",
+      "nloc": 7,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/Auth/ResetPasswordUseCase.ts",
+      "nloc": 46,
+      "functions": 2,
+      "max_cc": 13
+    },
+    {
+      "file": "application/use_cases/chatGetSignedUrl.ts",
+      "nloc": 17,
+      "functions": 2,
+      "max_cc": 3
+    },
+    {
+      "file": "application/use_cases/deleteMessage.ts",
+      "nloc": 16,
+      "functions": 2,
+      "max_cc": 1
+    },
+    {
+      "file": "application/use_cases/Driver/AcceptBooking.ts",
+      "nloc": 58,
+      "functions": 2,
+      "max_cc": 6
+    },
+    {
+      "file": "application/use_cases/Driver/DriverOnboarding.ts",
+      "nloc": 18,
+      "functions": 2,
+      "max_cc": 1
+    },
+    {
+      "file": "application/use_cases/Driver/DriverReview.ts",
+      "nloc": 14,
+      "functions": 2,
+      "max_cc": 1
+    },
+    {
+      "file": "application/use_cases/Driver/EditDriverProfile.ts",
+      "nloc": 26,
+      "functions": 2,
+      "max_cc": 4
+    },
+    {
+      "file": "application/use_cases/Driver/GetBookingStatusSummary.ts",
+      "nloc": 14,
+      "functions": 2,
+      "max_cc": 1
+    },
+    {
+      "file": "application/use_cases/Driver/Getdriverbooking.ts",
+      "nloc": 20,
+      "functions": 2,
+      "max_cc": 1
+    },
+    {
+      "file": "application/use_cases/Driver/GetDriverDashboardStats.ts",
+      "nloc": 42,
+      "functions": 3,
+      "max_cc": 8
+    },
+    {
+      "file": "application/use_cases/Driver/Getdriverprofile.ts",
+      "nloc": 24,
+      "functions": 2,
+      "max_cc": 3
+    },
+    {
+      "file": "application/use_cases/Driver/GetMonthlyEarningsReport.ts",
+      "nloc": 18,
+      "functions": 2,
+      "max_cc": 1
+    },
+    {
+      "file": "application/use_cases/Driver/interfaces/IAcceptBookingUseCase.ts",
+      "nloc": 8,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/Driver/interfaces/IEditDriverProfile.ts",
+      "nloc": 4,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/Driver/interfaces/IGetBookingStatusSummaryUseCase.ts",
+      "nloc": 7,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/Driver/interfaces/IGetDriverDashboardStatsUseCase.ts",
+      "nloc": 16,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/Driver/interfaces/IGetDriverEarningsSummaryUseCase.ts",
+      "nloc": 11,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/Driver/interfaces/IGetDriverProfile.ts",
+      "nloc": 4,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/Driver/interfaces/IGetDriverReviewsUseCase.ts",
+      "nloc": 3,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/Driver/interfaces/IGetUserBooking.ts",
+      "nloc": 5,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/Driver/interfaces/IOnboardDriverUseCase.ts",
+      "nloc": 3,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/Driver/interfaces/IRegisterDriverUseCase.ts",
+      "nloc": 4,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/Driver/interfaces/IUpdateBookingStatusUseCase.ts",
+      "nloc": 10,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/Driver/interfaces/IVerifyDriverPaymentAccount.ts",
+      "nloc": 3,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/Driver/RegisterDriver.ts",
+      "nloc": 28,
+      "functions": 2,
+      "max_cc": 2
+    },
+    {
+      "file": "application/use_cases/Driver/UpdateBookingstatus.ts",
+      "nloc": 64,
+      "functions": 2,
+      "max_cc": 12
+    },
+    {
+      "file": "application/use_cases/Driver/VerifyAccountStatus.ts",
+      "nloc": 28,
+      "functions": 2,
+      "max_cc": 5
+    },
+    {
+      "file": "application/use_cases/GenerateSignedUrl.ts",
+      "nloc": 17,
+      "functions": 2,
+      "max_cc": 3
+    },
+    {
+      "file": "application/use_cases/GetAllVehicle.ts",
+      "nloc": 14,
+      "functions": 2,
+      "max_cc": 1
+    },
+    {
+      "file": "application/use_cases/GetRidechat.ts",
+      "nloc": 20,
+      "functions": 2,
+      "max_cc": 1
+    },
+    {
+      "file": "application/use_cases/Interfaces/IAddvehicle.ts",
+      "nloc": 4,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/Interfaces/IDeleteMessageUseCase.ts",
+      "nloc": 3,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/Interfaces/IGenerateSignedUrlUseCase.ts",
+      "nloc": 4,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/Interfaces/IGetMessage.ts",
+      "nloc": 7,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/Interfaces/IGetNearbyDriverDetailsUseCase.ts",
+      "nloc": 9,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/Interfaces/ILogin.ts",
+      "nloc": 8,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/Interfaces/IRefreshTokenUseCase.ts",
+      "nloc": 3,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/Interfaces/IResendOTP.ts",
+      "nloc": 4,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/Interfaces/IVerifyOtp.ts",
+      "nloc": 4,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/Login.ts",
+      "nloc": 105,
+      "functions": 2,
+      "max_cc": 12
+    },
+    {
+      "file": "application/use_cases/Refreshtoken.ts",
+      "nloc": 46,
+      "functions": 2,
+      "max_cc": 12
+    },
+    {
+      "file": "application/use_cases/ResendOTP.ts",
+      "nloc": 31,
+      "functions": 2,
+      "max_cc": 2
+    },
+    {
+      "file": "application/use_cases/saveMessagechat.ts",
+      "nloc": 68,
+      "functions": 2,
+      "max_cc": 9
+    },
+    {
+      "file": "application/use_cases/User/AcknowledgeBooking.ts",
+      "nloc": 23,
+      "functions": 2,
+      "max_cc": 2
+    },
+    {
+      "file": "application/use_cases/User/AddVehicle.ts",
+      "nloc": 35,
+      "functions": 2,
+      "max_cc": 3
+    },
+    {
+      "file": "application/use_cases/User/AttachPaymentIntentIdToBooking.ts",
+      "nloc": 71,
+      "functions": 2,
+      "max_cc": 13
+    },
+    {
+      "file": "application/use_cases/User/BookDriver.ts",
+      "nloc": 136,
+      "functions": 5,
+      "max_cc": 18
+    },
+    {
+      "file": "application/use_cases/User/CancelBooking.ts",
+      "nloc": 48,
+      "functions": 2,
+      "max_cc": 9
+    },
+    {
+      "file": "application/use_cases/User/CreatePaymentIntent.ts",
+      "nloc": 34,
+      "functions": 2,
+      "max_cc": 4
+    },
+    {
+      "file": "application/use_cases/User/CreditReferalreward.ts",
+      "nloc": 35,
+      "functions": 2,
+      "max_cc": 4
+    },
+    {
+      "file": "application/use_cases/User/EditVehicle.ts",
+      "nloc": 24,
+      "functions": 2,
+      "max_cc": 3
+    },
+    {
+      "file": "application/use_cases/User/FindNearbyDrivers.ts",
+      "nloc": 75,
+      "functions": 5,
+      "max_cc": 6
+    },
+    {
+      "file": "application/use_cases/User/GetEstimatedFare.ts",
+      "nloc": 16,
+      "functions": 2,
+      "max_cc": 1
+    },
+    {
+      "file": "application/use_cases/User/GetNearbyDriverDetails.ts",
+      "nloc": 61,
+      "functions": 2,
+      "max_cc": 7
+    },
+    {
+      "file": "application/use_cases/User/GetRideHistory.ts",
+      "nloc": 15,
+      "functions": 2,
+      "max_cc": 1
+    },
+    {
+      "file": "application/use_cases/User/GetUserbooking.ts",
+      "nloc": 14,
+      "functions": 2,
+      "max_cc": 1
+    },
+    {
+      "file": "application/use_cases/User/GetUserData.ts",
+      "nloc": 24,
+      "functions": 2,
+      "max_cc": 3
+    },
+    {
+      "file": "application/use_cases/User/GetVehiclesByUser.ts",
+      "nloc": 15,
+      "functions": 2,
+      "max_cc": 1
+    },
+    {
+      "file": "application/use_cases/User/interfaces/IAcknowledgeBookingUseCase.ts",
+      "nloc": 3,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/User/interfaces/IAttachPaymentIntentIdToBookingUseCase.ts",
+      "nloc": 10,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/User/interfaces/IBookDriverUseCase.ts",
+      "nloc": 8,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/User/interfaces/ICancelBookingUseCase.ts",
+      "nloc": 16,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/User/interfaces/ICreatePaymentIntent.ts",
+      "nloc": 4,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/User/interfaces/IEditVehicleUseCase.ts",
+      "nloc": 4,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/User/interfaces/IFindNearbyDriversUseCase.ts",
+      "nloc": 11,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/User/interfaces/IGetEstimatedFare.ts",
+      "nloc": 4,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/User/interfaces/IGetRideHistoryUseCase.ts",
+      "nloc": 13,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/User/interfaces/IGetUserBookingsUseCase.ts",
+      "nloc": 4,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/User/interfaces/IGetUserData.ts",
+      "nloc": 4,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/User/interfaces/IGetVehiclesByUserUseCase.ts",
+      "nloc": 4,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/User/interfaces/INearbyDriverUseCase.ts",
+      "nloc": 9,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/User/interfaces/IRegisterUser.ts",
+      "nloc": 4,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/User/interfaces/ISubmitDriverReview.ts",
+      "nloc": 4,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/User/interfaces/IUpdateUserData.ts",
+      "nloc": 5,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/User/interfaces/IWalletBalanceUseCase.ts",
+      "nloc": 3,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/User/interfaces/IWalletPaymentUseCase.ts",
+      "nloc": 3,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/User/interfaces/IWalletTransaction.ts",
+      "nloc": 9,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "application/use_cases/User/RegisterUser.ts",
+      "nloc": 35,
+      "functions": 2,
+      "max_cc": 3
+    },
+    {
+      "file": "application/use_cases/User/SubmitRating.ts",
+      "nloc": 45,
+      "functions": 2,
+      "max_cc": 5
+    },
+    {
+      "file": "application/use_cases/User/UpdateUserData.ts",
+      "nloc": 29,
+      "functions": 2,
+      "max_cc": 4
+    },
+    {
+      "file": "application/use_cases/User/WalletBallence.ts",
+      "nloc": 17,
+      "functions": 2,
+      "max_cc": 2
+    },
+    {
+      "file": "application/use_cases/User/WalletRidePayment.ts",
+      "nloc": 63,
+      "functions": 2,
+      "max_cc": 5
+    },
+    {
+      "file": "application/use_cases/User/walletTransaction.ts",
+      "nloc": 32,
+      "functions": 3,
+      "max_cc": 2
+    },
+    {
+      "file": "application/use_cases/VerifyOTP.ts",
+      "nloc": 87,
+      "functions": 2,
+      "max_cc": 12
+    },
+    {
+      "file": "config/controllerResolve.ts",
+      "nloc": 0,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "config/database.ts",
+      "nloc": 12,
+      "functions": 1,
+      "max_cc": 2
+    },
+    {
+      "file": "config/redisconfig.ts",
+      "nloc": 7,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "constants/ErrorMessages.ts",
+      "nloc": 63,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "constants/HttpStatusCode.ts",
+      "nloc": 11,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "constants/Info_Messages.ts",
+      "nloc": 13,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "constants/Routes.ts",
+      "nloc": 110,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "constants/Tokens.ts",
+      "nloc": 38,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "constants/UseCaseTokens.ts",
+      "nloc": 52,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "domain/booking/CancellationPolicy.ts",
+      "nloc": 37,
+      "functions": 4,
+      "max_cc": 4
+    },
+    {
+      "file": "domain/booking/TripState.ts",
+      "nloc": 114,
+      "functions": 19,
+      "max_cc": 4
+    },
+    {
+      "file": "domain/driver/DriverAccountState.ts",
+      "nloc": 135,
+      "functions": 19,
+      "max_cc": 6
+    },
+    {
+      "file": "domain/errors/Autherror.ts",
+      "nloc": 7,
+      "functions": 1,
+      "max_cc": 1
+    },
+    {
+      "file": "domain/errors/BaseError.ts",
+      "nloc": 12,
+      "functions": 1,
+      "max_cc": 1
+    },
+    {
+      "file": "domain/errors/ConflictError.ts",
+      "nloc": 7,
+      "functions": 1,
+      "max_cc": 1
+    },
+    {
+      "file": "domain/errors/InvalidTransitionError.ts",
+      "nloc": 7,
+      "functions": 1,
+      "max_cc": 1
+    },
+    {
+      "file": "domain/errors/NotFoundError.ts",
+      "nloc": 7,
+      "functions": 1,
+      "max_cc": 1
+    },
+    {
+      "file": "domain/models/Booking.ts",
+      "nloc": 50,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "domain/models/Chat.ts",
+      "nloc": 25,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "domain/models/Driver.ts",
+      "nloc": 36,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "domain/models/DriverReview.ts",
+      "nloc": 14,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "domain/models/RegistrationPayload.ts",
+      "nloc": 17,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "domain/models/User.ts",
+      "nloc": 25,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "domain/models/Vehicle.ts",
+      "nloc": 18,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "domain/models/Wallet.ts",
+      "nloc": 15,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "domain/pricing/DynamicPricing.ts",
+      "nloc": 28,
+      "functions": 6,
+      "max_cc": 5
+    },
+    {
+      "file": "domain/pricing/FareStrategy.ts",
+      "nloc": 52,
+      "functions": 6,
+      "max_cc": 3
+    },
+    {
+      "file": "domain/repositories/IBaseRepository.ts",
+      "nloc": 8,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "domain/repositories/IBookingrepository.ts",
+      "nloc": 88,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "domain/repositories/IChatRepository.ts",
+      "nloc": 13,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "domain/repositories/IDriverepository.ts",
+      "nloc": 24,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "domain/repositories/IDriverReviewRepository.ts",
+      "nloc": 12,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "domain/repositories/IRedisrepository.ts",
+      "nloc": 10,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "domain/repositories/IUserepository.ts",
+      "nloc": 12,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "domain/repositories/IVehicleRepository.ts",
+      "nloc": 9,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "domain/repositories/IWalletRepository.ts",
+      "nloc": 9,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "domain/services/IFileStorageService.ts",
+      "nloc": 5,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "domain/services/IGoogleMapService.ts",
+      "nloc": 10,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "domain/services/IStripeService.ts",
+      "nloc": 18,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "index.ts",
+      "nloc": 59,
+      "functions": 2,
+      "max_cc": 1
+    },
+    {
+      "file": "infrastructure/config/container.ts",
+      "nloc": 84,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "infrastructure/config/controllerContainer.ts",
+      "nloc": 13,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "infrastructure/config/useCaseContainer.ts",
+      "nloc": 286,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "infrastructure/database/BaseRepository.ts",
+      "nloc": 34,
+      "functions": 7,
+      "max_cc": 3
+    },
+    {
+      "file": "infrastructure/database/ChatRepository.ts",
+      "nloc": 75,
+      "functions": 8,
+      "max_cc": 4
+    },
+    {
+      "file": "infrastructure/database/interfaces/PopulatedBooking.ts",
+      "nloc": 47,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "infrastructure/database/mappers/DriverReviewMapper.ts",
+      "nloc": 25,
+      "functions": 2,
+      "max_cc": 2
+    },
+    {
+      "file": "infrastructure/database/modals/Bookingschema.ts",
+      "nloc": 50,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "infrastructure/database/modals/ChatSchema.ts",
+      "nloc": 51,
+      "functions": 2,
+      "max_cc": 3
+    },
+    {
+      "file": "infrastructure/database/modals/DriverReviewschema.ts",
+      "nloc": 18,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "infrastructure/database/modals/Driverschema.ts",
+      "nloc": 68,
+      "functions": 1,
+      "max_cc": 3
+    },
+    {
+      "file": "infrastructure/database/modals/userschema.ts",
+      "nloc": 38,
+      "functions": 1,
+      "max_cc": 4
+    },
+    {
+      "file": "infrastructure/database/modals/VehicleSchema.ts",
+      "nloc": 21,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "infrastructure/database/modals/Walletschema.ts",
+      "nloc": 28,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "infrastructure/database/MongoBookingRepository.ts",
+      "nloc": 518,
+      "functions": 22,
+      "max_cc": 7
+    },
+    {
+      "file": "infrastructure/database/MongodriverRepository.ts",
+      "nloc": 251,
+      "functions": 13,
+      "max_cc": 8
+    },
+    {
+      "file": "infrastructure/database/MongoDriverReviewRepository.ts",
+      "nloc": 45,
+      "functions": 4,
+      "max_cc": 2
+    },
+    {
+      "file": "infrastructure/database/MongoUserRepository.ts",
+      "nloc": 137,
+      "functions": 9,
+      "max_cc": 5
+    },
+    {
+      "file": "infrastructure/database/MongoVehicleRepository.ts",
+      "nloc": 31,
+      "functions": 6,
+      "max_cc": 2
+    },
+    {
+      "file": "infrastructure/database/WalletRepository.ts",
+      "nloc": 112,
+      "functions": 9,
+      "max_cc": 4
+    },
+    {
+      "file": "infrastructure/services/Accountservice.ts",
+      "nloc": 57,
+      "functions": 3,
+      "max_cc": 2
+    },
+    {
+      "file": "infrastructure/services/cloudstorageservice.ts",
+      "nloc": 91,
+      "functions": 3,
+      "max_cc": 5
+    },
+    {
+      "file": "infrastructure/services/CronScheduler.ts",
+      "nloc": 45,
+      "functions": 2,
+      "max_cc": 5
+    },
+    {
+      "file": "infrastructure/services/FareCalculatorService.ts",
+      "nloc": 30,
+      "functions": 4,
+      "max_cc": 2
+    },
+    {
+      "file": "infrastructure/services/file.ts",
+      "nloc": 0,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "infrastructure/services/GoogleMapService.ts",
+      "nloc": 69,
+      "functions": 5,
+      "max_cc": 5
+    },
+    {
+      "file": "infrastructure/services/Hashservice.ts",
+      "nloc": 12,
+      "functions": 2,
+      "max_cc": 1
+    },
+    {
+      "file": "infrastructure/services/SocketNotification.ts",
+      "nloc": 79,
+      "functions": 10,
+      "max_cc": 3
+    },
+    {
+      "file": "infrastructure/services/StripeService.ts",
+      "nloc": 81,
+      "functions": 5,
+      "max_cc": 4
+    },
+    {
+      "file": "infrastructure/services/TwilioSMSService.ts",
+      "nloc": 13,
+      "functions": 1,
+      "max_cc": 1
+    },
+    {
+      "file": "infrastructure/socket/referralSocket.ts",
+      "nloc": 104,
+      "functions": 14,
+      "max_cc": 3
+    },
+    {
+      "file": "infrastructure/socket/socket.ts",
+      "nloc": 168,
+      "functions": 8,
+      "max_cc": 11
+    },
+    {
+      "file": "infrastructure/socket/SocketNotification.ts",
+      "nloc": 107,
+      "functions": 7,
+      "max_cc": 11
+    },
+    {
+      "file": "infrastructure/store/UserRegisterStore.ts",
+      "nloc": 37,
+      "functions": 7,
+      "max_cc": 2
+    },
+    {
+      "file": "infrastructure/utils/catchAsync.ts",
+      "nloc": 8,
+      "functions": 2,
+      "max_cc": 1
+    },
+    {
+      "file": "middleware/authMiddleware.ts",
+      "nloc": 37,
+      "functions": 2,
+      "max_cc": 6
+    },
+    {
+      "file": "middleware/checkBlocked.ts",
+      "nloc": 51,
+      "functions": 2,
+      "max_cc": 9
+    },
+    {
+      "file": "middleware/errorHandler.ts",
+      "nloc": 42,
+      "functions": 1,
+      "max_cc": 5
+    },
+    {
+      "file": "middleware/socketAuthMiddleware.ts",
+      "nloc": 18,
+      "functions": 1,
+      "max_cc": 4
+    },
+    {
+      "file": "presentation/controllers/AdminController.ts",
+      "nloc": 121,
+      "functions": 9,
+      "max_cc": 3
+    },
+    {
+      "file": "presentation/controllers/AuthController.ts",
+      "nloc": 89,
+      "functions": 6,
+      "max_cc": 2
+    },
+    {
+      "file": "presentation/controllers/BookingController.ts",
+      "nloc": 241,
+      "functions": 21,
+      "max_cc": 2
+    },
+    {
+      "file": "presentation/controllers/DriverControler.ts",
+      "nloc": 146,
+      "functions": 11,
+      "max_cc": 3
+    },
+    {
+      "file": "presentation/controllers/FileController.ts",
+      "nloc": 20,
+      "functions": 2,
+      "max_cc": 1
+    },
+    {
+      "file": "presentation/controllers/googleAuthController.ts",
+      "nloc": 32,
+      "functions": 1,
+      "max_cc": 4
+    },
+    {
+      "file": "presentation/controllers/UserController.ts",
+      "nloc": 258,
+      "functions": 16,
+      "max_cc": 3
+    },
+    {
+      "file": "presentation/routes/adminRoutes.ts",
+      "nloc": 32,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "presentation/routes/AuthRoute.ts",
+      "nloc": 14,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "presentation/routes/BookingRoute.ts",
+      "nloc": 14,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "presentation/routes/driverRoutes.ts",
+      "nloc": 67,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "presentation/routes/fileRoutes.ts",
+      "nloc": 10,
+      "functions": 1,
+      "max_cc": 1
+    },
+    {
+      "file": "presentation/routes/googleAuthRoute.ts",
+      "nloc": 8,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "presentation/routes/userRoutes.ts",
+      "nloc": 126,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "presentation/schemas/admin/AdminRequestDTO.ts",
+      "nloc": 43,
+      "functions": 3,
+      "max_cc": 2
+    },
+    {
+      "file": "presentation/schemas/auth/AuthRequestDTO.ts",
+      "nloc": 30,
+      "functions": 1,
+      "max_cc": 2
+    },
+    {
+      "file": "presentation/schemas/booking/BookingRequestDTO.ts",
+      "nloc": 101,
+      "functions": 4,
+      "max_cc": 3
+    },
+    {
+      "file": "presentation/schemas/common/FileRequestDTO.ts",
+      "nloc": 6,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "presentation/schemas/common/ZodHelper.ts",
+      "nloc": 10,
+      "functions": 1,
+      "max_cc": 2
+    },
+    {
+      "file": "presentation/schemas/driver/DriverRequestDTO.ts",
+      "nloc": 48,
+      "functions": 0,
+      "max_cc": 0
+    },
+    {
+      "file": "presentation/schemas/user/DriverDTO.ts",
+      "nloc": 59,
+      "functions": 3,
+      "max_cc": 13
+    },
+    {
+      "file": "presentation/schemas/user/UserDTO.ts",
+      "nloc": 92,
+      "functions": 3,
+      "max_cc": 2
+    }
+  ]
+}

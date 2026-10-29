@@ -1,0 +1,16 @@
+{
+  "source": "https://github.com/banksystembg/BankSystem",
+  "commit": "9af0ff8e42e4769d370203ae681e913339ec0121",
+  "access_date": "2026-10-24",
+  "license": "MIT",
+  "omitted_files": [
+    ".github/workflows/main.yml",
+    "src/DemoShop/DemoShop.Web/appsettings.Development.json",
+    "src/DemoShop/DemoShop.Web/appsettings.json",
+    "src/Web/Api/CentralApi/appsettings.Development.json",
+    "src/Web/Api/CentralApi/appsettings.json",
+    "src/Web/BankSystem.Web/appsettings.Development.json",
+    "src/Web/BankSystem.Web/appsettings.json"
+  ],
+  "reason": "Do not redistribute upstream example RSA private keys; supply local configuration using README."
+}

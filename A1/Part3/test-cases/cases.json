@@ -1,0 +1,35 @@
+{
+  "fixture": {
+    "observer": {
+      "order_id": "O101",
+      "new_status": "Shipped",
+      "observers_in_registration_order": ["Admin", "Restaurant", "DeliveryPerson(name='Delivery Partner')"]
+    },
+    "strategy": {
+      "partners_in_list_order": [
+        {"name": "Partner A", "available": true, "priority": 2},
+        {"name": "Partner B", "available": false, "priority": 5},
+        {"name": "Partner C", "available": true, "priority": 4}
+      ],
+      "strategies_in_call_order": ["AvailabilityStrategy", "PriorityStrategy"]
+    }
+  },
+  "cases": [
+    {"id": "OBS-1", "pattern": "Observer", "line": 2, "expected": "Admin notified: Order O101 is Shipped",
+     "rule": "First registered observer is notified first with the order id and new status."},
+    {"id": "OBS-2", "pattern": "Observer", "line": 3, "expected": "Restaurant notified: Order O101 is Shipped",
+     "rule": "Second registered observer is notified second."},
+    {"id": "OBS-3", "pattern": "Observer", "line": 4, "expected": "Delivery Partner notified: Order O101 is Shipped",
+     "rule": "Concrete observer with per-instance state (name) receives the same event."},
+    {"id": "STR-1", "pattern": "Strategy", "line": 7, "expected": "Assigned to: Partner A",
+     "rule": "AvailabilityStrategy returns the first available partner in list order."},
+    {"id": "STR-2", "pattern": "Strategy", "line": 8, "expected": "Assigned to: Partner C",
+     "rule": "PriorityStrategy returns the highest-priority available partner; unavailable Partner B (priority 5) is excluded."}
+  ],
+  "whole_output_case": {"id": "FULL", "expected_file": "expected_output.txt",
+     "rule": "Complete standard output, including section headers and the blank separator line, matches exactly (trailing newline normalised)."},
+  "not_exercised": [
+    "No available partner (strategy returns null/None/nullptr and the context prints 'No delivery partner available'): the original programs hard-code one fixture, so this branch is not executed.",
+    "Observer registration after notification, duplicate registration and observer removal: no detach operation exists in the demonstrations."
+  ]
+}

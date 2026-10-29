@@ -1,0 +1,3 @@
+public class Snippet { static class Transfer{String sender;int amount;Transfer(String s,int a){sender=s;amount=a;}}interface Check{boolean allow(Transfer t);}static class AmountCheck implements Check{Check next;AmountCheck(Check n){next=n;}public boolean allow(Transfer t){return t.amount<=1000&&(next==null||next.allow(t));}}static class DenyListCheck implements Check{Check next;DenyListCheck(Check n){next=n;}public boolean allow(Transfer t){return !t.sender.equals("blocked")&&(next==null||next.allow(t));}}
+ public static boolean demo(){Check c=new DenyListCheck(new AmountCheck(null));return c.allow(new Transfer("a",10))&&!c.allow(new Transfer("blocked",10));} }
+

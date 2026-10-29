@@ -1,0 +1,3 @@
+Command: g++ -std=c++17 -Wall -Wextra -pedantic state_parser_strategy.cpp TestRunner.cpp -o test_runner.exe && ./test_runner.exe
+Result: PASS
+Output: PASS: Alert parser strategy delegation

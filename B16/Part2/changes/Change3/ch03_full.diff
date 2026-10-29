@@ -1,0 +1,382 @@
+diff --git a/junit-platform-launcher/src/main/java/org/junit/platform/launcher/LauncherConstants.java b/junit-platform-launcher/src/main/java/org/junit/platform/launcher/LauncherConstants.java
+index de1cfc7..9c77586 100644
+--- a/junit-platform-launcher/src/main/java/org/junit/platform/launcher/LauncherConstants.java
++++ b/junit-platform-launcher/src/main/java/org/junit/platform/launcher/LauncherConstants.java
+@@ -318,6 +318,51 @@ public class LauncherConstants {
+ 	@API(status = EXPERIMENTAL, since = "6.1.1")
+ 	public static final String MEMORY_CLEANUP_EXCLUDED_ENGINES_PROPERTY_NAME = "junit.platform.execution.memory.cleanup.engines.excluded";
+ 
++	/**
++	 * Property name used to set the mode of the configurable filter policy:
++	 * {@value}
++	 *
++	 * <p>Supported values:
++	 * <ul>
++	 * <li>{@code off} (default): the policy is not applied.
++	 * <li>{@code exclude}: tests matched by the policy are removed from the test plan.
++	 * <li>{@code only}: only tests matched by the policy are kept.
++	 * </ul>
++	 *
++	 * <p>A test is matched if it matches any tag expression in
++	 * {@link #FILTER_POLICY_TAGS_PROPERTY_NAME} or any pattern in
++	 * {@link #FILTER_POLICY_METHODS_PROPERTY_NAME}; at least one of the two
++	 * must be set unless the mode is {@code off}. The policy is applied after
++	 * all other post-discovery filters, so it can only narrow their result.
++	 * Invalid values make discovery fail with a message naming the parameter.
++	 *
++	 * @since 6.2
++	 */
++	@API(status = EXPERIMENTAL, since = "6.2")
++	public static final String FILTER_POLICY_MODE_PROPERTY_NAME = "junit.platform.filter.policy.mode";
++
++	/**
++	 * Property name used to supply the comma-separated
++	 * {@linkplain TagFilter tag expressions} of the filter policy: {@value}
++	 *
++	 * @since 6.2
++	 * @see #FILTER_POLICY_MODE_PROPERTY_NAME
++	 */
++	@API(status = EXPERIMENTAL, since = "6.2")
++	public static final String FILTER_POLICY_TAGS_PROPERTY_NAME = "junit.platform.filter.policy.tags";
++
++	/**
++	 * Property name used to supply the comma-separated
++	 * {@linkplain MethodFilter method name patterns} of the filter policy,
++	 * matched against fully qualified method names such as
++	 * {@code com.example.MyTests#test}: {@value}
++	 *
++	 * @since 6.2
++	 * @see #FILTER_POLICY_MODE_PROPERTY_NAME
++	 */
++	@API(status = EXPERIMENTAL, since = "6.2")
++	public static final String FILTER_POLICY_METHODS_PROPERTY_NAME = "junit.platform.filter.policy.methods";
++
+ 	private LauncherConstants() {
+ 		/* no-op */
+ 	}
+diff --git a/junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java b/junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java
+index f37e90e..1024ffe 100644
+--- a/junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java
++++ b/junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/EngineDiscoveryOrchestrator.java
+@@ -177,15 +177,19 @@ public class EngineDiscoveryOrchestrator {
+ 
+ 		engineFilterer.performSanityChecks();
+ 
+-		List<PostDiscoveryFilter> filters = new ArrayList<>(postDiscoveryFilters);
+-		filters.addAll(request.getPostDiscoveryFilters());
+-
+-		applyPostDiscoveryFilters(testEngineDescriptors, filters);
++		applyPostDiscoveryFilters(testEngineDescriptors, collectPostDiscoveryFilters(request));
+ 		prune(testEngineDescriptors);
+ 
+ 		return testEngineDescriptors;
+ 	}
+ 
++	private List<PostDiscoveryFilter> collectPostDiscoveryFilters(LauncherDiscoveryRequest request) {
++		List<PostDiscoveryFilter> filters = new ArrayList<>(postDiscoveryFilters);
++		filters.addAll(request.getPostDiscoveryFilters());
++		FilterPolicy.fromConfiguration(request.getConfigurationParameters()).ifPresent(filters::add);
++		return filters;
++	}
++
+ 	private EngineResultInfo discoverEngineRoot(TestEngine testEngine, LauncherDiscoveryRequest request,
+ 			DiscoveryIssueCollector issueCollector, Function<String, UniqueId> uniqueIdCreator) {
+ 		UniqueId uniqueEngineId = uniqueIdCreator.apply(testEngine.getId());
+diff --git a/junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/FilterPolicy.java b/junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/FilterPolicy.java
+new file mode 100644
+index 0000000..87d6364
+--- /dev/null
++++ b/junit-platform-launcher/src/main/java/org/junit/platform/launcher/core/FilterPolicy.java
+@@ -0,0 +1,114 @@
++/*
++ * Copyright 2015-2026 the original author or authors.
++ *
++ * All rights reserved. This program and the accompanying materials are
++ * made available under the terms of the Eclipse Public License v2.0 which
++ * accompanies this distribution and is available at
++ *
++ * https://www.eclipse.org/legal/epl-v20.html
++ */
++
++package org.junit.platform.launcher.core;
++
++import static org.junit.platform.launcher.LauncherConstants.FILTER_POLICY_METHODS_PROPERTY_NAME;
++import static org.junit.platform.launcher.LauncherConstants.FILTER_POLICY_MODE_PROPERTY_NAME;
++import static org.junit.platform.launcher.LauncherConstants.FILTER_POLICY_TAGS_PROPERTY_NAME;
++
++import java.util.ArrayList;
++import java.util.Arrays;
++import java.util.List;
++import java.util.Locale;
++import java.util.Optional;
++import java.util.function.Function;
++import java.util.function.Predicate;
++
++import org.junit.platform.commons.JUnitException;
++import org.junit.platform.engine.ConfigurationParameters;
++import org.junit.platform.engine.FilterResult;
++import org.junit.platform.engine.TestDescriptor;
++import org.junit.platform.launcher.MethodFilter;
++import org.junit.platform.launcher.PostDiscoveryFilter;
++import org.junit.platform.launcher.TagFilter;
++
++/**
++ * {@link PostDiscoveryFilter} that is configured entirely through
++ * configuration parameters: one set of tests (tag expressions and/or method
++ * name patterns) plus a mode that either excludes that set ({@code exclude})
++ * or keeps only that set ({@code only}).
++ *
++ * <p>All values are parsed and validated in {@link #fromConfiguration}, so
++ * {@link #apply} never throws.
++ *
++ * @since 6.2
++ * @see org.junit.platform.launcher.LauncherConstants#FILTER_POLICY_MODE_PROPERTY_NAME
++ */
++final class FilterPolicy implements PostDiscoveryFilter {
++
++	private final boolean exclude;
++	private final List<Predicate<TestDescriptor>> matchers;
++
++	/**
++	 * Create the policy for the supplied configuration.
++	 *
++	 * @return empty if the mode is {@code off} or not set
++	 * @throws JUnitException if any value is invalid; the message names the
++	 * offending configuration parameter
++	 */
++	static Optional<PostDiscoveryFilter> fromConfiguration(ConfigurationParameters configuration) {
++		String mode = configuration.get(FILTER_POLICY_MODE_PROPERTY_NAME) //
++				.map(value -> value.strip().toLowerCase(Locale.ROOT)) //
++				.orElse("off");
++		if (mode.equals("off")) {
++			return Optional.empty();
++		}
++		if (!mode.equals("exclude") && !mode.equals("only")) {
++			throw new JUnitException("Invalid value '%s' for configuration parameter '%s': expected off, exclude or only"
++					.formatted(mode, FILTER_POLICY_MODE_PROPERTY_NAME));
++		}
++		List<Predicate<TestDescriptor>> matchers = new ArrayList<>();
++		matcher(configuration, FILTER_POLICY_TAGS_PROPERTY_NAME, TagFilter::includeTags).ifPresent(matchers::add);
++		matcher(configuration, FILTER_POLICY_METHODS_PROPERTY_NAME, MethodFilter::includeMethodNamePatterns).ifPresent(
++			matchers::add);
++		if (matchers.isEmpty()) {
++			throw new JUnitException("Configuration parameter '%s' is '%s' but neither '%s' nor '%s' is set".formatted(
++				FILTER_POLICY_MODE_PROPERTY_NAME, mode, FILTER_POLICY_TAGS_PROPERTY_NAME,
++				FILTER_POLICY_METHODS_PROPERTY_NAME));
++		}
++		return Optional.of(new FilterPolicy(mode.equals("exclude"), matchers));
++	}
++
++	// ponytail: values are split on ',', so a method regex cannot itself contain a comma
++	private static Optional<Predicate<TestDescriptor>> matcher(ConfigurationParameters configuration, String key,
++			Function<List<String>, PostDiscoveryFilter> filterFactory) {
++		List<String> values = configuration.get(key) //
++				.map(value -> Arrays.stream(value.split(",")).map(String::strip).filter(s -> !s.isEmpty()).toList()) //
++				.orElse(List.of());
++		if (values.isEmpty()) {
++			return Optional.empty();
++		}
++		try {
++			return Optional.of(filterFactory.apply(values).toPredicate());
++		}
++		catch (RuntimeException ex) {
++			throw new JUnitException(
++				"Invalid value for configuration parameter '%s': %s".formatted(key, ex.getMessage()), ex);
++		}
++	}
++
++	private FilterPolicy(boolean exclude, List<Predicate<TestDescriptor>> matchers) {
++		this.exclude = exclude;
++		this.matchers = matchers;
++	}
++
++	@Override
++	public FilterResult apply(TestDescriptor descriptor) {
++		boolean matches = this.matchers.stream().anyMatch(matcher -> matcher.test(descriptor));
++		if (this.exclude) {
++			return FilterResult.includedIf(!matches, () -> "not matched by filter policy",
++				() -> "excluded by filter policy (mode=exclude)");
++		}
++		return FilterResult.includedIf(matches, () -> "selected by filter policy (mode=only)",
++			() -> "not selected by filter policy (mode=only)");
++	}
++
++}
+diff --git a/platform-tests/src/test/java/org/junit/platform/launcher/core/FilterPolicyTests.java b/platform-tests/src/test/java/org/junit/platform/launcher/core/FilterPolicyTests.java
+new file mode 100644
+index 0000000..b8b60b7
+--- /dev/null
++++ b/platform-tests/src/test/java/org/junit/platform/launcher/core/FilterPolicyTests.java
+@@ -0,0 +1,172 @@
++/*
++ * Copyright 2015-2026 the original author or authors.
++ *
++ * All rights reserved. This program and the accompanying materials are
++ * made available under the terms of the Eclipse Public License v2.0 which
++ * accompanies this distribution and is available at
++ *
++ * https://www.eclipse.org/legal/epl-v20.html
++ */
++
++package org.junit.platform.launcher.core;
++
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.junit.jupiter.api.Assertions.assertThrows;
++import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
++import static org.junit.platform.launcher.LauncherConstants.FILTER_POLICY_METHODS_PROPERTY_NAME;
++import static org.junit.platform.launcher.LauncherConstants.FILTER_POLICY_MODE_PROPERTY_NAME;
++import static org.junit.platform.launcher.LauncherConstants.FILTER_POLICY_TAGS_PROPERTY_NAME;
++import static org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder.request;
++import static org.junit.platform.launcher.core.LauncherFactoryForTestingPurposesOnly.createLauncher;
++
++import java.util.Map;
++import java.util.Set;
++import java.util.stream.Collectors;
++
++import org.junit.jupiter.api.Tag;
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.engine.JupiterTestEngine;
++import org.junit.jupiter.params.ParameterizedTest;
++import org.junit.jupiter.params.provider.CsvSource;
++import org.junit.platform.commons.JUnitException;
++import org.junit.platform.engine.Filter;
++import org.junit.platform.launcher.TagFilter;
++import org.junit.platform.launcher.TestIdentifier;
++import org.junit.platform.launcher.TestPlan;
++
++/**
++ * Acceptance tests for the configurable {@link FilterPolicy} (CH03).
++ */
++class FilterPolicyTests {
++
++	private static final Set<String> ALL = Set.of("flakyOne()", "fastSmoke()", "fastPlain()", "slowPlain()",
++		"inFlakyClass()");
++
++	@Test
++	void offOrUnsetIsNoOp() {
++		assertThat(testNames(Map.of())).isEqualTo(ALL);
++		assertThat(testNames(Map.of(FILTER_POLICY_MODE_PROPERTY_NAME, "off", FILTER_POLICY_TAGS_PROPERTY_NAME,
++			"flaky"))).isEqualTo(ALL);
++	}
++
++	@Test
++	void excludeRemovesMatchedTestsAndPrunesEmptyClasses() {
++		var testPlan = discover(Map.of(FILTER_POLICY_MODE_PROPERTY_NAME, "exclude", //
++			FILTER_POLICY_TAGS_PROPERTY_NAME, "flaky"));
++
++		assertThat(testNames(testPlan)).containsExactlyInAnyOrder("fastSmoke()", "fastPlain()", "slowPlain()");
++		assertThat(allNames(testPlan)).doesNotContain(FlakyClassTestCase.class.getSimpleName());
++	}
++
++	@Test
++	void tagsAndMethodsAreCombinedWithOr() {
++		var names = testNames(Map.of(FILTER_POLICY_MODE_PROPERTY_NAME, "EXCLUDE", //
++			FILTER_POLICY_TAGS_PROPERTY_NAME, "flaky", //
++			FILTER_POLICY_METHODS_PROPERTY_NAME, ".*#slow.*"));
++
++		assertThat(names).containsExactlyInAnyOrder("fastSmoke()", "fastPlain()");
++	}
++
++	@Test
++	void onlyKeepsMatchedTests() {
++		var names = testNames(Map.of(FILTER_POLICY_MODE_PROPERTY_NAME, "only", //
++			FILTER_POLICY_METHODS_PROPERTY_NAME, ".*PolicyTestCase#fast.*"));
++
++		assertThat(names).containsExactlyInAnyOrder("fastSmoke()", "fastPlain()");
++	}
++
++	@Test
++	void policyNarrowsRequestFiltersAndNeverReincludes() {
++		var requestFilter = TagFilter.includeTags("smoke | flaky");
++		assertThat(testNames(Map.of(), requestFilter)) // request filter alone
++				.containsExactlyInAnyOrder("flakyOne()", "fastSmoke()", "inFlakyClass()");
++
++		var names = testNames(Map.of(FILTER_POLICY_MODE_PROPERTY_NAME, "only", //
++			FILTER_POLICY_METHODS_PROPERTY_NAME, ".*#fast.*"), requestFilter);
++
++		// fastPlain() matches the policy but stays excluded by the request filter
++		assertThat(names).containsExactly("fastSmoke()");
++	}
++
++	@ParameterizedTest
++	@CsvSource(delimiter = '|', textBlock = """
++			bogus   |           |      | junit.platform.filter.policy.mode
++			only    |           |      | junit.platform.filter.policy.mode
++			exclude | 'flaky &' |      | junit.platform.filter.policy.tags
++			only    |           | '['  | junit.platform.filter.policy.methods
++			""")
++	void invalidConfigurationFailsDiscoveryNamingTheKey(String mode, String tags, String methods, String key) {
++		var params = new java.util.HashMap<String, String>();
++		params.put(FILTER_POLICY_MODE_PROPERTY_NAME, mode);
++		if (tags != null) {
++			params.put(FILTER_POLICY_TAGS_PROPERTY_NAME, tags);
++		}
++		if (methods != null) {
++			params.put(FILTER_POLICY_METHODS_PROPERTY_NAME, methods);
++		}
++
++		var exception = assertThrows(JUnitException.class, () -> discover(params));
++
++		assertThat(exception).hasMessageContaining("'" + key + "'");
++	}
++
++	private static TestPlan discover(Map<String, String> configurationParameters, Filter<?>... filters) {
++		var request = request() //
++				.selectors(selectClass(PolicyTestCase.class), selectClass(FlakyClassTestCase.class)) //
++				.enableImplicitConfigurationParameters(false) //
++				.configurationParameters(configurationParameters) //
++				.filters(filters) //
++				.build();
++		return createLauncher(new JupiterTestEngine()).discover(request);
++	}
++
++	private static Set<String> testNames(Map<String, String> configurationParameters, Filter<?>... filters) {
++		return testNames(discover(configurationParameters, filters));
++	}
++
++	private static Set<String> testNames(TestPlan testPlan) {
++		return descendants(testPlan).stream().filter(TestIdentifier::isTest).map(
++			TestIdentifier::getDisplayName).collect(Collectors.toSet());
++	}
++
++	private static Set<String> allNames(TestPlan testPlan) {
++		return descendants(testPlan).stream().map(TestIdentifier::getDisplayName).collect(Collectors.toSet());
++	}
++
++	private static Set<TestIdentifier> descendants(TestPlan testPlan) {
++		return testPlan.getRoots().stream().flatMap(root -> testPlan.getDescendants(root).stream()).collect(
++			Collectors.toSet());
++	}
++
++	@SuppressWarnings("JUnitMalformedDeclaration")
++	static class PolicyTestCase {
++
++		@Tag("flaky")
++		@Test
++		void flakyOne() {
++		}
++
++		@Tag("smoke")
++		@Test
++		void fastSmoke() {
++		}
++
++		@Test
++		void fastPlain() {
++		}
++
++		@Test
++		void slowPlain() {
++		}
++	}
++
++	@SuppressWarnings("JUnitMalformedDeclaration")
++	@Tag("flaky")
++	static class FlakyClassTestCase {
++
++		@Test
++		void inFlakyClass() {
++		}
++	}
++
++}

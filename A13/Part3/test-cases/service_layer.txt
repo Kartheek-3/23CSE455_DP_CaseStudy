@@ -1,0 +1,9 @@
+# case|commands: create <userId|-> <mod|nomod> <title>; read <userId> <id>; get <id> <userId|->; unread <userId>|expected (events and logs in order; "deactivated#id" is a state check printed after the command's events)
+create_global_with_moderator|create - mod Welcome|created#1~event:broadcast announcementCreated~modlog:createGlobalAnnouncement
+create_user_specific|create 7 nomod Hi|created#1~event:main:7 announcementCreated
+unread_lists_global_and_own|create - nomod G;create 7 nomod P;create 8 nomod Q;unread 7|created#1~event:broadcast announcementCreated~created#2~event:main:7 announcementCreated~created#3~event:main:8 announcementCreated~unread:1,2
+read_last_unread_publishes_event|create 7 nomod P;read 7 1|created#1~event:main:7 announcementCreated~event:main:7 readAllAnnouncements~deactivated#1
+read_twice_is_ignored|create - nomod G;read 7 1;read 7 1|created#1~event:broadcast announcementCreated~event:main:7 readAllAnnouncements
+get_hides_private_from_others|create 7 nomod P;get 1 8|created#1~event:main:7 announcementCreated~ERR:not found
+get_reports_read_flag|create - nomod G;get 1 7;read 7 1;get 1 7|created#1~event:broadcast announcementCreated~announcement#1 title=G read=false~event:main:7 readAllAnnouncements~announcement#1 title=G read=true
+get_missing|get 9 7|ERR:not found

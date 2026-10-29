@@ -1,0 +1,2 @@
+test add PASS
+run div

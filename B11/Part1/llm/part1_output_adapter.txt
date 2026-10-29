@@ -1,0 +1,22 @@
+[Model: Claude Opus 4.8 | Date: 2026-10-10 | Pattern: Adapter | Owner: Lokesh]
+
+VERDICT: Confirmed (object Adapter, GoF structural).
+
+Role mapping (verified against source):
+- Target    = UserDetails (Spring Security interface)         [framework]
+- Adaptee   = Users                     modal/Users.java:8
+- Adapter   = CustomUserDetails         modal/CustomUserDetails.java:10
+- Client    = CustomUserDetailsService.loadUserByUsername
+                                        service/CustomUserDetailsService.java:24-32
+
+Evidence:
+`public class CustomUserDetails extends Users implements UserDetails` (line 10) makes
+one class present both the app's own Users data (via inheritance) and the interface
+Spring Security expects. getAuthorities() (line 23) converts the app's roles into
+SimpleGrantedAuthority("ROLE_"+role) - the adaptation of the role representation. The
+client never constructs a UserDetails directly; it maps the loaded Users through the
+adapter with `CustomUserDetails::new` (line 31).
+
+Why it is an Adapter and not just subclassing: the intent is to make an existing,
+incompatible type (Users) usable where a different interface (UserDetails) is
+required, without changing either - the defining purpose of Adapter.

@@ -1,0 +1,9 @@
+# script of commands separated by ';'  =>  output of the LAST command
+# save <balance> prints the new id; find <id> prints the balance or NOT_FOUND; all prints balances by id or -
+save 100;find 1 => 100.00
+find 5 => NOT_FOUND
+save 10;save 20;all => 10.00,20.00
+all => -
+save 5;save 7;find 2 => 7.00
+save 1;find 2 => NOT_FOUND
+save 3;save 4;save 5 => 3

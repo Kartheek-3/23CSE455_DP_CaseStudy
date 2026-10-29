@@ -1,0 +1,7 @@
+== with a console listener ==
+listener: add PASS
+listener: div FAIL
+listener: sub PASS
+result: 2 passed, 1 failed
+== with no listener (null object) ==
+result: 2 passed, 1 failed

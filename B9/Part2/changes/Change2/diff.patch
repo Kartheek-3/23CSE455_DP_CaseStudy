@@ -1,0 +1,6 @@
+--- transfer-flow-before-limits
++++ transfer-flow-after-limits
+@@ -1,2 +1,3 @@
++ limits.validate(draft, repository.usedToday(sender, today));
+  Transfer completed = complete(draft);
+  repository.save(completed);

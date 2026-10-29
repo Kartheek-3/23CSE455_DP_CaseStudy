@@ -1,0 +1,17 @@
+@startuml observer
+title Observer - Hearing Notification (uncertain baseline -> CH02 true Observer)
+skinparam shadowing false
+interface HearingObserver <<Observer>> {
+  +onHearing()
+}
+class CaseRegister <<Subject>> {
+  +subscribe()
+  +newHearing()
+}
+class EmailReminderObserver <<ConcreteObserver>>
+class SmsReminderObserver <<ConcreteObserver (CH02 new)>>
+HearingObserver <|.. EmailReminderObserver
+HearingObserver <|.. SmsReminderObserver
+CaseRegister o--> HearingObserver : notifies
+note bottom of CaseRegister : baseline was @Scheduled broadcast\n(LegalAppApplication.java:25) - UNCERTAIN
+@enduml

@@ -1,0 +1,466 @@
+# DaPlanStan — Frontend Interaction Investigation
+
+Source Investigation 06 · Original uploaded source ZIP · Static source analysis
+
+New patterns unconfirmed
+
+## 1. Initial source findings
+
+I inspected the JavaScript files under `app/javascript/controllers/` and searched their corresponding views for controller attachments, event dispatches and listeners.
+
+The directory contains 16 application-defined Stimulus controllers, plus two Stimulus initialization/registration files.
+
+The strongest cross-controller interaction is between three controllers:
+
+- `TimelineController` publishes `map:locate` and `map:reset` when a user selects or deselects an itinerary row.
+- `TripNavController` publishes `map:resize` when the itinerary panel becomes visible.
+- `MapController` listens for all three events and performs the corresponding Leaflet operations.
+
+This is a real, application-defined communication relationship. However, the event names are explicitly known to the producers and consumer, and the events are dispatched directly onto the map's DOM element. It should not automatically be classified as a fully decoupled Observer implementation.
+
+Two other mechanisms are present but should be kept separate: normal DOM/Stimulus interactions within individual controllers, and server-driven Turbo Stream refreshes that may update the page and cause Stimulus controllers to reconnect.
+
+## 2. Main Stimulus controllers and their responsibilities
+
+The application's Stimulus setup is defined in `app/javascript/controllers/application.js:1–9` and `index.js:1–4`. Controllers are loaded through the import map and attached to HTML elements using `data-controller` attributes. Stimulus supplies controller lifecycle handling, targets and declarative actions.&#x20;
+
+[image](https://www.google.com/s2/favicons?domain=https://github.com\&sz=32)
+
+GitHub
+
+
+
+| Controller        | Source lines                          | Actual application behavior                                           |
+| ----------------- | ------------------------------------- | --------------------------------------------------------------------- |
+| `map`             | `map_controller.js:38–147`            | Initializes Leaflet trip map, builds markers, listens for map events  |
+| `timeline`        | `timeline_controller.js:5–85`         | Selects itinerary rows, dispatches map events, filters by kind/status |
+| `trip-nav`        | `trip_nav_controller.js:3–58`         | Switches trip panels, updates URL, requests map resizing              |
+| `location-picker` | `location_picker_controller.js:3–76`  | Allows map-click or marker-drag coordinate selection                  |
+| `kind-picker`     | `kind_picker_controller.js:5–87`      | Selects an itinerary or expense kind and updates form controls        |
+| `category-picker` | `category_picker_controller.js:3–11`  | Selects a category and changes button appearance                      |
+| `date-range`      | `date_range_controller.js:3–16`       | Prevents an end date preceding the start date                         |
+| `tabs`            | `tabs_controller.js:3–27`             | Shows/hides tabs and updates URL query parameters                     |
+| `bottom-sheet`    | `bottom_sheet_controller.js:10–30`    | Changes sheet height between peek, half and full                      |
+| `clipboard`       | `clipboard_controller.js:3–16`        | Copies text through the browser Clipboard API                         |
+| `json-file`       | `json_file_controller.js:4–15`        | Reads selected JSON file contents into a textarea                     |
+| `receipt`         | `receipt_controller.js:3–32`          | Previews receipt uploads and submits forms                            |
+| `pull-to-refresh` | `pull_to_refresh_controller.js:3–149` | Detects downward touch gestures and reloads the page                  |
+| `details-close`   | `details_close_controller.js:4–19`    | Closes dropdown details on outside click or navigation                |
+| `flash`           | `flash_controller.js:3–17`            | Automatically dismisses flash messages                                |
+| `trip-delete`     | `trip_delete_controller.js:3–20`      | Controls deletion dialog and title confirmation                       |
+
+Source-coverage observation: No attachment for `bottom-sheet`, `category-picker`, `location-picker` or `tabs` was found in the inspected application views. Their classes exist, but a currently reachable use of them was not established. That is not proof they never execute.&#x20;
+
+
+
+Most of these controllers handle local component behavior. The map, timeline and trip-navigation controllers contain the substantive cross-controller event collaboration.
+
+## 3. Main frontend collaboration: itinerary selection and map interaction
+
+Application-defined event flow
+
+\#chatgpt-mermaid-\_r_2nn\_{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;fill:rgb(237, 237, 237);}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#chatgpt-mermaid-\_r_2nn\_ .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-\_r_2nn\_ .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-\_r_2nn\_ .error-icon{fill:rgb(48, 48, 48);}#chatgpt-mermaid-\_r_2nn\_ .error-text{fill:rgb(237, 237, 237);stroke:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2nn\_ .edge-thickness-normal{stroke-width:1px;}#chatgpt-mermaid-\_r_2nn\_ .edge-thickness-thick{stroke-width:3.5px;}#chatgpt-mermaid-\_r_2nn\_ .edge-pattern-solid{stroke-dasharray:0;}#chatgpt-mermaid-\_r_2nn\_ .edge-thickness-invisible{stroke-width:0;fill:none;}#chatgpt-mermaid-\_r_2nn\_ .edge-pattern-dashed{stroke-dasharray:3;}#chatgpt-mermaid-\_r_2nn\_ .edge-pattern-dotted{stroke-dasharray:2;}#chatgpt-mermaid-\_r_2nn\_ .marker{fill:rgb(175, 175, 175);stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_2nn\_ .marker.cross{stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_2nn\_ svg{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;}#chatgpt-mermaid-\_r_2nn\_ p{margin:0;}#chatgpt-mermaid-\_r_2nn\_ .label{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2nn\_ .cluster-label text{fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2nn\_ .cluster-label span{color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2nn\_ .cluster-label span p{background-color:transparent;}#chatgpt-mermaid-\_r_2nn\_ .label text,#chatgpt-mermaid-\_r_2nn\_ span{fill:rgb(237, 237, 237);color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2nn\_ .node rect,#chatgpt-mermaid-\_r_2nn\_ .node circle,#chatgpt-mermaid-\_r_2nn\_ .node ellipse,#chatgpt-mermaid-\_r_2nn\_ .node polygon,#chatgpt-mermaid-\_r_2nn\_ .node path{fill:rgb(9, 23, 44);stroke:rgb(31, 78, 148);stroke-width:1px;}#chatgpt-mermaid-\_r_2nn\_ .rough-node .label text,#chatgpt-mermaid-\_r_2nn\_ .node .label text,#chatgpt-mermaid-\_r_2nn\_ .image-shape .label,#chatgpt-mermaid-\_r_2nn\_ .icon-shape .label{text-anchor:middle;}#chatgpt-mermaid-\_r_2nn\_ .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#chatgpt-mermaid-\_r_2nn\_ .rough-node .label,#chatgpt-mermaid-\_r_2nn\_ .node .label,#chatgpt-mermaid-\_r_2nn\_ .image-shape .label,#chatgpt-mermaid-\_r_2nn\_ .icon-shape .label{text-align:center;}#chatgpt-mermaid-\_r_2nn\_ .node.clickable{cursor:pointer;}#chatgpt-mermaid-\_r_2nn\_ .root .anchor path{fill:rgb(175, 175, 175)!important;stroke-width:0;stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_2nn\_ .arrowheadPath{fill:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_2nn\_ .edgePath .path{stroke:rgb(175, 175, 175);stroke-width:1px;}#chatgpt-mermaid-\_r_2nn\_ .flowchart-link{stroke:rgb(175, 175, 175);fill:none;}#chatgpt-mermaid-\_r_2nn\_ .edgeLabel{background-color:rgb(0, 0, 0);text-align:center;}#chatgpt-mermaid-\_r_2nn\_ .edgeLabel p{background-color:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_2nn\_ .edgeLabel rect{opacity:0.5;background-color:rgb(0, 0, 0);fill:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_2nn\_ .labelBkg{background-color:rgba(0, 0, 0, 0.5);}#chatgpt-mermaid-\_r_2nn\_ .cluster rect{fill:rgb(48, 48, 48);stroke:rgba(255, 255, 255, 0.15);stroke-width:1px;}#chatgpt-mermaid-\_r_2nn\_ .cluster text{fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2nn\_ .cluster span{color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2nn\_ div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:12px;background:rgb(48, 48, 48);border:1px solid rgba(255, 255, 255, 0.15);border-radius:2px;pointer-events:none;z-index:100;}#chatgpt-mermaid-\_r_2nn\_ .flowchartTitleText{text-anchor:middle;font-size:18px;fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2nn\_ rect.text{fill:none;stroke-width:0;}#chatgpt-mermaid-\_r_2nn\_ .icon-shape,#chatgpt-mermaid-\_r_2nn\_ .image-shape{background-color:rgb(0, 0, 0);text-align:center;}#chatgpt-mermaid-\_r_2nn\_ .icon-shape p,#chatgpt-mermaid-\_r_2nn\_ .image-shape p{background-color:rgb(0, 0, 0);padding:2px;}#chatgpt-mermaid-\_r_2nn\_ .icon-shape .label rect,#chatgpt-mermaid-\_r_2nn\_ .image-shape .label rect{opacity:0.5;background-color:rgb(0, 0, 0);fill:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_2nn\_ .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#chatgpt-mermaid-\_r_2nn\_ .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#chatgpt-mermaid-\_r_2nn\_ .node .neo-node{stroke:rgb(31, 78, 148);}#chatgpt-mermaid-\_r_2nn\_ [data-look="neo"].node rect,#chatgpt-mermaid-\_r_2nn\_ [data-look="neo"].cluster rect,#chatgpt-mermaid-\_r_2nn\_ [data-look="neo"].node polygon{stroke:url(#chatgpt-mermaid-\_r_2nn\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_2nn\_ [data-look="neo"].swimlane.cluster rect{filter:none;}#chatgpt-mermaid-\_r_2nn\_ [data-look="neo"].node path{stroke:url(#chatgpt-mermaid-\_r_2nn\_-gradient);stroke-width:1px;}#chatgpt-mermaid-\_r_2nn\_ [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_2nn\_ [data-look="neo"].node .neo-line path{stroke:rgb(31, 78, 148);filter:none;}#chatgpt-mermaid-\_r_2nn\_ [data-look="neo"].node circle{stroke:url(#chatgpt-mermaid-\_r_2nn\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_2nn\_ [data-look="neo"].node circle .state-start{fill:#000000;}#chatgpt-mermaid-\_r_2nn\_ [data-look="neo"].icon-shape .icon{fill:url(#chatgpt-mermaid-\_r_2nn\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_2nn\_ [data-look="neo"].icon-shape .icon-neo path{stroke:url(#chatgpt-mermaid-\_r_2nn\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_2nn\_ .node text{font-size:14px;font-weight:600;letter-spacing:normal;fill:rgb(153, 206, 255);}#chatgpt-mermaid-\_r_2nn\_ .edgeLabels text{font-size:13px;font-weight:600;letter-spacing:-0.08px;fill:rgb(153, 206, 255);}#chatgpt-mermaid-\_r_2nn\_ .node tspan[font-weight="normal"],#chatgpt-mermaid-\_r_2nn\_ .edgeLabels tspan[font-weight="normal"]{font-weight:600;}#chatgpt-mermaid-\_r_2nn\_ .edgeLabel .label rect{opacity:1;rx:13px;ry:13px;fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-width:1px;}#chatgpt-mermaid-\_r_2nn\_ .node rect,#chatgpt-mermaid-\_r_2nn\_ .node circle,#chatgpt-mermaid-\_r_2nn\_ .node ellipse,#chatgpt-mermaid-\_r_2nn\_ .node polygon,#chatgpt-mermaid-\_r_2nn\_ .node path{fill:rgb(0, 40, 77);stroke:rgba(255, 255, 255, 0.1);stroke-width:1px;}#chatgpt-mermaid-\_r_2nn\_ .node rect{rx:16px;ry:16px;}#chatgpt-mermaid-\_r_2nn\_ .node.mermaid-decision .label-container{fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-dasharray:2,2;}#chatgpt-mermaid-\_r_2nn\_ .edgePaths .flowchart-link{stroke:rgb(175, 175, 175);stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;}#chatgpt-mermaid-\_r_2nn\_ .marker{fill:rgb(175, 175, 175);stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_2nn\_ :root{--mermaid-font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";}User clicks itinerary rowStimulus invokesTimelineController.selectAlready selected?Dispatch map:locatelat, lng, item IDDispatch map:resetUser opens itinerary tabTripNavController.showPanel changedhidden to visible?Dispatch map:resizeMap DOM elementid=trip-mapMapController listenersonLocate: flyTohighlight selected markeronReset: restore markersflyToBoundsonResize: invalidateSizefitBoundsLeaflet mapNoYesYes
+
+### Flow A — Select an itinerary row
+
+UI initiation
+
+`app/views/trips/_timeline.html.erb:23` attaches `TimelineController`.
+
+The view renders itinerary rows through `app/views/trip_items/_item_row.html.erb:7–17`.
+
+For rows with coordinates, the application includes:
+
+```
+data-action="click->timeline#select"
+data-lat="<%= item.latitude %>"
+data-lng="<%= item.longitude %>"
+data-item-id="<%= item.id %>"
+```
+
+Rows without coordinates are not assigned this click action.
+
+Publisher
+
+`TimelineController#select`, `app/javascript/controllers/timeline_controller.js:11–33`, looks up:
+
+```
+const map = document.getElementById("trip-map")
+```
+
+For a newly selected row, it sends:
+
+```
+map.dispatchEvent(new CustomEvent("map:locate", {
+  detail: {
+    lat: parseFloat(row.dataset.lat),
+    lng: parseFloat(row.dataset.lng),
+    id: row.dataset.itemId
+  },
+  bubbles: true
+}))
+```
+
+The event carries the coordinates and itinerary-item ID.
+
+Consumer
+
+`MapController#connect`, `app/javascript/controllers/map_controller.js:51–57`, registers an event listener on the map element.
+
+`MapController#onLocate`, lines 92–109:
+
+- Reads `lat`, `lng` and `id` from `event.detail`.
+- Calls Leaflet's `flyTo`.
+- Iterates through known markers.
+- Highlights the selected marker.
+- Dims other markers.
+
+End result: The selected itinerary row controls the map's focus and marker highlighting without invoking a `MapController` method directly.&#x20;
+
+
+
+### Flow B — Deselect an itinerary row
+
+The same `TimelineController#select` method checks whether the clicked row was already selected.
+
+If true, it dispatches:
+
+```
+map.dispatchEvent(
+  new CustomEvent("map:reset", { bubbles: true })
+)
+```
+
+`MapController#onReset`, lines 77–89, restores marker appearance and calls `flyToBounds` when saved coordinates are available.
+
+The result is that clicking the selected row again restores the map's broader trip view.
+
+This is the same timeline-to-map communication relationship, not a separate pattern instance.
+
+### Flow C — Make the itinerary panel visible
+
+The trip view attaches:
+
+```
+<div data-controller="trip-nav pull-to-refresh">
+```
+
+`app/views/trips/show.html.erb:16`
+
+Desktop and mobile navigation buttons use `click->trip-nav#switch`, as shown in:
+
+- `app/views/trips/_tab_bar.html.erb:4–24`
+- `app/views/trips/_bottom_nav.html.erb:4–24`
+
+`TripNavController#switch`, `trip_nav_controller.js:22–29`, selects the new tab and updates the URL.
+
+`TripNavController#show`, lines 31–56, shows the selected panel and hides the others.
+
+Only when the itinerary panel transitions from hidden to visible does it execute:
+
+```
+const mapEl = p.querySelector("[data-controller='map']")
+if (mapEl) mapEl.dispatchEvent(new CustomEvent("map:resize"))
+```
+
+The receiving `MapController#onResize`, lines 68–74, invokes Leaflet's `invalidateSize`, then fits the known map coordinates where possible.
+
+This solves a concrete UI problem: the map needs to recalculate its layout when a previously hidden panel becomes visible.
+
+Unlike the other two events, `map:resize` is dispatched without `bubbles: true`. That is sufficient for this observed flow because it is dispatched directly on the element carrying the listener.
+
+## 4. Custom-event producer and consumer table
+
+A search across the application JavaScript identified exactly these three `CustomEvent` construction sites in the inspected source.&#x20;
+
+
+
+| Event        | Application producer        | Dispatch location              | Application consumer     | Behavior                            |
+| ------------ | --------------------------- | ------------------------------ | ------------------------ | ----------------------------------- |
+| `map:locate` | `TimelineController#select` | `timeline_controller.js:26–31` | `MapController#onLocate` | Move map and highlight marker       |
+| `map:reset`  | `TimelineController#select` | `timeline_controller.js:21–22` | `MapController#onReset`  | Reset marker styling and map bounds |
+| `map:resize` | `TripNavController#show`    | `trip_nav_controller.js:40–43` | `MapController#onResize` | Recalculate map size and bounds     |
+
+All three listeners are registered at `map_controller.js:51–56` and removed during `disconnect` at lines 60–64.
+
+### Does one controller know about another?
+
+There is no direct controller-instance lookup or controller-method invocation in these interactions.
+
+Neither `TimelineController` nor `TripNavController` imports `MapController` or retrieves it through Stimulus's application API.&#x20;
+
+
+
+However, they are not completely independent of the map's implementation:
+
+- `TimelineController` explicitly looks for the DOM ID `trip-map`.
+- `TripNavController` explicitly searches for an element with `data-controller='map'`.
+- Both producers know the event names that `MapController` handles.
+- Only the map element registers listeners for these application-defined events.
+
+The result is indirect method communication through directly targeted DOM events, not a general event bus or a completely anonymous publisher/subscriber relationship.
+
+## 5. Other frontend event and lifecycle behavior
+
+Several other interactions initially resemble notification mechanisms, but their origins are different.
+
+| Interaction                | Actual code                                              | Classification of behavior                                      |
+| -------------------------- | -------------------------------------------------------- | --------------------------------------------------------------- |
+| Kind or category selection | `kind_picker_controller.js:19–57`; related form partials | Ordinary Stimulus action and local DOM updates                  |
+| Receipt selection          | `receipt_controller.js:6–31`                             | Native file-input event and FileReader API                      |
+| Location marker dragging   | `location_picker_controller.js:18–58`                    | Leaflet event callbacks and local form updates                  |
+| Pull-to-refresh            | `pull_to_refresh_controller.js:13–26, 59–70, 124–130`    | Browser touch listeners and explicit `window.location.reload()` |
+| Navigation render event    | `trip_nav_controller.js:11–19`                           | Subscription to Turbo's `turbo:render` lifecycle event          |
+| Dropdown closing           | `details_close_controller.js:5–19`                       | Browser click and Turbo navigation listeners                    |
+| Page transition effects    | `app/javascript/application.js:11–32`                    | Turbo lifecycle events and browser View Transitions API         |
+| Flash dismissal            | `flash_controller.js:4–16`                               | Local timers and DOM removal                                    |
+
+The Stimulus `data-action` mechanism binds DOM events to controller methods. That is supplied by Stimulus; the application supplies the methods that react to those events.&#x20;
+
+[image](https://www.google.com/s2/favicons?domain=https://stimulus.hotwired.dev\&sz=32)
+
+Stimulus
+
+
+
+Similarly, listening to `turbo:render` does not mean DaPlanStan independently implements an Observer framework. Turbo publishes the lifecycle event, while the application uses it to restore tab appearance after rendering.
+
+### No additional app-defined event family found
+
+The inspected JavaScript does not demonstrate another custom publisher/consumer relationship comparable to the three `map:*` events.
+
+In particular, `pull-to-refresh` does not publish a custom refresh event for other controllers. It calls `window.location.reload()` directly.
+
+## 6. Revisit: Trip-Scoped Turbo Refresh Notifications
+
+The frontend investigation provides stronger structural evidence for the previously uncertain Turbo-mediated Observer candidate.
+
+The application contains two trip-stream subscriptions:
+
+- `app/views/trips/show.html.erb:2`
+- `app/views/inbox_items/index.html.erb:1`
+
+Both use:
+
+```
+<%= turbo_stream_from @trip %>
+```
+
+Two application paths can cause refresh broadcasting to the corresponding trip stream:
+
+- `InboxItem` declares `broadcasts_refreshes_to :trip` in `app/models/inbox_item.rb:5`.
+- `GeocodeTripItemsJob` explicitly calls `Turbo::StreamsChannel.broadcast_refresh_to(trip)` in `app/jobs/geocode_trip_items_job.rb:21`.
+
+Framework-mediated trip refresh
+
+\#chatgpt-mermaid-\_r_2q3\_{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;fill:rgb(237, 237, 237);}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#chatgpt-mermaid-\_r_2q3\_ .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-\_r_2q3\_ .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-\_r_2q3\_ .error-icon{fill:rgb(48, 48, 48);}#chatgpt-mermaid-\_r_2q3\_ .error-text{fill:rgb(237, 237, 237);stroke:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2q3\_ .edge-thickness-normal{stroke-width:1px;}#chatgpt-mermaid-\_r_2q3\_ .edge-thickness-thick{stroke-width:3.5px;}#chatgpt-mermaid-\_r_2q3\_ .edge-pattern-solid{stroke-dasharray:0;}#chatgpt-mermaid-\_r_2q3\_ .edge-thickness-invisible{stroke-width:0;fill:none;}#chatgpt-mermaid-\_r_2q3\_ .edge-pattern-dashed{stroke-dasharray:3;}#chatgpt-mermaid-\_r_2q3\_ .edge-pattern-dotted{stroke-dasharray:2;}#chatgpt-mermaid-\_r_2q3\_ .marker{fill:rgb(175, 175, 175);stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_2q3\_ .marker.cross{stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_2q3\_ svg{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;}#chatgpt-mermaid-\_r_2q3\_ p{margin:0;}#chatgpt-mermaid-\_r_2q3\_ .label{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2q3\_ .cluster-label text{fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2q3\_ .cluster-label span{color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2q3\_ .cluster-label span p{background-color:transparent;}#chatgpt-mermaid-\_r_2q3\_ .label text,#chatgpt-mermaid-\_r_2q3\_ span{fill:rgb(237, 237, 237);color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2q3\_ .node rect,#chatgpt-mermaid-\_r_2q3\_ .node circle,#chatgpt-mermaid-\_r_2q3\_ .node ellipse,#chatgpt-mermaid-\_r_2q3\_ .node polygon,#chatgpt-mermaid-\_r_2q3\_ .node path{fill:rgb(9, 23, 44);stroke:rgb(31, 78, 148);stroke-width:1px;}#chatgpt-mermaid-\_r_2q3\_ .rough-node .label text,#chatgpt-mermaid-\_r_2q3\_ .node .label text,#chatgpt-mermaid-\_r_2q3\_ .image-shape .label,#chatgpt-mermaid-\_r_2q3\_ .icon-shape .label{text-anchor:middle;}#chatgpt-mermaid-\_r_2q3\_ .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#chatgpt-mermaid-\_r_2q3\_ .rough-node .label,#chatgpt-mermaid-\_r_2q3\_ .node .label,#chatgpt-mermaid-\_r_2q3\_ .image-shape .label,#chatgpt-mermaid-\_r_2q3\_ .icon-shape .label{text-align:center;}#chatgpt-mermaid-\_r_2q3\_ .node.clickable{cursor:pointer;}#chatgpt-mermaid-\_r_2q3\_ .root .anchor path{fill:rgb(175, 175, 175)!important;stroke-width:0;stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_2q3\_ .arrowheadPath{fill:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_2q3\_ .edgePath .path{stroke:rgb(175, 175, 175);stroke-width:1px;}#chatgpt-mermaid-\_r_2q3\_ .flowchart-link{stroke:rgb(175, 175, 175);fill:none;}#chatgpt-mermaid-\_r_2q3\_ .edgeLabel{background-color:rgb(0, 0, 0);text-align:center;}#chatgpt-mermaid-\_r_2q3\_ .edgeLabel p{background-color:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_2q3\_ .edgeLabel rect{opacity:0.5;background-color:rgb(0, 0, 0);fill:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_2q3\_ .labelBkg{background-color:rgba(0, 0, 0, 0.5);}#chatgpt-mermaid-\_r_2q3\_ .cluster rect{fill:rgb(48, 48, 48);stroke:rgba(255, 255, 255, 0.15);stroke-width:1px;}#chatgpt-mermaid-\_r_2q3\_ .cluster text{fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2q3\_ .cluster span{color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2q3\_ div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:12px;background:rgb(48, 48, 48);border:1px solid rgba(255, 255, 255, 0.15);border-radius:2px;pointer-events:none;z-index:100;}#chatgpt-mermaid-\_r_2q3\_ .flowchartTitleText{text-anchor:middle;font-size:18px;fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2q3\_ rect.text{fill:none;stroke-width:0;}#chatgpt-mermaid-\_r_2q3\_ .icon-shape,#chatgpt-mermaid-\_r_2q3\_ .image-shape{background-color:rgb(0, 0, 0);text-align:center;}#chatgpt-mermaid-\_r_2q3\_ .icon-shape p,#chatgpt-mermaid-\_r_2q3\_ .image-shape p{background-color:rgb(0, 0, 0);padding:2px;}#chatgpt-mermaid-\_r_2q3\_ .icon-shape .label rect,#chatgpt-mermaid-\_r_2q3\_ .image-shape .label rect{opacity:0.5;background-color:rgb(0, 0, 0);fill:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_2q3\_ .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#chatgpt-mermaid-\_r_2q3\_ .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#chatgpt-mermaid-\_r_2q3\_ .node .neo-node{stroke:rgb(31, 78, 148);}#chatgpt-mermaid-\_r_2q3\_ [data-look="neo"].node rect,#chatgpt-mermaid-\_r_2q3\_ [data-look="neo"].cluster rect,#chatgpt-mermaid-\_r_2q3\_ [data-look="neo"].node polygon{stroke:url(#chatgpt-mermaid-\_r_2q3\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_2q3\_ [data-look="neo"].swimlane.cluster rect{filter:none;}#chatgpt-mermaid-\_r_2q3\_ [data-look="neo"].node path{stroke:url(#chatgpt-mermaid-\_r_2q3\_-gradient);stroke-width:1px;}#chatgpt-mermaid-\_r_2q3\_ [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_2q3\_ [data-look="neo"].node .neo-line path{stroke:rgb(31, 78, 148);filter:none;}#chatgpt-mermaid-\_r_2q3\_ [data-look="neo"].node circle{stroke:url(#chatgpt-mermaid-\_r_2q3\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_2q3\_ [data-look="neo"].node circle .state-start{fill:#000000;}#chatgpt-mermaid-\_r_2q3\_ [data-look="neo"].icon-shape .icon{fill:url(#chatgpt-mermaid-\_r_2q3\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_2q3\_ [data-look="neo"].icon-shape .icon-neo path{stroke:url(#chatgpt-mermaid-\_r_2q3\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_2q3\_ .node text{font-size:14px;font-weight:600;letter-spacing:normal;fill:rgb(153, 206, 255);}#chatgpt-mermaid-\_r_2q3\_ .edgeLabels text{font-size:13px;font-weight:600;letter-spacing:-0.08px;fill:rgb(153, 206, 255);}#chatgpt-mermaid-\_r_2q3\_ .node tspan[font-weight="normal"],#chatgpt-mermaid-\_r_2q3\_ .edgeLabels tspan[font-weight="normal"]{font-weight:600;}#chatgpt-mermaid-\_r_2q3\_ .edgeLabel .label rect{opacity:1;rx:13px;ry:13px;fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-width:1px;}#chatgpt-mermaid-\_r_2q3\_ .node rect,#chatgpt-mermaid-\_r_2q3\_ .node circle,#chatgpt-mermaid-\_r_2q3\_ .node ellipse,#chatgpt-mermaid-\_r_2q3\_ .node polygon,#chatgpt-mermaid-\_r_2q3\_ .node path{fill:rgb(0, 40, 77);stroke:rgba(255, 255, 255, 0.1);stroke-width:1px;}#chatgpt-mermaid-\_r_2q3\_ .node rect{rx:16px;ry:16px;}#chatgpt-mermaid-\_r_2q3\_ .node.mermaid-decision .label-container{fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-dasharray:2,2;}#chatgpt-mermaid-\_r_2q3\_ .edgePaths .flowchart-link{stroke:rgb(175, 175, 175);stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;}#chatgpt-mermaid-\_r_2q3\_ .marker{fill:rgb(175, 175, 175);stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_2q3\_ :root{--mermaid-font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";}InboxItem record changebroadcasts_refreshes_to :tripGeocoding job completesbroadcast_refresh_to(trip)Turbo StreamsChannelTrip-scoped notificationTrip show pageturbo_stream_from @tripInbox index pageturbo_stream_from @tripTurbo page refresh / morphTripNavControllerresponds to turbo:render
+
+### Framework-contract evidence
+
+I also checked the tagged source for Turbo Rails 2.0.23, the version specified in the application's lockfile.
+
+That version implements `broadcasts_refreshes_to` through an `after_commit` callback that schedules a refresh broadcast to the named stream. Its `turbo_stream_from` helper constructs a subscription through `Turbo::StreamsChannel`.&#x20;
+
+[image](https://www.google.com/s2/favicons?domain=https://github.com\&sz=32)
+
+GitHub
+
++1
+
+
+
+This supports the existence of a real framework publication/subscription relationship, rather than a coincidence of method names.
+
+The frontend provides additional related code:
+
+- `app/views/trips/show.html.erb:5–9` requests morph-style refresh and scroll preservation.
+- The panel container at line 23 and map element at lines 36–40 are marked `data-turbo-permanent`.
+- `TripNavController#connect`, lines 11–15, listens for `turbo:render` and restores tab selection.
+
+### Does this resolve the existing candidate?
+
+It strengthens the mechanism evidence, but does not automatically settle whether to count the collaboration as an application-implemented GoF Observer or a framework idiom.
+
+The framework implements subscription, dispatch and refresh handling. DaPlanStan defines stream usage, model broadcasting and an explicit job broadcast.
+
+I recommend retaining the existing candidate record as:
+
+`Trip-Scoped Turbo Refresh Notifications` — UNCERTAIN
+
+The remaining uncertainty is primarily its classification and counting eligibility, not whether the relevant framework APIs describe a real subscription relationship.
+
+It must remain one provisional collaboration spanning the inbox and geocoding areas. The two subscribing views and two broadcast origins do not justify counting it several times.
+
+## 7. New pattern candidate
+
+After reviewing the source, only one new classification is worth retaining.
+
+Observer-like DOM Event Coordination
+
+UNCONFIRMED
+
+Provisional instance name: Itinerary Timeline–Map Event Coordination
+
+Category: GoF Behavioral candidate · Mixed application/browser implementation
+
+Actual participants
+
+- Event producers: `TimelineController#select` and `TripNavController#show`.
+- Notification target: DOM element `#trip-map`.
+- Event subscriber: `MapController`, through its `addEventListener` calls.
+- Notification handlers: `MapController#onLocate`, `#onReset` and `#onResize`.
+- Event infrastructure: Browser `EventTarget`, `CustomEvent` and event dispatch machinery.
+
+Why it might fit
+
+The producers publish named events without directly calling receiver-controller methods. The consumer explicitly registers notification handlers, responds to those notifications and unregisters handlers when disconnected.
+
+Those are concrete elements of an Observer-like event relationship.
+
+Strongest false-positive explanation
+
+The implementation may be nothing more than ordinary browser event handling.
+
+The producer identifies the map's DOM element directly and dispatches an event specifically to it. There is no application-defined subject abstraction, independently maintained observer list or evidence of multiple interchangeable listeners.
+
+Most of the event mechanism comes from browser APIs, while Stimulus supplies the controller lifecycle.
+
+Origin: Mixed — application-defined events, dispatch decisions and reactions; browser-provided event infrastructure.
+
+Decision: UNCONFIRMED.
+
+Formal verification must decide whether this browser-mediated targeted event relationship is sufficiently substantive to count as an Observer instance, rather than merely an ordinary DOM event contract.
+
+I do not recommend separate pattern candidates for `map:locate`, `map:reset` and `map:resize`. They are operations within the same map-interaction collaboration.
+
+No new candidate is justified merely by `connect`, `disconnect`, Stimulus targets, Leaflet marker callbacks or ordinary UI form interactions.
+
+## 8. Consolidated participant and source-evidence table
+
+| Participant / declaration         | Exact source path and lines                                                 | Observed responsibility                      |
+| --------------------------------- | --------------------------------------------------------------------------- | -------------------------------------------- |
+| Stimulus application startup      | `app/javascript/controllers/application.js:1–9`                             | Start Stimulus                               |
+| Stimulus controller registration  | `app/javascript/controllers/index.js:1–4`                                   | Load controller modules                      |
+| Import map                        | `config/importmap.rb:3–8`                                                   | Pin JavaScript imports                       |
+| Map container                     | `app/views/trips/show.html.erb:35–41`                                       | Attach MapController and pass trip-item JSON |
+| Timeline container                | `app/views/trips/_timeline.html.erb:23`                                     | Attach TimelineController                    |
+| Selectable itinerary row          | `app/views/trip_items/_item_row.html.erb:4–17`                              | Provide action and coordinate data           |
+| `TimelineController#select`       | `app/javascript/controllers/timeline_controller.js:11–33`                   | Send locate/reset notifications              |
+| `TimelineController#filter`       | Same file, `35–48`                                                          | Apply kind filtering                         |
+| `TimelineController#filterStatus` | Same file, `50–71`                                                          | Apply status filtering                       |
+| `TimelineController#applyFilters` | Same file, `73–85`                                                          | Update row/date-group visibility             |
+| `MapController#connect`           | `app/javascript/controllers/map_controller.js:41–58`                        | Register listeners and initialize map        |
+| `MapController#disconnect`        | Same file, `60–65`                                                          | Remove map and listeners                     |
+| `MapController#onResize`          | Same file, `68–74`                                                          | Recalculate Leaflet layout                   |
+| `MapController#onReset`           | Same file, `77–89`                                                          | Restore marker appearance and map extent     |
+| `MapController#onLocate`          | Same file, `92–109`                                                         | Focus and highlight an itinerary marker      |
+| `MapController#initMap`           | Same file, `111–147`                                                        | Create Leaflet map and initial markers       |
+| `TripNavController#connect`       | `app/javascript/controllers/trip_nav_controller.js:6–16`                    | Initialize tab and listen to Turbo rendering |
+| `TripNavController#switch`        | Same file, `22–29`                                                          | Switch tabs and update URL                   |
+| `TripNavController#show`          | Same file, `31–56`                                                          | Show panel and request map resize            |
+| `TripsController#show`            | `app/controllers/trips_controller.rb:11–29`                                 | Supply itinerary data for the view           |
+| Turbo trip subscriptions          | `app/views/trips/show.html.erb:2`; `app/views/inbox_items/index.html.erb:1` | Subscribe to trip stream                     |
+| Inbox refresh declaration         | `app/models/inbox_item.rb:5`                                                | Request trip refresh after model commits     |
+| Geocoding refresh call            | `app/jobs/geocode_trip_items_job.rb:20–21`                                  | Broadcast trip refresh following the job     |
+| Global Turbo listeners            | `app/javascript/application.js:11–32`                                       | Handle pageviews and transitions             |
+
+These line ranges refer to the extracted original ZIP. The ZIP's correspondence with the stated Git commit remains unverified.
+
+## 9. Application, framework and browser responsibility split
+
+| Layer           | DaPlanStan implements                                             | External infrastructure supplies                                      |
+| --------------- | ----------------------------------------------------------------- | --------------------------------------------------------------------- |
+| Stimulus        | Controller methods, target declarations, local UI decisions       | Controller lifecycle, binding of actions and targets                  |
+| Browser DOM     | Custom `map:*` event names, event payloads and listener callbacks | `CustomEvent`, `dispatchEvent`, listener registration and propagation |
+| Map interaction | Decide which marker to focus, reset or resize                     | Leaflet map, markers, movement and tile rendering                     |
+| Turbo           | Request refresh broadcasts and declare subscriptions              | Stream subscription, delivery, page refresh and morph behavior        |
+| Rails server    | Query trip items and construct JSON for the map                   | Controller rendering and Active Record retrieval                      |
+
+This separation is essential to avoid treating standard framework mechanics as code written by DaPlanStan.
+
+## 10. Previously examined collaborations — no duplicate counts
+
+| Existing collaboration                    | Frontend appearance                                               | Counting decision                                            |
+| ----------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------ |
+| Geocoding shared behavior                 | New coordinates become available for map display after geocoding  | Reuse previous geocoding analysis; no new confirmed instance |
+| `Trip-Scoped Turbo Refresh Notifications` | Trip/inbox subscriptions, broadcast triggers and refresh handling | Existing uncertain candidate; do not create another instance |
+| `Parsed Email to Trip Record Linking`     | Inbox changes can lead to Turbo refreshes                         | Existing confirmed model responsibility; no new instance     |
+
+The DOM map-event candidate is separate from Turbo's trip stream. One communicates among browser-side components; the other delivers server-originated refresh notifications.
+
+## 11. Strongest non-pattern explanation
+
+The frontend architecture is best explained as server-rendered Rails views enhanced by small Stimulus controllers, direct DOM custom events, Leaflet map operations and Turbo lifecycle integration.
+
+The application uses declarative Stimulus actions for ordinary component behavior. For the timeline and map, it introduces explicit DOM events so that map interactions can be requested without calling another Stimulus controller's methods.
+
+This is a meaningful frontend collaboration, but it is still compatible with the simpler explanation of ordinary browser event-driven programming.
+
+The source does not demonstrate a general-purpose application event bus, custom notification registry or elaborate frontend coordination abstraction.
+
+## 12. What still requires verification?
+
+| Question                                                                        | Why it matters                                                                                               |
+| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Does the live timeline-to-map communication work in desktop and mobile layouts? | The view renders two TimelineController instances targeting the same map                                     |
+| Are listeners always connected when events are dispatched?                      | Stimulus connection and DOM rendering lifecycles affect listener availability                                |
+| Are markers updated correctly after Turbo refresh?                              | The map and panel elements are `data-turbo-permanent`, while the JSON input is supplied at rendering time    |
+| Can `map:locate` handle coordinates at latitude or longitude zero?              | `onLocate` rejects falsy coordinate values                                                                   |
+| Does tab switching preserve zoom as intended after morphing?                    | `map:resize` is intentionally skipped when the panel is already visible                                      |
+| Should targeted DOM events count as Observer?                                   | Requires deciding whether ordinary EventTarget usage meets the assignment's pattern threshold                |
+| Does the Turbo refresh mechanism qualify as a framework-idiom instance?         | The framework contract supports the mechanism, but the application/framework inventory boundary needs review |
+| Have the client workflows been executed?                                        | No browser runtime test was performed in this investigation                                                  |
+
+The potentially stale permanent map deserves particular attention. `TripsController#show` generates marker data from the current trip items, but Turbo's permanent-element treatment may preserve an existing map whose markers were constructed earlier. Verify the actual behavior after new geocoding results or itinerary changes instead of assuming the broadcast always refreshes the markers.
+
+## 13. Investigation outcome
+
+Frontend Investigation 06
+
+Verification pending
+
+| Stimulus controllers inventoried | 16                                 |
+| -------------------------------- | ---------------------------------- |
+| Application-defined map events   | 3                                  |
+| New pattern candidates           | 1 unconfirmed                      |
+| Existing Turbo candidate         | Stronger evidence; still uncertain |
+| New confirmed instances          | 0                                  |
+| Browser runtime testing          | Not performed                      |
+
+### Candidate-review record
+
+### Frontend Interaction — Preliminary Candidate Review
+
+**Source:** DaPlanStan original uploaded source ZIP\
+**Method:** Static inspection of Stimulus controllers, views, custom-event call sites and Turbo subscriptions.\
+**Runtime tests:** Not performed.
+
+**Observed collaboration**
+
+`TimelineController` dispatches application-defined `map:locate` and `map:reset` events when geocoded itinerary rows are selected or deselected. `TripNavController` dispatches `map:resize` when the itinerary panel becomes visible. `MapController` explicitly registers listeners for these three events and invokes Leaflet operations to move, reset or resize the map.
+
+The controllers communicate through DOM events rather than directly invoking one another's methods. However, event publishers know the map's DOM identity and the specific event names.
+
+**New candidate**
+
+- Pattern: Observer-like DOM Event Coordination
+- Category: GoF Behavioral candidate
+- Provisional instance: Itinerary Timeline–Map Event Coordination
+- Status: UNCONFIRMED
+- Origin: Mixed application/browser behavior
+
+The code demonstrates producers, registered listeners and event-driven reactions. The strongest alternative explanation is ordinary targeted DOM event communication, without an application-defined observer abstraction.
+
+**Existing candidate revisited**
+
+Trip-Scoped Turbo Refresh Notifications remains UNCERTAIN. The application contains trip-scoped subscriptions and refresh broadcasts, while Turbo Rails 2.0.23 implements the corresponding subscription and model-change broadcasting contracts. This strengthens the structural evidence but does not settle application-versus-framework counting eligibility.
+
+**Duplicate-counting rule**
+
+Do not create separate instances for the three map events. Do not recount the existing Turbo collaboration for each stream subscriber, broadcast trigger or source area.
+
+**Conclusion**
+
+No new pattern is confirmed in the frontend investigation. Preserve the timeline-to-map collaboration as one new candidate, retain the existing Turbo candidate and separately record the identified frontend lifecycle and marker-refresh verification questions.
+
+The next verification step within this source area should decide whether Itinerary Timeline–Map Event Coordination exceeds ordinary DOM event handling sufficiently to qualify as Observer, and whether the trip-stream Turbo mechanism is eligible as a framework-mediated pattern instance.

@@ -1,0 +1,42 @@
+@startuml D3
+!pragma layout smetana
+title D3 Strategy: ParameterResolver (after Change2 - extended)
+
+interface ParameterResolver <<Strategy>> {
+  +supportsParameter(ParameterContext, ExtensionContext) : boolean
+  +resolveParameter(ParameterContext, ExtensionContext) : Object
+}
+class TempDirectory <<ConcreteStrategy>>
+class TestInfoParameterResolver <<ConcreteStrategy>>
+class TestReporterParameterResolver <<ConcreteStrategy>>
+class RepetitionExtension <<ConcreteStrategy, not counted>> #E6E6E6
+class ParameterResolutionUtils <<Context>> {
+  {static} -resolveParameter(...)
+}
+interface ExtensionRegistry <<Registry>> {
+  +stream(Class) : Stream
+}
+
+TempDirectory ..|> ParameterResolver
+TestInfoParameterResolver ..|> ParameterResolver
+TestReporterParameterResolver ..|> ParameterResolver
+RepetitionExtension ..|> ParameterResolver
+ParameterResolutionUtils ..> ExtensionRegistry : stream(ParameterResolver.class)
+ParameterResolutionUtils ..> ParameterResolver : supportsParameter(), then resolveParameter() on the single match
+class ManagedResourceExtension <<ConcreteStrategy, new in CH02>> #C8F7C5 {
+  +supportsParameter(...) : boolean
+  +resolveParameter(...) : Object
+}
+ManagedResourceExtension ..|> ParameterResolver
+' aligned-with-record
+legend right
+  <b>Counted participants</b> (record in the dataset)
+  Strategy: ParameterResolver
+  ConcreteStrategy: TempDirectory
+  ConcreteStrategy: TestInfoParameterResolver
+  ConcreteStrategy: TestReporterParameterResolver
+  Context: ParameterResolutionUtils#resolveParameter
+  ConcreteStrategy: ManagedResourceExtension
+  Grey classes: real, shown for context, not counted
+endlegend
+@enduml

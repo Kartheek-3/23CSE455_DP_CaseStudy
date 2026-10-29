@@ -1,0 +1,44 @@
+classDiagram
+direction TB
+class TripMembersController {
+  <<application>>
+  +create()
+  +destroy()
+  +add_traveler()
+  +resolve_and_add_by_email()
+  +require_owner_or_planner()
+}
+class ApplicationController {
+  <<application>>
+  +current_member_for()
+}
+class Trip {
+  <<application>>
+}
+class Account {
+  <<application>>
+}
+class Traveler {
+  <<application>>
+}
+class User {
+  <<application>>
+}
+class TripMember {
+  <<application>>
+}
+class InvitationMailer {
+  <<application>>
+  +invite_to_trip()
+}
+
+ApplicationController <|-- TripMembersController
+TripMembersController ..> Trip : manages membership for
+TripMembersController ..> Account : resolves travelers within
+TripMembersController ..> User : finds registered identity
+TripMembersController ..> TripMember : creates or destroys
+TripMembersController ..> InvitationMailer : requests invitation
+Trip --> TripMember : has many
+Account --> Traveler : has many
+TripMember --> Traveler : belongs to
+Traveler --> User : optionally belongs to

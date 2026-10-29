@@ -1,0 +1,14 @@
+$ (cd Part3/composite-test-tree/javascript) node --test test/composite.test.js
+✔ report for tag 'slow' matches expected-output.txt (0.76625ms)
+✔ a leaf and a container answer countTests the same way (0.337833ms)
+✔ invalid input is rejected with expected-error.txt (0.271208ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 102.0555
+[exit 0]
+result: 3/3 passed

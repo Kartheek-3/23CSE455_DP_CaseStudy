@@ -1,0 +1,2 @@
+Compare the Specification implementation in Java, Python, JavaScript, and C++. Preserve the same four-property fixture and expected property id 1 for the five-rule composite. Explain interfaces, composition, memory ownership, and language-specific trade-offs without declaring one language universally best.
+

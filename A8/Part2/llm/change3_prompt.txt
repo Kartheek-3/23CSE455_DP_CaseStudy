@@ -1,0 +1,4 @@
+DISCLAIMER:
+This file is a reconstructed summary of the relevant intent/actions from the Change 3 agent session. It is not a literal historical LLM transcript or streaming log. The original session evidence was not recoverable after the agent session crash.
+
+Implement Change 3: Ticket Modification according to the official requirements. Modify the existing Booking module to allow changing seats and flights. Enforce authorization, seat validation, and handle cancelled flights. Do not create a separate Ticket entity.

@@ -1,0 +1,49 @@
+<% content_for :hide_navbar, true %>
+<% content_for :main_class, "flex flex-col overflow-hidden" %>
+<div class="h-14 shrink-0 max-w-sm mx-auto w-full px-4 flex items-center justify-between">
+  <%= link_to trip_path(@trip, tab: "itinerary"), class: "btn btn-sm btn-ghost" do %>← Back to trip<% end %>
+  <span class="text-xs font-medium text-base-content/50">Sample booking options</span>
+</div>
+<div class="flex-1 min-h-0 overflow-y-auto px-4 pb-8">
+  <div class="max-w-sm mx-auto space-y-4">
+    <div class="bg-base-200 border border-base-content/10 rounded-3xl p-5 space-y-4">
+      <h1 class="text-xl font-bold text-base-content">Browse sample offers</h1>
+      <p class="text-xs text-base-content/60">Compare two fictional provider catalogues for <%= @trip.title %>.</p>
+      <div role="note" class="p-3 rounded-xl bg-warning/10 border border-warning/20 text-xs text-base-content/80">
+        Demonstration offers only. Adding an offer to your itinerary does not make a reservation or process a payment.
+        Prices are invented examples and are not live availability or quotes.
+      </div>
+      <% if @provider_error.present? %>
+        <div role="alert" class="p-3 rounded-xl bg-error/10 border border-error/20 text-xs text-error"><%= @provider_error %></div>
+      <% end %>
+      <%= form_with url: trip_booking_options_path(@trip), method: :get, data: { turbo: false }, class: "space-y-3" do %>
+        <div>
+          <%= label_tag :provider_code, "Provider", class: "dp-label block mb-1.5" %>
+          <%= select_tag :provider_code, options_for_select(@providers.map { |p| [ p[:name], p[:code] ] }, @provider_code), class: "select w-full bg-base-300/20 border-base-content/10" %>
+        </div>
+        <div>
+          <%= label_tag :destination_code, "Sample destination", class: "dp-label block mb-1.5" %>
+          <%= select_tag :destination_code, options_for_select(@destinations.map { |code, label| [ label, code ] }, @destination_code), class: "select w-full bg-base-300/20 border-base-content/10" %>
+        </div>
+        <%= submit_tag "Browse sample offers", class: "btn btn-primary w-full" %>
+      <% end %>
+    </div>
+    <% if @offers.empty? && @provider_error.blank? %>
+      <div class="bg-base-200 rounded-2xl p-5 text-sm text-base-content/60">No sample offers are available for this demo selection.</div>
+    <% end %>
+    <% @offers.each do |offer| %>
+      <div class="bg-base-200 border border-base-content/10 rounded-2xl p-4 space-y-2">
+        <p class="text-[10px] uppercase tracking-wide font-semibold text-primary"><%= offer[:provider_name] %> · fictional</p>
+        <h2 class="text-base font-bold text-base-content"><%= offer[:name] %></h2>
+        <p class="text-xs text-base-content/60"><%= offer[:address] %> · <%= offer[:kind].humanize %></p>
+        <p class="text-sm text-base-content/70"><%= offer[:description] %></p>
+        <% if offer[:sample_amount] %>
+          <p class="text-xs font-semibold text-base-content/70">Sample estimate: <%= number_with_precision(offer[:sample_amount], precision: 2) %> <%= offer[:currency] %> (not a quote)</p>
+        <% end %>
+        <%= button_to "Add as idea", trip_booking_options_path(@trip), method: :post,
+              params: { provider_code: offer[:provider_code], destination_code: @destination_code, offer_id: offer[:offer_id] },
+              class: "btn btn-primary btn-sm w-full", form: { data: { turbo: false } } %>
+      </div>
+    <% end %>
+  </div>
+</div>

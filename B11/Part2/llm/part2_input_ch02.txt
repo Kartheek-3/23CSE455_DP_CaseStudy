@@ -1,0 +1,3 @@
+Input (CH02) - legalSystem @ commit 4e4ebb574d6730614855899e032fd5a79b04da63 (2023-03-18).
+- Part 1 uncertain instance: Hearing/Reminder Notification (scheduler-driven).
+- Requirement: a second (SMS) notification channel + a real subject/observer registration.

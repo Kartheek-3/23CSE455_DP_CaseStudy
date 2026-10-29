@@ -1,0 +1,18 @@
+CH01 Strategy — authoritative result: JUnit 5 run via Maven on the submission
+machine (OpenJDK 11.0.32, Spring Boot 2.4.0).
+
+Command: ./mvnw test -Dtest=FineServiceTest -DfailIfNoTests=false
+Result:  FineServiceTest — Tests run: 3, Failures: 0, Errors: 0  (BUILD SUCCESS)
+Full log: ../../../../test_result/mvn_test.log
+
+Assertions covered (all PASS):
+  regular(10)  = 50.0   [expected 50.0]
+  advocate(10) = 23.0   [expected 23.0]
+  compute(0)   = 0.0    [expected 0.0]
+  switching the policy changes only the injected strategy, not the context.
+
+Integration finding (recorded honestly): two FinePolicy beans (regularFine,
+advocateFine) caused NoUniqueBeanDefinitionException on app startup; resolved by
+marking RegularFine @Primary. Verified by a successful app boot
+(../../../../test_result/app_startup.log). Details:
+../../../../test_result/ENVIRONMENT_NOTES.md

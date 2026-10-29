@@ -1,0 +1,8 @@
+[Part 1 - Template Method - owner: Sai Tharun (Am.sc.u4cse23249)]
+Context: analyse the open-source Spring Boot app github.com/vikash0439/legalSystem at commit 4e4ebb57 (a legal case management system: cases, lawyers, hearings, documents, payments, reminders). I am verifying ONE design pattern for a Design Patterns case study. Do not just assert the pattern exists — point to the exact class/interface/method and file:line, map each pattern role to the real symbol, and quote the few lines of code that prove the collaboration (calls/delegation/inheritance). If a role is absent or combined, say so; do not invent classes.
+
+Task: Confirm whether the Template Method pattern is present. I suspect it is in
+config/SecurityConfiguration.java extending WebSecurityConfigurerAdapter. Identify
+the AbstractClass, the ConcreteClass, and the primitive operations (the overridden
+configure(...) hooks the framework invokes). Give file:line for each and explain the
+fixed-algorithm / variable-step split. Give a confirmed/rejected/uncertain verdict.

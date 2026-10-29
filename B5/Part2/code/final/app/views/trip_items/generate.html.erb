@@ -1,0 +1,46 @@
+<% content_for :hide_navbar, true %>
+<% content_for :main_class, "flex flex-col overflow-hidden" %>
+<div class="h-14 shrink-0 max-w-sm mx-auto w-full px-4 flex items-center justify-between">
+  <%= link_to trip_path(@trip, tab: "itinerary"), class: "btn btn-sm btn-ghost" do %>← Back to trip<% end %>
+  <span class="text-xs font-medium text-base-content/50">Generate ideas</span>
+</div>
+<div class="flex-1 min-h-0 overflow-y-auto px-4 pb-6">
+  <div class="max-w-sm mx-auto bg-base-200 border border-base-content/10 rounded-3xl p-5 space-y-4">
+    <div>
+      <h1 class="text-xl font-bold text-base-content">Personalized itinerary ideas</h1>
+      <p class="text-xs text-base-content/50 mt-1">Suggest up to six activities for <%= @trip.title %>. You will review everything before it is saved.</p>
+    </div>
+    <% if @generation_error.present? %>
+      <div role="alert" class="px-3 py-2 rounded-xl bg-error/10 border border-error/20 text-xs text-error"><%= @generation_error %></div>
+    <% end %>
+    <% choices = @preferences || {} %>
+    <%= form_with url: generate_trip_trip_items_path(@trip), method: :post, data: { turbo: false }, class: "space-y-4" do |f| %>
+      <fieldset>
+        <legend class="dp-label mb-2">Interests (at least one)</legend>
+        <div class="grid grid-cols-2 gap-2">
+          <% { "culture" => "Culture & history", "food" => "Food & cafes", "nature" => "Nature & outdoors", "shopping" => "Shopping" }.each do |value, label| %>
+            <label class="flex items-center gap-2 text-xs bg-base-300/20 rounded-xl p-3 border border-base-content/5">
+              <%= check_box_tag "interests[]", value, Array(choices["interests"]).include?(value), class: "checkbox checkbox-primary checkbox-sm" %>
+              <%= label %>
+            </label>
+          <% end %>
+        </div>
+      </fieldset>
+      <div>
+        <%= f.label :budget, "Budget", class: "dp-label block mb-1.5" %>
+        <%= select_tag :budget, options_for_select([ ["Budget", "low"], ["Moderate", "medium"], ["Premium", "high"] ], choices["budget"] || "medium"), class: "select w-full bg-base-300/20 border-base-content/10" %>
+      </div>
+      <div>
+        <%= f.label :pace, "Preferred pace", class: "dp-label block mb-1.5" %>
+        <%= select_tag :pace, options_for_select([ ["Relaxed", "relaxed"], ["Balanced", "balanced"], ["Active", "busy"] ], choices["pace"] || "balanced"), class: "select w-full bg-base-300/20 border-base-content/10" %>
+      </div>
+      <div>
+        <%= f.label :notes, "Additional preference (optional)", class: "dp-label block mb-1.5" %>
+        <%= text_area_tag :notes, choices["notes"], maxlength: 300, rows: 3, placeholder: "For example: indoor activities and local food", class: "textarea w-full bg-base-300/20 border-base-content/10 text-sm" %>
+      </div>
+      <p class="text-xs text-base-content/50">Suggestions are ideas only. Check locations and opening hours before visiting.</p>
+      <%= f.submit "Generate suggestions", class: "btn btn-primary w-full" %>
+    <% end %>
+    <%= link_to "Cancel", trip_path(@trip, tab: "itinerary"), class: "btn btn-ghost btn-sm w-full" %>
+  </div>
+</div>

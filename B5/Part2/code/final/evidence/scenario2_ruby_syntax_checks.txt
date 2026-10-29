@@ -1,0 +1,10 @@
+RUBY ruby 3.3.8 (2025-04-09 revision b200bad6cd) [x86_64-linux-gnu]
+app/controllers/booking_options_controller.rb: Syntax OK
+app/services/booking_providers/registry.rb: Syntax OK
+app/services/booking_providers/atlas_adapter.rb: Syntax OK
+app/services/booking_providers/beacon_adapter.rb: Syntax OK
+test/services/booking_providers_test.rb: Syntax OK
+test/controllers/booking_options_controller_test.rb: Syntax OK
+test/models/scenario2_email_and_refresh_regression_test.rb: Syntax OK
+evidence/isolated_provider_checks.rb: Syntax OK
+config/routes.rb: Syntax OK

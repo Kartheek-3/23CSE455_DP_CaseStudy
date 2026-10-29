@@ -1,0 +1,10 @@
+# <type S|C> deposit <balance> <amount> prints the new balance; <type> withdraw <balance> <amount> prints ALLOWED or DENIED; unknown type -> NO_POLICY
+# S = savings: +0.50 deposit bonus, no overdraft.  C = checking: no bonus, overdraft limit 500.00
+S deposit 100 50 => 150.50
+C deposit 100 50 => 150.00
+S withdraw 100 100 => ALLOWED
+S withdraw 100 100.01 => DENIED
+C withdraw 100 600 => ALLOWED
+C withdraw 100 600.01 => DENIED
+S withdraw 100 0 => DENIED
+X deposit 1 1 => NO_POLICY

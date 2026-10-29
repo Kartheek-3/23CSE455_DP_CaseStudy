@@ -1,0 +1,423 @@
+Use everything already completed and frozen in this chat for DaPlanStan Part 2 — Design Pattern Discovery and Verification.
+
+Do not perform any new pattern discovery.
+Do not change the frozen baseline.
+Do not change the nine confirmed classifications or five rejected classifications.
+
+The frozen baseline is:
+
+1. P01 — Information Expert (GRASP) — Parsed Email to Trip Record Linking
+2. P02 — Controller (GRASP) — Inbound Travel Email Intake Coordination
+3. P03 — Controller (GRASP) — Trip Creation Coordination
+4. P04 — Controller (GRASP) — Trip Membership Management Coordination
+5. P05 — Controller (GRASP) — Bulk Itinerary Import Coordination
+6. P06 — Controller (GRASP) — OAuth Sign-in and Identity Linking Coordination
+7. P07 — Controller (GRASP) — Account Traveler Enrollment Coordination
+8. P08 — Observer (GoF) — Outbound Mail Delivery Logging
+9. P09 — Observer (GoF) — Trip-Scoped Turbo Refresh Notifications
+
+Final counts:
+
+Controller (GRASP) = 6
+Information Expert (GRASP) = 1
+Observer (GoF) = 2
+Total instances = 9
+Distinct pattern types = 3
+
+Create the complete Part 2 submission package as actual downloadable files.
+
+Use this folder structure:
+
+`DaPlanStan_Part2/`
+
+Inside it create:
+
+### 1. Pattern CSV files
+
+Create:
+
+`patterns.csv`
+
+Use the exact frozen nine-row content already prepared in this chat with these columns:
+
+`source_version,pattern_name,pattern_type,instance_name,participant_roles,source_locations,intent_and_evidence`
+
+Create:
+
+`pattern_counts.csv`
+
+Use:
+
+`source_version,summary,pattern_name,count`
+
+with the frozen counts:
+
+Controller (GRASP) = 6
+Information Expert (GRASP) = 1
+Observer (GoF) = 2
+total_pattern_types = 3
+total_pattern_instances = 9
+
+Do not change the previously prepared CSV content unless fixing CSV formatting only.
+
+### 2. UML source files
+
+Create a folder:
+
+`uml/source/`
+
+Save the nine editable Mermaid UML sources already prepared in this chat as:
+
+`P01_Parsed_Email_to_Trip_Record_Linking.mmd`
+
+`P02_Inbound_Travel_Email_Intake_Coordination.mmd`
+
+`P03_Trip_Creation_Coordination.mmd`
+
+`P04_Trip_Membership_Management_Coordination.mmd`
+
+`P05_Bulk_Itinerary_Import_Coordination.mmd`
+
+`P06_OAuth_Signin_and_Identity_Linking_Coordination.mmd`
+
+`P07_Account_Traveler_Enrollment_Coordination.mmd`
+
+`P08_Outbound_Mail_Delivery_Logging.mmd`
+
+`P09_Trip_Scoped_Turbo_Refresh_Notifications.mmd`
+
+The `.mmd` files must contain clean Mermaid source only.
+
+Do not include ChatGPT-rendering CSS or UI-generated Mermaid styling text.
+
+### 3. UML SVG exports
+
+Create:
+
+`uml/svg/`
+
+Export each P01–P09 Mermaid diagram as an editable/vector SVG:
+
+`P01_Parsed_Email_to_Trip_Record_Linking.svg`
+
+`P02_Inbound_Travel_Email_Intake_Coordination.svg`
+
+`P03_Trip_Creation_Coordination.svg`
+
+`P04_Trip_Membership_Management_Coordination.svg`
+
+`P05_Bulk_Itinerary_Import_Coordination.svg`
+
+`P06_OAuth_Signin_and_Identity_Linking_Coordination.svg`
+
+`P07_Account_Traveler_Enrollment_Coordination.svg`
+
+`P08_Outbound_Mail_Delivery_Logging.svg`
+
+`P09_Trip_Scoped_Turbo_Refresh_Notifications.svg`
+
+Check that every SVG opens correctly and corresponds to its `.mmd` source.
+
+### 4. Verification and rejected-candidate evidence
+
+Create:
+
+`verification/Part2_Verification_Evidence.md`
+
+Use the completed verification evidence from this chat.
+
+It must contain:
+
+9 SOURCE-CONFIRMED records for P01–P09
+
+5 REJECTED records for:
+
+Geocoding — Template Method
+
+Geocoding — Strategy
+
+Geocoding — Adapter
+
+Itinerary Timeline–Map Event Coordination — Observer
+
+Beta Invite Eligibility Evaluation — Information Expert
+
+Also preserve the documented limitations:
+
+runtime testing not completed
+
+independent human sign-off not established
+
+ZIP-to-commit correspondence unverified
+
+framework-mediated Observer classifications depend on checked framework contracts
+
+### 5. LLM audit CSV
+
+Create:
+
+`llm/llm.csv`
+
+Use the completed 20-stage LLM audit content already prepared in this chat.
+
+Use exactly these columns:
+
+`part,model_and_date,prompt_file,input_file,output_file,evaluation,verification_file`
+
+Preserve the historical progression of the analysis.
+
+Do not rewrite early uncertain or rejected classifications to look as though the final nine-pattern inventory was known from the beginning.
+
+### 6. Archive the 20 prompts
+
+Create:
+
+`llm/prompts/`
+
+Save the 20 major prompts from this conversation using these filenames:
+
+`01_requirements_plan_prompt.txt`
+
+`02_geocoding_investigation_prompt.txt`
+
+`03_geocoding_verification_prompt.txt`
+
+`04_inbound_email_investigation_prompt.txt`
+
+`05_inbound_email_verification_prompt.txt`
+
+`06_trip_membership_investigation_prompt.txt`
+
+`07_trip_membership_verification_prompt.txt`
+
+`08_itinerary_expenses_investigation_prompt.txt`
+
+`09_bulk_import_verification_prompt.txt`
+
+`10_external_identity_investigation_prompt.txt`
+
+`11_external_identity_verification_prompt.txt`
+
+`12_frontend_investigation_prompt.txt`
+
+`13_frontend_observer_verification_prompt.txt`
+
+`14_repository_sweep_prompt.txt`
+
+`15_adversarial_review_prompt.txt`
+
+`16_human_worksheet_prompt.txt`
+
+`17_baseline_freeze_prompt.txt`
+
+`18_baseline_csv_prompt.txt`
+
+`19_uml_preparation_prompt.txt`
+
+`20_verification_evidence_prompt.txt`
+
+Use the actual prompts from the conversation.
+
+Do not invent missing prompt text.
+
+If an exact historical prompt cannot be recovered from this conversation, create a clearly marked file stating:
+
+`ORIGINAL PROMPT NOT RECOVERABLE FROM AVAILABLE CHAT CONTEXT`
+
+Do not fabricate it.
+
+### 7. Archive the 20 raw LLM outputs
+
+Create:
+
+`llm/raw_outputs/`
+
+Save the corresponding original raw responses as:
+
+`01_requirements_plan_raw.txt`
+
+`02_geocoding_investigation_raw.txt`
+
+`03_geocoding_verification_raw.txt`
+
+`04_inbound_email_investigation_raw.txt`
+
+`05_inbound_email_verification_raw.txt`
+
+`06_trip_membership_investigation_raw.txt`
+
+`07_trip_membership_verification_raw.txt`
+
+`08_itinerary_expenses_investigation_raw.txt`
+
+`09_bulk_import_verification_raw.txt`
+
+`10_external_identity_investigation_raw.txt`
+
+`11_external_identity_verification_raw.txt`
+
+`12_frontend_investigation_raw.txt`
+
+`13_frontend_observer_verification_raw.txt`
+
+`14_repository_sweep_raw.txt`
+
+`15_adversarial_review_raw.txt`
+
+`16_human_worksheet_raw.txt`
+
+`17_baseline_freeze_raw.txt`
+
+`18_baseline_csv_raw.txt`
+
+`19_uml_preparation_raw.txt`
+
+`20_verification_evidence_raw.txt`
+
+Preserve these as raw historical evidence.
+
+Do not silently correct earlier outputs.
+
+If an exact raw historical response cannot be recovered from the available conversation, create a clearly marked file saying:
+
+`ORIGINAL RAW OUTPUT NOT RECOVERABLE FROM AVAILABLE CHAT CONTEXT`
+
+Do not reconstruct or fabricate historical evidence.
+
+### 8. Final Part 2 report section
+
+Create:
+
+`report/Part2_Design_Pattern_Discovery_and_Verification.md`
+
+Use the final report-ready Part 2 section already prepared in this chat.
+
+It should contain:
+
+1. Pattern Discovery Method
+2. Final Pattern Inventory
+3. Pattern Counts
+4. Important Pattern Evidence
+5. Rejected Candidates and False Positives
+6. Verification and Limitations
+7. Part 2 Deliverables
+8. Handoff to Software Evolution / Refactoring
+9. Part 2 Completion Statement
+
+Do not add evolution solutions.
+
+### 9. Software evolution handoff
+
+Also create a separate file:
+
+`handoff/Part2_to_Software_Evolution_Handoff.md`
+
+Extract the Section 8 handoff from the final Part 2 report and make it usable independently by the teammate handling software evolution/refactoring.
+
+It must state:
+
+Use the frozen baseline as the BEFORE version.
+
+Keep P01–P09 stable.
+
+For every existing instance record whether it becomes:
+
+preserved
+modified
+extended
+replaced
+removed
+
+Record genuinely new patterns separately.
+
+Use `patterns_evolution.csv` during the evolution stage.
+
+Do not retroactively change baseline counts.
+
+Mention the relevant investigation areas for:
+
+personalized itinerary generation
+
+multiple booking providers
+
+different cancellation policies
+
+Do not prescribe the evolution patterns or refactoring solution.
+
+### 10. Final consistency check
+
+Create:
+
+`FINAL_CONSISTENCY_CHECK.md`
+
+Check all generated artifacts against the frozen baseline.
+
+Verify:
+
+1. `patterns.csv` contains exactly 9 pattern rows.
+
+2. Controller (GRASP) count = 6.
+
+3. Information Expert (GRASP) count = 1.
+
+4. Observer (GoF) count = 2.
+
+5. Total instances = 9.
+
+6. Distinct pattern types = 3.
+
+7. P01–P09 names are identical across CSVs, UML files, verification records and report.
+
+8. The five rejected candidates do not appear in the confirmed inventory.
+
+9. Source paths and important line ranges are consistent with the frozen verification evidence.
+
+10. `ParseInboxItemJob#perform` uses the rechecked location `app/jobs/parse_inbox_item_job.rb:99–112`.
+
+11. P08 and P09 clearly distinguish application participants from framework participants.
+
+12. The source version is `baseline`.
+
+13. Do not claim the ZIP has been independently verified as commit `da54d9ab8bfc118e99375fdd6c506efb20b66e5b`.
+
+14. Do not claim runtime testing was completed.
+
+15. Do not claim independent human verification was completed.
+
+16. There are 9 `.mmd` UML files and 9 corresponding `.svg` files.
+
+17. `llm.csv` contains the 20 major stages.
+
+18. There are 20 prompt archive files and 20 raw-output archive files, or any unrecoverable originals are explicitly marked rather than fabricated.
+
+### Final packaging
+
+After creating everything, package the complete folder into:
+
+`DaPlanStan_Part2_Complete_Submission.zip`
+
+Actually create the files and ZIP archive.
+
+Do not merely display their contents in the chat.
+
+At the end provide:
+
+1. A download link for `DaPlanStan_Part2_Complete_Submission.zip`.
+
+2. A download link for `patterns.csv`.
+
+3. A download link for `pattern_counts.csv`.
+
+4. A download link for `llm.csv`.
+
+5. A download link for the final Part 2 report.
+
+6. A download link for the software-evolution handoff.
+
+7. A download link for `FINAL_CONSISTENCY_CHECK.md`.
+
+8. Confirmation of how many UML `.mmd` and `.svg` files were created.
+
+9. Confirmation of how many historical prompt and raw-output files were successfully recovered.
+
+Do not continue with software evolution analysis after creating the package.

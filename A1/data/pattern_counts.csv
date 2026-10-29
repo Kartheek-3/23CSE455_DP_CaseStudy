@@ -1,0 +1,8 @@
+source_version,summary,pattern_name,count
+Original code (baseline commit 83998629e633594037cfa25e583542f9f6f0f968),per_pattern,Observer,2
+Original code (baseline commit 83998629e633594037cfa25e583542f9f6f0f968),total_pattern_types,,1
+Original code (baseline commit 83998629e633594037cfa25e583542f9f6f0f968),total_pattern_instances,,2
+Code after Change1 (CH01: baseline 83998629 + Part2/changes/Change1/CH01.diff),per_pattern,Observer,2
+Code after Change1 (CH01: baseline 83998629 + Part2/changes/Change1/CH01.diff),per_pattern,Strategy,1
+Code after Change1 (CH01: baseline 83998629 + Part2/changes/Change1/CH01.diff),total_pattern_types,,2
+Code after Change1 (CH01: baseline 83998629 + Part2/changes/Change1/CH01.diff),total_pattern_instances,,3

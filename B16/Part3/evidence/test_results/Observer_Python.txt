@@ -1,0 +1,11 @@
+$ (cd Part3/observer-test-listeners/python) python3 -m unittest -v test_observer
+test_invalid_input_is_rejected_with_expected_error (test_observer.ObserverTest.test_invalid_input_is_rejected_with_expected_error) ... ok
+test_report_matches_expected_output (test_observer.ObserverTest.test_report_matches_expected_output) ... ok
+test_throwing_listener_does_not_stop_the_next_one (test_observer.ObserverTest.test_throwing_listener_does_not_stop_the_next_one) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK
+[exit 0]
+result: 3/3 passed

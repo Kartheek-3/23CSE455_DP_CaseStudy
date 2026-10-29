@@ -1,0 +1,13 @@
+[
+  "src/Data/BankSystem/BankSystem.Models/MoneyTransfer.cs",
+  "src/Services/BankSystem/BankSystem.Services/Fraud/TransferRules.cs",
+  "src/Services/BankSystem/BankSystem.Services/MoneyTransfer/IInternalTransferService.cs",
+  "src/Services/BankSystem/BankSystem.Services/MoneyTransfer/InternalTransferRequest.cs",
+  "src/Services/BankSystem/BankSystem.Services/MoneyTransfer/InternalTransferService.cs",
+  "src/Web/BankSystem.Web/Areas/MoneyTransfers/Controllers/InternalController.cs",
+  "src/Web/BankSystem.Web/Controllers/BillPaymentsController.cs",
+  "src/Web/BankSystem.Web/Infrastructure/Authentication/SecondFactorStrategies.cs",
+  "src/Web/BankSystem.Web/Pages/Account/LoginWith2fa.cshtml.cs",
+  "src/Web/BankSystem.Web/Pages/Account/Settings/RecoveryCodes.cshtml.cs",
+  "src/Web/BankSystem.Web/Startup.cs"
+]

@@ -1,0 +1,5 @@
+Command: node test_runner.js
+Runtime: Node.js v24.15.0
+Result: PASS
+Output: PASS: Alert parser strategy delegation
+Note: Illustrative parser delegation; simplified behavior.

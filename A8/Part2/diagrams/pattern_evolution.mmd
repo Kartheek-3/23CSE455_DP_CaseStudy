@@ -1,0 +1,103 @@
+classDiagram
+    direction TB
+
+    %% Dynamic Guard Factory
+    class rolesRestrict {
+        <<Factory Function>>
+        +rolesRestrict(...allowedRoles) Type~CanActivate~
+    }
+
+    class RolesRestriceGuard {
+        <<Dynamic Mixin Guard>>
+        -UsersService userService
+        +canActivate(context) Promise~boolean~
+    }
+
+    class CanActivate {
+        <<Interface>>
+        +canActivate(context) boolean
+    }
+
+    class FlightRestrict {
+        <<Guard>>
+        +canActivate(context) Promise~boolean~
+    }
+
+    rolesRestrict ..> RolesRestriceGuard : creates through mixin
+    RolesRestriceGuard ..|> CanActivate : implements
+    FlightRestrict ..|> CanActivate : implements
+
+    class FlightResolver {
+        +cancelFlight(id) Flight
+        +removeFlight(id) FlightResponse
+        +myAssignedFlights(user) Flight[]
+    }
+
+    class BookingResolver {
+        +createBooking(user, bookingBody) Booking
+        +modifyBooking(user, updateBody) Booking
+        +updateBooking(user, updateBody) Booking
+        +cancelBooking(user, cancelBody) responseMessage
+        +user(booking) User
+        +flight(booking) Flight
+        +seat(booking) Seat[]
+    }
+
+    FlightResolver ..> rolesRestrict : cancelFlight ADMIN/CREW
+    FlightResolver ..> FlightRestrict : other restricted operations
+    FlightResolver ..> rolesRestrict : myAssignedFlights CREW/SECURITY
+    BookingResolver ..> rolesRestrict : booking operations USER
+    BookingResolver ..> FlightRestrict : not directly applied
+
+    %% DataLoader pattern
+    class UserDataLoader {
+        <<Batch Loader>>
+        +userLoader: DataLoader~string, User~
+    }
+
+    class FlightDataLoader {
+        <<Batch Loader>>
+        +flightLoader: DataLoader~string, Flight~
+    }
+
+    class SeatDataLoader {
+        <<Batch Loader>>
+        +seatLoader: DataLoader~string, Seat~
+        +seatManyLoader: DataLoader~string, Seat[]~
+    }
+
+    BookingResolver --> UserDataLoader : resolves user
+    BookingResolver --> FlightDataLoader : resolves flight
+    BookingResolver --> SeatDataLoader : resolves seats
+
+    %% Producer-Consumer email queue
+    class FlightService {
+        +cancelFlight(id) Promise~Flight~
+    }
+
+    class SendGridService {
+        +send(mailData) Promise~void~
+    }
+
+    class UsersResolver {
+        +forgetPassword(dto)
+    }
+
+    class BullMQ_EmailQueue {
+        <<Queue>>
+        +add(jobName, payload)
+    }
+
+    class EmailProcessor {
+        <<Worker Consumer>>
+        +process(job) Promise~any~
+        +onCompleted(job)
+        +onFailed(job)
+    }
+
+    FlightService --> SendGridService : sends cancellation notice
+    SendGridService --> BullMQ_EmailQueue : adds sending-token-sendGrid
+    UsersResolver --> BullMQ_EmailQueue : adds sending-token-mailtrap
+    BullMQ_EmailQueue --> EmailProcessor : delivers jobs
+    EmailProcessor --> SendGrid : sends SendGrid mail
+    EmailProcessor --> UsersService : handles Mailtrap jobs

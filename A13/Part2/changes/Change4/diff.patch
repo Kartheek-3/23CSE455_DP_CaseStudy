@@ -1,0 +1,2088 @@
+diff --git a/packages/backend/migration/1788000000000-recommendation-preferences.js b/packages/backend/migration/1788000000000-recommendation-preferences.js
+new file mode 100644
+index 0000000000..04fe34d1d5
+--- /dev/null
++++ b/packages/backend/migration/1788000000000-recommendation-preferences.js
+@@ -0,0 +1,30 @@
++/*
++ * SPDX-FileCopyrightText: syuilo and misskey-project
++ * SPDX-License-Identifier: AGPL-3.0-only
++ */
++
++export class RecommendationPreferences1788000000000 {
++	name = 'RecommendationPreferences1788000000000';
++
++	async up(queryRunner) {
++		await queryRunner.query(`
++			CREATE TABLE "recommendation_preference" (
++				"userId" character varying(32) NOT NULL,
++				"mutedTopics" character varying(128)[] NOT NULL DEFAULT '{}',
++				"reducedAuthors" character varying(32)[] NOT NULL DEFAULT '{}',
++				"preferredTopics" character varying(128)[] NOT NULL DEFAULT '{}',
++				"topicWeights" jsonb NOT NULL DEFAULT '{}',
++				"createdAt" TIMESTAMP WITH TIME ZONE NOT NULL,
++				"updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL,
++				CONSTRAINT "PK_recommendation_preference_userId" PRIMARY KEY ("userId"),
++				CONSTRAINT "FK_recommendation_preference_userId" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION
++			)
++		`);
++
++		await queryRunner.query(`CREATE INDEX "IDX_recommendation_preference_userId" ON "recommendation_preference" ("userId")`);
++	}
++
++	async down(queryRunner) {
++		await queryRunner.query(`DROP TABLE "recommendation_preference"`);
++	}
++}
+diff --git a/packages/backend/src/core/CoreModule.ts b/packages/backend/src/core/CoreModule.ts
+index 469441701a..a6f2d30e2c 100644
+--- a/packages/backend/src/core/CoreModule.ts
++++ b/packages/backend/src/core/CoreModule.ts
+@@ -32,6 +32,7 @@ import { EmailService } from './EmailService.js';
+ import { EventService } from './EventService.js';
+ import { AudioTranscriptService } from './AudioTranscriptService.js';
+ import { LinkSafetyService } from './security/LinkSafetyService.js';
++import { RecommendationService } from './RecommendationService.js';
+ import { FederatedInstanceService } from './FederatedInstanceService.js';
+ import { FetchInstanceMetadataService } from './FetchInstanceMetadataService.js';
+ import { GlobalEventService } from './GlobalEventService.js';
+@@ -237,6 +238,7 @@ const $PageService: Provider = { provide: 'PageService', useExisting: PageServic
+ const $EventService: Provider = { provide: 'EventService', useExisting: EventService };
+ const $AudioTranscriptService: Provider = { provide: 'AudioTranscriptService', useExisting: AudioTranscriptService };
+ const $LinkSafetyService: Provider = { provide: 'LinkSafetyService', useExisting: LinkSafetyService };
++const $RecommendationService: Provider = { provide: 'RecommendationService', useExisting: RecommendationService };
+ 
+ const $ChartLoggerService: Provider = { provide: 'ChartLoggerService', useExisting: ChartLoggerService };
+ const $FederationChart: Provider = { provide: 'FederationChart', useExisting: FederationChart };
+@@ -393,6 +395,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
+ 		EventService,
+ 		AudioTranscriptService,
+ 		LinkSafetyService,
++		RecommendationService,
+ 
+ 		ChartLoggerService,
+ 		FederationChart,
+@@ -547,6 +550,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
+ 		$EventService,
+ 		$AudioTranscriptService,
+ 		$LinkSafetyService,
++		$RecommendationService,
+ 
+ 		$ChartLoggerService,
+ 		$FederationChart,
+@@ -701,6 +705,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
+ 		EventService,
+ 		AudioTranscriptService,
+ 		LinkSafetyService,
++		RecommendationService,
+ 
+ 		FederationChart,
+ 		NotesChart,
+@@ -853,6 +858,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
+ 		$EventService,
+ 		$AudioTranscriptService,
+ 		$LinkSafetyService,
++		$RecommendationService,
+ 
+ 		$FederationChart,
+ 		$NotesChart,
+diff --git a/packages/backend/src/core/RecommendationService.ts b/packages/backend/src/core/RecommendationService.ts
+new file mode 100644
+index 0000000000..5ea6feaeee
+--- /dev/null
++++ b/packages/backend/src/core/RecommendationService.ts
+@@ -0,0 +1,370 @@
++/*
++ * SPDX-FileCopyrightText: syuilo and misskey-project
++ * SPDX-License-Identifier: AGPL-3.0-only
++ */
++
++import { Inject, Injectable, Optional } from '@nestjs/common';
++import { In } from 'typeorm';
++import { DI } from '@/di-symbols.js';
++import type {
++	NotesRepository,
++	UsersRepository,
++	FollowingsRepository,
++	MutingsRepository,
++	BlockingsRepository,
++	NoteReactionsRepository,
++	NoteFavoritesRepository,
++	FlaggedLinksRepository,
++	RecommendationPreferencesRepository,
++	MiNote,
++	MiUser,
++} from '@/models/_.js';
++import { MiRecommendationPreference } from '@/models/RecommendationPreference.js';
++import { IdService } from '@/core/IdService.js';
++import {
++	RecommendationRankingStrategy,
++	WeightedPersonalizedRankingStrategy,
++	ChronologicalRankingStrategy,
++	CandidateNote,
++	RecommendationUserProfile,
++	ScoredRecommendation,
++} from './recommendation/RecommendationStrategy.js';
++
++export interface GetRecommendationsOptions {
++	limit?: number;
++	mode?: 'personalized' | 'chronological';
++	sinceId?: string;
++	untilId?: string;
++	now?: Date;
++}
++
++export function normalizeTopic(topic: string): string {
++	return topic.trim().toLowerCase().replace(/^#/, '');
++}
++
++export function extractHashtags(note: MiNote): string[] {
++	const set = new Set<string>();
++	if (Array.isArray(note.tags)) {
++		for (const tag of note.tags) {
++			if (typeof tag === 'string' && tag.trim()) {
++				set.add(normalizeTopic(tag));
++			}
++		}
++	}
++	if (note.text) {
++		const matches = note.text.matchAll(/(?:^|\s)#([^\s#]+)/g);
++		for (const m of matches) {
++			if (m[1] && m[1].trim()) {
++				set.add(normalizeTopic(m[1]));
++			}
++		}
++	}
++	return Array.from(set);
++}
++
++@Injectable()
++export class RecommendationService {
++	private personalizedStrategy: RecommendationRankingStrategy;
++	private chronologicalStrategy: RecommendationRankingStrategy;
++	private cache = new Map<string, { timestamp: number; results: ScoredRecommendation[] }>();
++	private readonly CACHE_TTL_MS = 30000;
++
++	constructor(
++		@Optional() @Inject(DI.recommendationPreferencesRepository)
++		private recommendationPreferencesRepository?: RecommendationPreferencesRepository,
++		@Optional() @Inject(DI.notesRepository)
++		private notesRepository?: NotesRepository,
++		@Optional() @Inject(DI.usersRepository)
++		private usersRepository?: UsersRepository,
++		@Optional() @Inject(DI.followingsRepository)
++		private followingsRepository?: FollowingsRepository,
++		@Optional() @Inject(DI.mutingsRepository)
++		private mutingsRepository?: MutingsRepository,
++		@Optional() @Inject(DI.blockingsRepository)
++		private blockingsRepository?: BlockingsRepository,
++		@Optional() @Inject(DI.noteReactionsRepository)
++		private noteReactionsRepository?: NoteReactionsRepository,
++		@Optional() @Inject(DI.noteFavoritesRepository)
++		private noteFavoritesRepository?: NoteFavoritesRepository,
++		@Optional() @Inject(DI.flaggedLinksRepository)
++		private flaggedLinksRepository?: FlaggedLinksRepository,
++		@Optional()
++		private idService?: IdService,
++	) {
++		this.personalizedStrategy = new WeightedPersonalizedRankingStrategy();
++		this.chronologicalStrategy = new ChronologicalRankingStrategy();
++	}
++
++	public setPersonalizedStrategy(strategy: RecommendationRankingStrategy): void {
++		this.personalizedStrategy = strategy;
++	}
++
++	public clearUserCache(userId: string): void {
++		for (const key of Array.from(this.cache.keys())) {
++			if (key.startsWith(`${userId}:`)) {
++				this.cache.delete(key);
++			}
++		}
++	}
++
++	public clearAllCache(): void {
++		this.cache.clear();
++	}
++
++	public async getPreferences(userId: string): Promise<MiRecommendationPreference> {
++		if (!this.recommendationPreferencesRepository) {
++			return {
++				userId,
++				mutedTopics: [],
++				reducedAuthors: [],
++				preferredTopics: [],
++				topicWeights: {},
++				createdAt: new Date(),
++				updatedAt: new Date(),
++			} as MiRecommendationPreference;
++		}
++
++		let pref = await this.recommendationPreferencesRepository.findOneBy({ userId });
++		if (!pref) {
++			pref = {
++				userId,
++				mutedTopics: [],
++				reducedAuthors: [],
++				preferredTopics: [],
++				topicWeights: {},
++				createdAt: new Date(),
++				updatedAt: new Date(),
++			} as MiRecommendationPreference;
++			await this.recommendationPreferencesRepository.save(pref);
++		}
++		return pref;
++	}
++
++	public async updatePreferences(
++		userId: string,
++		update: {
++			mutedTopics?: string[];
++			reducedAuthors?: string[];
++			preferredTopics?: string[];
++			topicWeights?: Record<string, number>;
++		},
++	): Promise<MiRecommendationPreference> {
++		const pref = await this.getPreferences(userId);
++
++		if (update.mutedTopics !== undefined) {
++			pref.mutedTopics = Array.from(new Set(update.mutedTopics.map(normalizeTopic).filter(Boolean)));
++		}
++		if (update.reducedAuthors !== undefined) {
++			pref.reducedAuthors = Array.from(new Set(update.reducedAuthors.filter(Boolean)));
++		}
++		if (update.preferredTopics !== undefined) {
++			pref.preferredTopics = Array.from(new Set(update.preferredTopics.map(normalizeTopic).filter(Boolean)));
++		}
++		if (update.topicWeights !== undefined) {
++			const cleanedWeights: Record<string, number> = {};
++			for (const [k, v] of Object.entries(update.topicWeights)) {
++				const norm = normalizeTopic(k);
++				if (norm && typeof v === 'number' && !isNaN(v)) {
++					cleanedWeights[norm] = v;
++				}
++			}
++			pref.topicWeights = cleanedWeights;
++		}
++		pref.updatedAt = new Date();
++
++		if (this.recommendationPreferencesRepository) {
++			await this.recommendationPreferencesRepository.save(pref);
++		}
++
++		this.clearUserCache(userId);
++		return pref;
++	}
++
++	public async resetProfile(userId: string): Promise<MiRecommendationPreference> {
++		const pref = await this.getPreferences(userId);
++		pref.mutedTopics = [];
++		pref.reducedAuthors = [];
++		pref.preferredTopics = [];
++		pref.topicWeights = {};
++		pref.updatedAt = new Date();
++
++		if (this.recommendationPreferencesRepository) {
++			await this.recommendationPreferencesRepository.save(pref);
++		}
++
++		this.clearUserCache(userId);
++		return pref;
++	}
++
++	public async getRecommendations(
++		userId: string,
++		options: GetRecommendationsOptions = {},
++	): Promise<ScoredRecommendation[]> {
++		const limit = Math.min(100, Math.max(1, options.limit ?? 10));
++		const mode = options.mode ?? 'personalized';
++		const now = options.now ?? new Date();
++
++		// Check user-scoped cache
++		const cacheKey = `${userId}:${mode}`;
++		const cached = this.cache.get(cacheKey);
++		if (cached && (now.getTime() - cached.timestamp < this.CACHE_TTL_MS)) {
++			return this.paginateRecommendations(cached.results, limit, options.sinceId, options.untilId);
++		}
++
++		const pref = await this.getPreferences(userId);
++
++		// 1. Load relation sets for safety and eligibility filtering
++		const blockedUserIds = new Set<string>();
++		const blockingUserIds = new Set<string>();
++		const mutedUserIds = new Set<string>();
++		const followingUserIds = new Set<string>();
++
++		if (this.blockingsRepository) {
++			const blocks = await this.blockingsRepository.findBy({ blockerId: userId });
++			for (const b of blocks) blockedUserIds.add(b.blockeeId);
++			const blockedBy = await this.blockingsRepository.findBy({ blockeeId: userId });
++			for (const b of blockedBy) blockingUserIds.add(b.blockerId);
++		}
++
++		if (this.mutingsRepository) {
++			const mutes = await this.mutingsRepository.findBy({ muterId: userId });
++			for (const m of mutes) mutedUserIds.add(m.muteeId);
++		}
++
++		if (this.followingsRepository) {
++			const followings = await this.followingsRepository.findBy({ followerId: userId });
++			for (const f of followings) followingUserIds.add(f.followeeId);
++		}
++
++		// 2. Query bounded candidate notes: only eligible public notes
++		let rawNotes: MiNote[] = [];
++		if (this.notesRepository) {
++			const qb = this.notesRepository.createQueryBuilder('note')
++				.leftJoinAndSelect('note.user', 'user')
++				.where('note.visibility = :visibility', { visibility: 'public' })
++				.andWhere('note.localOnly = false')
++				.orderBy('note.createdAt', 'DESC')
++				.take(100);
++
++			rawNotes = await qb.getMany();
++		}
++
++		// 3. Filter hard exclusions: blocks, mutes, inactive authors, muted topics, CH03 malicious links
++		const candidateNotes: CandidateNote[] = [];
++		const mutedTopicSet = new Set(pref.mutedTopics.map(normalizeTopic));
++
++		// Check CH03 malicious links for candidate notes
++		const noteIds = rawNotes.map(n => n.id);
++		const maliciousNoteIds = new Set<string>();
++		if (this.flaggedLinksRepository && noteIds.length > 0) {
++			const flagged = await this.flaggedLinksRepository.find({
++				where: {
++					noteId: In(noteIds),
++					resolved: false,
++					riskCategory: 'malicious',
++				},
++			});
++			for (const f of flagged) {
++				if (f.noteId) maliciousNoteIds.add(f.noteId);
++			}
++		}
++
++		for (const note of rawNotes) {
++			// Inaccessible visibility check (must be public)
++			if (note.visibility !== 'public') continue;
++
++			// Author eligibility checks
++			if (blockedUserIds.has(note.userId) || blockingUserIds.has(note.userId)) continue;
++			if (mutedUserIds.has(note.userId)) continue;
++			if (note.user && (note.user.isDeleted || (note.user as any).isSuspended)) continue;
++
++			// CH03 malicious link exclusion
++			if (maliciousNoteIds.has(note.id)) continue;
++
++			// Extract hashtags
++			const hashtags = extractHashtags(note);
++
++			// Exclude if any hashtag matches muted topics
++			if (hashtags.some(t => mutedTopicSet.has(t))) continue;
++
++			candidateNotes.push({
++				note,
++				hashtags,
++				authorFollowed: followingUserIds.has(note.userId),
++				userInteracted: false,
++			});
++		}
++
++		// 4. Mark user interactions (reactions/favorites)
++		if (candidateNotes.length > 0) {
++			const cNoteIds = candidateNotes.map(c => c.note.id);
++			const interactedIds = new Set<string>();
++
++			if (this.noteReactionsRepository) {
++				const reactions = await this.noteReactionsRepository.find({
++					where: { userId, noteId: In(cNoteIds) },
++				});
++				for (const r of reactions) interactedIds.add(r.noteId);
++			}
++
++			if (this.noteFavoritesRepository) {
++				const favs = await this.noteFavoritesRepository.find({
++					where: { userId, noteId: In(cNoteIds) },
++				});
++				for (const f of favs) interactedIds.add(f.noteId);
++			}
++
++			for (const cand of candidateNotes) {
++				if (interactedIds.has(cand.note.id)) {
++					cand.userInteracted = true;
++				}
++			}
++		}
++
++		// 5. Select ranking strategy
++		const strategy = mode === 'chronological' ? this.chronologicalStrategy : this.personalizedStrategy;
++
++		const userProfile: RecommendationUserProfile = {
++			userId,
++			mutedTopics: pref.mutedTopics,
++			reducedAuthors: pref.reducedAuthors,
++			preferredTopics: pref.preferredTopics,
++			topicWeights: pref.topicWeights,
++			followingUserIds,
++		};
++
++		// 6. Score and rank candidates
++		const scored = strategy.scoreCandidates(candidateNotes, userProfile, now);
++
++		// Store in cache
++		this.cache.set(cacheKey, { timestamp: now.getTime(), results: scored });
++
++		// 7. Paginate
++		return this.paginateRecommendations(scored, limit, options.sinceId, options.untilId);
++	}
++
++	private paginateRecommendations(
++		list: ScoredRecommendation[],
++		limit: number,
++		sinceId?: string,
++		untilId?: string,
++	): ScoredRecommendation[] {
++		let result = [...list];
++
++		if (untilId) {
++			const index = result.findIndex(r => r.note.id === untilId);
++			if (index !== -1) {
++				result = result.slice(index + 1);
++			}
++		}
++
++		if (sinceId) {
++			const index = result.findIndex(r => r.note.id === sinceId);
++			if (index !== -1) {
++				result = result.slice(0, index);
++			}
++		}
++
++		return result.slice(0, limit);
++	}
++}
+diff --git a/packages/backend/src/core/recommendation/RecommendationStrategy.ts b/packages/backend/src/core/recommendation/RecommendationStrategy.ts
+new file mode 100644
+index 0000000000..462ca68418
+--- /dev/null
++++ b/packages/backend/src/core/recommendation/RecommendationStrategy.ts
+@@ -0,0 +1,280 @@
++/*
++ * SPDX-FileCopyrightText: syuilo and misskey-project
++ * SPDX-License-Identifier: AGPL-3.0-only
++ */
++
++import type { MiNote } from '@/models/Note.js';
++
++export interface CandidateNote {
++	note: MiNote;
++	hashtags: string[];
++	authorFollowed?: boolean;
++	userInteracted?: boolean;
++}
++
++export interface RecommendationUserProfile {
++	userId: string;
++	mutedTopics: string[];
++	reducedAuthors: string[];
++	preferredTopics: string[];
++	topicWeights: Record<string, number>;
++	followingUserIds?: Set<string>;
++}
++
++export type ExplanationReason =
++	| 'explicit_topic'
++	| 'inferred_topic'
++	| 'followed_author'
++	| 'saved_interaction'
++	| 'trending_recency';
++
++export interface ScoredRecommendation {
++	note: MiNote;
++	score: number;
++	explanation: string;
++	principalReason: ExplanationReason;
++	scoreBreakdown: {
++		interestScore: number;
++		interactionScore: number;
++		recencyScore: number;
++		diversityPenalty: number;
++	};
++}
++
++export interface RecommendationRankingStrategy {
++	readonly name: string;
++	scoreCandidates(
++		candidates: CandidateNote[],
++		profile: RecommendationUserProfile,
++		now?: Date,
++	): ScoredRecommendation[];
++}
++
++function normalizeTopic(topic: string): string {
++	return topic.trim().toLowerCase().replace(/^#/, '');
++}
++
++/**
++ * Deterministic weighted scoring strategy for For You feed:
++ * score = interestRelevance + interactionRelevance + recencyContribution - diversityPenalty
++ */
++export class WeightedPersonalizedRankingStrategy implements RecommendationRankingStrategy {
++	public readonly name = 'weighted-personalized';
++
++	public scoreCandidates(
++		candidates: CandidateNote[],
++		profile: RecommendationUserProfile,
++		now: Date = new Date(),
++	): ScoredRecommendation[] {
++		const mutedSet = new Set(profile.mutedTopics.map(normalizeTopic));
++		const reducedAuthorsSet = new Set(profile.reducedAuthors);
++		const preferredSet = new Set(profile.preferredTopics.map(normalizeTopic));
++
++		const normalizedWeights: Record<string, number> = {};
++		for (const [t, w] of Object.entries(profile.topicWeights ?? {})) {
++			normalizedWeights[normalizeTopic(t)] = w;
++		}
++
++		// 1. Initial scoring for each candidate
++		interface ScoredInitial {
++			candidate: CandidateNote;
++			interestScore: number;
++			interactionScore: number;
++			recencyScore: number;
++			authorReductionPenalty: number;
++			matchedExplicitTopic?: string;
++			matchedInferredTopic?: string;
++		}
++
++		const initialList: ScoredInitial[] = [];
++
++		for (const cand of candidates) {
++			const note = cand.note;
++			const candTopics = cand.hashtags.map(normalizeTopic);
++
++			// Hard mute check: If any topic matches a muted topic, exclude completely!
++			if (candTopics.some(t => mutedSet.has(t))) {
++				continue;
++			}
++
++			// Interest relevance
++			let interestScore = 0;
++			let matchedExplicitTopic: string | undefined;
++			let matchedInferredTopic: string | undefined;
++
++			for (const topic of candTopics) {
++				if (preferredSet.has(topic)) {
++					interestScore += 40;
++					if (!matchedExplicitTopic) matchedExplicitTopic = topic;
++				}
++				if (normalizedWeights[topic]) {
++					const w = normalizedWeights[topic];
++					interestScore += Math.min(30, Math.max(0, w * 10));
++					if (!matchedInferredTopic) matchedInferredTopic = topic;
++				}
++			}
++
++			// Interaction relevance
++			let interactionScore = 0;
++			const isAuthorFollowed = cand.authorFollowed || (profile.followingUserIds?.has(note.userId) ?? false);
++			if (isAuthorFollowed) {
++				interactionScore += 25;
++			}
++			if (cand.userInteracted) {
++				interactionScore += 15;
++			}
++
++			// Recency contribution: exponential decay over 24 hours
++			const ageHours = Math.max(0, (now.getTime() - new Date(note.createdAt).getTime()) / (1000 * 60 * 60));
++			const recencyScore = 30 * Math.exp(-ageHours / 24);
++
++			// Author reduction policy: strong penalty (-100) if reduced
++			const authorReductionPenalty = reducedAuthorsSet.has(note.userId) ? 100 : 0;
++
++			initialList.push({
++				candidate: cand,
++				interestScore,
++				interactionScore,
++				recencyScore,
++				authorReductionPenalty,
++				matchedExplicitTopic,
++				matchedInferredTopic,
++			});
++		}
++
++		// 2. Iterative diversity selection: select top post while adjusting diversity penalties
++		const results: ScoredRecommendation[] = [];
++		const authorCounts = new Map<string, number>();
++		const topicCounts = new Map<string, number>();
++		const remaining = [...initialList];
++
++		while (remaining.length > 0) {
++			// Compute effective dynamic score with diversity penalties for remaining candidates
++			let bestIndex = -1;
++			let bestScore = -Infinity;
++			let bestBreakdown = { interestScore: 0, interactionScore: 0, recencyScore: 0, diversityPenalty: 0 };
++			let bestInitial: ScoredInitial | null = null;
++
++			for (let i = 0; i < remaining.length; i++) {
++				const item = remaining[i];
++				const note = item.candidate.note;
++				const authorCount = authorCounts.get(note.userId) ?? 0;
++
++				let candTopicPenalty = 0;
++				for (const t of item.candidate.hashtags.map(normalizeTopic)) {
++					candTopicPenalty += (topicCounts.get(t) ?? 0) * 5;
++				}
++
++				const diversityPenalty = (authorCount * 20) + candTopicPenalty + item.authorReductionPenalty;
++				const currentScore = item.interestScore + item.interactionScore + item.recencyScore - diversityPenalty;
++
++				// Tie-breaking: score > createdAt > id
++				let isBetter = false;
++				if (bestIndex === -1) {
++					isBetter = true;
++				} else if (currentScore > bestScore) {
++					isBetter = true;
++				} else if (Math.abs(currentScore - bestScore) < 1e-6) {
++					const curDate = new Date(note.createdAt).getTime();
++					const bestDate = new Date(remaining[bestIndex].candidate.note.createdAt).getTime();
++					if (curDate > bestDate) {
++						isBetter = true;
++					} else if (curDate === bestDate && note.id.localeCompare(remaining[bestIndex].candidate.note.id) > 0) {
++						isBetter = true;
++					}
++				}
++
++				if (isBetter) {
++					bestIndex = i;
++					bestScore = currentScore;
++					bestBreakdown = {
++						interestScore: item.interestScore,
++						interactionScore: item.interactionScore,
++						recencyScore: item.recencyScore,
++						diversityPenalty,
++					};
++					bestInitial = item;
++				}
++			}
++
++			if (bestIndex === -1 || !bestInitial) break;
++
++			const chosen = remaining.splice(bestIndex, 1)[0];
++			const chosenNote = chosen.candidate.note;
++
++			// Update diversity counts
++			authorCounts.set(chosenNote.userId, (authorCounts.get(chosenNote.userId) ?? 0) + 1);
++			for (const t of chosen.candidate.hashtags.map(normalizeTopic)) {
++				topicCounts.set(t, (topicCounts.get(t) ?? 0) + 1);
++			}
++
++			// Generate explainable reason
++			let explanation = 'Recommended based on recent popular activity';
++			let principalReason: ExplanationReason = 'trending_recency';
++
++			if (chosen.matchedExplicitTopic) {
++				explanation = `Recommended because you follow #${chosen.matchedExplicitTopic}`;
++				principalReason = 'explicit_topic';
++			} else if (chosen.matchedInferredTopic && chosen.interestScore > chosen.interactionScore) {
++				explanation = `Recommended because you frequently interact with posts about #${chosen.matchedInferredTopic}`;
++				principalReason = 'inferred_topic';
++			} else if (chosen.candidate.userInteracted) {
++				explanation = 'Recommended because you previously interacted with this or similar content';
++				principalReason = 'saved_interaction';
++			} else if (chosen.candidate.authorFollowed || profile.followingUserIds?.has(chosenNote.userId)) {
++				const authorName = (chosenNote as any).user?.username ? `@${(chosenNote as any).user.username}` : 'an author you follow';
++				explanation = `Recommended because you follow ${authorName}`;
++				principalReason = 'followed_author';
++			}
++
++			results.push({
++				note: chosenNote,
++				score: Number(bestScore.toFixed(4)),
++				explanation,
++				principalReason,
++				scoreBreakdown: bestBreakdown,
++			});
++		}
++
++		return results;
++	}
++}
++
++/**
++ * Chronological ranking strategy for fallback / opt-out
++ */
++export class ChronologicalRankingStrategy implements RecommendationRankingStrategy {
++	public readonly name = 'chronological';
++
++	public scoreCandidates(
++		candidates: CandidateNote[],
++		profile: RecommendationUserProfile,
++	): ScoredRecommendation[] {
++		const mutedSet = new Set(profile.mutedTopics.map(normalizeTopic));
++
++		const filtered = candidates.filter(cand => {
++			const candTopics = cand.hashtags.map(normalizeTopic);
++			return !candTopics.some(t => mutedSet.has(t));
++		});
++
++		// Sort by createdAt desc, tie-break by id desc
++		filtered.sort((a, b) => {
++			const diff = new Date(b.note.createdAt).getTime() - new Date(a.note.createdAt).getTime();
++			if (diff !== 0) return diff;
++			return b.note.id.localeCompare(a.note.id);
++		});
++
++		return filtered.map(cand => ({
++			note: cand.note,
++			score: new Date(cand.note.createdAt).getTime(),
++			explanation: 'Chronological timeline order',
++			principalReason: 'trending_recency',
++			scoreBreakdown: {
++				interestScore: 0,
++				interactionScore: 0,
++				recencyScore: 100,
++				diversityPenalty: 0,
++			},
++		}));
++	}
++}
+diff --git a/packages/backend/src/di-symbols.ts b/packages/backend/src/di-symbols.ts
+index cee4244ae5..8e81cbf78a 100644
+--- a/packages/backend/src/di-symbols.ts
++++ b/packages/backend/src/di-symbols.ts
+@@ -95,5 +95,6 @@ export const DI = {
+ 	eventRsvpsRepository: Symbol('eventRsvpsRepository'),
+ 	audioTranscriptsRepository: Symbol('audioTranscriptsRepository'),
+ 	flaggedLinksRepository: Symbol('flaggedLinksRepository'),
++	recommendationPreferencesRepository: Symbol('recommendationPreferencesRepository'),
+ 	//#endregion
+ };
+diff --git a/packages/backend/src/models/RecommendationPreference.ts b/packages/backend/src/models/RecommendationPreference.ts
+new file mode 100644
+index 0000000000..c9c84ce4b8
+--- /dev/null
++++ b/packages/backend/src/models/RecommendationPreference.ts
+@@ -0,0 +1,60 @@
++/*
++ * SPDX-FileCopyrightText: syuilo and misskey-project
++ * SPDX-License-Identifier: AGPL-3.0-only
++ */
++
++import { PrimaryColumn, Entity, Index, JoinColumn, Column, OneToOne } from 'typeorm';
++import { id } from './util/id.js';
++import { MiUser } from './User.js';
++
++@Entity('recommendation_preference')
++export class MiRecommendationPreference {
++	@PrimaryColumn(id())
++	public userId: MiUser['id'];
++
++	@OneToOne(() => MiUser, {
++		onDelete: 'CASCADE',
++	})
++	@JoinColumn()
++	public user: MiUser;
++
++	@Column('varchar', {
++		length: 128,
++		array: true,
++		default: '{}',
++		comment: 'Explicitly muted topics / hashtags excluded from recommendations.',
++	})
++	public mutedTopics: string[];
++
++	@Column('varchar', {
++		length: 32,
++		array: true,
++		default: '{}',
++		comment: 'Author user IDs whose recommendations should be heavily suppressed.',
++	})
++	public reducedAuthors: string[];
++
++	@Column('varchar', {
++		length: 128,
++		array: true,
++		default: '{}',
++		comment: 'Explicit user-selected topics of interest.',
++	})
++	public preferredTopics: string[];
++
++	@Column('jsonb', {
++		default: {},
++		comment: 'Inferred topic weights derived from interactions.',
++	})
++	public topicWeights: Record<string, number>;
++
++	@Column('timestamp with time zone', {
++		comment: 'The created date.',
++	})
++	public createdAt: Date;
++
++	@Column('timestamp with time zone', {
++		comment: 'The updated date.',
++	})
++	public updatedAt: Date;
++}
+diff --git a/packages/backend/src/models/RepositoryModule.ts b/packages/backend/src/models/RepositoryModule.ts
+index ff7acd7fd6..94b6322c94 100644
+--- a/packages/backend/src/models/RepositoryModule.ts
++++ b/packages/backend/src/models/RepositoryModule.ts
+@@ -32,6 +32,7 @@ import {
+ 	MiEventRsvp,
+ 	MiAudioTranscript,
+ 	MiFlaggedLink,
++	MiRecommendationPreference,
+ 	MiFlash,
+ 	MiFlashLike,
+ 	MiFollowing,
+@@ -572,6 +573,12 @@ const $flaggedLinksRepository: Provider = {
+ 	inject: [DI.db],
+ };
+ 
++const $recommendationPreferencesRepository: Provider = {
++	provide: DI.recommendationPreferencesRepository,
++	useFactory: (db: DataSource) => db.getRepository(MiRecommendationPreference).extend(miRepository as MiRepository<MiRecommendationPreference>),
++	inject: [DI.db],
++};
++
+ @Module({
+ 	imports: [],
+ 	providers: [
+@@ -655,6 +662,7 @@ const $flaggedLinksRepository: Provider = {
+ 		$eventRsvpsRepository,
+ 		$audioTranscriptsRepository,
+ 		$flaggedLinksRepository,
++		$recommendationPreferencesRepository,
+ 	],
+ 	exports: [
+ 		$usersRepository,
+@@ -737,6 +745,7 @@ const $flaggedLinksRepository: Provider = {
+ 		$eventRsvpsRepository,
+ 		$audioTranscriptsRepository,
+ 		$flaggedLinksRepository,
++		$recommendationPreferencesRepository,
+ 	],
+ })
+ export class RepositoryModule {
+diff --git a/packages/backend/src/models/_.ts b/packages/backend/src/models/_.ts
+index a596fd4734..a7d97614c3 100644
+--- a/packages/backend/src/models/_.ts
++++ b/packages/backend/src/models/_.ts
+@@ -39,6 +39,7 @@ import { MiEvent } from '@/models/Event.js';
+ import { MiEventRsvp } from '@/models/EventRsvp.js';
+ import { MiAudioTranscript } from '@/models/AudioTranscript.js';
+ import { MiFlaggedLink } from '@/models/FlaggedLink.js';
++import { MiRecommendationPreference } from '@/models/RecommendationPreference.js';
+ import { MiFlash } from '@/models/Flash.js';
+ import { MiFlashLike } from '@/models/FlashLike.js';
+ import { MiFollowing } from '@/models/Following.js';
+@@ -179,6 +180,7 @@ export {
+ 	MiReversiGame,
+ 	MiAudioTranscript,
+ 	MiFlaggedLink,
++	MiRecommendationPreference,
+ };
+ 
+ export type AbuseUserReportsRepository = Repository<MiAbuseUserReport> & MiRepository<MiAbuseUserReport>;
+@@ -263,3 +265,4 @@ export type EventsRepository = Repository<MiEvent> & MiRepository<MiEvent>;
+ export type EventRsvpsRepository = Repository<MiEventRsvp> & MiRepository<MiEventRsvp>;
+ export type AudioTranscriptsRepository = Repository<MiAudioTranscript> & MiRepository<MiAudioTranscript>;
+ export type FlaggedLinksRepository = Repository<MiFlaggedLink> & MiRepository<MiFlaggedLink>;
++export type RecommendationPreferencesRepository = Repository<MiRecommendationPreference> & MiRepository<MiRecommendationPreference>;
+diff --git a/packages/backend/src/postgres.ts b/packages/backend/src/postgres.ts
+index 11935303e8..0f9a4a0e59 100644
+--- a/packages/backend/src/postgres.ts
++++ b/packages/backend/src/postgres.ts
+@@ -35,6 +35,7 @@ import { MiEvent } from '@/models/Event.js';
+ import { MiEventRsvp } from '@/models/EventRsvp.js';
+ import { MiAudioTranscript } from '@/models/AudioTranscript.js';
+ import { MiFlaggedLink } from '@/models/FlaggedLink.js';
++import { MiRecommendationPreference } from '@/models/RecommendationPreference.js';
+ import { MiFollowing } from '@/models/Following.js';
+ import { MiFollowRequest } from '@/models/FollowRequest.js';
+ import { MiGalleryLike } from '@/models/GalleryLike.js';
+@@ -223,6 +224,7 @@ export const entities = [
+ 	MiEventRsvp,
+ 	MiAudioTranscript,
+ 	MiFlaggedLink,
++	MiRecommendationPreference,
+ 	MiHashtag,
+ 	MiSwSubscription,
+ 	MiSystemAccount,
+diff --git a/packages/backend/src/server/api/endpoint-list.ts b/packages/backend/src/server/api/endpoint-list.ts
+index 6c34550270..1cb9badcce 100644
+--- a/packages/backend/src/server/api/endpoint-list.ts
++++ b/packages/backend/src/server/api/endpoint-list.ts
+@@ -462,3 +462,7 @@ export * as 'chat/rooms/invitations/outbox' from './endpoints/chat/rooms/invitat
+ export * as 'chat/history' from './endpoints/chat/history.js';
+ export * as 'chat/read-all' from './endpoints/chat/read-all.js';
+ export * as 'v2/admin/emoji/list' from './endpoints/v2/admin/emoji/list.js';
++export * as 'recommendations/for-you' from './endpoints/recommendations/for-you.js';
++export * as 'recommendations/preferences' from './endpoints/recommendations/preferences.js';
++export * as 'recommendations/preferences/update' from './endpoints/recommendations/preferences/update.js';
++export * as 'recommendations/preferences/reset' from './endpoints/recommendations/preferences/reset.js';
+diff --git a/packages/backend/src/server/api/endpoints/recommendations/for-you.ts b/packages/backend/src/server/api/endpoints/recommendations/for-you.ts
+new file mode 100644
+index 0000000000..cea1651b9e
+--- /dev/null
++++ b/packages/backend/src/server/api/endpoints/recommendations/for-you.ts
+@@ -0,0 +1,73 @@
++/*
++ * SPDX-FileCopyrightText: syuilo and misskey-project
++ * SPDX-License-Identifier: AGPL-3.0-only
++ */
++
++import { Injectable } from '@nestjs/common';
++import { Endpoint } from '@/server/api/endpoint-base.js';
++import { RecommendationService } from '@/core/RecommendationService.js';
++import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
++
++export const meta = {
++	tags: ['recommendations', 'notes'],
++	requireCredential: true,
++	kind: 'read:account',
++	res: {
++		type: 'array',
++		optional: false,
++		nullable: false,
++		items: {
++			type: 'object',
++			optional: false,
++			nullable: false,
++			ref: 'Note',
++		},
++	},
++} as const;
++
++export const paramDef = {
++	type: 'object',
++	properties: {
++		limit: { type: 'integer', minimum: 1, maximum: 100, default: 10 },
++		mode: { type: 'string', enum: ['personalized', 'chronological'], default: 'personalized' },
++		sinceId: { type: 'string', format: 'misskey:id', nullable: true },
++		untilId: { type: 'string', format: 'misskey:id', nullable: true },
++	},
++} as const;
++
++@Injectable()
++export default class extends Endpoint<typeof meta, typeof paramDef> {
++	constructor(
++		private recommendationService: RecommendationService,
++		private noteEntityService: NoteEntityService,
++	) {
++		super(meta, paramDef, async (ps, me) => {
++			const recommendations = await this.recommendationService.getRecommendations(me.id, {
++				limit: ps.limit,
++				mode: ps.mode as 'personalized' | 'chronological',
++				sinceId: ps.sinceId ?? undefined,
++				untilId: ps.untilId ?? undefined,
++			});
++
++			if (recommendations.length === 0) {
++				return [];
++			}
++
++			const notes = recommendations.map(r => r.note);
++			const packedNotes = await this.noteEntityService.packMany(notes, me);
++
++			const recMap = new Map(recommendations.map(r => [r.note.id, r]));
++
++			for (const packed of packedNotes) {
++				const rec = recMap.get(packed.id);
++				if (rec) {
++					(packed as any).recommendationReason = rec.explanation;
++					(packed as any).recommendationScore = rec.score;
++					(packed as any).principalReason = rec.principalReason;
++				}
++			}
++
++			return packedNotes;
++		});
++	}
++}
+diff --git a/packages/backend/src/server/api/endpoints/recommendations/preferences.ts b/packages/backend/src/server/api/endpoints/recommendations/preferences.ts
+new file mode 100644
+index 0000000000..3a480d7376
+--- /dev/null
++++ b/packages/backend/src/server/api/endpoints/recommendations/preferences.ts
+@@ -0,0 +1,59 @@
++/*
++ * SPDX-FileCopyrightText: syuilo and misskey-project
++ * SPDX-License-Identifier: AGPL-3.0-only
++ */
++
++import { Injectable } from '@nestjs/common';
++import { Endpoint } from '@/server/api/endpoint-base.js';
++import { RecommendationService } from '@/core/RecommendationService.js';
++
++export const meta = {
++	tags: ['recommendations'],
++	requireCredential: true,
++	kind: 'read:account',
++	res: {
++		type: 'object',
++		optional: false,
++		nullable: false,
++		properties: {
++			mutedTopics: {
++				type: 'array',
++				items: { type: 'string' },
++			},
++			reducedAuthors: {
++				type: 'array',
++				items: { type: 'string' },
++			},
++			preferredTopics: {
++				type: 'array',
++				items: { type: 'string' },
++			},
++			topicWeights: {
++				type: 'object',
++			},
++		},
++		required: ['mutedTopics', 'reducedAuthors', 'preferredTopics'],
++	},
++} as const;
++
++export const paramDef = {
++	type: 'object',
++	properties: {},
++} as const;
++
++@Injectable()
++export default class extends Endpoint<typeof meta, typeof paramDef> {
++	constructor(
++		private recommendationService: RecommendationService,
++	) {
++		super(meta, paramDef, async (_ps, me) => {
++			const pref = await this.recommendationService.getPreferences(me.id);
++			return {
++				mutedTopics: pref.mutedTopics ?? [],
++				reducedAuthors: pref.reducedAuthors ?? [],
++				preferredTopics: pref.preferredTopics ?? [],
++				topicWeights: pref.topicWeights ?? {},
++			};
++		});
++	}
++}
+diff --git a/packages/backend/src/server/api/endpoints/recommendations/preferences/reset.ts b/packages/backend/src/server/api/endpoints/recommendations/preferences/reset.ts
+new file mode 100644
+index 0000000000..7a5698fc36
+--- /dev/null
++++ b/packages/backend/src/server/api/endpoints/recommendations/preferences/reset.ts
+@@ -0,0 +1,61 @@
++/*
++ * SPDX-FileCopyrightText: syuilo and misskey-project
++ * SPDX-License-Identifier: AGPL-3.0-only
++ */
++
++import { Injectable } from '@nestjs/common';
++import { Endpoint } from '@/server/api/endpoint-base.js';
++import { RecommendationService } from '@/core/RecommendationService.js';
++
++export const meta = {
++	tags: ['recommendations'],
++	requireCredential: true,
++	kind: 'write:account',
++	res: {
++		type: 'object',
++		optional: false,
++		nullable: false,
++		properties: {
++			success: { type: 'boolean' },
++			mutedTopics: {
++				type: 'array',
++				items: { type: 'string' },
++			},
++			reducedAuthors: {
++				type: 'array',
++				items: { type: 'string' },
++			},
++			preferredTopics: {
++				type: 'array',
++				items: { type: 'string' },
++			},
++			topicWeights: {
++				type: 'object',
++			},
++		},
++		required: ['success', 'mutedTopics', 'reducedAuthors', 'preferredTopics'],
++	},
++} as const;
++
++export const paramDef = {
++	type: 'object',
++	properties: {},
++} as const;
++
++@Injectable()
++export default class extends Endpoint<typeof meta, typeof paramDef> {
++	constructor(
++		private recommendationService: RecommendationService,
++	) {
++		super(meta, paramDef, async (_ps, me) => {
++			const reset = await this.recommendationService.resetProfile(me.id);
++			return {
++				success: true,
++				mutedTopics: reset.mutedTopics ?? [],
++				reducedAuthors: reset.reducedAuthors ?? [],
++				preferredTopics: reset.preferredTopics ?? [],
++				topicWeights: reset.topicWeights ?? {},
++			};
++		});
++	}
++}
+diff --git a/packages/backend/src/server/api/endpoints/recommendations/preferences/update.ts b/packages/backend/src/server/api/endpoints/recommendations/preferences/update.ts
+new file mode 100644
+index 0000000000..08d229984e
+--- /dev/null
++++ b/packages/backend/src/server/api/endpoints/recommendations/preferences/update.ts
+@@ -0,0 +1,85 @@
++/*
++ * SPDX-FileCopyrightText: syuilo and misskey-project
++ * SPDX-License-Identifier: AGPL-3.0-only
++ */
++
++import { Injectable } from '@nestjs/common';
++import { Endpoint } from '@/server/api/endpoint-base.js';
++import { RecommendationService } from '@/core/RecommendationService.js';
++
++export const meta = {
++	tags: ['recommendations'],
++	requireCredential: true,
++	kind: 'write:account',
++	res: {
++		type: 'object',
++		optional: false,
++		nullable: false,
++		properties: {
++			mutedTopics: {
++				type: 'array',
++				items: { type: 'string' },
++			},
++			reducedAuthors: {
++				type: 'array',
++				items: { type: 'string' },
++			},
++			preferredTopics: {
++				type: 'array',
++				items: { type: 'string' },
++			},
++			topicWeights: {
++				type: 'object',
++			},
++		},
++		required: ['mutedTopics', 'reducedAuthors', 'preferredTopics'],
++	},
++} as const;
++
++export const paramDef = {
++	type: 'object',
++	properties: {
++		mutedTopics: {
++			type: 'array',
++			items: { type: 'string' },
++			nullable: true,
++		},
++		reducedAuthors: {
++			type: 'array',
++			items: { type: 'string' },
++			nullable: true,
++		},
++		preferredTopics: {
++			type: 'array',
++			items: { type: 'string' },
++			nullable: true,
++		},
++		topicWeights: {
++			type: 'object',
++			nullable: true,
++		},
++	},
++} as const;
++
++@Injectable()
++export default class extends Endpoint<typeof meta, typeof paramDef> {
++	constructor(
++		private recommendationService: RecommendationService,
++	) {
++		super(meta, paramDef, async (ps, me) => {
++			const updated = await this.recommendationService.updatePreferences(me.id, {
++				mutedTopics: ps.mutedTopics ?? undefined,
++				reducedAuthors: ps.reducedAuthors ?? undefined,
++				preferredTopics: ps.preferredTopics ?? undefined,
++				topicWeights: (ps.topicWeights as Record<string, number>) ?? undefined,
++			});
++
++			return {
++				mutedTopics: updated.mutedTopics ?? [],
++				reducedAuthors: updated.reducedAuthors ?? [],
++				preferredTopics: updated.preferredTopics ?? [],
++				topicWeights: updated.topicWeights ?? {},
++			};
++		});
++	}
++}
+diff --git a/packages/backend/test/unit/RecommendationService.test.ts b/packages/backend/test/unit/RecommendationService.test.ts
+new file mode 100644
+index 0000000000..fc57f438bf
+--- /dev/null
++++ b/packages/backend/test/unit/RecommendationService.test.ts
+@@ -0,0 +1,552 @@
++/*
++ * SPDX-FileCopyrightText: syuilo and misskey-project
++ * SPDX-License-Identifier: AGPL-3.0-only
++ */
++
++import { describe, beforeEach, test, expect, vi } from 'vitest';
++import { RecommendationService, normalizeTopic, extractHashtags } from '@/core/RecommendationService.js';
++import {
++	WeightedPersonalizedRankingStrategy,
++	ChronologicalRankingStrategy,
++	type CandidateNote,
++	type RecommendationUserProfile,
++} from '@/core/recommendation/RecommendationStrategy.js';
++import type {
++	RecommendationPreferencesRepository,
++	NotesRepository,
++	UsersRepository,
++	FollowingsRepository,
++	MutingsRepository,
++	BlockingsRepository,
++	NoteReactionsRepository,
++	NoteFavoritesRepository,
++	FlaggedLinksRepository,
++	MiNote,
++	MiUser,
++} from '@/models/_.js';
++import { MiRecommendationPreference } from '@/models/RecommendationPreference.js';
++
++describe('RecommendationService (CH04)', () => {
++	let service: RecommendationService;
++	let prefStore: Map<string, MiRecommendationPreference>;
++	let notesStore: MiNote[];
++	let followingsStore: { followerId: string; followeeId: string }[];
++	let blockingsStore: { blockerId: string; blockeeId: string }[];
++	let mutingsStore: { muterId: string; muteeId: string }[];
++	let reactionsStore: { userId: string; noteId: string }[];
++	let favoritesStore: { userId: string; noteId: string }[];
++	let flaggedLinksStore: any[];
++
++	let prefRepoMock: Partial<RecommendationPreferencesRepository>;
++	let notesRepoMock: Partial<NotesRepository>;
++	let followingsRepoMock: Partial<FollowingsRepository>;
++	let blockingsRepoMock: Partial<BlockingsRepository>;
++	let mutingsRepoMock: Partial<MutingsRepository>;
++	let reactionsRepoMock: Partial<NoteReactionsRepository>;
++	let favoritesRepoMock: Partial<NoteFavoritesRepository>;
++	let flaggedRepoMock: Partial<FlaggedLinksRepository>;
++
++	function createMockNote(id: string, authorId: string, tags: string[], text: string, createdAt: Date, visibility = 'public'): MiNote {
++		return {
++			id,
++			userId: authorId,
++			visibility,
++			localOnly: false,
++			text,
++			tags,
++			createdAt,
++			updatedAt: createdAt,
++			user: {
++				id: authorId,
++				username: `user_${authorId}`,
++				isDeleted: false,
++				isSuspended: false,
++			} as MiUser,
++		} as unknown as MiNote;
++	}
++
++	beforeEach(() => {
++		prefStore = new Map();
++		notesStore = [];
++		followingsStore = [];
++		blockingsStore = [];
++		mutingsStore = [];
++		reactionsStore = [];
++		favoritesStore = [];
++		flaggedLinksStore = [];
++
++		prefRepoMock = {
++			findOneBy: vi.fn(async (query: any) => prefStore.get(query.userId) ?? null),
++			save: vi.fn(async (entity: any) => {
++				prefStore.set(entity.userId, { ...entity });
++				return entity;
++			}),
++		};
++
++		notesRepoMock = {
++			createQueryBuilder: vi.fn(() => {
++				const query: any = {
++					leftJoinAndSelect: vi.fn().mockReturnThis(),
++					where: vi.fn().mockReturnThis(),
++					andWhere: vi.fn().mockReturnThis(),
++					orderBy: vi.fn().mockReturnThis(),
++					take: vi.fn().mockReturnThis(),
++					getMany: vi.fn(async () => [...notesStore]),
++				};
++				return query;
++			}),
++		};
++
++		followingsRepoMock = {
++			findBy: vi.fn(async (query: any) => {
++				return followingsStore.filter(f => f.followerId === query.followerId);
++			}),
++		};
++
++		blockingsRepoMock = {
++			findBy: vi.fn(async (query: any) => {
++				if (query.blockerId) return blockingsStore.filter(b => b.blockerId === query.blockerId);
++				if (query.blockeeId) return blockingsStore.filter(b => b.blockeeId === query.blockeeId);
++				return [];
++			}),
++		};
++
++		mutingsRepoMock = {
++			findBy: vi.fn(async (query: any) => {
++				return mutingsStore.filter(m => m.muterId === query.muterId);
++			}),
++		};
++
++		reactionsRepoMock = {
++			find: vi.fn(async (query: any) => {
++				const noteIds = query?.where?.noteId?._value ?? [];
++				return reactionsStore.filter(r => r.userId === query.where.userId && (noteIds.length === 0 || noteIds.includes(r.noteId)));
++			}),
++		};
++
++		favoritesRepoMock = {
++			find: vi.fn(async (query: any) => {
++				const noteIds = query?.where?.noteId?._value ?? [];
++				return favoritesStore.filter(f => f.userId === query.where.userId && (noteIds.length === 0 || noteIds.includes(f.noteId)));
++			}),
++		};
++
++		flaggedRepoMock = {
++			find: vi.fn(async (query: any) => {
++				return flaggedLinksStore.filter(f => !f.resolved && f.riskCategory === 'malicious');
++			}),
++		};
++
++		service = new RecommendationService(
++			prefRepoMock as any,
++			notesRepoMock as any,
++			undefined,
++			followingsRepoMock as any,
++			mutingsRepoMock as any,
++			blockingsRepoMock as any,
++			reactionsRepoMock as any,
++			favoritesRepoMock as any,
++			flaggedRepoMock as any,
++		);
++	});
++
++	describe('15.1 Ranking algorithm & strategies', () => {
++		test('outranks unrelated post when post matches explicit preferred topic', () => {
++			const strategy = new WeightedPersonalizedRankingStrategy();
++			const now = new Date('2026-10-11T12:00:00Z');
++			const noteA = createMockNote('note_a', 'author1', ['typescript'], 'Learning #typescript', now);
++			const noteB = createMockNote('note_b', 'author2', ['gardening'], 'Spring #gardening', now);
++
++			const candidates: CandidateNote[] = [
++				{ note: noteB, hashtags: ['gardening'] },
++				{ note: noteA, hashtags: ['typescript'] },
++			];
++
++			const profile: RecommendationUserProfile = {
++				userId: 'user1',
++				preferredTopics: ['typescript'],
++				mutedTopics: [],
++				reducedAuthors: [],
++				topicWeights: {},
++			};
++
++			const ranked = strategy.scoreCandidates(candidates, profile, now);
++			expect(ranked).toHaveLength(2);
++			expect(ranked[0].note.id).toBe('note_a');
++			expect(ranked[0].principalReason).toBe('explicit_topic');
++			expect(ranked[0].score).toBeGreaterThan(ranked[1].score);
++		});
++
++		test('inferred topic weight boosts ranking proportionally', () => {
++			const strategy = new WeightedPersonalizedRankingStrategy();
++			const now = new Date('2026-10-11T12:00:00Z');
++			const noteA = createMockNote('note_a', 'author1', ['tech'], 'Post on #tech', now);
++			const noteB = createMockNote('note_b', 'author2', ['general'], 'General post', now);
++
++			const candidates: CandidateNote[] = [
++				{ note: noteB, hashtags: ['general'] },
++				{ note: noteA, hashtags: ['tech'] },
++			];
++
++			const profile: RecommendationUserProfile = {
++				userId: 'user1',
++				preferredTopics: [],
++				mutedTopics: [],
++				reducedAuthors: [],
++				topicWeights: { tech: 2.5 },
++			};
++
++			const ranked = strategy.scoreCandidates(candidates, profile, now);
++			expect(ranked[0].note.id).toBe('note_a');
++			expect(ranked[0].principalReason).toBe('inferred_topic');
++			expect(ranked[0].scoreBreakdown.interestScore).toBeGreaterThan(0);
++		});
++
++		test('followed author and past interactions provide meaningful relevance boost', () => {
++			const strategy = new WeightedPersonalizedRankingStrategy();
++			const now = new Date('2026-10-11T12:00:00Z');
++			const noteFollowed = createMockNote('note_f', 'author_f', [], 'From friend', now);
++			const noteStranger = createMockNote('note_s', 'author_s', [], 'From stranger', now);
++
++			const candidates: CandidateNote[] = [
++				{ note: noteStranger, hashtags: [], authorFollowed: false },
++				{ note: noteFollowed, hashtags: [], authorFollowed: true, userInteracted: true },
++			];
++
++			const profile: RecommendationUserProfile = {
++				userId: 'user1',
++				preferredTopics: [],
++				mutedTopics: [],
++				reducedAuthors: [],
++				topicWeights: {},
++			};
++
++			const ranked = strategy.scoreCandidates(candidates, profile, now);
++			expect(ranked[0].note.id).toBe('note_f');
++			expect(ranked[0].scoreBreakdown.interactionScore).toBe(40); // 25 (followed) + 15 (interacted)
++		});
++
++		test('recency decay gives advantage to newer posts with comparable relevance', () => {
++			const strategy = new WeightedPersonalizedRankingStrategy();
++			const now = new Date('2026-10-11T12:00:00Z');
++			const recentDate = new Date('2026-10-11T11:30:00Z'); // 30 mins ago
++			const oldDate = new Date('2026-10-09T12:00:00Z'); // 48 hours ago
++
++			const noteRecent = createMockNote('note_rec', 'a1', ['topic'], 'Fresh note', recentDate);
++			const noteOld = createMockNote('note_old', 'a2', ['topic'], 'Old note', oldDate);
++
++			const candidates: CandidateNote[] = [
++				{ note: noteOld, hashtags: ['topic'] },
++				{ note: noteRecent, hashtags: ['topic'] },
++			];
++
++			const profile: RecommendationUserProfile = {
++				userId: 'user1',
++				preferredTopics: ['topic'],
++				mutedTopics: [],
++				reducedAuthors: [],
++				topicWeights: {},
++			};
++
++			const ranked = strategy.scoreCandidates(candidates, profile, now);
++			expect(ranked[0].note.id).toBe('note_rec');
++			expect(ranked[0].scoreBreakdown.recencyScore).toBeGreaterThan(ranked[1].scoreBreakdown.recencyScore);
++		});
++
++		test('author diversity penalty suppresses consecutive posts from the same author', () => {
++			const strategy = new WeightedPersonalizedRankingStrategy();
++			const now = new Date('2026-10-11T12:00:00Z');
++
++			const noteA1 = createMockNote('note_a1', 'prolific_author', ['news'], 'Article 1', now);
++			const noteA2 = createMockNote('note_a2', 'prolific_author', ['news'], 'Article 2', new Date(now.getTime() - 1000));
++			const noteB1 = createMockNote('note_b1', 'other_author', ['news'], 'Article 3', new Date(now.getTime() - 2000));
++
++			const candidates: CandidateNote[] = [
++				{ note: noteA1, hashtags: ['news'] },
++				{ note: noteA2, hashtags: ['news'] },
++				{ note: noteB1, hashtags: ['news'] },
++			];
++
++			const profile: RecommendationUserProfile = {
++				userId: 'user1',
++				preferredTopics: ['news'],
++				mutedTopics: [],
++				reducedAuthors: [],
++				topicWeights: {},
++			};
++
++			const ranked = strategy.scoreCandidates(candidates, profile, now);
++			expect(ranked[0].note.id).toBe('note_a1');
++			// Due to diversity penalty on prolific_author, other_author moves ahead of noteA2
++			expect(ranked[1].note.id).toBe('note_b1');
++			expect(ranked[2].note.id).toBe('note_a2');
++		});
++
++		test('reduced-recommendation author receives heavy suppression penalty', () => {
++			const strategy = new WeightedPersonalizedRankingStrategy();
++			const now = new Date('2026-10-11T12:00:00Z');
++
++			const noteNormal = createMockNote('note_norm', 'normal_user', ['tech'], 'Normal tech post', now);
++			const noteReduced = createMockNote('note_red', 'reduced_user', ['tech'], 'Reduced author post', now);
++
++			const candidates: CandidateNote[] = [
++				{ note: noteReduced, hashtags: ['tech'] },
++				{ note: noteNormal, hashtags: ['tech'] },
++			];
++
++			const profile: RecommendationUserProfile = {
++				userId: 'user1',
++				preferredTopics: ['tech'],
++				mutedTopics: [],
++				reducedAuthors: ['reduced_user'],
++				topicWeights: {},
++			};
++
++			const ranked = strategy.scoreCandidates(candidates, profile, now);
++			expect(ranked[0].note.id).toBe('note_norm');
++			expect(ranked[1].note.id).toBe('note_red');
++			expect(ranked[1].scoreBreakdown.diversityPenalty).toBeGreaterThanOrEqual(100);
++		});
++
++		test('deterministic tie-breaking produces identical repeatable ordering', () => {
++			const strategy = new WeightedPersonalizedRankingStrategy();
++			const now = new Date('2026-10-11T12:00:00Z');
++
++			const note1 = createMockNote('note_1', 'author1', [], 'Post 1', now);
++			const note2 = createMockNote('note_2', 'author2', [], 'Post 2', now);
++
++			const candidates: CandidateNote[] = [
++				{ note: note1, hashtags: [] },
++				{ note: note2, hashtags: [] },
++			];
++
++			const profile: RecommendationUserProfile = {
++				userId: 'user1',
++				preferredTopics: [],
++				mutedTopics: [],
++				reducedAuthors: [],
++				topicWeights: {},
++			};
++
++			const run1 = strategy.scoreCandidates(candidates, profile, now);
++			const run2 = strategy.scoreCandidates(candidates, profile, now);
++
++			expect(run1.map(r => r.note.id)).toEqual(run2.map(r => r.note.id));
++			expect(run1.map(r => r.score)).toEqual(run2.map(r => r.score));
++		});
++	});
++
++	describe('15.2 Truthful and explainable recommendations', () => {
++		test('emits explicit topic explanation when matched', () => {
++			const strategy = new WeightedPersonalizedRankingStrategy();
++			const note = createMockNote('n1', 'a1', ['opensource'], '#opensource rocks', new Date());
++			const ranked = strategy.scoreCandidates(
++				[{ note, hashtags: ['opensource'] }],
++				{ userId: 'u1', preferredTopics: ['opensource'], mutedTopics: [], reducedAuthors: [], topicWeights: {} },
++			);
++
++			expect(ranked[0].explanation).toBe('Recommended because you follow #opensource');
++			expect(ranked[0].principalReason).toBe('explicit_topic');
++		});
++
++		test('emits inferred interaction explanation when topic weight is highest signal', () => {
++			const strategy = new WeightedPersonalizedRankingStrategy();
++			const note = createMockNote('n1', 'a1', ['linux'], 'Kernel notes #linux', new Date());
++			const ranked = strategy.scoreCandidates(
++				[{ note, hashtags: ['linux'] }],
++				{ userId: 'u1', preferredTopics: [], mutedTopics: [], reducedAuthors: [], topicWeights: { linux: 3.0 } },
++			);
++
++			expect(ranked[0].explanation).toBe('Recommended because you frequently interact with posts about #linux');
++			expect(ranked[0].principalReason).toBe('inferred_topic');
++		});
++
++		test('emits followed author explanation when author is followed', () => {
++			const strategy = new WeightedPersonalizedRankingStrategy();
++			const note = createMockNote('n1', 'friend_1', [], 'Hello world', new Date());
++			const ranked = strategy.scoreCandidates(
++				[{ note, hashtags: [], authorFollowed: true }],
++				{ userId: 'u1', preferredTopics: [], mutedTopics: [], reducedAuthors: [], topicWeights: {}, followingUserIds: new Set(['friend_1']) },
++			);
++
++			expect(ranked[0].explanation).toContain('Recommended because you follow @user_friend_1');
++			expect(ranked[0].principalReason).toBe('followed_author');
++		});
++
++		test('truthful fallback explanation when no user preference matches', () => {
++			const strategy = new WeightedPersonalizedRankingStrategy();
++			const note = createMockNote('n1', 'stranger', [], 'Public status', new Date());
++			const ranked = strategy.scoreCandidates(
++				[{ note, hashtags: [] }],
++				{ userId: 'u1', preferredTopics: [], mutedTopics: [], reducedAuthors: [], topicWeights: {} },
++			);
++
++			expect(ranked[0].explanation).toBe('Recommended based on recent popular activity');
++			expect(ranked[0].principalReason).toBe('trending_recency');
++		});
++	});
++
++	describe('15.3 User controls and preference persistence', () => {
++		test('topic mute completely excludes matching candidate notes', async () => {
++			const now = new Date();
++			notesStore = [
++				createMockNote('n_sports', 'a1', ['sports'], 'Game highlights #sports', now),
++				createMockNote('n_coding', 'a2', ['coding'], 'Code review #coding', now),
++			];
++
++			await service.updatePreferences('user1', { mutedTopics: ['#Sports'] });
++
++			const recs = await service.getRecommendations('user1', { now });
++			expect(recs.map(r => r.note.id)).not.toContain('n_sports');
++			expect(recs.map(r => r.note.id)).toContain('n_coding');
++		});
++
++		test('profile reset clears recommendation state without touching user data', async () => {
++			await service.updatePreferences('user1', {
++				preferredTopics: ['ai', 'rust'],
++				mutedTopics: ['crypto'],
++				reducedAuthors: ['spammer'],
++				topicWeights: { ai: 5 },
++			});
++
++			let pref = await service.getPreferences('user1');
++			expect(pref.preferredTopics).toHaveLength(2);
++			expect(pref.mutedTopics).toHaveLength(1);
++
++			await service.resetProfile('user1');
++			pref = await service.getPreferences('user1');
++
++			expect(pref.preferredTopics).toEqual([]);
++			expect(pref.mutedTopics).toEqual([]);
++			expect(pref.reducedAuthors).toEqual([]);
++			expect(pref.topicWeights).toEqual({});
++		});
++
++		test('topic normalization strips hashes and ignores casing', () => {
++			expect(normalizeTopic('  #OpenSource  ')).toBe('opensource');
++			expect(normalizeTopic('#RustLang')).toBe('rustlang');
++			expect(normalizeTopic('Typescript')).toBe('typescript');
++
++			const note = createMockNote('n1', 'a1', ['JavaScript', 'web'], 'Learning #React and #CSS', new Date());
++			const tags = extractHashtags(note);
++			expect(tags).toContain('javascript');
++			expect(tags).toContain('web');
++			expect(tags).toContain('react');
++			expect(tags).toContain('css');
++		});
++	});
++
++	describe('15.4 Visibility, privacy and content safety', () => {
++		test('non-public notes (home, followers, specified) are strictly excluded', async () => {
++			const now = new Date();
++			notesStore = [
++				createMockNote('n_pub', 'a1', [], 'Public note', now, 'public'),
++				createMockNote('n_home', 'a2', [], 'Home note', now, 'home'),
++				createMockNote('n_followers', 'a3', [], 'Followers note', now, 'followers'),
++				createMockNote('n_specified', 'a4', [], 'DM note', now, 'specified'),
++			];
++
++			const recs = await service.getRecommendations('user1', { now });
++			const ids = recs.map(r => r.note.id);
++			expect(ids).toContain('n_pub');
++			expect(ids).not.toContain('n_home');
++			expect(ids).not.toContain('n_followers');
++			expect(ids).not.toContain('n_specified');
++		});
++
++		test('blocked or muting users are excluded from recommendations', async () => {
++			const now = new Date();
++			notesStore = [
++				createMockNote('n1', 'author_blocked', [], 'Post by blocked', now),
++				createMockNote('n2', 'author_muted', [], 'Post by muted', now),
++				createMockNote('n3', 'author_ok', [], 'Post by ok', now),
++			];
++
++			blockingsStore.push({ blockerId: 'user1', blockeeId: 'author_blocked' });
++			mutingsStore.push({ muterId: 'user1', muteeId: 'author_muted' });
++
++			const recs = await service.getRecommendations('user1', { now });
++			const ids = recs.map(r => r.note.id);
++			expect(ids).not.toContain('n1');
++			expect(ids).not.toContain('n2');
++			expect(ids).toContain('n3');
++		});
++
++		test('CH03 malicious links are strictly excluded from recommendation feed', async () => {
++			const now = new Date();
++			notesStore = [
++				createMockNote('n_safe', 'a1', [], 'Safe post with https://example.com', now),
++				createMockNote('n_malicious', 'a2', [], 'Phishing link here', now),
++			];
++
++			flaggedLinksStore.push({
++				id: 'fl_1',
++				noteId: 'n_malicious',
++				riskCategory: 'malicious',
++				resolved: false,
++			});
++
++			const recs = await service.getRecommendations('user1', { now });
++			const ids = recs.map(r => r.note.id);
++			expect(ids).toContain('n_safe');
++			expect(ids).not.toContain('n_malicious');
++		});
++	});
++
++	describe('15.5 Chronological mode and pagination', () => {
++		test('chronological mode orders strictly by createdAt descending with correct explanation', async () => {
++			const t1 = new Date('2026-10-11T10:00:00Z');
++			const t2 = new Date('2026-10-11T11:00:00Z');
++			const t3 = new Date('2026-10-11T09:00:00Z');
++
++			notesStore = [
++				createMockNote('n1', 'a1', [], 'Post 1', t1),
++				createMockNote('n2', 'a2', [], 'Post 2', t2),
++				createMockNote('n3', 'a3', [], 'Post 3', t3),
++			];
++
++			const recs = await service.getRecommendations('user1', { mode: 'chronological' });
++			expect(recs.map(r => r.note.id)).toEqual(['n2', 'n1', 'n3']);
++			expect(recs[0].explanation).toBe('Chronological timeline order');
++		});
++
++		test('pagination respects limit and slices results cleanly', async () => {
++			const now = new Date();
++			notesStore = [
++				createMockNote('n1', 'a1', [], 'Post 1', new Date(now.getTime() - 1000)),
++				createMockNote('n2', 'a2', [], 'Post 2', new Date(now.getTime() - 2000)),
++				createMockNote('n3', 'a3', [], 'Post 3', new Date(now.getTime() - 3000)),
++			];
++
++			const page1 = await service.getRecommendations('user1', { limit: 2, now });
++			expect(page1).toHaveLength(2);
++
++			const page2 = await service.getRecommendations('user1', { limit: 2, untilId: page1[1].note.id, now });
++			expect(page2).toHaveLength(1);
++			expect(page2[0].note.id).toBe('n3');
++		});
++	});
++
++	describe('15.6 Cache isolation and invalidation', () => {
++		test('cache is isolated per user and invalidated on preference update', async () => {
++			const now = new Date();
++			notesStore = [
++				createMockNote('n1', 'a1', ['crypto'], 'Crypto post', now),
++				createMockNote('n2', 'a2', ['foss'], 'Open source post', now),
++			];
++
++			const recsUser1 = await service.getRecommendations('user1', { now });
++			expect(recsUser1).toHaveLength(2);
++
++			// User 1 mutes crypto -> cache invalidated for user 1
++			await service.updatePreferences('user1', { mutedTopics: ['crypto'] });
++
++			const freshRecs = await service.getRecommendations('user1', { now });
++			expect(freshRecs.map(r => r.note.id)).toEqual(['n2']);
++
++			// User 2 is independent and sees crypto
++			const recsUser2 = await service.getRecommendations('user2', { now });
++			expect(recsUser2.map(r => r.note.id)).toContain('n1');
++		});
++	});
++});
+diff --git a/packages/frontend/src/components/MkNote.vue b/packages/frontend/src/components/MkNote.vue
+index e3abd60b0e..2d8c372012 100644
+--- a/packages/frontend/src/components/MkNote.vue
++++ b/packages/frontend/src/components/MkNote.vue
+@@ -13,6 +13,7 @@ SPDX-License-Identifier: AGPL-3.0-only
+ >
+ 	<MkNoteSub v-if="appearNote.replyId && !renoteCollapsed" :note="appearNote?.reply ?? null" :class="$style.replyTo"/>
+ 	<div v-if="pinned" :class="$style.tip"><i class="ti ti-pin"></i> {{ i18n.ts.pinnedNote }}</div>
++	<div v-if="appearNote.recommendationReason" :class="$style.recommendationTip"><i class="ti ti-sparkles" style="margin-right: 6px;"></i> {{ appearNote.recommendationReason }}</div>
+ 	<div v-if="isRenote" :class="$style.renote">
+ 		<div v-if="note.channel" :class="$style.colorBar" :style="{ background: note.channel.color }"></div>
+ 		<MkAvatar :class="$style.renoteAvatar" :user="note.user" link preview/>
+@@ -464,6 +465,20 @@ const keymap = {
+ 	padding-top: 8px;
+ }
+ 
++.recommendationTip {
++	display: flex;
++	align-items: center;
++	padding: 12px 32px 4px 32px;
++	line-height: 20px;
++	font-size: 85%;
++	color: var(--accent);
++	font-weight: 500;
++}
++
++.recommendationTip + .article {
++	padding-top: 8px;
++}
++
+ .replyTo {
+ 	opacity: 0.7;
+ 	padding-bottom: 0;
+diff --git a/packages/frontend/src/pages/for-you.vue b/packages/frontend/src/pages/for-you.vue
+new file mode 100644
+index 0000000000..83785504f0
+--- /dev/null
++++ b/packages/frontend/src/pages/for-you.vue
+@@ -0,0 +1,264 @@
++<!--
++SPDX-FileCopyrightText: syuilo and misskey-project
++SPDX-License-Identifier: AGPL-3.0-only
++-->
++
++<template>
++<PageWithHeader>
++	<div class="_spacer" style="--MI_SPACER-w: 800px;">
++		<div :class="$style.toolbar">
++			<div :class="$style.modeSelector">
++				<button
++					:class="[$style.modeBtn, { [$style.active]: mode === 'personalized' }]"
++					class="_button"
++					@click="setMode('personalized')"
++				>
++					<i class="ti ti-sparkles"></i> For You (Personalized)
++				</button>
++				<button
++					:class="[$style.modeBtn, { [$style.active]: mode === 'chronological' }]"
++					class="_button"
++					@click="setMode('chronological')"
++				>
++					<i class="ti ti-clock"></i> Chronological
++				</button>
++			</div>
++
++			<button
++				:class="$style.prefBtn"
++				class="_button"
++				@click="openPreferencesModal()"
++			>
++				<i class="ti ti-adjustments"></i> Controls
++			</button>
++		</div>
++
++		<MkPagination :key="paginationKey" :paginator="paginator">
++			<template #empty>
++				<div :class="$style.emptyState">
++					<i class="ti ti-sparkles" :class="$style.emptyIcon"></i>
++					<div :class="$style.emptyTitle">No recommendations available yet</div>
++					<div :class="$style.emptyDesc">
++						Interact with posts or set your preferred topics in Controls to customize your personalized feed.
++					</div>
++					<MkButton primary rounded @click="openPreferencesModal()">
++						<i class="ti ti-adjustments"></i> Open Controls
++					</MkButton>
++				</div>
++			</template>
++
++			<template #default="{ items }">
++				<MkNote v-for="item in items" :key="item.id" :note="item" :class="$style.note"/>
++			</template>
++		</MkPagination>
++	</div>
++</PageWithHeader>
++</template>
++
++<script lang="ts" setup>
++import { ref, markRaw, computed } from 'vue';
++import MkPagination from '@/components/MkPagination.vue';
++import MkNote from '@/components/MkNote.vue';
++import MkButton from '@/components/MkButton.vue';
++import { i18n } from '@/i18n.js';
++import { definePage } from '@/page.js';
++import { Paginator } from '@/utility/paginator.js';
++import { misskeyApi } from '@/utility/misskey-api.js';
++import * as os from '@/os.js';
++
++const mode = ref<'personalized' | 'chronological'>('personalized');
++const paginationKey = ref(0);
++
++const paginator = computed(() => {
++	return markRaw(new Paginator('recommendations/for-you', {
++		limit: 10,
++		mode: mode.value,
++	}));
++});
++
++function setMode(newMode: 'personalized' | 'chronological') {
++	mode.value = newMode;
++	paginationKey.value++;
++}
++
++async function openPreferencesModal() {
++	try {
++		const pref = await misskeyApi('recommendations/preferences', {});
++		const preferredText = (pref.preferredTopics ?? []).join(', ');
++		const mutedText = (pref.mutedTopics ?? []).join(', ');
++		const reducedText = (pref.reducedAuthors ?? []).join(', ');
++
++		const { canceled, result } = await os.form('Recommendation Controls', {
++			preferredTopics: {
++				type: 'string',
++				label: 'Preferred Topics (comma-separated)',
++				description: 'Explicit topics and hashtags to prioritize in For You.',
++				default: preferredText,
++			},
++			mutedTopics: {
++				type: 'string',
++				label: 'Muted Topics (comma-separated)',
++				description: 'Topics and hashtags to strictly exclude from recommendations.',
++				default: mutedText,
++			},
++			reducedAuthors: {
++				type: 'string',
++				label: 'Reduced Authors (comma-separated user IDs)',
++				description: 'Authors whose recommendations should be heavily suppressed.',
++				default: reducedText,
++			},
++			resetProfile: {
++				type: 'boolean',
++				label: 'Reset recommendation profile',
++				description: 'Clear all recommendation weights and preferences back to defaults.',
++				default: false,
++			},
++		});
++
++		if (canceled) return;
++
++		if (result.resetProfile) {
++			const { canceled: confirmCanceled } = await os.confirm({
++				type: 'warning',
++				text: 'Are you sure you want to reset your recommendation profile? This will clear all topic preferences and inferred weights. Your notes, bookmarks, and follows will NOT be affected.',
++			});
++
++			if (!confirmCanceled) {
++				await misskeyApi('recommendations/preferences/reset', {});
++				os.alert({
++					type: 'success',
++					text: 'Recommendation profile reset successfully.',
++				});
++				paginationKey.value++;
++			}
++			return;
++		}
++
++		const preferred = (result.preferredTopics as string)
++			.split(',')
++			.map(s => s.trim().replace(/^#/, ''))
++			.filter(Boolean);
++
++		const muted = (result.mutedTopics as string)
++			.split(',')
++			.map(s => s.trim().replace(/^#/, ''))
++			.filter(Boolean);
++
++		const reduced = (result.reducedAuthors as string)
++			.split(',')
++			.map(s => s.trim())
++			.filter(Boolean);
++
++		await misskeyApi('recommendations/preferences/update', {
++			preferredTopics: preferred,
++			mutedTopics: muted,
++			reducedAuthors: reduced,
++		});
++
++		os.alert({
++			type: 'success',
++			text: 'Recommendation preferences updated.',
++		});
++		paginationKey.value++;
++	} catch (err: any) {
++		os.alert({
++			type: 'error',
++			text: err?.message ?? 'Failed to update preferences',
++		});
++	}
++}
++
++definePage(() => ({
++	title: 'For You',
++	icon: 'ti ti-sparkles',
++}));
++</script>
++
++<style lang="scss" module>
++.toolbar {
++	display: flex;
++	align-items: center;
++	justify-content: space-between;
++	padding: 12px 16px;
++	margin-bottom: 12px;
++	background: var(--MI_THEME-panel);
++	border-radius: var(--MI-radius);
++	flex-wrap: wrap;
++	gap: 10px;
++}
++
++.modeSelector {
++	display: flex;
++	background: var(--MI_THEME-bg);
++	border-radius: var(--MI-radius);
++	padding: 3px;
++	gap: 4px;
++}
++
++.modeBtn {
++	display: inline-flex;
++	align-items: center;
++	gap: 6px;
++	padding: 6px 14px;
++	border-radius: calc(var(--MI-radius) - 2px);
++	font-size: 90%;
++	font-weight: 500;
++	color: var(--MI_THEME-fg);
++	transition: all 0.2s ease;
++
++	&.active {
++		background: var(--MI_THEME-accent);
++		color: #fff;
++	}
++}
++
++.prefBtn {
++	display: inline-flex;
++	align-items: center;
++	gap: 6px;
++	padding: 6px 14px;
++	border-radius: var(--MI-radius);
++	background: var(--MI_THEME-bg);
++	color: var(--MI_THEME-fg);
++	font-size: 90%;
++	font-weight: 500;
++	transition: background 0.2s ease;
++
++	&:hover {
++		background: var(--MI_THEME-accentedBg);
++	}
++}
++
++.note {
++	background: var(--MI_THEME-panel);
++	border-radius: var(--MI-radius);
++	margin-bottom: 8px;
++}
++
++.emptyState {
++	text-align: center;
++	padding: 48px 24px;
++	background: var(--MI_THEME-panel);
++	border-radius: var(--MI-radius);
++}
++
++.emptyIcon {
++	font-size: 48px;
++	color: var(--MI_THEME-accent);
++	margin-bottom: 16px;
++}
++
++.emptyTitle {
++	font-size: 110%;
++	font-weight: bold;
++	margin-bottom: 8px;
++}
++
++.emptyDesc {
++	color: var(--MI_THEME-fgSub);
++	font-size: 90%;
++	max-width: 400px;
++	margin: 0 auto 20px auto;
++	line-height: 1.5;
++}
++</style>

@@ -1,0 +1,7 @@
+$ (cd Part3/command-task-queue/java) java -cp out command.CommandTest
+PASS report matches expected-output.txt
+PASS commands run only when the invoker runs them
+PASS invalid input is rejected with expected-error.txt
+3 passed, 0 failed
+[exit 0]
+result: 3/3 passed

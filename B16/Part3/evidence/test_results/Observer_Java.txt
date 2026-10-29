@@ -1,0 +1,7 @@
+$ (cd Part3/observer-test-listeners/java) java -cp out observer.ObserverTest
+PASS report matches expected-output.txt
+PASS a throwing listener does not stop the next one
+PASS invalid input is rejected with expected-error.txt
+3 passed, 0 failed
+[exit 0]
+result: 3/3 passed

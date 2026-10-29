@@ -1,0 +1,13 @@
+Part 3 extension was done by Claude Code (Claude Opus 5.5, CLI, on my machine) on 2026-10-10,
+not in the claude.ai chat. There was no separate written prompt. My instruction, after the review
+showed that Part 3 covered only 2 of the 10 detected pattern types, was:
+"do all 3" (the third item being: implement the remaining pattern types).
+
+Plan (from Claude Code): one small problem per remaining type, each mirroring a confirmed Part 1
+instance, in Java, Python, JavaScript and C++ with the same layout and rules as the first two
+problems (shared test data, exact expected output, a bad input with an exact error, 3 checks per
+test runner, standard library only):
+  Strategy (A3), Adapter (B7), Decorator (D10), Template Method (B1), Command (B9),
+  Null Object (C7), Chain of Responsibility (D9), Factory Method (B2).
+Python versions written first as the reference that generated each expected-output.txt; the
+other three languages had to reproduce it byte for byte.

@@ -1,0 +1,33 @@
+@startuml C3
+!pragma layout smetana
+title C3 Strategy: IterationOrder
+
+enum IterationOrder <<Strategy>> {
+  ORIGINAL
+  REVERSED
+  {abstract} forEach(List<T>, Consumer<T>)
+}
+class CompositeTestExecutionListener <<Context>> {
+  -notifyEach(List, IterationOrder, Consumer, Supplier)
+}
+class CompositeEngineExecutionListener <<Context>> {
+  -notifyEach(List, IterationOrder, Consumer, Supplier)
+}
+
+CompositeTestExecutionListener ..> IterationOrder : notifyEach(..., REVERSED)
+CompositeEngineExecutionListener ..> IterationOrder : notifyEach(..., ORIGINAL)
+
+note right of IterationOrder
+  ConcreteStrategies: the constants
+  ORIGINAL and REVERSED, each
+  overriding forEach()
+end note
+' aligned-with-record
+legend right
+  <b>Counted participants</b> (record in the dataset)
+  Strategy + ConcreteStrategies (ORIGINAL, REVERSED): IterationOrder
+  Context: CompositeTestExecutionListener#notifyEach
+  Context: CompositeEngineExecutionListener#notifyEach
+  Grey classes: real, shown for context, not counted
+endlegend
+@enduml

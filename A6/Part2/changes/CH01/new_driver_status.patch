@@ -1,0 +1,630 @@
+diff --git a/src/application/use_cases/Admin/AdminChangeDriverStatus.ts b/src/application/use_cases/Admin/AdminChangeDriverStatus.ts
+index 17ff202..a1e39c4 100644
+--- a/src/application/use_cases/Admin/AdminChangeDriverStatus.ts
++++ b/src/application/use_cases/Admin/AdminChangeDriverStatus.ts
+@@ -4,8 +4,10 @@ import { AuthError } from "../../../domain/errors/Autherror";
+ import { INotificationService } from "../../services/NotificationService";
+ import { TOKENS } from "../../../constants/Tokens";
+ import { HTTP_STATUS_CODES } from "../../../constants/HttpStatusCode";
++import { ERROR_MESSAGES } from "../../../constants/ErrorMessages";
+ import { IAdminChangeDriverStatusUseCase } from "./Interfaces/IAdminChangeDriverStatus";
+ import { AdminDriverResponseDto, toAdminDriverResponse } from "../../dto/admin/AdminResponseDto";
++import { DriverAccount, DriverAccountStatus } from "../../../domain/driver/DriverAccountState";
+ 
+ @injectable()
+ export class AdminChangeDriverStatus implements IAdminChangeDriverStatusUseCase  {
+@@ -17,23 +19,20 @@ export class AdminChangeDriverStatus implements IAdminChangeDriverStatusUseCase
+ 
+   async execute(
+     driverId: string,
+-    status: "pending" | "approved" | "rejected",
++    status: DriverAccountStatus,
+     reason?: string
+   ): Promise<AdminDriverResponseDto | null> {
++    const driver = await this._driverRepository.findDriverById(driverId);
++    if (!driver) {
++      throw new AuthError(ERROR_MESSAGES.DRIVER_NOT_FOUND, HTTP_STATUS_CODES.NOT_FOUND);
++    }
++
++    // The current state object decides whether this change is allowed (throws otherwise).
++    const nextStatus = new DriverAccount(driver.status).changeTo(status, reason);
++
++    const updatedDriver = await this._driverRepository.updateStatus(driverId, nextStatus, reason);
++    await this._notificationService.adminChangeDriverStatusNotification(driverId, { status: nextStatus, reason });
+ 
+-    if (!["pending", "approved", "rejected"].includes(status)) {
+-        throw new AuthError("Invalid status value.", HTTP_STATUS_CODES.BAD_REQUEST);
+-      }
+-      
+-      if (status === "rejected" && !reason) {
+-        throw new AuthError("Rejection reason is required.", HTTP_STATUS_CODES.UNPROCESSABLE_ENTITY);
+-      }
+-      
+-    await this._notificationService.adminChangeDriverStatusNotification(driverId, { status, reason });
+-    const updatedDriver = await this._driverRepository.updateStatus(driverId, status, reason);
+-    
+     return updatedDriver ? toAdminDriverResponse(updatedDriver) : null;
+   }
+ }
+-
+-
+diff --git a/src/application/use_cases/Admin/Interfaces/IAdminChangeDriverStatus.ts b/src/application/use_cases/Admin/Interfaces/IAdminChangeDriverStatus.ts
+index a1010d0..8ed28d1 100644
+--- a/src/application/use_cases/Admin/Interfaces/IAdminChangeDriverStatus.ts
++++ b/src/application/use_cases/Admin/Interfaces/IAdminChangeDriverStatus.ts
+@@ -1,9 +1,10 @@
+ import { AdminDriverResponseDto } from "../../../dto/admin/AdminResponseDto";
++import { DriverAccountStatus } from "../../../../domain/driver/DriverAccountState";
+ 
+ export interface IAdminChangeDriverStatusUseCase {
+   execute(
+     driverId: string,
+-    status: "pending" | "approved" | "rejected",
++    status: DriverAccountStatus,
+     reason?: string
+   ): Promise<AdminDriverResponseDto | null>
+ }
+diff --git a/src/application/use_cases/Driver/AcceptBooking.ts b/src/application/use_cases/Driver/AcceptBooking.ts
+index 7a203ea..ec1a1bf 100644
+--- a/src/application/use_cases/Driver/AcceptBooking.ts
++++ b/src/application/use_cases/Driver/AcceptBooking.ts
+@@ -1,31 +1,37 @@
+ import { inject, injectable } from "tsyringe";
+ import { IBookingRepository } from "../../../domain/repositories/IBookingrepository";
++import { IDriverRepository } from "../../../domain/repositories/IDriverepository";
+ import { BookingStatus, Booking } from "../../../domain/models/Booking";
+ import { AuthError } from "../../../domain/errors/Autherror";
+ import { INotificationService } from "../../services/NotificationService";
+ import { TOKENS } from "../../../constants/Tokens";
+ import { HTTP_STATUS_CODES } from "../../../constants/HttpStatusCode";
+-import BookingModel from "../../../infrastructure/database/modals/Bookingschema";
+-import { Types } from "mongoose";
++import { ERROR_MESSAGES } from "../../../constants/ErrorMessages";
+ import { IAcceptBookingUseCase, AcceptBookingInput } from "./interfaces/IAcceptBookingUseCase";
+ import { PopulatedDriver } from "../../../infrastructure/database/interfaces/PopulatedBooking";
++import { DriverAccount } from "../../../domain/driver/DriverAccountState";
+ 
+ @injectable()
+ export class AcceptBooking implements IAcceptBookingUseCase {
+   constructor(
+     @inject(TOKENS.IBOOKING_REPO) private _bookingRepo: IBookingRepository,
+-    @inject(TOKENS.NOTIFICATION_SERVICE) private _notificationService: INotificationService
++    @inject(TOKENS.NOTIFICATION_SERVICE) private _notificationService: INotificationService,
++    @inject(TOKENS.IDRIVER_REPO) private _driverRepo: IDriverRepository
+   ) {}
+ 
+   async execute(data: AcceptBookingInput): Promise<Booking> {
+     const { bookingId, driverId } = data;
+ 
+-    // Atomic update: only updates status to CONFIRMED if status is currently PENDING
+-    const updatedBooking = await BookingModel.findOneAndUpdate(
+-      { _id: new Types.ObjectId(bookingId), status: BookingStatus.PENDING },
+-      { status: BookingStatus.CONFIRMED, driverId: new Types.ObjectId(driverId) },
+-      { new: true }
+-    ).populate("driverId", "name profileImage mobile");
++    const driver = await this._driverRepo.findDriverById(driverId);
++    if (!driver) {
++      throw new AuthError(ERROR_MESSAGES.DRIVER_NOT_FOUND, HTTP_STATUS_CODES.NOT_FOUND);
++    }
++    if (!new DriverAccount(driver.status).canReceiveRides()) {
++      throw new AuthError(`Drivers with status ${driver.status} cannot accept rides.`, HTTP_STATUS_CODES.FORBIDDEN);
++    }
++
++    // Atomic update in the repository: only succeeds while the booking is still PENDING
++    const updatedBooking = await this._bookingRepo.acceptPendingBooking(bookingId, driverId);
+ 
+     // If updatedBooking is null, it was either already accepted or expired
+     if (!updatedBooking) {
+@@ -36,7 +42,7 @@ export class AcceptBooking implements IAcceptBookingUseCase {
+ 
+     // Notify user via Socket.IO
+     await this._notificationService.sendBookingConfirmation(updatedBooking.userId.toString(), {
+-      bookingId: (updatedBooking._id as Types.ObjectId).toString(),
++      bookingId: String(updatedBooking._id),
+       status: BookingStatus.CONFIRMED,
+       driver: driverObj ? {
+         _id: driverObj._id.toString(),
+@@ -47,8 +53,8 @@ export class AcceptBooking implements IAcceptBookingUseCase {
+     });
+ 
+     // Notify other online drivers to dismiss their popups
+-    this._notificationService.bookingAssignedNotification((updatedBooking._id as Types.ObjectId).toString(), driverId);
++    this._notificationService.bookingAssignedNotification(String(updatedBooking._id), driverId);
+ 
+-    return updatedBooking.toObject() as Booking;
++    return updatedBooking;
+   }
+ }
+diff --git a/src/application/use_cases/Login.ts b/src/application/use_cases/Login.ts
+index f8d362c..50b40c9 100644
+--- a/src/application/use_cases/Login.ts
++++ b/src/application/use_cases/Login.ts
+@@ -58,6 +58,12 @@ export class Login implements ILogin {
+           HTTP_STATUS_CODES.FORBIDDEN
+         );
+       }
++      if (found.status === "suspended") {
++        throw new AuthError(
++          `Your account is suspended${found.reason ? `: ${found.reason}` : ""}. Please contact support.`,
++          HTTP_STATUS_CODES.FORBIDDEN
++        );
++      }
+       user = found;
+     }
+ 
+diff --git a/src/application/use_cases/User/BookDriver.ts b/src/application/use_cases/User/BookDriver.ts
+index f89ad5d..24049f7 100644
+--- a/src/application/use_cases/User/BookDriver.ts
++++ b/src/application/use_cases/User/BookDriver.ts
+@@ -10,6 +10,7 @@ import { IBookDriverUseCase } from "./interfaces/IBookDriverUseCase";
+ import { IDriverRepository } from "../../../domain/repositories/IDriverepository";
+ import { GoogleDistanceService } from "../../services/GoogleDistanceService";
+ import { HTTP_STATUS_CODES } from "../../../constants/HttpStatusCode";
++import { DriverAccount } from "../../../domain/driver/DriverAccountState";
+ 
+ export interface BookDriverInput {
+   userId: string;
+@@ -43,6 +44,10 @@ export class BookDriver implements IBookDriverUseCase  {
+ 
+     // Check availability only if a specific driver was requested
+     if (driverId) {
++      const driver = await this._driverRepo.findDriverById(driverId);
++      if (!driver || !new DriverAccount(driver.status).canReceiveRides()) {
++        throw new AuthError("The selected driver is not available for rides.", HTTP_STATUS_CODES.BAD_REQUEST);
++      }
+       const isBooked = await this._bookingRepo.checkDriverAvailability(driverId, startDate, endDate);
+       if (!isBooked) {
+         throw new AuthError("Driver is already booked for the selected time.", HTTP_STATUS_CODES.BAD_REQUEST);
+diff --git a/src/domain/driver/DriverAccountState.ts b/src/domain/driver/DriverAccountState.ts
+new file mode 100644
+index 0000000..cc966cd
+--- /dev/null
++++ b/src/domain/driver/DriverAccountState.ts
+@@ -0,0 +1,144 @@
++import { InvalidTransitionError } from "../errors/InvalidTransitionError";
++import { AuthError } from "../errors/Autherror";
++import { HTTP_STATUS_CODES } from "../../constants/HttpStatusCode";
++
++export type DriverAccountStatus = "pending" | "approved" | "rejected" | "suspended";
++
++export const DRIVER_ACCOUNT_STATUSES: DriverAccountStatus[] = ["pending", "approved", "rejected", "suspended"];
++
++/**
++ * State pattern: each driver account status is an object that decides which admin
++ * actions are legal and whether the driver may take rides.
++ */
++export interface DriverAccountState {
++  readonly status: DriverAccountStatus;
++  approve(): DriverAccountState;
++  reject(reason?: string): DriverAccountState;
++  suspend(reason?: string): DriverAccountState;
++  resetToPending(): DriverAccountState;
++  canReceiveRides(): boolean;
++}
++
++abstract class BaseDriverAccountState implements DriverAccountState {
++  abstract readonly status: DriverAccountStatus;
++
++  approve(): DriverAccountState {
++    return this.refuse("approve");
++  }
++  reject(_reason?: string): DriverAccountState {
++    return this.refuse("reject");
++  }
++  suspend(_reason?: string): DriverAccountState {
++    return this.refuse("suspend");
++  }
++  resetToPending(): DriverAccountState {
++    return this.refuse("move to pending");
++  }
++  canReceiveRides(): boolean {
++    return false;
++  }
++
++  protected refuse(action: string): never {
++    throw new InvalidTransitionError(`Cannot ${action} a driver whose status is ${this.status}.`);
++  }
++}
++
++const requireReason = (reason: string | undefined, action: string) => {
++  if (!reason || !reason.trim()) {
++    throw new AuthError(`A reason is required to ${action} a driver.`, HTTP_STATUS_CODES.UNPROCESSABLE_ENTITY);
++  }
++};
++
++export class PendingDriverState extends BaseDriverAccountState {
++  readonly status = "pending" as const;
++  approve() {
++    return new ApprovedDriverState();
++  }
++  reject(reason?: string) {
++    requireReason(reason, "reject");
++    return new RejectedDriverState();
++  }
++}
++
++export class ApprovedDriverState extends BaseDriverAccountState {
++  readonly status = "approved" as const;
++  suspend(reason?: string) {
++    requireReason(reason, "suspend");
++    return new SuspendedDriverState();
++  }
++  canReceiveRides() {
++    return true;
++  }
++}
++
++export class RejectedDriverState extends BaseDriverAccountState {
++  readonly status = "rejected" as const;
++  // A rejected driver may re-submit documents; the admin puts the account back in review.
++  resetToPending() {
++    return new PendingDriverState();
++  }
++}
++
++export class SuspendedDriverState extends BaseDriverAccountState {
++  readonly status = "suspended" as const;
++  // Reinstating a suspended driver.
++  approve() {
++    return new ApprovedDriverState();
++  }
++  reject(reason?: string) {
++    requireReason(reason, "reject");
++    return new RejectedDriverState();
++  }
++}
++
++export function driverAccountStateFor(status: string | undefined): DriverAccountState {
++  switch (status ?? "pending") {
++    case "pending":
++      return new PendingDriverState();
++    case "approved":
++      return new ApprovedDriverState();
++    case "rejected":
++      return new RejectedDriverState();
++    case "suspended":
++      return new SuspendedDriverState();
++    default:
++      throw new AuthError(`Unknown driver status: ${status}`, HTTP_STATUS_CODES.BAD_REQUEST);
++  }
++}
++
++/** Context: holds the current state and turns an admin's target status into a state action. */
++export class DriverAccount {
++  private state: DriverAccountState;
++
++  constructor(status: string | undefined) {
++    this.state = driverAccountStateFor(status);
++  }
++
++  get status(): DriverAccountStatus {
++    return this.state.status;
++  }
++
++  canReceiveRides(): boolean {
++    return this.state.canReceiveRides();
++  }
++
++  changeTo(target: DriverAccountStatus, reason?: string): DriverAccountStatus {
++    switch (target) {
++      case "approved":
++        this.state = this.state.approve();
++        break;
++      case "rejected":
++        this.state = this.state.reject(reason);
++        break;
++      case "suspended":
++        this.state = this.state.suspend(reason);
++        break;
++      case "pending":
++        this.state = this.state.resetToPending();
++        break;
++      default:
++        throw new AuthError(`Unknown driver status: ${target}`, HTTP_STATUS_CODES.BAD_REQUEST);
++    }
++    return this.state.status;
++  }
++}
+diff --git a/src/domain/errors/InvalidTransitionError.ts b/src/domain/errors/InvalidTransitionError.ts
+new file mode 100644
+index 0000000..50075da
+--- /dev/null
++++ b/src/domain/errors/InvalidTransitionError.ts
+@@ -0,0 +1,9 @@
++import { BaseError } from "./BaseError";
++import { HTTP_STATUS_CODES } from "../../constants/HttpStatusCode";
++
++// Raised by state objects when an action is not allowed in the current state.
++export class InvalidTransitionError extends BaseError {
++  constructor(message: string) {
++    super(message, HTTP_STATUS_CODES.CONFLICT);
++  }
++}
+diff --git a/src/domain/models/Driver.ts b/src/domain/models/Driver.ts
+index a9e40a5..a3aa71f 100644
+--- a/src/domain/models/Driver.ts
++++ b/src/domain/models/Driver.ts
+@@ -1,4 +1,5 @@
+ import { Types } from "mongoose";
++import { DriverAccountStatus } from "../driver/DriverAccountState";
+ 
+ export interface Driver {
+     _id?: Types.ObjectId | string;
+@@ -22,7 +23,7 @@ export interface Driver {
+     licenseNumber: string;
+     aadhaarImage: string;
+     licenseImage: string;
+-    status: "pending" | "approved" | "rejected";
++    status: DriverAccountStatus;
+     isBlock: boolean; 
+     role:"driver";
+     onlineStatus: 'online' | 'offline';
+diff --git a/src/domain/repositories/IBookingrepository.ts b/src/domain/repositories/IBookingrepository.ts
+index 3114f0d..42830d7 100644
+--- a/src/domain/repositories/IBookingrepository.ts
++++ b/src/domain/repositories/IBookingrepository.ts
+@@ -38,6 +38,8 @@ export interface IBookingRepository {
+     limit: number
+   ): Promise<PaginatedResult<rideHistory>>;
+   updateBooking(id: string, updates: Partial<Booking>): Promise<Booking | null>;
++  /** Assigns the driver only while the booking is still PENDING; returns null otherwise. */
++  acceptPendingBooking(bookingId: string, driverId: string): Promise<Booking | null>;
+   checkDriverAvailability(
+     driverId: string,
+     start: Date,
+diff --git a/src/domain/repositories/IDriverepository.ts b/src/domain/repositories/IDriverepository.ts
+index 0f92f7a..65fe6e0 100644
+--- a/src/domain/repositories/IDriverepository.ts
++++ b/src/domain/repositories/IDriverepository.ts
+@@ -1,12 +1,13 @@
+ import { Driver } from "../models/Driver";
+ import { PaginatedResult } from "./IBookingrepository";
++import { DriverAccountStatus } from "../driver/DriverAccountState";
+ 
+ export interface IDriverRepository {
+   create(driver: Driver): Promise<Driver>;
+   findByEmail(email: string): Promise<Driver | null>;
+   getDrivers(page: number, limit: number): Promise<PaginatedResult<Driver>>;
+   findDriverById(driverId: string): Promise<Driver | null>; 
+-  updateStatus(driverId: string, status: "pending" | "approved" | "rejected", reason?: string):Promise<Driver | null>; 
++  updateStatus(driverId: string, status: DriverAccountStatus, reason?: string):Promise<Driver | null>; 
+   blockOrUnblockDriver(driverId: string, isBlocked: boolean): Promise<void>;
+   update(userId: string, data: Partial<Driver>): Promise<Driver | null>;
+   findActiveDrivers(page: number, limit: number, placeKey?: string, lat?: number, lng?: number): Promise<PaginatedResult<Driver>>;
+diff --git a/src/infrastructure/database/MongoBookingRepository.ts b/src/infrastructure/database/MongoBookingRepository.ts
+index 1840b12..42fa7ea 100644
+--- a/src/infrastructure/database/MongoBookingRepository.ts
++++ b/src/infrastructure/database/MongoBookingRepository.ts
+@@ -1,5 +1,5 @@
+ import { BookingWithUsername, IBookingRepository, PaginatedResult, rideHistory, RawDriverDashboardStats, RawAdminDashboardStats } from "../../domain/repositories/IBookingrepository"; 
+-import { Booking, paymentStatus } from "../../domain/models/Booking"; 
++import { Booking, BookingStatus, paymentStatus } from "../../domain/models/Booking"; 
+ import BookingModel, { BookingDocument } from "./modals/Bookingschema"; 
+ import { injectable } from "tsyringe";
+ import { AuthError } from "../../domain/errors/Autherror";
+@@ -116,6 +116,15 @@ export class MongoBookingRepository extends BaseRepository<Booking, BookingDocum
+       return super.update(id, updates);
+     }
+ 
++    async acceptPendingBooking(bookingId: string, driverId: string): Promise<Booking | null> {
++      const updated = await BookingModel.findOneAndUpdate(
++        { _id: new mongoose.Types.ObjectId(bookingId), status: BookingStatus.PENDING },
++        { status: BookingStatus.CONFIRMED, driverId: new mongoose.Types.ObjectId(driverId) },
++        { new: true }
++      ).populate("driverId", "name profileImage mobile");
++      return updated ? (updated.toObject() as Booking) : null;
++    }
++
+       
+   
+     async checkDriverAvailability(driverId: string, start: Date, end?: Date): Promise<boolean> {
+diff --git a/src/infrastructure/database/MongodriverRepository.ts b/src/infrastructure/database/MongodriverRepository.ts
+index f0c0f34..5cd3ae2 100644
+--- a/src/infrastructure/database/MongodriverRepository.ts
++++ b/src/infrastructure/database/MongodriverRepository.ts
+@@ -9,6 +9,7 @@ import { NotFoundError } from "../../domain/errors/NotFoundError";
+ import { PaginatedResult } from "../../domain/repositories/IBookingrepository";
+ import { HTTP_STATUS_CODES } from "../../constants/HttpStatusCode";
+ import { BaseRepository } from "./BaseRepository";
++import { DriverAccountStatus } from "../../domain/driver/DriverAccountState";
+ 
+ @injectable()
+ export class MongoDriverRepository extends BaseRepository<Driver, IDriver> implements IDriverRepository {
+@@ -88,11 +89,11 @@ export class MongoDriverRepository extends BaseRepository<Driver, IDriver> imple
+ 
+   async updateStatus(
+     driverId: string,
+-    status: "pending" | "approved" | "rejected",
++    status: DriverAccountStatus,
+     reason?: string
+   ): Promise<Driver | null> {
+     const updateData: Partial<Driver> = { status };
+-    if (status === "rejected" && reason) {
++    if ((status === "rejected" || status === "suspended") && reason) {
+       updateData.reason = reason;
+     } else {
+       updateData.reason = undefined;
+diff --git a/src/infrastructure/database/modals/Driverschema.ts b/src/infrastructure/database/modals/Driverschema.ts
+index bc41925..13519c3 100644
+--- a/src/infrastructure/database/modals/Driverschema.ts
++++ b/src/infrastructure/database/modals/Driverschema.ts
+@@ -29,7 +29,7 @@ const DriverSchema = new Schema<IDriver>(
+     licenseImage: { type: String, required: true },
+     status: {
+       type: String,
+-      enum: ["pending", "approved", "rejected"],
++      enum: ["pending", "approved", "rejected", "suspended"],
+       default: "pending",
+     },
+     isBlock: { type: Boolean, default: false },
+diff --git a/src/infrastructure/socket/SocketNotification.ts b/src/infrastructure/socket/SocketNotification.ts
+index e84afe3..fd9b356 100644
+--- a/src/infrastructure/socket/SocketNotification.ts
++++ b/src/infrastructure/socket/SocketNotification.ts
+@@ -9,6 +9,7 @@ import BookingModel from "../database/modals/Bookingschema";
+ import DriverModel from "../database/modals/Driverschema";
+ import { BookingStatus } from "../../domain/models/Booking";
+ import { Types } from "mongoose";
++import { DriverAccount } from "../../domain/driver/DriverAccountState";
+ 
+ export const NotificationSocket = () => {
+   const io = getIO();
+@@ -23,6 +24,7 @@ export const NotificationSocket = () => {
+         // 1. Fetch driver profile to get coordinates
+         const driver = await DriverModel.findById(driverId);
+         if (!driver || !driver.location) return;
++        if (!new DriverAccount(driver.status).canReceiveRides()) return;
+ 
+         let driverLng: number;
+         let driverLat: number;
+diff --git a/src/presentation/schemas/admin/AdminRequestDTO.ts b/src/presentation/schemas/admin/AdminRequestDTO.ts
+index 966e396..c67a1ab 100644
+--- a/src/presentation/schemas/admin/AdminRequestDTO.ts
++++ b/src/presentation/schemas/admin/AdminRequestDTO.ts
+@@ -48,8 +48,8 @@ export const DriverIdParamSchema = z.object({
+  * Change Driver Status Schema (Approval/Rejection)
+  */
+ export const ChangeDriverStatusSchema = z.object({
+-  status: z.enum(["pending", "approved", "rejected"] as const, {
+-    message: "Status must be pending, approved, or rejected",
++  status: z.enum(["pending", "approved", "rejected", "suspended"] as const, {
++    message: "Status must be pending, approved, rejected, or suspended",
+   }),
+   reason: z.string().optional(),
+ });
+diff --git a/tests/baseline_defects.test.ts b/tests/baseline_defects.test.ts
+index adf2885..50ff51c 100644
+--- a/tests/baseline_defects.test.ts
++++ b/tests/baseline_defects.test.ts
+@@ -2,12 +2,12 @@ import "reflect-metadata";
+ import { test } from "node:test";
+ import assert from "node:assert/strict";
+ import { CancelBookingInputUseCase } from "../src/application/use_cases/User/CancelBooking";
+-import { AdminChangeDriverStatus } from "../src/application/use_cases/Admin/AdminChangeDriverStatus";
+ import { BookingStatus } from "../src/domain/models/Booking";
+-import { FakeBookingRepo, FakeDriverRepo, FakeNotifier, makeBooking, makeDriver } from "./helpers/fakes";
++import { FakeBookingRepo, FakeNotifier, makeBooking } from "./helpers/fakes";
+ 
+ // These tests document defects of the public baseline that motivate CH01 and CH02.
+ // They pass on the baseline; CH01/CH02 replace them with tests of the corrected behaviour.
++// CH01 replaced "an admin can move a rejected driver straight to approved" (see driverStatus.test.ts).
+ 
+ test("DEFECT (baseline): a COMPLETED trip can still be cancelled", async () => {
+   const bookings = new FakeBookingRepo();
+@@ -16,11 +16,3 @@ test("DEFECT (baseline): a COMPLETED trip can still be cancelled", async () => {
+   await useCase.execute({ bookingId: String(b._id), status: BookingStatus.CANCELLED, reason: "late" });
+   assert.equal((await bookings.findBookingById(String(b._id)))?.status, BookingStatus.CANCELLED);
+ });
+-
+-test("DEFECT (baseline): an admin can move a rejected driver straight to approved", async () => {
+-  const drivers = new FakeDriverRepo();
+-  const d = drivers.seed(makeDriver({ status: "rejected" }));
+-  const useCase = new AdminChangeDriverStatus(drivers as any, new FakeNotifier() as any);
+-  const res = await useCase.execute(String(d._id), "approved");
+-  assert.equal(res?.status, "approved");
+-});
+diff --git a/tests/driverStatus.test.ts b/tests/driverStatus.test.ts
+new file mode 100644
+index 0000000..cd485b0
+--- /dev/null
++++ b/tests/driverStatus.test.ts
+@@ -0,0 +1,99 @@
++import "reflect-metadata";
++import { test } from "node:test";
++import assert from "node:assert/strict";
++import { AdminChangeDriverStatus } from "../src/application/use_cases/Admin/AdminChangeDriverStatus";
++import { AcceptBooking } from "../src/application/use_cases/Driver/AcceptBooking";
++import { BookDriver } from "../src/application/use_cases/User/BookDriver";
++import { FareCalculatorService } from "../src/infrastructure/services/FareCalculatorService";
++import { DriverAccount } from "../src/domain/driver/DriverAccountState";
++import { InvalidTransitionError } from "../src/domain/errors/InvalidTransitionError";
++import { BookingStatus, BookingType } from "../src/domain/models/Booking";
++import { FakeBookingRepo, FakeDriverRepo, FakeNotifier, FakeDistance, makeBooking, makeDriver, id } from "./helpers/fakes";
++
++// CH01 - new driver status SUSPENDED, driver account lifecycle as State objects.
++
++test("CH01 state table: allowed admin transitions", () => {
++  assert.equal(new DriverAccount("pending").changeTo("approved"), "approved");
++  assert.equal(new DriverAccount("pending").changeTo("rejected", "documents unclear"), "rejected");
++  assert.equal(new DriverAccount("approved").changeTo("suspended", "complaints"), "suspended");
++  assert.equal(new DriverAccount("suspended").changeTo("approved"), "approved");
++  assert.equal(new DriverAccount("suspended").changeTo("rejected", "fraud"), "rejected");
++  assert.equal(new DriverAccount("rejected").changeTo("pending"), "pending");
++});
++
++test("CH01 state table: illegal admin transitions are refused", () => {
++  assert.throws(() => new DriverAccount("rejected").changeTo("approved"), InvalidTransitionError);
++  assert.throws(() => new DriverAccount("pending").changeTo("suspended", "x"), InvalidTransitionError);
++  assert.throws(() => new DriverAccount("approved").changeTo("approved"), InvalidTransitionError);
++  assert.throws(() => new DriverAccount("approved").changeTo("pending"), InvalidTransitionError);
++});
++
++test("CH01 suspending requires a reason", () => {
++  assert.throws(() => new DriverAccount("approved").changeTo("suspended"), /reason is required/);
++});
++
++test("CH01 only approved drivers can receive rides", () => {
++  assert.deepEqual(
++    ["pending", "approved", "rejected", "suspended"].map((s) => new DriverAccount(s).canReceiveRides()),
++    [false, true, false, false]
++  );
++});
++
++test("CH01 admin suspends an approved driver: saved and driver notified", async () => {
++  const drivers = new FakeDriverRepo();
++  const d = drivers.seed(makeDriver({ status: "approved" }));
++  const notifier = new FakeNotifier();
++  const res = await new AdminChangeDriverStatus(drivers as any, notifier as any)
++    .execute(String(d._id), "suspended", "repeated late arrivals");
++  assert.equal(res?.status, "suspended");
++  assert.deepEqual(drivers.statusCalls, [{ driverId: String(d._id), status: "suspended", reason: "repeated late arrivals" }]);
++  assert.deepEqual(notifier.calls[0], ["adminChangeDriverStatusNotification", String(d._id),
++    { status: "suspended", reason: "repeated late arrivals" }]);
++});
++
++test("CH01 (fixes baseline defect) a rejected driver cannot jump straight to approved; nothing saved or sent", async () => {
++  const drivers = new FakeDriverRepo();
++  const d = drivers.seed(makeDriver({ status: "rejected" }));
++  const notifier = new FakeNotifier();
++  await assert.rejects(new AdminChangeDriverStatus(drivers as any, notifier as any).execute(String(d._id), "approved"),
++    InvalidTransitionError);
++  assert.equal(drivers.statusCalls.length, 0);
++  assert.equal(notifier.calls.length, 0);
++});
++
++test("CH01 a suspended driver cannot accept a booking", async () => {
++  const bookings = new FakeBookingRepo();
++  const drivers = new FakeDriverRepo();
++  const b = bookings.seed(makeBooking({ status: BookingStatus.PENDING }));
++  const d = drivers.seed(makeDriver({ status: "suspended" }));
++  await assert.rejects(new AcceptBooking(bookings as any, new FakeNotifier() as any, drivers as any)
++    .execute({ bookingId: String(b._id), driverId: String(d._id) }), /cannot accept rides/);
++  assert.equal((await bookings.findBookingById(String(b._id)))?.status, BookingStatus.PENDING);
++});
++
++test("CH01 an approved driver accepts a PENDING booking through the repository (refactored)", async () => {
++  const bookings = new FakeBookingRepo();
++  const drivers = new FakeDriverRepo();
++  const b = bookings.seed(makeBooking({ status: BookingStatus.PENDING }));
++  const d = drivers.seed(makeDriver({ status: "approved" }));
++  const notifier = new FakeNotifier();
++  const accepted = await new AcceptBooking(bookings as any, notifier as any, drivers as any)
++    .execute({ bookingId: String(b._id), driverId: String(d._id) });
++  assert.equal(accepted.status, BookingStatus.CONFIRMED);
++  assert.deepEqual(notifier.names(), ["sendBookingConfirmation", "bookingAssignedNotification"]);
++  // a second driver is too late
++  const d2 = drivers.seed(makeDriver({ status: "approved" }));
++  await assert.rejects(new AcceptBooking(bookings as any, notifier as any, drivers as any)
++    .execute({ bookingId: String(b._id), driverId: String(d2._id) }), /no longer available/);
++});
++
++test("CH01 a rider cannot request a suspended driver directly", async () => {
++  const drivers = new FakeDriverRepo();
++  const d = drivers.seed(makeDriver({ status: "suspended" }));
++  const useCase = new BookDriver(new FakeBookingRepo() as any, drivers as any, new FareCalculatorService(),
++    new FakeNotifier() as any, new FakeDistance() as any);
++  await assert.rejects(useCase.execute({
++    userId: id(), driverId: String(d._id), fromLocation: "Kochi", startDate: new Date(Date.now() + 864e5),
++    estimatedKm: 30, bookingType: BookingType.ONE_WAY, fromLat: 10, fromLng: 76.3,
++  }), /not available/);
++});

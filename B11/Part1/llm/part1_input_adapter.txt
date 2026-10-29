@@ -1,0 +1,5 @@
+Input (Adapter) - legalSystem @ commit 4e4ebb574d6730614855899e032fd5a79b04da63 (2023-03-18).
+Source files supplied to the model:
+- modal/CustomUserDetails.java
+- modal/Users.java
+- service/CustomUserDetailsService.java

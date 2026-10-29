@@ -1,0 +1,156 @@
+You are helping with Part 3 (Cross-Language Comparison) of a university Design Patterns
+case study. Complete the WHOLE task
+in one continuous run: every confirmed pattern type, all four languages, all measurements and all draft
+documents. Do not stop to ask for confirmation. If something is ambiguous or blocked,
+choose the most reasonable option, record the decision and the reason in
+Part3/llm/output.txt, and carry on.
+
+CONTEXT
+- Application: Mycodo (Flask-based environmental monitoring and regulation system, used as
+  an agriculture management application), baseline commit
+  ee70a111c622e2a81026fd5c1553a948acf8161e. Original source (read-only): Mycodo/
+- Our VERIFIED pattern results: Part1/patterns_llm_draft.csv
+- Scope rule (from the course instructions): implement EVERY confirmed pattern type in
+  Part1/patterns.csv, choosing ONE representative verified instance per type. One per
+  pattern TYPE, not one per instance: if there are two Strategy instances, implement only
+  one of them.
+- How to choose the representative instance for each type: prefer the instance whose roles
+  are all mapped to real classes/functions (fewest "not separately declared" roles) and
+  whose behaviour can be reproduced without a database, hardware or network. Use its
+  instance_name EXACTLY as written in patterns.csv. Record the list of types, the chosen
+  instance and the reason in Part3/llm/output.txt before writing any code.
+- If a confirmed pattern type genuinely cannot be reproduced as a small standalone problem
+  (e.g. it only exists through the framework or the database), still implement the
+  closest faithful version of its roles in all four languages, and explain in output.txt
+  what was simplified. Do not silently skip a type.
+- For each chosen instance, read the source files listed in its source_locations before
+  designing the snippet. Do not invent behaviour that is not in that source.
+
+FOLDER LAYOUT (all paths relative to Part3/)
+  test-cases/SPEC.md
+  test-cases/<problem>_cases.csv
+  <pattern>_<problem>/java/        production .java + separate test runner .java + README.md
+  <pattern>_<problem>/python/      production .py   + separate test runner .py   + README.md
+  <pattern>_<problem>/javascript/  production .js   + separate test runner .js   + README.md
+  <pattern>_<problem>/cpp/         production .hpp  + separate test runner .cpp  + README.md
+  tools/measure.py                 timing script (dev tool, not part of the comparison)
+  evidence/                        raw tool output (versions, test runs, lizard, timings)
+  llm/input.txt, llm/output.txt, llm/run_info.txt, llm/cross_language_llm_draft.csv
+  Each test runner is run from its own language folder and reads
+  ../../test-cases/<problem>_cases.csv
+
+ONE-TIME SETUP (do this first)
+1. Detect the operating system and record it. Record the exact output of
+   `java -version`, `javac -version`, `python --version`, `node --version` and
+   `g++ --version` in Part3/evidence/toolchains.txt and Part3/llm/run_info.txt.
+   Known toolchains on this machine (Windows):
+   - Java: JDK 21.0.2 is NOT on the PATH. Use the full paths
+     javac and ...\bin\java.exe, and
+     show those full paths in the Java README commands.
+   - C++: MinGW g++ 6.3.0, which does not fully support C++17. Use -std=c++14 and only
+     C++14 features (no std::optional, std::string_view, structured bindings or
+     <filesystem>). If std::stod/std::to_string fail to compile on this MinGW, use
+     std::istringstream / std::ostringstream instead.
+   - Python 3.12.7 and Node v23.11.0 are on the PATH.
+   If a toolchain is missing, do NOT stop: still write that language's code and README,
+   and record test_result "not_run - <reason>" and a blank median_process_ms for it.
+2. Install lizard (pip, dev tool only) for LOC and complexity, and record its version.
+3. Write Part3/llm/input.txt listing every file you read as input (paths + commit).
+
+TASK - for EACH confirmed pattern type (N types in total)
+1. Turn the representative instance into ONE small, self-contained problem that keeps
+   the same pattern roles and core behaviour as the source.
+2. Write the SPEC.md section, then the shared test-case CSV, then the code in all four
+   languages, then the four READMEs.
+3. Compile and run every test runner. If a test fails, fix the PRODUCTION code so it
+   matches SPEC.md. Never change an expected value just to make a test pass; if you
+   find that a test case itself contradicts SPEC.md, fix it in BOTH files and note it in
+   output.txt. Save each final test run's raw output to Part3/evidence/.
+4. Measure (see MEASUREMENT RULES) and save all raw output to Part3/evidence/.
+
+STRICT RULES
+1. Keep the pattern faithful to the source instance: same roles, same responsibilities.
+   Simplify framework/database/hardware/network parts away, and list exactly what you
+   simplified.
+2. Use the SAME role/class names in all four languages (adjust only casing to each
+   language's convention, e.g. calculate_setpoint vs calculateSetpoint).
+3. Standard library ONLY. No JUnit, Maven, pip packages, npm packages, Boost or
+   GoogleTest. Java test runners use a main() method; JavaScript uses CommonJS
+   (module.exports / require); C++ production code is header-only (.hpp), C++14.
+4. Production code and test runner must be in SEPARATE files. The production file must
+   contain no test code, no main(), and no file reading. One production file per
+   language (Java: one public class/interface plus package-private classes in the same
+   file is fine).
+5. All four test runners must:
+   - read the same shared CSV file (simple format: comma-separated, no quoted fields,
+     lists inside a field separated by "|"),
+   - treat expected value "ERROR" as "this input must raise/throw an error",
+   - compare decimals with tolerance 1e-9,
+   - print "FAIL <case_id>: expected <x>, got <y>" for each failure,
+   - finish with exactly one line: "<Pattern> tests: X/Y passed",
+   - exit with code 0 if all passed, 1 otherwise.
+6. Keep each production file small (about 30-90 code lines) and readable.
+7. Report ONLY measured values. Never estimate or round up LOC, complexity, pass counts
+   or times, and do not claim one language is faster beyond what the measurements show.
+8. Do not cite any reference that is not a real, well-known source (book, official
+   language documentation or specification).
+9. Never modify Mycodo/, Part1/ or Part2/.
+
+MEASUREMENT RULES (same rules for every language; copy them into each README)
+- source_loc and max_function_cc: run lizard on the PRODUCTION file only. source_loc =
+  lizard NLOC for that file (excludes blank lines and comments); max_function_cc = the
+  highest CCN of any function in that file. Save lizard's raw output.
+- Timing: compile first (javac / g++ -std=c++14 -O2) outside the timed runs. Then run the
+  test-runner process once as a warmup and five more times as measured runs on the same
+  machine, using Part3/tools/measure.py (time.perf_counter around subprocess.run).
+  Report the median of the five measured runs in milliseconds. The measured time is the
+  whole test-runner process: interpreter/JVM startup, reading the CSV and running all
+  test cases. Save every individual run time to Part3/evidence/timings_<pattern>.txt.
+- Record the exact compile/run/test command and the working folder for each language.
+
+OUTPUT FILES (write them all; repeat A-F for each pattern type, into Part3/llm/output.txt)
+
+A. Selection and mapping
+   - Why this instance represents the pattern well (2-3 sentences)
+   - Table: Pattern role | Name in snippet | Source symbol it comes from (file:lines,
+     confirmed with grep -n)
+   - What was simplified away from the original code and why
+B. SPEC.md section (in Part3/test-cases/SPEC.md): inputs, outputs, rules, error cases,
+   written so a person could implement it without seeing any code.
+C. Shared test cases CSV (Part3/test-cases/<problem>_cases.csv): header + 6-12 cases
+   covering normal cases, boundary cases and at least 2 ERROR cases. In output.txt, one
+   short line per case explaining what it checks.
+D. Code files written to the layout above (do not paste them into output.txt).
+E. README.md in each language folder: working folder, toolchain and version, exact
+   compile/run/test command, expected final line, measurement rules.
+F. Language notes: one sentence per language on how the pattern roles are expressed
+   (interface / ABC / base class / pure virtual), when the contract is enforced (compile
+   time vs run time), and object ownership (GC vs smart pointers).
+
+AFTER ALL PATTERN TYPES
+G. Part3/llm/cross_language_llm_draft.csv with exactly this header, one row per
+   pattern type x language (4 x N rows), cells containing commas quoted, paths relative to the
+   team folder:
+   pattern_name,instance_name,language,snippet_path,source_loc,max_function_cc,runtime_compiler,test_command,test_result,median_process_ms,language_notes
+   test_result is the actual "passed/total" (or "not_run - <reason>").
+H. Comparison draft (in output.txt): for each pattern, a table
+   Language | How roles are written | Contract checked when | Inheritance vs composition |
+   Memory/ownership | Notable language features used | source_loc | max_function_cc |
+   median_process_ms
+   then one paragraph on what static vs dynamic typing changes for this pattern, using
+   the measured numbers.
+I. Technology discussion draft (150-250 words) with only real references, e.g. Gamma et
+   al. "Design Patterns" (1994), the Java Language Specification, Python "abc" module
+   documentation, cppreference.com, ECMAScript/MDN class documentation.
+J. Pitfalls found: anything that failed to compile or behaved differently across
+   languages while you worked (path handling, integer vs float division, rounding, CSV
+   parsing, exception types) and how you resolved it.
+
+FINAL SELF-CHECK (last step of the run)
+- Confirm every file listed above exists; list any that are missing and why.
+- Re-run all 4 x N test runners one last time and report each final line.
+- Confirm cross_language_llm_draft.csv has 4 x N rows (N = number of confirmed pattern types) and every numeric value matches the raw
+  output in Part3/evidence/.
+- Confirm Mycodo/ Part1/ and Part2/ were not modified.
+- End with a short summary table: pattern | language | source_loc | max_function_cc |
+  test_result | median_process_ms.

@@ -1,0 +1,6 @@
+# Plugin / python
+working folder: Part3/plugin_module_loading/python
+$ python test_module_loading.py
+Plugin tests: 9/9 passed
+
+[exit code: 0]

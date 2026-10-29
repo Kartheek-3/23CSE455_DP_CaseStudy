@@ -1,0 +1,877 @@
+https://github.com/DevBM04/DP_Case_study
+You are an autonomous software-engineering agent working on my NestJS Airline Reservation Design Pattern Case Study.
+
+============================================================
+PROJECT
+============================================================
+
+Application repository:
+
+DP_Case_study
+
+This is the ACTUAL APPLICATION repository.
+
+DO NOT work in the A9 submission repository.
+
+The assignment is a Design Pattern Case Study for a NestJS Airline Reservation System.
+
+============================================================
+PART 2 SCOPE
+============================================================
+
+I am responsible for the COMPLETE Part 2 evolution.
+
+Implement exactly these THREE changes:
+
+CHANGE 1:
+Flight cancellation
+
+CHANGE 2:
+Seat-class expansion
+
+CHANGE 3:
+Ticket modification
+
+DO NOT implement a new payment provider.
+
+DO NOT add payment functionality.
+
+Do not create or modify payment-related functionality unless it already exists and must remain untouched.
+
+============================================================
+PART 2 OBJECTIVE
+============================================================
+
+Part 2 is NOT merely a feature-development task.
+
+The purpose is to evolve the baseline application and study the impact of each change on the design-pattern collaborations identified in Part 1.
+
+The evolution must therefore be traceable as:
+
+Original
+    ↓
+Change1 — Flight cancellation
+    ↓
+Change2 — Seat-class expansion
+    ↓
+Change3 — Ticket modification
+
+For every source version, identify confirmed pattern collaborations and determine whether they are:
+
+- baseline
+- preserved
+- modified
+- extended
+- replaced
+- removed
+- newly_introduced
+
+Do not invent patterns simply to increase the number of patterns.
+
+============================================================
+SOURCE OF TRUTH
+============================================================
+
+The actual TypeScript source under:
+
+src/
+
+is the ultimate source of truth.
+
+Existing analysis documents such as:
+
+DP_REPOSITORY_ANALYSIS.md
+DP_DEPENDENCY_MAP.md
+DP_PATTERN_EVIDENCE.md
+
+are hypotheses only.
+
+Verify all claims against source code.
+
+Do not blindly trust existing analysis.
+
+============================================================
+PART 1 BASELINE
+============================================================
+
+The exact Part 1 baseline commit is:
+
+ae2c24869377ce2f7a29022cd237d808338156ea
+
+First verify that this exact SHA exists.
+
+Create a dedicated Part 2 branch from this baseline:
+
+part2-three-changes
+
+DO NOT modify or rewrite the baseline commit.
+
+============================================================
+PART 1 BASELINE PATTERNS
+============================================================
+
+Part 1 identified these confirmed pattern collaborations:
+
+1. Dynamic Guard Factory
+   Type: Creational
+   Instance: Role-Based Guard Synthesis
+
+2. Batch Loader
+   Type: Architectural
+   Instance: User Entity Batch Loading
+
+3. Batch Loader
+   Type: Architectural
+   Instance: Flight Entity Batch Loading
+
+4. Batch Loader
+   Type: Architectural
+   Instance: Seat Entity Batch Loading
+
+5. Producer-Consumer
+   Type: Architectural
+   Instance: Async Email Processing Queue
+
+Verify these against source code before using them.
+
+If source inspection contradicts any Part 1 claim, document the discrepancy.
+
+Do not silently invent or alter evidence.
+
+============================================================
+CRITICAL PATTERN CLASSIFICATION RULES
+============================================================
+
+For every candidate pattern, classify it as one of:
+
+1. CONFIRMED DESIGN PATTERN
+2. CONFIRMED SOFTWARE/ARCHITECTURAL PATTERN
+3. FRAMEWORK MECHANISM
+4. PATTERN-LIKE STRUCTURE
+5. REJECTED / INSUFFICIENT EVIDENCE
+
+Do not count framework-provided mechanisms as application-level patterns.
+
+Examples of things that must be evaluated carefully:
+
+- NestJS dependency injection
+- NestJS decorators
+- TypeORM repositories
+- Passport mechanisms
+- BullMQ infrastructure
+- GraphQL framework behavior
+
+Do not call something Strategy, Factory, Observer, Adapter, etc. merely because the code has similarly named classes/functions.
+
+A pattern must be supported by an actual collaboration in the source.
+
+============================================================
+BASELINE REPRODUCIBILITY
+============================================================
+
+Before modifying code:
+
+Run and record:
+
+git status
+git branch --show-current
+git log --oneline --decorate -10
+
+Verify:
+
+ae2c24869377ce2f7a29022cd237d808338156ea
+
+Record:
+
+- exact commit SHA
+- commit message
+- branch
+- working-tree state
+
+Determine and record environment versions:
+
+- Node.js
+- npm
+- TypeScript
+- NestJS
+- TypeORM
+- other relevant dependencies
+
+Inspect package.json/package-lock.json.
+
+Run the baseline build.
+
+Run the baseline test suite.
+
+Record:
+
+- exact commands
+- output
+- passed tests
+- failed tests
+- warnings/errors
+
+Do not claim a command succeeded unless it was actually executed.
+
+============================================================
+BASELINE FEATURE & WORKFLOW TRACING
+============================================================
+
+Before implementation, inspect and document:
+
+1. Flight management
+2. Booking creation
+3. Booking cancellation
+4. Seat creation
+5. Seat validation
+6. Seat DataLoader
+7. User authentication
+8. User/session behavior
+9. Google OAuth
+10. Role-based authorization
+11. BullMQ email notifications
+12. Cron/automatic deletion
+13. Ticket representation
+14. Seat representation
+15. Payment functionality
+
+Explicitly record non-implemented functionality.
+
+Payment must remain:
+
+NOT IMPLEMENTED / NOT PART OF THIS TASK
+
+============================================================
+IMPORTANT: FLIGHT CANCELLATION
+============================================================
+
+Inspect the existing code before implementing this.
+
+The application already has booking cancellation functionality.
+
+Distinguish:
+
+cancelBooking
+
+from:
+
+cancelFlight
+
+Do NOT duplicate booking cancellation.
+
+Implement actual FLIGHT cancellation based on the existing Flight/Booking architecture.
+
+Determine appropriate behavior from the source and requirement.
+
+Consider only what is justified, such as:
+
+- flight cancellation state
+- preventing future bookings
+- handling existing bookings
+- seat consistency
+- authorization
+- notification if supported by the existing architecture
+- GraphQL mutation
+- persistence
+
+Do not invent payment/refund functionality.
+
+============================================================
+CHANGE 1 — FLIGHT CANCELLATION
+============================================================
+
+Implement flight cancellation.
+
+Before coding:
+
+- inspect affected source
+- identify affected workflows
+- identify affected patterns
+- define expected behavior
+- define tests
+
+After coding:
+
+- run focused tests
+- run affected existing tests
+- record actual results
+- inspect Git diff
+- analyze pattern evolution
+
+============================================================
+CHANGE 2 — SEAT-CLASS EXPANSION
+============================================================
+
+Inspect the existing Seat entity and workflow.
+
+Implement a reasonable seat-class model.
+
+Potential classes may include:
+
+- Economy
+- Business
+- First
+
+Use only what is actually required.
+
+Trace the effect on:
+
+- Seat entity
+- seat creation
+- seat lookup
+- seat validation
+- seat booking
+- Booking
+- GraphQL inputs/outputs
+- DataLoader
+- availability
+
+Do not unnecessarily redesign the seat subsystem.
+
+After coding:
+
+- add focused tests
+- test valid classes
+- test invalid classes
+- test seat booking
+- test availability
+- run existing tests
+- record results
+- inspect diff
+- analyze pattern evolution
+
+============================================================
+CHANGE 3 — TICKET MODIFICATION
+============================================================
+
+Inspect how the application currently represents a ticket.
+
+Do NOT automatically create a Ticket entity.
+
+If ticket functionality is represented through Booking, use the existing architecture unless a separate abstraction is genuinely justified.
+
+Implement a meaningful ticket modification capability.
+
+Possible operations include:
+
+- changing seat
+- changing seat class
+- changing flight
+- modifying relevant booking information
+
+Choose the smallest implementation that fits the existing application.
+
+Consider:
+
+- booking
+- flight
+- seat
+- seat class
+- availability
+- cancellation state
+
+Do NOT implement payment.
+
+After coding:
+
+- add focused tests
+- test successful modification
+- test invalid modification
+- test unavailable resources
+- test cancelled flight interactions
+- run complete tests
+- record results
+- inspect diff
+- analyze pattern evolution
+
+============================================================
+INCREMENTAL GIT HISTORY
+============================================================
+
+Maintain reproducible evolution.
+
+Preferred history:
+
+ae2c248... Part 1 baseline
+        ↓
+Change1 — Flight cancellation
+        ↓
+Change2 — Seat-class expansion
+        ↓
+Change3 — Ticket modification
+
+Create separate commits for the three changes.
+
+Suggested commit messages:
+
+Part2: Add flight cancellation
+Part2: Add seat-class expansion
+Part2: Add ticket modification
+
+Do not squash these changes.
+
+Do not push automatically.
+
+============================================================
+PATTERN EVOLUTION ANALYSIS
+============================================================
+
+After EACH change, compare the source with the previous version.
+
+For every confirmed collaboration determine:
+
+status_after_change:
+
+baseline
+preserved
+modified
+extended
+replaced
+removed
+newly_introduced
+
+IMPORTANT:
+
+"source_version" means the actual code version:
+
+Original
+Change1
+Change2
+Change3
+
+It does NOT mean submission stage.
+
+For a continuing collaboration:
+
+KEEP THE SAME instance_name.
+
+Update:
+
+- participants
+- source locations
+- intent/evidence
+- status
+- change description
+
+when the collaboration actually changes.
+
+If a collaboration disappears, retain its row and mark:
+
+removed
+
+Do not delete the historical row.
+
+If a new collaboration genuinely appears, add:
+
+newly_introduced
+
+============================================================
+PATTERNS_EVOLUTION.CSV
+============================================================
+
+Create:
+
+Part2/pattern_evolution.csv
+
+Use exactly these columns:
+
+source_version,
+pattern_name,
+pattern_type,
+instance_name,
+participant_roles,
+source_locations,
+intent_and_evidence,
+status_after_change,
+change_description
+
+Rules:
+
+- one row = one confirmed pattern collaboration in one source version
+- include all applicable participants
+- map roles to actual classes/interfaces/functions
+- use exact source file paths
+- use exact line ranges
+- describe concrete evidence
+- preserve Original rows
+- keep instance names for continuing collaborations
+- retain removed instances
+- add newly introduced collaborations
+- do not invent participants
+- do not invent source locations
+
+============================================================
+PATTERN_COUNT.CSV
+============================================================
+
+Create:
+
+Part2/Pattern_count.csv
+
+Use these columns:
+
+source_version,
+summary,
+pattern_name,
+count
+
+Generate counts FROM pattern_evolution.csv.
+
+Include the appropriate summaries such as:
+
+per_pattern
+total_pattern_types
+total_pattern_instances
+
+Count each source version separately.
+
+IMPORTANT:
+
+Removed instances must NOT be included in the current total for that source version.
+
+Do not count the same collaboration multiple times merely because it has multiple participants.
+
+============================================================
+CHANGE EVIDENCE
+============================================================
+
+Create:
+
+Part2/changes/
+
+Change1/
+    requirement.md
+    diff.patch
+    test_result.txt
+
+Change2/
+    requirement.md
+    diff.patch
+    test_result.txt
+
+Change3/
+    requirement.md
+    diff.patch
+    test_result.txt
+
+Each requirement.md must contain:
+
+- requirement
+- intended behavior
+- affected scope
+
+Each diff.patch must be generated from Git.
+
+Do not manually fabricate diffs.
+
+Each test_result.txt must contain actual:
+
+- command
+- result
+- passed/total
+- failures
+- relevant output
+- environment where appropriate
+
+============================================================
+PART2/CODE
+============================================================
+
+Create:
+
+Part2/code/
+
+This must contain the evolved application source.
+
+The assignment requires Part2/code to contain the evolved application source.
+
+Keep the final source reproducible.
+
+Do NOT include:
+
+- node_modules
+- passwords
+- API keys
+- .env secrets
+- dependency caches
+- compiled binaries
+
+Record the commits needed to reconstruct Original/Change1/Change2/Change3.
+
+============================================================
+DIAGRAMS
+============================================================
+
+Create:
+
+Part2/diagrams/
+
+Update UML/design diagrams where required by the changes.
+
+Only update diagrams where the architecture or confirmed pattern collaboration actually changes.
+
+Diagrams must correspond to real source code.
+
+Do not create generic pattern diagrams unsupported by implementation.
+
+Where useful, provide before/after views.
+
+============================================================
+PART2_PROMPT.TEXT
+============================================================
+
+Create:
+
+Part2/Part2_prompt.text
+
+Store the exact prompt used for this Part 2 AI-assisted work.
+
+Use the exact filename required by the assignment.
+
+============================================================
+LLM.CSV
+============================================================
+
+Create:
+
+Part2/llm.csv
+
+This must be auditable.
+
+Use the required columns:
+
+part,
+model_and_date,
+prompt_file,
+input_file,
+output_file,
+evaluation,
+verification_file
+
+For each meaningful AI interaction record:
+
+part:
+evolution
+
+model_and_date:
+actual displayed model + actual interaction date
+
+prompt_file:
+relative path to the exact prompt
+
+input_file:
+relative path to supplied code/context
+
+output_file:
+relative path to raw model output
+
+evaluation:
+correct / partial / incorrect / cannot confirm, with concise correction
+
+verification_file:
+relative path to source/test evidence supporting the evaluation
+
+Do NOT fabricate model dates, outputs, or verification.
+
+============================================================
+RAW AI OUTPUT
+============================================================
+
+Because llm.csv requires an output_file:
+
+Save the raw Antigravity analysis/implementation output to an appropriate file under Part2, for example:
+
+Part2/llm/
+
+or another clearly documented relative path.
+
+Make sure llm.csv points to the actual file.
+
+============================================================
+README REQUIREMENTS
+============================================================
+
+Do not forget the team-level README.
+
+The assignment requires README.md to include:
+
+- application/source URL
+- source commits
+- environment versions
+- run commands
+- test commands
+- inspected modules
+- LOC rules
+- complexity rules
+- timing rules
+- limitations
+
+Part 2 should provide the information necessary for the README.
+
+Do NOT invent LOC/complexity/timing values.
+
+If Part 2 does not use runtime measurements, explicitly document that.
+
+============================================================
+NO CROSS-LANGUAGE WORK
+============================================================
+
+Do NOT perform Part 3 cross-language analysis.
+
+Do NOT create:
+
+Java
+Python
+JavaScript
+C++
+
+pattern snippets for Part 3.
+
+Do NOT create cross_language.csv.
+
+Part 3 is a separate responsibility.
+
+============================================================
+SUBMISSION STRUCTURE
+============================================================
+
+The assignment requires the following overall team structure:
+
+TeamFolder/
+├── README.md
+├── Team_Report.pdf
+├── Team_Report.tex
+├── data/
+├── code/
+├── test_result/
+├── Part1/
+│   ├── patterns.csv
+│   ├── Pattern_count.csv
+│   ├── pattern_architecture/
+│   ├── Part1_prompt.txt
+│   └── llm.csv
+├── Part2/
+│   ├── code/
+│   ├── changes/
+│   │   ├── Change1/
+│   │   ├── Change2/
+│   │   └── Change3/
+│   ├── pattern_evolution.csv
+│   ├── Pattern_count.csv
+│   ├── diagrams/
+│   ├── Part2_prompt.text
+│   └── llm.csv
+└── Part3/
+
+Part 2 must NOT become a separate submission.
+
+It is supporting evidence inside the single team submission.
+
+============================================================
+DO NOT DUPLICATE FOUR CSV DATASETS
+============================================================
+
+Do not create duplicate copies of the same four major CSV datasets throughout Part1/Part2/Part3.
+
+Part2 specifically needs:
+
+pattern_evolution.csv
+Pattern_count.csv
+
+Do not create unnecessary copies elsewhere.
+
+============================================================
+FINAL REPRODUCIBILITY
+============================================================
+
+The original and changed application versions must be reproducible through:
+
+- recorded Git commits
+OR
+- saved source versions
+
+Prefer Git commits.
+
+Record:
+
+Original commit
+Change1 commit
+Change2 commit
+Change3 commit
+
+============================================================
+FINAL VERIFICATION
+============================================================
+
+Before declaring Part 2 complete, verify:
+
+[ ] Part 1 baseline SHA verified
+[ ] Baseline build executed
+[ ] Baseline tests executed
+[ ] Environment versions recorded
+[ ] Existing modules inspected
+[ ] Existing patterns verified
+[ ] Change1 implemented
+[ ] Change2 implemented
+[ ] Change3 implemented
+[ ] Payment NOT implemented
+[ ] Booking cancellation preserved
+[ ] Flight cancellation is distinct
+[ ] Seat classes implemented
+[ ] Ticket modification implemented
+[ ] Tests added for each change
+[ ] Full test suite executed
+[ ] Git history contains separate changes
+[ ] pattern_evolution.csv generated
+[ ] Pattern_count.csv generated
+[ ] Counts derived from pattern records
+[ ] Removed patterns excluded from current totals
+[ ] Historical removed rows retained
+[ ] Same instance_name retained across continuing collaborations
+[ ] Exact source locations verified
+[ ] Exact participant roles verified
+[ ] UML updated where needed
+[ ] Change1 requirement/diff/test evidence exists
+[ ] Change2 requirement/diff/test evidence exists
+[ ] Change3 requirement/diff/test evidence exists
+[ ] Part2/code contains evolved application source
+[ ] Part2_prompt.text exists
+[ ] llm.csv exists
+[ ] Raw AI output exists
+[ ] llm.csv points to real files
+[ ] README information is available
+[ ] No secrets included
+[ ] No dependency caches included
+[ ] No compiled binaries included
+[ ] A9 repository NOT modified
+[ ] Part3 NOT performed
+
+============================================================
+EXECUTION PROTOCOL
+============================================================
+
+PHASE 1 — DO NOT MODIFY SOURCE
+
+First:
+
+1. Inspect repository.
+2. Verify baseline commit.
+3. Verify Part 1 patterns.
+4. Inspect all relevant workflows.
+5. Verify environment.
+6. Run baseline build.
+7. Run baseline tests.
+8. Determine exact implementation scope.
+9. Produce a detailed implementation plan.
+
+STOP.
+
+DO NOT MODIFY src/ UNTIL THE PLAN HAS BEEN REVIEWED AND APPROVED.
+
+After approval, implement:
+
+Change1
+then Change2
+then Change3
+
+with tests, commits, diffs, pattern evolution analysis, diagrams, and submission artifacts after each stage.

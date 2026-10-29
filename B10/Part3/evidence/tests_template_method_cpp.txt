@@ -1,0 +1,9 @@
+# Template Method / cpp
+working folder: Part3/template_method_setpoint_interpolation/cpp
+$ g++ -std=c++14 -O2 -Wall -o test_setpoint_interpolation.exe test_setpoint_interpolation.cpp
+
+[compile exit code: 0]
+$ test_setpoint_interpolation.exe
+Template Method tests: 12/12 passed
+
+[exit code: 0]

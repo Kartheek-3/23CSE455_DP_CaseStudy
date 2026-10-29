@@ -1,0 +1,30 @@
+# Observations for the later snapshots (grep evidence)
+
+## After Change1: AccountPolicyResolver.forType is a lookup, not a creating factory
+14:    private final Map<AccountType, AccountPolicy> policies = new EnumMap<>(AccountType.class);
+17:        policies.put(AccountType.CONTA_CORRENTE, new CheckingAccountPolicy());
+18:        policies.put(AccountType.CONTA_POUPANCA, new SavingsAccountPolicy());
+22:        AccountPolicy policy = policies.get(type);
+24:            throw new BadRequestException("Tipo de conta sem política definida: " + type);
+
+## After Change2: observers are registered by the container, the subject has no list of observers
+event/HighValueAlertObserver.java:19:    void onTransaction(@Observes TransactionEvent event) {
+event/TransactionAuditLog.java:18:    void onTransaction(@Observes TransactionEvent event) {
+service/AccountService.java:38:    Event<TransactionEvent> transactionEvents;
+service/AccountService.java:63:                transactionEvents.fire(new TransactionEvent(accountId, TransactionKind.DEPOSIT, amount, newBalance, Instant.now()));
+service/AccountService.java:85:                transactionEvents.fire(new TransactionEvent(accountId, TransactionKind.WITHDRAWAL, amount, newBalance, Instant.now()));
+
+## After Change3: no abstract class / hook methods exist (Template Method rejected)
+no 'abstract' in production code
+
+## After Change3: @Transactional locations (annotation only - Interceptor/Unit of Work stays uncertain)
+persistence/dao/AccountDAO.java:30:    @Transactional
+persistence/dao/AccountDAO.java:35:    @Transactional
+persistence/dao/UserDAO.java:28:    @Transactional
+service/AccountService.java:50:    @Transactional
+service/AccountService.java:60:    @Transactional
+service/AccountService.java:71:    @Transactional
+
+## After Change3: shape shared by deposit/withdraw/transfer (load -> domain call -> persist -> publish) is reused through private helpers, not through inheritance
+104:    private Account loadAccount(Long accountId) {
+109:    private void publish(Long accountId, TransactionKind kind, double amount, double balanceAfter) {

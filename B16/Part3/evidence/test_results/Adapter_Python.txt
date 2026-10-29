@@ -1,0 +1,11 @@
+$ (cd Part3/adapter-listener-bridge/python) python3 -m unittest -v test_adapter
+test_adapter_converts_engine_calls_into_client_calls (test_adapter.AdapterTest.test_adapter_converts_engine_calls_into_client_calls) ... ok
+test_invalid_input_is_rejected_with_expected_error (test_adapter.AdapterTest.test_invalid_input_is_rejected_with_expected_error) ... ok
+test_report_matches_expected_output (test_adapter.AdapterTest.test_report_matches_expected_output) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK
+[exit 0]
+result: 3/3 passed

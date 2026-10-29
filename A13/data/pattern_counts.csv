@@ -1,0 +1,70 @@
+source_version,summary,pattern_name,count
+baseline,per_pattern,Dependency Injection,1
+baseline,per_pattern,Factory,1
+baseline,per_pattern,Repository,1
+baseline,per_pattern,Adapter,2
+baseline,per_pattern,Facade,2
+baseline,per_pattern,Proxy,1
+baseline,per_pattern,Flyweight / DataLoader,1
+baseline,per_pattern,Observer / Pub-Sub,2
+baseline,per_pattern,Strategy,1
+baseline,per_pattern,Template Method,1
+baseline,per_pattern,Mediator,1
+baseline,total_pattern_types,ALL,11
+baseline,total_pattern_instances,ALL,14
+CH01,per_pattern,Dependency Injection,1
+CH01,per_pattern,Factory,1
+CH01,per_pattern,Repository,1
+CH01,per_pattern,Adapter,2
+CH01,per_pattern,Facade,2
+CH01,per_pattern,Proxy,1
+CH01,per_pattern,Flyweight / DataLoader,1
+CH01,per_pattern,Observer / Pub-Sub,2
+CH01,per_pattern,Strategy,1
+CH01,per_pattern,Template Method,1
+CH01,per_pattern,Mediator,1
+CH01,per_pattern,State,1
+CH01,total_pattern_types,ALL,12
+CH01,total_pattern_instances,ALL,15
+CH02,per_pattern,Dependency Injection,1
+CH02,per_pattern,Factory,1
+CH02,per_pattern,Repository,1
+CH02,per_pattern,Adapter,2
+CH02,per_pattern,Facade,2
+CH02,per_pattern,Proxy,1
+CH02,per_pattern,Flyweight / DataLoader,1
+CH02,per_pattern,Observer / Pub-Sub,2
+CH02,per_pattern,Strategy,2
+CH02,per_pattern,Template Method,1
+CH02,per_pattern,Mediator,1
+CH02,per_pattern,State,2
+CH02,total_pattern_types,ALL,12
+CH02,total_pattern_instances,ALL,17
+CH03,per_pattern,Dependency Injection,1
+CH03,per_pattern,Factory,1
+CH03,per_pattern,Repository,1
+CH03,per_pattern,Adapter,2
+CH03,per_pattern,Facade,2
+CH03,per_pattern,Proxy,1
+CH03,per_pattern,Flyweight / DataLoader,1
+CH03,per_pattern,Observer / Pub-Sub,2
+CH03,per_pattern,Strategy,3
+CH03,per_pattern,Template Method,1
+CH03,per_pattern,Mediator,1
+CH03,per_pattern,State,2
+CH03,total_pattern_types,ALL,12
+CH03,total_pattern_instances,ALL,18
+CH04,per_pattern,Dependency Injection,1
+CH04,per_pattern,Factory,1
+CH04,per_pattern,Repository,1
+CH04,per_pattern,Adapter,2
+CH04,per_pattern,Facade,2
+CH04,per_pattern,Proxy,1
+CH04,per_pattern,Flyweight / DataLoader,1
+CH04,per_pattern,Observer / Pub-Sub,2
+CH04,per_pattern,Strategy,4
+CH04,per_pattern,Template Method,1
+CH04,per_pattern,Mediator,1
+CH04,per_pattern,State,2
+CH04,total_pattern_types,ALL,12
+CH04,total_pattern_instances,ALL,19

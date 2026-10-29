@@ -1,0 +1,43 @@
+@startuml B9
+!pragma layout smetana
+title B9 Command: NodeTestTask as TestTask
+
+interface "HierarchicalTestExecutorService.TestTask" as TestTask <<Command>> {
+  +execute()
+  +getExecutionMode()
+  +getResourceLock()
+}
+class "NodeTestTask<C>" as NodeTestTask <<ConcreteCommand>> {
+  -node : Node<C>
+  +execute()
+}
+interface "Node<C>" as Node <<Receiver>> {
+  +prepare(C)
+  +before(C)
+  +execute(C, DynamicTestExecutor)
+  +after(C)
+  +cleanUp(C)
+}
+interface HierarchicalTestExecutorService <<Invoker>> {
+  +submit(TestTask)
+  +invokeAll(List<TestTask>)
+}
+class ForkJoinPoolHierarchicalTestExecutorService <<ConcreteInvoker>>
+class "HierarchicalTestExecutor<C>" as HierarchicalTestExecutor <<Client>>
+
+NodeTestTask ..|> TestTask
+NodeTestTask o--> Node : node
+ForkJoinPoolHierarchicalTestExecutorService ..|> HierarchicalTestExecutorService
+HierarchicalTestExecutorService ..> TestTask : execute()
+HierarchicalTestExecutor ..> NodeTestTask : creates root task
+HierarchicalTestExecutor ..> HierarchicalTestExecutorService : submit(rootTask)
+' aligned-with-record
+legend right
+  <b>Counted participants</b> (record in the dataset)
+  Command: TestTask
+  ConcreteCommand: NodeTestTask
+  Invoker: SameThreadHierarchicalTestExecutorService (not drawn)
+  Invoker: ForkJoinPoolHierarchicalTestExecutorService
+  Grey classes: real, shown for context, not counted
+endlegend
+@enduml

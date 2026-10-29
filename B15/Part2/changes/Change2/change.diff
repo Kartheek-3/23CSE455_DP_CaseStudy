@@ -1,0 +1,32 @@
+--- /dev/null
++++ b/backend/app/core/policy_engine.py
+@@ -0,0 +149 @@
++"""Access Policy Engine — Strategy + Chain of Responsibility for ABAC."""
++# Full content at: Part2/code/evolved/app/core/policy_engine.py
++# Key additions in CH02:
++#   - EmbargoPolicyRule (new ConcreteStrategy): time-bounded DENY before embargo expiry
++#   - RoleBasedRule (new ConcreteStrategy): ALLOW for OWNER/MANAGER, DENY for VIEWER on writes
++#   - AccessPolicyEngine.evaluate_chain (ChainHolder): ordered list evaluation, first ALLOW/DENY wins
+
+--- a/backend/app/api/deps.py
++++ b/backend/app/api/deps.py
+@@ -654,0 +655,18 @@
++from app.core.policy_engine import AccessContext, AccessPolicyEngine, SuperuserRule, ProjectOwnerRule, EmbargoPolicyRule, RoleBasedRule
++
++_default_engine = AccessPolicyEngine(rules=[
++    SuperuserRule(),
++    ProjectOwnerRule(),
++    EmbargoPolicyRule(),
++    RoleBasedRule(),
++])
++
++def require_access(
++    project_id: UUID,
++    db: Session = Depends(get_db),
++    current_user: models.User = Depends(get_current_approved_user),
++) -> None:
++    """FastAPI dependency: raises 403 if the policy engine denies access."""
++    ctx = AccessContext(user_id=current_user.id, user_is_superuser=current_user.is_superuser, project_id=project_id)
++    decision = _default_engine.evaluate_chain(ctx)
++    if decision.name != "ALLOW":
++        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied by policy engine")

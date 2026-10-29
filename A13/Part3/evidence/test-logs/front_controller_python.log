@@ -1,0 +1,15 @@
+# front_controller / python
+# working folder: Part3/code/pattern_front_controller/python
+# runtime: CPython 3.14.6
+$ python3 -B test_api_controller.py ../../../test-cases/front_controller.txt
+PASS public_endpoint
+PASS authenticated_endpoint
+PASS unknown_endpoint
+PASS missing_credential
+PASS bad_token
+PASS rate_limit_per_actor
+PASS anonymous_is_limited_too
+passed 7/7
+
+# exit code 0
+# timing: 1 warm-up + 5 runs, ms: 31.0, 26.9, 26.7, 27.3, 28.5 -> median 27.3

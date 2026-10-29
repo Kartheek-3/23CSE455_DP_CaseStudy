@@ -1,0 +1,15 @@
+digraph G {
+ rankdir=LR; fontname="Helvetica"; labelloc=t; label="Strategy - Account Type Policy";
+ node [shape=box, style="rounded,filled", fillcolor="#eef3fb", color="#4a6fa5", fontname="Helvetica", fontsize=10];
+ edge [fontname="Helvetica", fontsize=9, color="#555555"];
+ n_AccountPolicy [label="&laquo;Strategy&raquo;\nAccountPolicy", fillcolor="#eef3fb"];
+ n_SavingsAccountPolicy [label="&laquo;ConcreteStrategy&raquo;\nSavingsAccountPolicy", fillcolor="#eef3fb"];
+ n_CheckingAccountPolicy [label="&laquo;ConcreteStrategy&raquo;\nCheckingAccountPolicy", fillcolor="#eef3fb"];
+ n_AccountService [label="&laquo;Context&raquo;\nAccountService", fillcolor="#eef3fb"];
+ n_AccountPolicyResolver [label="&laquo;StrategySelector&raquo;\nAccountPolicyResolver", fillcolor="#eef3fb"];
+ n_AccountService -> n_AccountPolicyResolver [label="selects via"];
+ n_AccountPolicyResolver -> n_AccountPolicy [label="returns"];
+ n_AccountService -> n_AccountPolicy [label="calls bonusOnDeposit /\nallowsWithdrawal"];
+ n_SavingsAccountPolicy -> n_AccountPolicy [label="implements", style=dashed];
+ n_CheckingAccountPolicy -> n_AccountPolicy [label="implements", style=dashed];
+}

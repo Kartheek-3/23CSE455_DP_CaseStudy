@@ -1,0 +1,2 @@
+add 12 PASS
+div fast PASS

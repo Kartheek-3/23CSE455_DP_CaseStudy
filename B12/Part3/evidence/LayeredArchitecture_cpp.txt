@@ -1,0 +1,11 @@
+PATTERN/SUITE   : LayeredArchitecture_cpp
+RUNTIME/COMPILER: g++.exe (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r1) 16.2.0
+
+WORKDIR         : C:\Users\eswar\OneDrive\Documents\Visual Studio Code\23CSE455_DP_Submission\B12\Part3\LayeredArchitecture\cpp
+BUILD COMMAND   : & 'C:\Users\eswar\AppData\Local\Microsoft\WinGet\Packages\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\mingw64\bin\g++.exe' -O2 -static layered_architecture_test.cpp -o layered_architecture_test.exe
+BUILD OUTPUT    : 
+RUN COMMAND     : .\layered_architecture_test.exe 
+PROGRAM OUTPUT  : LAYERED_ARCHITECTURE_CPP PASS 8/8
+TIME INCLUDES   : whole process wall time (runtime startup + program execution), after 1 unmeasured warm-up
+TIMING SAMPLES  : 5 measured runs (ms): 15.8139, 16.5421, 17.4133, 14.7061, 13.7329
+MEDIAN_MS       : 15.814

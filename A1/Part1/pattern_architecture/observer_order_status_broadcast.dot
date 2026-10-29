@@ -1,0 +1,38 @@
+// Observer instance "Order Status Broadcast" (publish-subscribe variant; baseline 83998629).
+digraph observer_channels {
+  graph [rankdir=TB, fontname="Helvetica", fontsize=13, nodesep=0.25, ranksep=0.5];
+  node  [shape=plain, fontname="Helvetica", fontsize=13];
+  edge  [fontname="Helvetica", fontsize=11, color="#444444"];
+  pub [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="3" bgcolor="#f4f4f4">
+    <tr><td><b>Notifier / ConcreteSubject role (functions)</b></td></tr>
+    <tr><td align="left">views.adminupdateorderstatus (2124-2251)</td></tr>
+    <tr><td align="left">views.deliveryupdatedeliverystatus</td></tr>
+    <tr><td align="left">views.restaurantupdateorderstatus</td></tr>
+    <tr><td align="left">views.restaurantplaceorder, views.phonepe_callback</td></tr>
+    <tr><td align="left">order.save(); group_send(group, {"type": ...})</td></tr></table>>];
+  layer [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="3" bgcolor="#e8eef7">
+    <tr><td><b>Subject registry / ChangeManager (framework)</b></td></tr>
+    <tr><td>channels.layers.InMemoryChannelLayer</td></tr>
+    <tr><td align="left">group_add / group_discard / group_send</td></tr>
+    <tr><td align="left">admin_group, restaurant_group,</td></tr><tr><td align="left">delivery_group</td></tr></table>>];
+  base [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="3" bgcolor="#e8eef7">
+    <tr><td><b>Observer (framework base)</b></td></tr>
+    <tr><td>AsyncWebsocketConsumer</td></tr><tr><td>(channels.generic.websocket)</td></tr>
+    <tr><td align="left">event type x_y → method x_y(event)</td></tr></table>>];
+  admin [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="3" bgcolor="#f4f4f4">
+    <tr><td><b>ConcreteObserver</b></td></tr><tr><td>AdminOrderConsumer</td></tr><tr><td>consumers.py:350-460</td></tr>
+    <tr><td align="left">admin_{all,new,cancelled,</td></tr><tr><td align="left">delivered}_order()</td></tr></table>>];
+  rest [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="3" bgcolor="#f4f4f4">
+    <tr><td><b>ConcreteObserver</b></td></tr><tr><td>RestaurantOrderConsumer</td></tr><tr><td>consumers.py:462-587</td></tr>
+    <tr><td align="left">restaurant_{all,new,cancelled,</td></tr><tr><td align="left">delivered}_order()</td></tr></table>>];
+  deliv [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="3" bgcolor="#f4f4f4">
+    <tr><td><b>ConcreteObserver</b></td></tr><tr><td>DeliveryOrderConsumer</td></tr><tr><td>consumers.py:589-688</td></tr>
+    <tr><td align="left">delivery_{new,delivered}_order()</td></tr></table>>];
+  pub -> layer [label="group_send"];
+  layer -> admin [label="admin_group"];
+  layer -> rest [label="restaurant_group"];
+  layer -> deliv [label="delivery_group"];
+  admin -> base [arrowhead=empty, style=dashed];
+  rest -> base [arrowhead=empty, style=dashed];
+  deliv -> base [arrowhead=empty, style=dashed];
+}

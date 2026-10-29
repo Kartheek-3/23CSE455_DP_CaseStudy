@@ -1,0 +1,25 @@
+Change2 (trainer-assignment policies) test run - 2026-10-11 20:45
+Backend: FastAPI TestClient on a temporary copy of backend/gym_system.db
+
+[PASS] least_loaded picks the trainer with fewest clients
+[PASS] highest_rated picks the best-rated trainer
+[PASS] specialization_match matches the member's goal
+[PASS] specialization_match falls back to least loaded when nothing matches
+[PASS] admin lists 3 policies
+[PASS] non-admin cannot list policies (403)
+[PASS] admin assigns a trainer manually
+[PASS] member response shows the assigned trainer  (Alex Trainer)
+[PASS] assign to trainer with free capacity
+[PASS] trainer at max_clients is rejected (400)  (Trainer is inactive, already assigned to this member, or at full capacity)
+[PASS] unknown policy is rejected (400)
+[PASS] trainer sees own clients only
+[PASS] trainer creates plan for own client (200)
+[PASS] trainer cannot create plan for another trainer's client (403)
+[PASS] admin unassigns a trainer
+[PASS] auto-assign assigns unassigned members  (assigned=1 skipped=0)
+[PASS] assignment history keeps ended and active entries
+[PASS] trainer cannot change own capacity (403)
+[PASS] admin changes trainer capacity
+
+Result: 19 passed, 0 failed
+Frontend: ng build --configuration development -> success (final code after Change3)

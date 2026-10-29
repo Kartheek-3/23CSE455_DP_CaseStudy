@@ -1,0 +1,4 @@
+DISCLAIMER:
+This file is a reconstructed summary of the relevant intent/actions from the Change 3 agent session. It is not a literal historical LLM transcript or streaming log. The original session evidence was not recoverable after the agent session crash.
+
+Implemented `modifyBooking` in `BookingService` taking `UpdateBooking` input. Added checks for booking ownership and flight cancellation status. Refactored `UpdateBooking` DTO to take `bookingId`, `flightId?`, and `seats?`. Updated tests in `booking.service.spec.ts`.

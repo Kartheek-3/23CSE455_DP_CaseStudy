@@ -1,0 +1,46 @@
+================================================================================
+PART 3 LLM PROMPT — TRACK B: NATIVE SYSTEMS PROGRAMMING (C++14)
+Contributor: Contributor 2 (Systems & Native Performance Lead)
+Model: Claude 3.5 Sonnet / Date: 2026-10-11
+Target Language: C++ (MinGW GCC 6.3, -O2, -std=c++14)
+================================================================================
+
+Role & Context:
+I am the systems and native performance lead for Team A4. While Contributor 1 is handling the managed/interpreted languages (Java, Python, JavaScript), my role in Part 3 is to re-engineer all six confirmed ha-fusion design patterns in native modern C++ (C++14), targeting high-throughput, low-latency execution suitable for embedded IoT edge controllers (e.g., Raspberry Pi, ESP32 smart home hubs).
+
+Input Context:
+Please review `Part3/llm/input_code_context_cpp.md`, which defines the low-level contracts and scenarios for our 6 confirmed patterns:
+1. Composite: Visibility condition tree evaluating state and numeric predicates.
+2. Observer: Entity subscription hub broadcasting state updates to observers.
+3. Memento: Bounded-capacity configuration history manager with rollback transactions.
+4. Strategy: Pluggable condition evaluator context with dynamic algorithm registration.
+5. Factory Method: Parameterized entity domain modal factory producing domain controllers.
+6. Template Method: Canvas renderer base establishing an invariant algorithmic skeleton with polymorphic overlays.
+
+Systems & Performance Requirements:
+1. Idiomatic Modern C++ Architecture:
+   - Use clean header/source separation (`.hpp` and `.cpp`) for production code.
+   - Enforce RAII (Resource Acquisition Is Initialization) and safe memory management using `std::shared_ptr` and `std::make_shared`. Ensure zero memory leaks without manual `delete`.
+   - Utilize standard library containers (`std::vector`, `std::map`, `std::string`) while minimizing unnecessary heap allocations and object copying (pass by const reference).
+   - Leverage virtual method tables (`vtable`) for runtime polymorphism, optimized with `-O2` compiler flags under MinGW GCC 6.3.
+
+2. Test Harness & Critical Windows Timing Fix:
+   - Implement `test_runner.cpp` for each pattern, executing the exact same scenario assertions as the managed language runners (6/6 for Composite, Memento, Strategy; 5/5 for Observer, Factory, Template).
+   - **Crucial Timing Constraint on Windows**: On MinGW GCC 6.3, `std::chrono::high_resolution_clock` has a known flaw where its tick resolution defaults to `GetSystemTimeAsFileTime` (~15.6 ms), truncating fast microsecond-level test executions to `0.000 ms`.
+   - To capture true hardware-level execution times, use the native Windows High-Resolution Performance Counter API (`windows.h`):
+     ```cpp
+     LARGE_INTEGER freq, t1, t2;
+     QueryPerformanceFrequency(&freq);
+     QueryPerformanceCounter(&t1);
+     // ... execute tests ...
+     QueryPerformanceCounter(&t2);
+     double elapsedMs = (t2.QuadPart - t1.QuadPart) * 1000.0 / freq.QuadPart;
+     ```
+   - Print output in the standard parseable format:
+     `RESULT: X/X passed`
+     `TIME_MS: 0.XXXX`
+
+3. Metrics & Comparative Deliverables:
+   - Measure physical source LOC (excluding comments, blank lines, and headers/tests).
+   - Compute maximum function cyclomatic complexity via Lizard.
+   - Run 1 warm-up run + 5 measured runs, outputting the exact median execution time to merge with Contributor 1's dataset in `data/cross_language.csv`.

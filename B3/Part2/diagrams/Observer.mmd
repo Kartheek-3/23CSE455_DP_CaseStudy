@@ -1,0 +1,19 @@
+﻿classDiagram
+    class JobObserver {
+        <<Protocol>>
+        +update(job)
+    }
+    class JobCreatedLoggingObserver {
+        +update(job)
+    }
+    class JobCreatedSubject {
+        +subscribe(observer)
+        +unsubscribe(observer)
+        +notify(job)
+    }
+    class JobCreateAPIView {
+        +perform_create(serializer)
+    }
+    JobObserver <|.. JobCreatedLoggingObserver
+    JobCreatedSubject o-- JobObserver : notifies
+    JobCreateAPIView --> JobCreatedSubject : publishes event

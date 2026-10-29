@@ -1,0 +1,74 @@
+[
+  {
+    "name": "claude_text_and_irrelevant_event",
+    "input": {
+      "provider": "claude",
+      "events": [
+        {"type": "content_block_delta", "delta": {"type": "text_delta", "text": "Hello"}},
+        {"type": "message_start"},
+        {"type": "content_block_delta", "delta": {"type": "text_delta", "text": " world"}}
+      ]
+    },
+    "expected": {"chunks": ["Hello", " world"], "text": "Hello world"}
+  },
+  {
+    "name": "openai_text_and_empty_chunk",
+    "input": {
+      "provider": "openai",
+      "events": [
+        {"choices": [{"delta": {"content": "Good"}}]},
+        {"choices": [{"delta": {"content": ""}}]},
+        {"choices": [{"delta": {"content": " morning"}}]}
+      ]
+    },
+    "expected": {"chunks": ["Good", " morning"], "text": "Good morning"}
+  },
+  {
+    "name": "gemini_text_and_non_string",
+    "input": {
+      "provider": "gemini",
+      "events": [{"text": "A"}, {"text": 9}, {"text": "B"}]
+    },
+    "expected": {"chunks": ["A", "B"], "text": "AB"}
+  },
+  {
+    "name": "empty_stream",
+    "input": {"provider": "claude", "events": []},
+    "expected": {"chunks": [], "text": ""}
+  },
+  {
+    "name": "irrelevant_events",
+    "input": {"provider": "openai", "events": [{"choices": []}, {"other": true}]},
+    "expected": {"chunks": [], "text": ""}
+  },
+  {
+    "name": "unknown_provider",
+    "input": {"provider": "mistral", "events": []},
+    "expected": {"error": "Unsupported provider: mistral"}
+  },
+  {
+    "name": "prototype_named_provider",
+    "input": {"provider": "toString", "events": []},
+    "expected": {"error": "Unsupported provider: toString"}
+  },
+  {
+    "name": "input_not_object",
+    "input": null,
+    "expected": {"error": "input must be an object"}
+  },
+  {
+    "name": "missing_provider",
+    "input": {"events": []},
+    "expected": {"error": "provider must be a string"}
+  },
+  {
+    "name": "events_not_array",
+    "input": {"provider": "gemini", "events": {}},
+    "expected": {"error": "events must be an array"}
+  },
+  {
+    "name": "event_not_object",
+    "input": {"provider": "claude", "events": ["text"]},
+    "expected": {"error": "each event must be an object"}
+  }
+]

@@ -1,0 +1,10 @@
+{
+  "installCommand": "corepack pnpm install --frozen-lockfile",
+  "buildCommand": "corepack pnpm run build",
+  "crons": [
+    {
+      "path": "/api/newsletter/send",
+      "schedule": "0 9 * * *"
+    }
+  ]
+}

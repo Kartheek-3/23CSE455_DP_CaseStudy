@@ -1,0 +1,35 @@
+Baseline SHA: 5f501341d49d2bc3fa7e817ce7548a82174326eb
+Preceding SHA: 608b45de20dce0a78459025320bfdeb0c4e47a78
+Implementation SHA: 9a4398a103e392a0ea634eaf521470985985145d
+Date: 2026-10-11
+Author: Antigravity Agent <antigravity@deepmind.google>
+Branch: develop
+
+Commit Message:
+feat: add first-class audio posts with transcription
+
+Changed Files:
+- packages/backend/migration/1786000000000-audio-transcripts.js
+- packages/backend/src/core/AudioTranscriptService.ts
+- packages/backend/src/core/CoreModule.ts
+- packages/backend/src/core/audio/AudioTranscriptionProvider.ts
+- packages/backend/src/di-symbols.ts
+- packages/backend/src/models/AudioTranscript.ts
+- packages/backend/src/models/RepositoryModule.ts
+- packages/backend/src/models/_.ts
+- packages/backend/src/postgres.ts
+- packages/backend/src/server/api/endpoint-list.ts
+- packages/backend/src/server/api/endpoints/audio/transcribe.ts
+- packages/backend/src/server/api/endpoints/audio/transcript/approve.ts
+- packages/backend/src/server/api/endpoints/audio/transcript/search.ts
+- packages/backend/src/server/api/endpoints/audio/transcript/show.ts
+- packages/backend/src/server/api/endpoints/audio/transcript/update.ts
+- packages/backend/test/unit/AudioTranscriptService.test.ts
+- packages/frontend/src/components/MkAudioPlayer.vue
+- packages/frontend/src/components/MkMediaAudio.vue
+- packages/frontend/src/utility/audio-recorder.ts
+
+Verification Status:
+- Vitest: 21 passed (21 total), exit code 0
+- SPDX license check: OK
+- Working tree: clean

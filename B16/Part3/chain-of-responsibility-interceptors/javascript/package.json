@@ -1,0 +1,9 @@
+{
+  "name": "chain-of-responsibility-interceptors",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/main.js ../test-data/invocations.txt",
+    "test": "node --test test/chain.test.js"
+  }
+}

@@ -1,0 +1,54 @@
+[
+  {
+    "pattern_name": "Information Expert",
+    "instance_name": "Parsed Email to Trip Record Linking",
+    "language": "Java",
+    "snippet_path": "Part3/information_expert/java/Main.java",
+    "source_loc": 63,
+    "max_function_cc": 7,
+    "runtime_compiler": "openjdk version \"21.0.12.1\" 2026-08-18; javac 21.0.12.1",
+    "test_command": "cd Part3/information_expert/java && java TestMain",
+    "test_result": "PASS 8/8; failures=0; errors=0; skipped=0; exit_code=0",
+    "median_process_ms": 75.601558,
+    "language_notes": "InboxItem contains the parsed booking information and owns link-or-create. Trip holds candidate TripItems; InboxReviewController delegates. ASCII case-insensitive same-trip matching; absent values as ~. No Rails/database/Anthropic/email; linked items remain idea, created items confirmed. Production files: information_expert/java/Main.java."
+  },
+  {
+    "pattern_name": "Information Expert",
+    "instance_name": "Parsed Email to Trip Record Linking",
+    "language": "Python",
+    "snippet_path": "Part3/information_expert/python/main.py",
+    "source_loc": 45,
+    "max_function_cc": 7,
+    "runtime_compiler": "Python 3.13.5",
+    "test_command": "cd Part3/information_expert/python && python3 test_main.py",
+    "test_result": "PASS 8/8; failures=0; errors=0; skipped=0; exit_code=0",
+    "median_process_ms": 819.621766,
+    "language_notes": "InboxItem contains the parsed booking information and owns link-or-create. Trip holds candidate TripItems; InboxReviewController delegates. ASCII case-insensitive same-trip matching; absent values as ~. No Rails/database/Anthropic/email; linked items remain idea, created items confirmed. Production files: information_expert/python/main.py."
+  },
+  {
+    "pattern_name": "Information Expert",
+    "instance_name": "Parsed Email to Trip Record Linking",
+    "language": "JavaScript",
+    "snippet_path": "Part3/information_expert/javascript/main.js",
+    "source_loc": 38,
+    "max_function_cc": 6,
+    "runtime_compiler": "Node.js v22.16.0",
+    "test_command": "cd Part3/information_expert/javascript && node test_main.js",
+    "test_result": "PASS 8/8; failures=0; errors=0; skipped=0; exit_code=0",
+    "median_process_ms": 36.435657,
+    "language_notes": "InboxItem contains the parsed booking information and owns link-or-create. Trip holds candidate TripItems; InboxReviewController delegates. ASCII case-insensitive same-trip matching; absent values as ~. No Rails/database/Anthropic/email; linked items remain idea, created items confirmed. Production files: information_expert/javascript/main.js."
+  },
+  {
+    "pattern_name": "Information Expert",
+    "instance_name": "Parsed Email to Trip Record Linking",
+    "language": "C++",
+    "snippet_path": "Part3/information_expert/cpp/main.cpp",
+    "source_loc": 83,
+    "max_function_cc": 7,
+    "runtime_compiler": "g++ (Debian 14.2.0-19) 14.2.0, C++17",
+    "test_command": "cd Part3/information_expert/cpp && ./information_expert_tests",
+    "test_result": "PASS 8/8; failures=0; errors=0; skipped=0; exit_code=0",
+    "median_process_ms": 4.390529,
+    "language_notes": "InboxItem contains the parsed booking information and owns link-or-create. Trip holds candidate TripItems; InboxReviewController delegates. ASCII case-insensitive same-trip matching; absent values as ~. No Rails/database/Anthropic/email; linked items remain idea, created items confirmed. Production files: information_expert/cpp/main.hpp, information_expert/cpp/main.cpp."
+  }
+]

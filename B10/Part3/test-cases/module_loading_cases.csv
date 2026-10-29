@@ -1,0 +1,10 @@
+case_id,files,device,expected_registry,expected_device
+PL01,adafruit_i2c_soil.py|weather_openweathermap_weather.py,ADAFRUIT_I2C_SOIL,ADAFRUIT_I2C_SOIL=inputs/adafruit_i2c_soil.py|OPENWEATHERMAP_CALL_WEATHER=inputs/weather_openweathermap_weather.py,Adafruit Capacitive Moisture
+PL02,adafruit_i2c_soil.py|weather_openweathermap_weather.py,OPENWEATHERMAP_CALL_WEATHER,ADAFRUIT_I2C_SOIL=inputs/adafruit_i2c_soil.py|OPENWEATHERMAP_CALL_WEATHER=inputs/weather_openweathermap_weather.py,Weather OpenWeather City
+PL03,input_helpers.py|adafruit_i2c_soil.py,ADAFRUIT_I2C_SOIL,ADAFRUIT_I2C_SOIL=inputs/adafruit_i2c_soil.py,Adafruit Capacitive Moisture
+PL04,broken_input.py|adafruit_i2c_soil.py,ADAFRUIT_I2C_SOIL,ADAFRUIT_I2C_SOIL=inputs/adafruit_i2c_soil.py,Adafruit Capacitive Moisture
+PL05,unknown.py|__init__.py|base_input.py|adafruit_i2c_soil.py,ADAFRUIT_I2C_SOIL,ADAFRUIT_I2C_SOIL=inputs/adafruit_i2c_soil.py,Adafruit Capacitive Moisture
+PL06,adafruit_i2c_soil.py|soil_copy.py,ADAFRUIT_I2C_SOIL,ADAFRUIT_I2C_SOIL=inputs/soil_copy.py|duplicates=1,Adafruit Capacitive Moisture
+PL07,,ADAFRUIT_I2C_SOIL,none,ERROR
+PL08,adafruit_i2c_soil.py,HX711,ADAFRUIT_I2C_SOIL=inputs/adafruit_i2c_soil.py,ERROR
+PL09,adafruit_i2c_soil.py|bad_info.py,ADAFRUIT_I2C_SOIL,ERROR,-

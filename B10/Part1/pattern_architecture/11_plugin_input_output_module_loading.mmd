@@ -1,0 +1,30 @@
+%% Plugin - "Input/Output Module Loading"
+%% mycodo/utils/modules.py, utils/inputs.py, utils/outputs.py, controllers/controller_input.py
+classDiagram
+    class load_module_from_file
+    <<function>> load_module_from_file
+    class parse_input_information
+    <<function>> parse_input_information
+    class parse_output_information
+    <<function>> parse_output_information
+    class output_types
+    <<function>> output_types
+    class InputController {
+        +initialize_variables()
+    }
+    class AbstractInput
+    class AbstractOutput
+    class adafruit_i2c_soil_InputModule["adafruit_i2c_soil.InputModule"]
+    class weather_openweathermap_weather_InputModule["weather_openweathermap_weather.InputModule"]
+    class pump_gpio_OutputModule["pump_gpio.OutputModule"]
+    class on_off_gpio_OutputModule["on_off_gpio.OutputModule"]
+    parse_input_information ..> load_module_from_file
+    parse_output_information ..> load_module_from_file
+    output_types ..> parse_output_information
+    InputController ..> parse_input_information
+    InputController ..> load_module_from_file
+    InputController --> AbstractInput : measure_input
+    AbstractInput <|-- adafruit_i2c_soil_InputModule
+    AbstractInput <|-- weather_openweathermap_weather_InputModule
+    AbstractOutput <|-- pump_gpio_OutputModule
+    AbstractOutput <|-- on_off_gpio_OutputModule
