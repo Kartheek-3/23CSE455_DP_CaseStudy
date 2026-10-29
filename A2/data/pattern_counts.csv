@@ -1,0 +1,5 @@
+change_id,pattern_name,before_count,after_count,notes
+Baseline,Strategy,2,2,Two candidate Strategy collaborations identified in the baseline source
+Change1,Strategy,2,2,Rate limiter test coverage added; pattern structure unchanged
+Change2,Strategy,2,2,ETS rate limiter tests added; pattern structure unchanged
+Change3,Strategy,2,2,Parser exception handling improved; pattern structure unchanged

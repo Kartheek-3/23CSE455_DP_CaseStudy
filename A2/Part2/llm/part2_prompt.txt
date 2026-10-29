@@ -1,0 +1,15 @@
+﻿Analyze the three code changes in Part 2 of the MBTA API design-pattern case study.
+
+For each change:
+1. Describe the requirement and the problem being addressed.
+2. Identify the files changed and summarize the implementation.
+3. Identify tests executed and report only results supported by the supplied logs.
+4. Explain which design patterns are affected and whether their participants, roles, or collaborations are preserved, modified, or removed.
+5. Compare the original source with the source after each change.
+6. Record pattern-count changes and explain the evidence supporting them.
+7. Identify relevant code-quality, maintainability, or behavioral effects.
+8. Distinguish verified facts from assumptions and limitations.
+9. Do not invent test results, metrics, source history, or pattern instances.
+10. If evidence is missing, state what must be verified before submission.
+
+Use the change requirements, diffs, test logs, original source, evolved source, Part1 patterns.csv, and Part2 pattern_evolution.csv as inputs.

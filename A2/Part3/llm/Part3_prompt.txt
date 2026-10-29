@@ -1,0 +1,19 @@
+Analyze the design-pattern instances identified in Part 1 and their evolution in Part 2 for the MBTA API case study.
+
+Confirmed candidate instances to discuss:
+1. Rate Limiter Backend Selection — ApiWeb.RateLimiter.Limiter behaviour, ETS and Memcache implementations, and ApiWeb.RateLimiter delegation.
+2. State Data Parsing — Parse callback/Parse.Simple support, Alerts/Line/Routes parsers, and State.Server delegation.
+
+For Part 3, produce illustrative cross-language Strategy examples in Java, Python, JavaScript, and C++ for both instances.
+
+Requirements:
+- Identify the Strategy interface/contract, concrete strategies, and context for each language.
+- Label the examples as illustrative educational snippets; do not claim they are extracted from the MBTA source.
+- Keep test runners separate from production snippets.
+- Use the same sample inputs and expected outputs across language implementations where applicable.
+- Do not claim that a test ran unless its actual output was observed.
+- Record Java, Python, and JavaScript results from the observed test runs; mark both C++ examples not_run because GCC installation did not complete.
+- Explicitly state that the rate-limiter snippet returns a hard-coded false placeholder and does not implement production rate-limiting behavior.
+- Do not invent source LOC, cyclomatic complexity, runtime versions, median execution time, baseline commit, performance measurements, or student details. Mark missing measurements as pending/not measured.
+- Prepare a cross-language CSV using the required columns: pattern_name, instance_name, language, snippet_path, source_loc, max_function_cc, runtime_compiler, test_command, test_result, median_process_ms, language_notes.
+- Record limitations and the evidence paths needed for human verification.

@@ -1,0 +1,23 @@
+
+flowchart TB
+    subgraph RL["Strategy 1: Rate Limiter"]
+        RC["ApiWeb.RateLimiter<br/>Context"]
+        RI["ApiWeb.RateLimiter.Limiter<br/>Behaviour"]
+        ETS["ApiWeb.RateLimiter.ETS"]
+        MC["ApiWeb.RateLimiter.Memcache"]
+        RC -->|"delegates calls"| RI
+        RI -. "implemented by" .-> ETS
+        RI -. "implemented by" .-> MC
+    end
+
+    subgraph SP["Strategy 2: State Data Parsing"]
+        SS["State.Server<br/>Context"]
+        P["Parse<br/>Behaviour"]
+        A["Parse.Alerts"]
+        L["Parse.Line"]
+        R["Parse.Routes"]
+        SS -->|"uses configured parser"| P
+        P -. "implemented by" .-> A
+        P -. "implemented by" .-> L
+        P -. "implemented by" .-> R
+    end

@@ -1,0 +1,4 @@
+Command: javac StateParserStrategy.java TestRunner.java
+Run command: java TestRunner
+Result: PASS
+Note: Illustrative parser strategy delegation; simplified behavior.

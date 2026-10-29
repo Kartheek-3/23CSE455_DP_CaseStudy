@@ -1,0 +1,45 @@
+﻿Part 3: Cross-Language Strategy Pattern Analysis
+Model: GPT-6
+Date: 2026-10-26
+
+1. Rate Limiter Backend Selection
+The original MBTA API uses a common behaviour for rate limiter backends. ETS and Memcache are concrete implementations. The rate limiter context selects a configured backend and delegates operations to it.
+
+Illustrative examples were created in Java, Python, JavaScript, and C++. Each example shows a context delegating to a selected strategy.
+
+Important limitation: the illustrative rate limiter implementations return false as placeholders. They do not implement real rate-limiting logic and must not be presented as production implementations.
+
+2. State Data Parsing
+The original source uses parser modules for different state data types. State.Server delegates parsing to a configured parser. The identified examples include Alerts, Lines, and Routes.
+
+Illustrative examples were created in Java, Python, JavaScript, and C++. Each example demonstrates parser interchangeability and context delegation.
+
+Important limitation: these are educational examples, not code extracted from the MBTA repository. They simplify the original parser behavior.
+
+3. Test Results
+Python:
+- Rate limiter test runner: PASS
+- State parser test runner: PASS
+
+JavaScript:
+- Rate limiter test runner: PASS
+- State parser test runner: PASS
+
+Java:
+- Rate limiter test runner: PASS
+- State parser test runner: PASS
+
+C++:
+- Rate limiter test runner: NOT RUN
+- State parser test runner: NOT RUN
+- Reason: GCC installation failed because package mirrors timed out or returned SSL certificate verification errors.
+
+4. Interpretation
+Six test runners passed for the illustrative examples. These results verify basic strategy delegation and expected sample outputs. They do not establish equivalence with the original MBTA implementation or production correctness.
+
+5. Limitations
+- C++ examples have not been compiled or executed.
+- The rate limiter examples use placeholder behavior.
+- The examples simplify the original Elixir architecture.
+- Cross-language behavioral equivalence has not been fully established.
+- No performance comparison was performed.
